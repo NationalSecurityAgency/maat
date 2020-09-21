@@ -15,12 +15,12 @@
 # limitations under the License. 
 -->
 <asp>
-	<name>requestor_asp</name>
+	<name>send_execute_asp</name>
 	<uuid>cd82c9f7-760d-4535-bcab-74daafaa1739</uuid>
 	<type>Process</type>
 	<description>Request a measurement from another AM</description>
-	<usage>	requestor_asp [graph path] [node id] [certfile] [keyfile] [keypass] [nonce] [tpmpass] [use_tpm]</usage>
-	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/requestor_asp</aspfile>
+	<usage>	send_execute_asp [graph path] [node id] [certfile] [keyfile] [keypass] [nonce] [tpmpass] [use_tpm]</usage>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/send_execute_asp</aspfile>
 	<measurers>
 		<satisfier id="0">
 			<value name="type">GRAPH</value>
@@ -37,7 +37,7 @@
 		</satisfier>
 	</measurers>
 	<security_context>
-	  <selinux><type>requestor_asp_t</type></selinux>
+	  <selinux><type>send_execute_asp_t</type></selinux>
 	  <user>${MAAT_USER}</user>
 	  <group>${MAAT_GROUP}</group>
 	</security_context>

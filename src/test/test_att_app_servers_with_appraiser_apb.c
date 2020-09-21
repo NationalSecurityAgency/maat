@@ -194,7 +194,7 @@ START_TEST(test_appraiser_apb)
     // connect to appraiser
     int appraiser_chan = connect_to_server("127.0.0.1", app_portnum);
 
-    fail_if(appraiser_chan < 0, "Failed to connect to appraiser!");
+    fail_if(appraiser_chan < 0, "Failed to connect to appraiser with error: %d", -appraiser_chan);
 
     // send request
     int msglen;

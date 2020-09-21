@@ -358,44 +358,50 @@ int asp_measure(int argc, char *argv[])
     dlog(0, "IN create_contract ASP MEASURE\n");
 
     // Cmd line args
-    int fd_in      = -1;
-    int fd_out     = -1;
-    char *workdir  = NULL;
-    char *certfile = NULL;
-    char *keyfile  = NULL;
-    char *keypass  = NULL;
-    char *tpmpass  = NULL;
-    int sign_tpm   = 0;
-    int compressed = 0;
-    int encrypted  = 0;
+    int fd_in            = -1;
+    int fd_out           = -1;
+    char *workdir        = NULL;
+    char *certfile       = NULL;
+    char *keyfile        = NULL;
+    char *keypass        = NULL;
+    char *tpmpass        = NULL;
+    int sign_tpm         = 0;
+    int compressed       = 0;
+    int encrypted        = 0;
 
     // Bufs in
-    char *buf          = NULL;
-    size_t bufsize     = 0;
-    char *enckey       = NULL;
-    size_t enckey_size = 0;
+    char *buf            = NULL;
+    size_t bufsize       = 0;
+    char *enckey         = NULL;
+    size_t enckey_size   = 0;
 
     // Bufs out
-    unsigned char *out = NULL;
-    size_t outsize     = 0;
+    unsigned char *out   = NULL;
+    size_t outsize       = 0;
 
-    size_t bytes_written;
-    size_t bytes_read;
-    int eof_enc;
-    int ret_val   = 0;
+    // IO status values
+    size_t bytes_written = 0;
+    size_t bytes_read    = 0;
+    int eof_enc          = 0;
+
+    // Return value
+    int ret_val          = 0;
+
+    errno = 0;
 
     if((argc < 11) ||
-            ((fd_in = (atoi(argv[1]))) < 0) ||
-            ((fd_out = (atoi(argv[2]))) < 0) ||
+            (((fd_in = strtol(argv[1], NULL, 10)) < 0) || errno != 0) ||
+            (((fd_out = strtol(argv[2], NULL, 10)) < 0) || errno != 0) ||
             ((workdir    = argv[3]) == NULL) ||
             ((certfile   = argv[4]) == NULL) ||
             ((keyfile    = argv[5]) == NULL) ||
             ((keypass    = argv[6]) == NULL) ||
             ((tpmpass    = argv[7]) == NULL) ||
-            ((sign_tpm   = atoi(argv[8])) < 0) ||
-            ((compressed = atoi(argv[9])) < 0) ||
-            ((encrypted  = atoi(argv[10])) < 0)) {
+            (((sign_tpm   = strtol(argv[8], NULL, 10)) < 0) || errno != 0) ||
+            (((compressed = strtol(argv[9], NULL, 10)) < 0) || errno != 0) ||
+            (((encrypted  = strtol(argv[10], NULL, 10)) < 0) || errno != 0)) {
         asp_logerror("Usage: "ASP_NAME" <fd_in> <fd_out> <workdir> <certfile> <keyfile> <keypass> <tpmpass> <sign_tpm> <compressed> <encrypted>\n");
+
         ret_val = -EINVAL;
         goto parse_args_failed;
     }
@@ -442,6 +448,7 @@ int asp_measure(int argc, char *argv[])
                                    &out, &outsize);
 
     if(ret_val < 0) {
+        dlog(0, "Failed to create measurement contract\n");
         goto create_msmt_contract_failed;
     }
 
@@ -461,7 +468,8 @@ int asp_measure(int argc, char *argv[])
     } else if (ret_val == EAGAIN) {
         dlog(0, "Warning: timeout occured before write could complete\n");
     }
-    dlog(0, "buffer size: %zu, bytes_written: %zu\n", outsize, bytes_written);
+
+    dlog(3, "buffer size: %zu, bytes_written: %zu\n", outsize, bytes_written);
 
     ret_val = ASP_APB_SUCCESS;
     asp_loginfo("create_contract ASP returning with success\n");

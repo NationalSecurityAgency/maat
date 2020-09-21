@@ -614,16 +614,31 @@ define_asp(mtab_asp_t, mtab_asp_exe_t)
 type serialize_graph_asp_t;
 type serialize_graph_asp_exe_t;
 define_asp(serialize_graph_asp_t, serialize_graph_asp_exe_t);
+maat_tmp_access(serialize_graph_asp_t)
+allow serialize_graph_asp_t lib_t:file entrypoint;
 
 # Compress ASP
 type compress_asp_t;
 type compress_asp_exe_t;
 define_asp(compress_asp_t, compress_asp_exe_t);
+allow compress_asp_t lib_t:file entrypoint;
 
 # Encrypt ASP
 type encrypt_asp_t;
 type encrypt_asp_exe_t;
 define_asp(encrypt_asp_t, encrypt_asp_exe_t);
+allow encrypt_asp_t lib_t:file entrypoint;
+
+# Merge ASP
+type merge_asp_t;
+type merge_asp_exe_t;
+define_asp(merge_asp_t, merge_asp_exe_t);
+allow merge_asp_t lib_t:file entrypoint;
+
+# Split ASP
+type split_asp_t;
+type split_asp_exe_t;
+define_asp(split_asp_t, split_asp_exe_t);
 
 # Create Contract ASP
 type create_contract_asp_t;
@@ -638,6 +653,7 @@ type send_asp_t;
 type send_asp_exe_t;
 define_asp(send_asp_t, send_asp_exe_t);
 allow send_asp_t attestmgr_t:tcp_socket { rw_socket_perms };
+allow send_asp_t lib_t:file entrypoint;
 
 # Sign-send ASP
 type sign_send_asp_t;
@@ -652,15 +668,29 @@ allow sign_send_asp_t attestmgr_t:udp_socket { rw_socket_perms };
 allow sign_send_asp_t attestmgr_t:unix_stream_socket { rw_socket_perms };
 
 # Requestor ASP
-type requestor_asp_t;
-type requestor_asp_exe_t;
-define_asp(requestor_asp_t, requestor_asp_exe_t);
-maat_credentials_reader(requestor_asp_t)
-allow requestor_asp_t attestmgr_t:tcp_socket { rw_socket_perms };
-allow requestor_asp_t attestmgr_t:udp_socket { rw_socket_perms };
-allow requestor_asp_t attestmgr_t:unix_stream_socket { connectto rw_socket_perms };
+type send_execute_asp_t;
+type send_execute_asp_exe_t;
+define_asp(send_execute_asp_t, send_execute_asp_exe_t);
+maat_credentials_reader(send_execute_asp_t)
+allow send_execute_asp_t attestmgr_t:tcp_socket { rw_socket_perms };
+allow send_execute_asp_t attestmgr_t:udp_socket { rw_socket_perms };
+allow send_execute_asp_t attestmgr_t:unix_stream_socket { connectto rw_socket_perms };
 # XXX the attester should be updated to make this a maat-specific type
-allow requestor_asp_t tmp_t:sock_file { rw_file_perms };
+allow send_execute_asp_t tmp_t:sock_file { rw_file_perms };
+
+# Send Request ASP
+type send_request_asp_t;
+type send_request_asp_exe_t;
+define_asp(send_request_asp_t, send_request_asp_exe_t);
+maat_credentials_reader(send_request_asp_t)
+allow send_request_asp_t attestmgr_port_t:tcp_socket { rw_socket_perms name_connect };
+allow send_request_asp_t attestmgr_port_t:udp_socket { rw_socket_perms };
+allow send_request_asp_t attestmgr_t:unix_stream_socket { connectto rw_socket_perms };
+allow send_request_asp_t self:tcp_socket { create rw_socket_perms name_connect };
+allow send_request_asp_t complex_att_apb_t:fifo_file write;
+allow send_request_asp_t net_conf_t:file { getattr open read };
+# XXX the attester should be updated to make this a maat-specific type
+allow send_request_asp_t tmp_t:sock_file { rw_file_perms };
 
 # Dummy Appraisal ASP
 type dummy_appraisal_t;
@@ -670,7 +700,7 @@ require {
 	type maat_tmp_t;
 }
 
-allow dummy_appraisal_t maat_tmp_t:file { rw_file_perms  };
+allow dummy_appraisal_t maat_tmp_t:file { rw_file_perms };
 
 # Process Measurement APB
 define_apb(process_measurement_apb_t, process_measurement_apb_exe_t)
@@ -771,7 +801,7 @@ allow_apb_asp(userspace_apb_t, mtab_asp_exe_t, mtab_asp_t)
 allow_apb_asp(userspace_apb_t, memory_mapping_asp_exe_t, memory_mapping_asp_t)
 allow_apb_asp(userspace_apb_t, sign_send_asp_exe_t, sign_send_asp_t)
 allow_apb_asp(userspace_apb_t, got_measure_asp_exe_t, got_measure_asp_t)
-allow_apb_asp(userspace_apb_t, requestor_asp_exe_t, requestor_asp_t)
+allow_apb_asp(userspace_apb_t, send_execute_asp_exe_t, send_execute_asp_t)
 allow_apb_asp(userspace_apb_t, proc_fds_asp_exe_t, proc_fds_asp_t)
 allow_apb_asp(userspace_apb_t, proc_mem_asp_exe_t, proc_mem_asp_t)
 allow_apb_asp(userspace_apb_t, proc_namespaces_asp_exe_t, proc_namespaces_asp_t)
@@ -795,6 +825,50 @@ type kim_apb_exe_t;
 define_apb(kim_apb_t, kim_apb_exe_t)
 allow kim_apb_t userspace_appraiser_apb_t:fifo_file {rw_file_perms};
 allow_apb_asp(kim_apb_t, kernel_msmt_asp_exe_t, kernel_msmt_asp_t)
+
+# Forwarding APB
+type forwarding_apb_t;
+type forwarding_apb_exe_t;
+define_apb(forwarding_apb_t, forwarding_apb_exe_t)
+
+# No-op APB
+type no_op_apb_t;
+type no_op_apb_exe_t;
+define_apb(no_op_apb_t, no_op_apb_exe_t)
+allow no_op_apb_t lib_t:file entrypoint;
+
+# Complex Attestation APB
+type complex_att_apb_t;
+type complex_att_apb_exe_t;
+define_apb(complex_att_apb_t, complex_att_apb_exe_t)
+
+allow complex_att_apb_t lib_t:file { entrypoint };
+
+allow_apb_asp(complex_att_apb_t, hash_file_service_asp_exe_t, hash_file_service_asp_t)
+allow_apb_asp(complex_att_apb_t, lsproc_asp_exe_t, lsproc_asp_t)
+allow_apb_asp(complex_att_apb_t, proc_open_file_asp_exe_t, proc_open_file_asp_t)
+allow_apb_asp(complex_att_apb_t, system_asp_exe_t, system_asp_t)
+allow_apb_asp(complex_att_apb_t, dpkg_inv_asp_exe_t, dpkg_inv_asp_t)
+allow_apb_asp(complex_att_apb_t, dpkg_details_asp_exe_t, dpkg_details_asp_t)
+allow_apb_asp(complex_att_apb_t, rpm_inv_asp_exe_t, rpm_inv_asp_t)
+allow_apb_asp(complex_att_apb_t, rpm_details_asp_exe_t, rpm_details_asp_t)
+allow_apb_asp(complex_att_apb_t, md5_file_service_asp_exe_t, md5_file_service_asp_t)
+allow_apb_asp(complex_att_apb_t, list_directory_service_asp_exe_t, list_directory_service_asp_t)
+allow_apb_asp(complex_att_apb_t, mtab_asp_exe_t, mtab_asp_t)
+allow_apb_asp(complex_att_apb_t, memory_mapping_asp_exe_t, memory_mapping_asp_t)
+# allow_apb_asp(complex_att_apb_t, sign_send_asp_exe_t, sign_send_asp_t)
+allow_apb_asp(complex_att_apb_t, got_measure_asp_exe_t, got_measure_asp_t)
+allow_apb_asp(complex_att_apb_t, send_execute_asp_exe_t, send_execute_asp_t)
+allow_apb_asp(complex_att_apb_t, proc_fds_asp_exe_t, proc_fds_asp_t)
+allow_apb_asp(complex_att_apb_t, proc_mem_asp_exe_t, proc_mem_asp_t)
+allow_apb_asp(complex_att_apb_t, proc_namespaces_asp_exe_t, proc_namespaces_asp_t)
+allow_apb_asp(complex_att_apb_t, send_request_asp_exe_t, send_request_asp_t)
+allow_apb_asp(complex_att_apb_t, compress_asp_exe_t, compress_asp_t)
+allow_apb_asp(complex_att_apb_t, create_contract_asp_exe_t, create_contract_asp_t)
+allow_apb_asp(complex_att_apb_t, merge_asp_exe_t, merge_asp_t)
+allow_apb_asp(complex_att_apb_t, send_asp_exe_t, send_asp_t)
+allow_apb_asp(complex_att_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_t)
+allow_apb_asp(complex_att_apb_t, encrypt_asp_exe_t, encrypt_asp_t)
 
 # Userspace Appraiser APB
 require {

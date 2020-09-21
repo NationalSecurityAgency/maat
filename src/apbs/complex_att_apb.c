@@ -16,9 +16,9 @@
  */
 
 /*! \file
- * This APB will take measurements of userspace.
- * Note that since this APB uses the measurement specification library, it
- * doesn't guarantee order of measurements.
+ * This APB will request a kernel measurement of itself from some designated
+ * remote appraiser and will take measurements of userspace and concatenate the two
+ * measurements together.
  */
 
 #include <stdio.h>
@@ -42,6 +42,8 @@
 
 #include "apb-common.h"
 
+#define APB_NAME "complex_attestation_apb"
+
 /*
  * Artificially limit the number of processes measured
  * to PROC_LIMIT.  Useful for debuuging
@@ -55,10 +57,6 @@ int mcount = 0;
 /* Need to save these off for the requestor ASP */
 char *certfile = NULL;
 char *keyfile  = NULL;
-char *keypass = NULL;
-char *nonce = NULL;
-char *tpmpass = NULL;
-char *sign_tpm_str = NULL;
 
 /**
  * Creates a new measurement variable of passed target_type and address_space;
@@ -115,7 +113,7 @@ static GQueue *enumerate_variables(void *ctxt UNUSED, target_type *ttype,
                 (strcmp(op, "enumerate") == 0)) ||
                 ((ttype == &system_target_type) &&
                  (space == &unit_address_space))) {
-            /*XXX:  enumerate only processes owned by root */
+            /*XXXsch TODO: add way to enumerate only processes owned by root */
             measurement_variable *v = NULL;
             address *addr = alloc_address(&unit_address_space);
             if(addr == NULL) {
@@ -159,7 +157,9 @@ static GQueue *enumerate_variables(void *ctxt UNUSED, target_type *ttype,
             if(create_basic_variable(val, space, ttype, &v) != 0) {
                 goto err;
             }
-
+            // TODO: this used to be a weak guarentee of order because KIM
+            // was the only measurement of this type. But both USM and KIM
+            // same now. How to guarentee order?
             g_queue_push_head(q,v);
 
         } else {
@@ -226,10 +226,9 @@ static struct asp *find_inventory_asp(measurement_graph *g,
     char *distribution = NULL;
 
     /*
-     * XXX: since there's no guarantee of the order of evaluation,
-     * the need to get the distribution from the system ASP before
-     * the package inventory ASP can be run could lead to problems.
-     * Need to fix.
+     * XXXjc: there's no guarantee of the order of evaluation, right?
+     * Ergo, this could be run before the system ASP is run. Need to
+     * fix.
      */
     get_distribution(g, &distribution);
 
@@ -281,16 +280,18 @@ static struct asp *select_asp(measurement_graph *g, measurement_type *mtype,
         } else {
             dlog(0,"unknown path_list type???\n");
         }
+    } else if (mtype == &reloc_list_measurement_type) {
+        return find_asp(apb_asps, "proc_relocs");
     } else if (mtype == &md5hash_measurement_type) {
         return find_asp(apb_asps, "md5fileservice");
     } else if (mtype == &blob_measurement_type) {
         if (var->address->space->magic == PID_MEM_RANGE_MAGIC) {
             return find_asp(apb_asps, "procmem");
-        } else if (var->address->space->magic == PID_MAGIC) {
-            return find_asp(apb_asps, "got_measure");
         } else {
-            return find_asp(apb_asps, "send_execute_asp");
+            return find_asp(apb_asps, "got_measure");
         }
+    } else if (mtype == &elf_relocs_measurement_type) {
+        return find_asp(apb_asps, "elf_relocs");
     } else if (mtype == &mappings_measurement_type) {
 #ifdef LIMIT_PROCS
         if (mcount < PROC_LIMIT) {
@@ -311,6 +312,8 @@ static struct asp *select_asp(measurement_graph *g, measurement_type *mtype,
         return find_inventory_asp(g, mtype);
     } else if (mtype == &mtab_measurement_type) {
         return find_asp(apb_asps, "mtab");
+    } else if (mtype == &iptables_measurement_type) {
+        return find_asp(apb_asps, "firewall");
     } else if (mtype == &namespaces_measurement_type) {
         return find_asp(apb_asps, "proc_namespaces");
     } else if (mtype == &sha256_measurement_type) {
@@ -328,7 +331,7 @@ static int measure_variable(void *ctxt, measurement_variable *var,
 {
     measurement_graph *g = (measurement_graph*)ctxt;
     char *asp_argv[2];
-    char *rq_asp_argv[8];
+    char *rq_asp_argv[4];
     char *pmreloc_argv[3];
     char *graph_path = measurement_graph_get_path(g);
     node_id_t n = INVALID_NODE_ID;
@@ -361,26 +364,12 @@ static int measure_variable(void *ctxt, measurement_variable *var,
 
     struct asp *asp = select_asp(g, mtype, var);
     if(asp == NULL) {
-        dlog(0, "Failed to find satisfactory ASP\n");
+        dlog(0, "Failed to find satifactory ASP\n");
         rc = -ENOENT;
         goto error;
     }
 
-    /* Send execute ASP also needs cert and keyfile */
-    if(strcmp(asp->name, "send_execute_asp") == 0) {
-        rq_asp_argv[0] = graph_path;
-        rq_asp_argv[1] = nstr;
-        rq_asp_argv[2] = certfile;
-        rq_asp_argv[3] = keyfile;
-        rq_asp_argv[4] = keypass;
-        rq_asp_argv[5] = nonce;
-        rq_asp_argv[6] = tpmpass;
-        rq_asp_argv[7] = sign_tpm_str;
-        rc = run_asp(asp, -1, -1, false, 8, rq_asp_argv, -1);
-        // TODO: here, could check for appraiser named in address space. Right now
-        // just passing all measurements to peer, but could envision other architectures
-        // where the current AM acts as appraiser for some data.
-    } else if (strcmp(asp->name, "procmem") == 0 && mtype == &blob_measurement_type) {
+    if (strcmp(asp->name, "procmem") == 0 && mtype == &blob_measurement_type) {
         pmreloc_argv[0] = graph_path;
         pmreloc_argv[1] = nstr;
         pmreloc_argv[2] = "nohash";
@@ -404,46 +393,42 @@ static measurement_spec_callbacks callbacks = {
 
 
 /**
- * Handles setup and execution of the sign_send_asp
+ * Handles setup and execution of all of the ASPs used to trigger the KIM measurement and
+ * send the combined userspace and KIM measurement to the appraiser as well as delegates
+ * the taking of the userspace measurement
  * @graph is the measurement graph to serialize and send
+ * @mspec is the measurement spec for this measurement
+ * @rhost remote host to perform kernel measurement
+ * @rport port the remote host is listening on
+ * @lhost local address of the AM to get the result from the rhost
+ * @lport local port the local AM is listening on
  * @scen is the current scenario
  * @peerchan is where to send the measurement
  * Returns 0 on success, < 0 on error
- *
- * XXX: The sign_send ASP is deprecated; this should be updated to use the
- * individual serialize, compress, encrypt, create_contract, and send ASPs
  */
-static int execute_sign_send_pipeline(measurement_graph *graph,
-                                      struct scenario *scen, int peerchan)
+static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct meas_spec *mspec, const char *rhost,
+        const char *rport, const char *lhost, const char *lport,
+        struct scenario *scen, const int peerchan)
 {
-    int ret_val               = -1;
-    char *graph_path          = NULL;
-    char *peerchan_str        = NULL;
-    char *workdir             = NULL;
-    char *partner_cert        = NULL;
-
-    struct asp *sign_send_asp = find_asp(apb_asps, "sign_send_asp");
-    if(sign_send_asp == NULL) {
-        dlog(0, "Error: failed to find sign_send ASP\n");
-        goto find_asp_error;
-    }
-
-    graph_path = measurement_graph_get_path(graph);
-    if(graph_path == NULL) {
-        dlog(0, "ERROR: graph path is null, cannot call sign_send_asp\n");
-        goto graph_path_error;
-    }
-
-    if((peerchan_str = (char *)g_strdup_printf("%d", peerchan)) == NULL) {
-        dlog(0, "Error: peerchan could not be copied (%d)\n", peerchan);
-        goto peerchan_str_error;
-    }
-
-    if((sign_tpm_str = (char *)g_strdup_printf("%d", scen->sign_tpm)) == NULL) {
-        dlog(0, "Error: sign_tpm value could not be copied (%d)\n",
-             scen->sign_tpm);
-        goto sign_tpm_str_error;
-    }
+    int ret_val                  = -1;
+    int fb_fd                    = -1;
+    int kim_fd                   = 0;
+    char *graph_path             = NULL;
+    char *workdir                = NULL;
+    char *partner_cert           = NULL;
+    char *kim_fd_str             = NULL;
+    char *req_args[5];
+    char *serialize_args[1];
+    char *encrypt_args[1];
+    char *create_con_args[8];
+    char *merge_args[2];
+    struct asp *send_request_asp = NULL;
+    struct asp *serialize        = NULL;
+    struct asp *compress         = NULL;
+    struct asp *encrypt          = NULL;
+    struct asp *create_con       = NULL;
+    struct asp *send             = NULL;
+    struct asp *merge            = NULL;
 
     if( !scen->workdir || ((workdir = strdup(scen->workdir)) == NULL) ) {
         dlog(0, "Error: failed to copy workdir\n");
@@ -460,71 +445,238 @@ static int execute_sign_send_pipeline(measurement_graph *graph,
         goto keyfile_error;
     }
 
-    // Partner Cert is Optional.
-    // Once all ASPs are split into least privilege, the APB will just decide whether or
-    // not to launch the encrypting ASP, rather than basing it on presence of partner_cert here.
-    if(!scen->partner_cert ||
-            ((partner_cert = strdup(scen->partner_cert)) == NULL) ) {
-
-        dlog(3, "Warning: no partner certificate for sign_send_asp\n");
-
-        char *sign_send_asp_argv[8] = {graph_path, peerchan_str,
-                                       certfile, keyfile, keypass,
-                                       tpmpass, sign_tpm_str, workdir
-                                      };
-        ret_val = run_asp(sign_send_asp, -1, -1, false, 8,
-                          sign_send_asp_argv, -1);
-
-    } else {
-
-        char *sign_send_asp_argv[9] = {graph_path, peerchan_str,
-                                       certfile, keyfile, keypass,
-                                       tpmpass, sign_tpm_str,
-                                       workdir, partner_cert
-                                      };
-        ret_val = run_asp(sign_send_asp, -1, -1, false, 9,
-                          sign_send_asp_argv, -1);
-
+    /* Load all ASPs */
+    send_request_asp = find_asp(apb_asps, "send_request_asp");
+    if(send_request_asp == NULL) {
+        ret_val = -1;
+        dlog(1, "Unable to find the \"send request\" ASP\n");
+        goto find_asp_err;
     }
 
+    serialize = find_asp(apb_asps, "serialize_graph_asp");
+    if(serialize == NULL) {
+        ret_val = -1;
+        dlog(1, "Error: unable to retrieve serialize ASP\n");
+        goto find_asp_err;
+    }
+
+    compress = find_asp(apb_asps, "compress_asp");
+    if(compress == NULL) {
+        ret_val = -1;
+        dlog(1, "Error: unable to retrieve compress ASP\n");
+        goto find_asp_err;
+    }
+
+    encrypt = find_asp(apb_asps, "encrypt_asp");
+    if(encrypt == NULL) {
+        ret_val = -1;
+        dlog(1, "Error: unable to retrieve encrypt ASP\n");
+        goto find_asp_err;
+    }
+
+    create_con = find_asp(apb_asps, "create_contract_asp");
+    if(create_con == NULL) {
+        ret_val = -1;
+        dlog(1, "Error: unable to retrieve create contract ASP\n");
+        goto find_asp_err;
+    }
+
+    send = find_asp(apb_asps, "send_asp");
+    if(send == NULL) {
+        ret_val = -1;
+        dlog(1, "Error: unable to retrieve send ASP\n");
+        goto find_asp_err;
+    }
+
+    merge = find_asp(apb_asps, "merge_asp");
+    if(merge == NULL) {
+        ret_val = -1;
+        dlog(1, "Error: unable to retrieve merge ASP\n");
+        goto find_asp_err;
+    }
+
+    /* These casts are justified because the argv will not be modified */
+    req_args[0] = (char *)lhost;
+    req_args[1] = (char *)lport;
+    req_args[2] = (char *)rhost;
+    req_args[3] = (char *)rport;
+    req_args[4] = "runtime-meas";
+
+    /* infd is not used, just given to make the ASP happy */
+    ret_val = fork_and_buffer_async_asp(send_request_asp, 5, req_args, STDIN_FILENO, &kim_fd);
+    if(ret_val == -2) {
+        dlog(0, "Failed to execute fork and buffer for %s ASP\n", send_request_asp->name);
+    } else if(ret_val == -1) {
+        dlog(0, "Error in %s ASP or child process\n", send_request_asp->name);
+    } else if(ret_val == 0) {
+        /* Collect userspace measurement - enforcing order within userspace measurements?*/
+        evaluate_measurement_spec(mspec, &callbacks, graph);
+
+        /* Get graph path */
+        graph_path = measurement_graph_get_path(graph);
+        if(graph_path == NULL) {
+            dlog(0, "Error: unable to retrieve the graph path");
+            exit(-1);
+        }
+
+        serialize_args[0] = graph_path;
+
+        ret_val = fork_and_buffer_async_asp(serialize, 1, serialize_args, STDIN_FILENO, &fb_fd);
+        if(ret_val == -2) {
+            dlog(0, "Failed to execute fork and buffer for %s ASP\n", serialize->name);
+            exit(-1);
+        } else if(ret_val == -1) {
+            dlog(0, "Error in %s ASP or child process\n", serialize->name);
+            exit(-1);
+        } else if (ret_val > 0) {
+            /* Parent needs to gracefully exit to allow grandparent to continue */
+            exit(0);
+        } else {
+            /* Stringify the fork and buffer pipe FD so that we can provide as an argument */
+            if ((kim_fd_str = (char *)g_strdup_printf("%d", kim_fd)) == NULL) {
+                dlog(2, "Error: could not copy kim FD (%d)\n", kim_fd);
+                exit(-1);
+            }
+
+            merge_args[0] = kim_fd_str;
+            merge_args[1] = "seperator=\n";
+
+            ret_val = fork_and_buffer_async_asp(merge, 2, merge_args, fb_fd, &fb_fd);
+            if(ret_val == -2) {
+                dlog(0, "Failed to execute fork and buffer for %s ASP\n", merge->name);
+                exit(-1);
+            } else if(ret_val == -1) {
+                dlog(0, "Failed to wait on %s ASP or child process\n", merge->name);
+                exit(-1);
+            } else if (ret_val > 0) {
+                /* Parent needs to gracefully exit to allow grandparent to continue */
+                exit(0);
+            } else {
+                ret_val = fork_and_buffer_async_asp(compress, 0, NULL, fb_fd, &fb_fd);
+                if(ret_val == -2) {
+                    dlog(0, "Failed to execute fork and buffer for %s ASP\n", compress->name);
+                    exit(-1);
+                } else if(ret_val == -1) {
+                    dlog(0, "Failed to wait on %s ASP or child process\n", compress->name);
+                    exit(-1);
+                } else if (ret_val > 0) {
+                    /* Parent needs to gracefully exit to allow grandparent to continue */
+                    exit(0);
+                } else {
+                    /* Use the encrypt ASP if we have a certificate available*/
+                    if(scen->partner_cert && ((partner_cert = strdup(scen->partner_cert)) != NULL)) {
+                        encrypt_args[0] = partner_cert;
+
+                        create_con_args[7] = "1";
+
+                        ret_val = fork_and_buffer_async_asp(encrypt, 1, encrypt_args, fb_fd, &fb_fd);
+                        if(ret_val == -2) {
+                            dlog(0, "Failed to execute fork and buffer for %s ASP\n", encrypt->name);
+                            exit(-1);
+                        } else if(ret_val == -1) {
+                            dlog(0, "Failed to wait on %s ASP or child process\n", encrypt->name);
+                            exit(-1);
+                        } else if (ret_val > 0) {
+                            /* Parent needs to gracefully exit to allow grandparent to continue */
+                            exit(0);
+                        }
+                    } else {
+                        create_con_args[7] = "0";
+                    }
+
+                    create_con_args[0] = workdir;
+                    create_con_args[1] = certfile;
+                    create_con_args[2] = keyfile;
+                    /* TODO: Provide TPM functionality once it comes available */
+                    create_con_args[3] = scen->keypass == NULL ? "" : scen->keypass;
+                    create_con_args[4] = scen->tpmpass == NULL ? "" : scen->tpmpass;
+                    create_con_args[5] = "1";
+                    create_con_args[6] = "1";
+                    //The last argument is already set depending on the use of encryption
+
+                    ret_val = fork_and_buffer_async_asp(create_con, 8, create_con_args, fb_fd, &fb_fd);
+                    if(ret_val == -2) {
+                        dlog(0, "Failed to execute fork and buffer for %s ASP\n", create_con->name);
+                        exit(-1);
+                    } else if(ret_val == -1) {
+                        dlog(0, "Failed to wait on %s ASP or child process\n", create_con->name);
+                        exit(-1);
+                    } else if (ret_val > 0) {
+                        /* Parent needs to gracefully exit to allow grandparent to continue */
+                        exit(0);
+                    } else {
+                        /* Child code executes */
+                        ret_val = run_asp(send, fb_fd, peerchan, false, 0, NULL, -1);
+                        close(fb_fd);
+                        if(ret_val < 0) {
+                            dlog(1, "Error: Failure in the send ASP\n");
+                            exit(-1);
+                        }
+
+                        exit(ret_val);
+                    }// End of create_con child
+                }// End of compress child
+            }// End of merge child
+        }// End of serialize child
+    }// End of send_request child
+
+fb_req_err:
+find_asp_err:
 keyfile_error:
 certfile_error:
     free(workdir);
 workdir_error:
-    g_free(sign_tpm_str);
-sign_tpm_str_error:
-    g_free(peerchan_str);
-peerchan_str_error:
-    free(graph_path);
-graph_path_error:
-find_asp_error:
     return ret_val;
 }
 
 int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
                 int peerchan, int resultchan UNUSED, char *target UNUSED,
                 char *target_type UNUSED, char *resource UNUSED,
-                struct key_value **arg_list UNUSED, int argc UNUSED)
+                struct key_value **arg_list, int argc)
 {
-    dlog(3, "Hello from the USERSPACE_APB\n");
+    dlog(3, "Hello from the COMPLEX_ATTESTATION_APB\n");
     int ret_val = 0;
-    time_t start, end;
-
-    start = time(NULL);
+    struct meas_spec *mspec = NULL;
+    measurement_graph *graph = NULL;
 
     if((ret_val = register_types()) < 0) {
         return ret_val;
     }
 
+    if(argc != 4) {
+        dlog(1, "USAGE: APB_NAME <Remote KIM Appraiser Host> <Remote KIM Appraiser Port> <Local AM Host> <Local AM Port>\n");
+        return -1;
+    }
+
     apb_asps = apb->asps;
 
-    struct meas_spec *mspec = NULL;
+    /* Get host and port arguments */
+    if(strcmp(arg_list[0]->key, "@_2ip") != 0) {
+        dlog(1, "Did not receive rhost argument, instead received %s\n", arg_list[0]->key);
+        return -1;
+    }
+
+    if(strcmp(arg_list[1]->key, "@_2port") != 0) {
+        dlog(1, "Did not receive rport argument, instead received %s\n", arg_list[1]->key);
+        return -1;
+    }
+
+    if(strcmp(arg_list[2]->key, "@_1ip") != 0) {
+        dlog(1, "Did not receive lip argument, instead received %s\n", arg_list[2]->key);
+        return -1;
+    }
+
+    if(strcmp(arg_list[3]->key, "@_1port") != 0) {
+        dlog(1, "Did not receive lport argument, instead received %s\n", arg_list[3]->key);
+        return -1;
+    }
+
     ret_val = get_target_meas_spec(meas_spec_uuid, &mspec);
     if(ret_val != 0) {
         return ret_val;
     }
 
-    measurement_graph *graph = create_measurement_graph(NULL);
+    graph = create_measurement_graph(NULL);
     if(!graph) {
         dlog(0, "Failed to create measurement graph\n");
         free_meas_spec(mspec);
@@ -533,58 +685,23 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
 
     if(scen->certfile) {
         certfile = strdup(scen->certfile);
-    } else {
-        certfile= "";
     }
-
     if(scen->keyfile) {
         keyfile = strdup(scen->keyfile);
-    } else {
-        keyfile = "";
     }
 
-    if(scen->keypass) {
-        keypass = strdup(scen->keypass);
-    } else {
-        keypass = "";
-    }
+    dlog(3, "Entering execute_measurement_and_asp_pipeline\n");
 
-    if(scen->nonce) {
-        nonce = strdup(scen->nonce);
-    } else {
-        nonce = "";
-    }
-
-    if(scen->tpmpass) {
-        tpmpass = strdup(scen->tpmpass);;
-    } else {
-        tpmpass = "";
-    }
-
-    if((sign_tpm_str = (char *)g_strdup_printf("%d", scen->sign_tpm)) == NULL) {
-        sign_tpm_str = "";
-    }
-
-    dlog(3, "Evaluating measurement spec\n");
-    evaluate_measurement_spec(mspec, &callbacks, graph);
+    /* Execute the measurement ASPs and the ASPs to combine, sign, and send the
+       measurements to the appraiser */
+    ret_val = execute_measurement_and_asp_pipeline(graph, mspec, arg_list[0]->value,
+              arg_list[1]->value, arg_list[2]->value,
+              arg_list[3]->value, scen, peerchan);
 
     free_meas_spec(mspec);
-
-    graph_print_stats(graph, 1);
-
-    ret_val = execute_sign_send_pipeline(graph, scen, peerchan);
-
     destroy_measurement_graph(graph);
     graph = NULL;
 
-    end = time(NULL);
-
-    dlog(2, "Total time: %ld seconds\n", end-start);
-#ifdef DUMP_MEMORY_USAGE
-    g_char *memstat = g_strdup_printf("/bin/cat /proc/%d/status", getpid());
-    (void)system(memstat);
-    g_free(memstat);
-#endif
     return ret_val;
 }
 

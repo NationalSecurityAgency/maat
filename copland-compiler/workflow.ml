@@ -190,9 +190,9 @@ module type Actions = sig
         interpreter, it just returns the empty string. *)
     val to_string : t -> string;;
 
-    (** Requestor ASP should be use to handle {!const:workflow.At}
+    (** Send execute ASP should be use to handle {!const:workflow.At}
         forms. It's not properly implemented anywhere. *)
-    val requestor_asp : string -> evaluator -> evaluator;;
+    val send_execute_asp : string -> evaluator -> evaluator;;
 
     (** The Buffering ASP is used to handle {!const:workflow.Serial} forms. The
         {!type:evaluator} argument is {!val:Evaluation.eval_subflow}
@@ -273,7 +273,7 @@ module Evaluation (A: Actions) = struct
                                          >|= fun pid_ident -> [pid_ident])
             | LIN (CONC, flow)      -> eval_linear eval_subflow flow
             | LIN (SEQ, flow)       -> eval_linear (A.buffering_asp eval_subflow) flow
-            | AT  (s,w)             -> A.requestor_asp s eval_subflow
+            | AT  (s,w)             -> A.send_execute_asp s eval_subflow
                                            ~close_inputs ~close_outputs ~stdin ~stdout w)
 
 
@@ -356,6 +356,8 @@ module Interpreter = Evaluation(struct
                                 match target with
                                 | "" -> ignore (Unix.exec ~prog:cmd ~argv:(cmd::argv) ()); return (Unix.getpid ())
                                 | _  -> ignore (Unix.exec ~prog:cmd ~argv:(cmd::target::argv) ()); return (Unix.getpid ())
+                                (* exec never returns, calling getpid here makes
+                                   the type checker happy *)
                                )
             | `In_the_parent p -> return p;;
 
@@ -385,13 +387,13 @@ module Interpreter = Evaluation(struct
         let to_string () = "";;
 
         (** We'll just assume that there exists some ASP called
-            "requestor_asp" that expects a SExp form of a workflow and
+            "send_execute_asp" that expects a SExp form of a workflow and
             the target name and just does the right thing. So we just
             replace the At form with a corresponding Asp form and
             allow the evaluator to reduce that.
         *)
-        let requestor_asp s eval ~close_inputs ~close_outputs ~stdin ~stdout w =
-            eval ~close_inputs ~close_outputs ~stdin ~stdout (PRIM {cmd = "requestor_asp";
+        let send_execute_asp s eval ~close_inputs ~close_outputs ~stdin ~stdout w =
+            eval ~close_inputs ~close_outputs ~stdin ~stdout (PRIM {cmd = "send_execute_asp";
                                                                     target = s;
                                                                     args = [Sexp.to_string (sexp_of_workflow w)]})
 
@@ -526,10 +528,10 @@ module Compiler = Evaluation(struct
         (** Convert the fully built function to compilable C code. *)
         let to_string (_, _, pf) = Ccode.(c_of_pfunc {pf with stmts = (Return (Var pf.rcvar))::pf.stmts})
 
-        (** Same as {!val:Workflow.Interpreter.requestor_asp} assumes an ASP,
-            "requestor_asp" exists for doing all the work *)
-        let requestor_asp s eval ~close_inputs ~close_outputs ~stdin ~stdout w =
-            eval ~close_inputs ~close_outputs ~stdin ~stdout (PRIM {cmd = "requestor_asp";
+        (** Same as {!val:Workflow.Interpreter.send_execute_asp} assumes an ASP,
+            "send_execute_asp" exists for doing all the work *)
+        let send_execute_asp s eval ~close_inputs ~close_outputs ~stdin ~stdout w =
+            eval ~close_inputs ~close_outputs ~stdin ~stdout (PRIM {cmd = "send_execute_asp";
                                                                     target = s;
                                                                     args = [Sexp.to_string (sexp_of_workflow w)]})
 
@@ -732,7 +734,7 @@ module GraphBuilder : Actions = struct
             Buffer.contents b
 
         (* fixme: use subgraphs to support @ notation *)
-        let requestor_asp tgt eval ~close_inputs ~close_outputs ~stdin ~stdout w =
+        let send_execute_asp tgt eval ~close_inputs ~close_outputs ~stdin ~stdout w =
             let%bind g    = get in
             let%bind _    = put {nodes = []; subgraphs = []; next_node_id = g.next_node_id;
                                  edges = g.edges;

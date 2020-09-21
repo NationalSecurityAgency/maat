@@ -205,6 +205,9 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/apbs/process_measurement_apb
 %{_libexecdir}/maat/apbs/userspace_apb
 %{_libexecdir}/maat/apbs/userspace_appraiser_apb
+%{_libexecdir}/maat/apbs/complex_att_apb
+%{_libexecdir}/maat/apbs/forwarding_apb
+%{_libexecdir}/maat/apbs/no_op_apb
 # ASPs, enumerated explicitly because some need suid
 # %{_libexecdir}/maat/asps/*
 %{_libexecdir}/maat/asps/blacklist
@@ -213,6 +216,7 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/asps/dpkg_inv_asp
 %{_libexecdir}/maat/asps/dummy_appraisal
 %{_libexecdir}/maat/asps/elf_reader
+%{_libexecdir}/maat/asps/send_request_asp
 %{_libexecdir}/maat/asps/hashfileserviceasp
 %{_libexecdir}/maat/asps/hashserviceasp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/ima_asp
@@ -243,7 +247,7 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/asps/system_appraise_asp
 %{_libexecdir}/maat/asps/system_asp
 %{_libexecdir}/maat/asps/whitelist
-%{_libexecdir}/maat/asps/requestor_asp
+%{_libexecdir}/maat/asps/send_execute_asp
 %{_libexecdir}/maat/asps/serialize_graph_asp
 %{_libexecdir}/maat/asps/compress_asp
 %{_libexecdir}/maat/asps/encrypt_asp

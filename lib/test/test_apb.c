@@ -166,7 +166,7 @@ START_TEST(test_run_asp_return_success)
     fail_if(dummy_asp == NULL, "couldn't find dummy asp");
 
     //This should succeed
-    ret = run_asp(dummy_asp, STDIN_FILENO, STDOUT_FILENO, false, 0, NULL, -1);
+    ret = run_asp(dummy_asp, -1, -1, false, 0, NULL, -1);
     fail_unless(ret == 0, "run_asp returned %d instead of zero for success %s\n", ret, dummy_asp->name);
 
     unload_all_asps(asps);

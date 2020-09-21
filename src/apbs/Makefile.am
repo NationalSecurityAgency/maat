@@ -71,6 +71,12 @@ userspace_apb_SOURCES		= userspace_apb.c $(APB_COMMON_SOURCES)
 userspace_apb_LDADD		= $(AM_LIBADD)
 endif
 
+if BUILD_complex_att_APB
+apb_PROGRAMS                   += complex_att_apb
+complex_att_apb_SOURCES		= complex_att_apb.c $(APB_COMMON_SOURCES)
+complex_att_apb_LDADD		= $(AM_LIBADD)
+endif
+
 if BUILD_quiot_tlm_APB
 apb_PROGRAMS                   += quiot_tlm_apb
 quiot_tlm_apb_SOURCES		= quiot_tlm_apb.c $(APB_COMMON_SOURCES)
@@ -112,6 +118,18 @@ if BUILD_userspace_appraiser_APB
 apb_PROGRAMS			+= userspace_appraiser_apb
 userspace_appraiser_apb_SOURCES  = userspace_appraiser_apb.c
 userspace_appraiser_apb_LDADD    = $(AM_LIBADD) $(LIBMAAT_CLIENT_LIBS) $(LIBMAAT_AM_LIBS)
+endif
+
+if BUILD_forwarding_APB
+apb_PROGRAMS			+= forwarding_apb
+forwarding_apb_SOURCES = forwarding_apb.c
+forwarding_apb_LDADD   = $(AM_LIBADD) $(LIBMAAT_CLIENT_LIBS) $(LIBMAAT_AM_LIBS)
+endif
+
+if BUILD_no_op_APB
+apb_PROGRAMS			+= no_op_apb
+no_op_apb_SOURCES = no_op_apb.c
+no_op_apb_LDADD   = $(AM_LIBADD) $(LIBMAAT_CLIENT_LIBS) $(LIBMAAT_AM_LIBS)
 endif
 
 apbinfo_DATA+=$(patsubst %, %.xml, $(apb_PROGRAMS) $(suid_apb_PROGRAMS))

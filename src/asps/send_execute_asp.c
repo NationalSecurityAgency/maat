@@ -50,11 +50,11 @@
 #include <util/maat-io.h>
 #include <util/unix-socket.h>
 
-#define ASP_NAME        "requestor_asp"
+#define ASP_NAME        "send_execute_asp"
 
 #define RASP_AM_COMM_TIMEOUT 1000
 
-int asp_init(int argc, char *argv[])
+int asp_init(int argc UNUSED, char *argv[] UNUSED)
 {
     int ret_val = 0;
     asp_loginfo("Initialized requestor ASP\n");
@@ -66,7 +66,7 @@ int asp_init(int argc, char *argv[])
     return ASP_APB_SUCCESS;
 }
 
-int asp_exit(int status)
+int asp_exit(int status UNUSED)
 {
     asp_loginfo("Exiting requestor ASP\n");
     return ASP_APB_SUCCESS;
@@ -145,10 +145,6 @@ static int send_to_attester_listen_for_result(char *attester_path, char *resourc
     }
 
     size_t bytes_read = 0;
-    target_id_type_t target_typ = TARGET_TYPE_HOST_PORT;
-    xmlChar *target_id;
-    size_t data_count;
-    xmlChar **data_idents, **data_entries;
     char *result = NULL;
     size_t resultsz = 0;
     int eof_encountered=0;
@@ -223,7 +219,7 @@ error:
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(4, "In requestor ASP\n");
+    dlog(4, "In send_execute ASP\n");
     measurement_graph *graph;
     node_id_t node_id;
 

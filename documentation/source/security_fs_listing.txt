@@ -60,7 +60,7 @@ configuration file or on the command line).
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:bin_t:s0                           |test_client                             |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|A simple command-line client for Maat to request a measurement. (no specific security attributes)                         |
+|A simple command-line client for Maat to request a measurement and appraisal. (no specific security attributes)           |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
@@ -732,7 +732,9 @@ state) should be installed with appropriate ownership, and their SUID or SGID bi
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rwsr-xr-x. |root  |root   |system_u:object_r:proc_root_asp_exe_t:s0             |procrootasp                             |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:requestor_asp_exe_t:s0             |requestor_asp                           |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:send_execute_asp_exe_t:s0          |send_execute_asp                        |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:send_request_asp_exe_t:s0          |send_request_asp                        |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:rpm_details_asp_exe_t:s0           |rpm_details_asp                         |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
@@ -998,7 +1000,9 @@ directory and its contents world readable (chmod 0755 for the directory, chmod 0
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |procopenfileasp.xml                     |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |requestor_asp.xml                       |
+|-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |send_execute_asp.xml                    |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |send_request_asp.xml                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |rpm_details_asp.xml                     |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+

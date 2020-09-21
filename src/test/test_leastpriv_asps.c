@@ -386,7 +386,7 @@ START_TEST(test_create_contract_asp)
 
     char *certfile = partner_cert;
     char *keyfile = partner_key;
-    char *keypass = "maatkey";
+    char *keypass = "";
 
     /* Fork a child process for the ASP */
     childpid = fork();
@@ -397,7 +397,7 @@ START_TEST(test_create_contract_asp)
         close(fd_out[0]);
 
         /* The keypass argument is given as an empty string because no password is needed for the demo certificates */
-        char *asp_argv[] = {workdir, certfile, keyfile, keypass, sign_tpm, tpm_pass, compressed, encrypted};
+        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, sign_tpm, compressed, encrypted};
 
         rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 8, asp_argv, -1);
 

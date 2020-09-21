@@ -87,8 +87,9 @@ connect_to_server(char* ip, uint16_t portnum)
     int con_attempts = 0;
     int retval;
     int res;
+
     if(my_socket < 0) {
-        fprintf(stderr, "Failed to create socket\n");
+        dlog(0, "Failed to create socket, errno: %d\n", errno);
         return -1;
     }
 
@@ -96,6 +97,7 @@ connect_to_server(char* ip, uint16_t portnum)
     dest.sin_family = AF_INET;
     dest.sin_addr.s_addr = inet_addr(ip);
     if(dest.sin_addr.s_addr == INADDR_NONE) { //INADDR_NONE = -1
+        dlog(0, "Failed to create socket, errno: %d\n", errno);
         close(my_socket);
         return -1;
     }
@@ -109,13 +111,16 @@ connect_to_server(char* ip, uint16_t portnum)
         con_attempts++;
         sleep(1);
     }
+
     if(retval < 0) {
+        dlog(0, "Failed to connect to server\n");
         close(my_socket);
         return -1;
     }
 
 
     if((res = maat_io_channel_new(my_socket)) < 0) {
+        dlog(0, "Failed to create new io channel socket\n");
         close(my_socket);
     }
 

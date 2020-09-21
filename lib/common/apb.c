@@ -71,8 +71,6 @@ void parse_asps(struct apb *apb, GList *asps, xmlNode *asps_node)
         }
 
         ret = uuid_parse(stripped, uuid);
-        free(stripped);
-        stripped = NULL;
         if (ret) {
             dlog(1, "Error: Invalid UUID in entry, skipping\n");
             apb->valid = false;
@@ -81,11 +79,15 @@ void parse_asps(struct apb *apb, GList *asps, xmlNode *asps_node)
 
         a = find_asp_uuid(asps, uuid);
         if (!a) {
-            dlog(3, "ASP with UUID %s not found in ASPs list\n", tmp);
+            dlog(2, "ASP with UUID %s not found in ASPs list\n", stripped);
+            free(stripped);
+            stripped = NULL;
             uuid_clear(uuid);
             apb->valid = false;
             continue;
         }
+        free(stripped);
+        stripped = NULL;
         apb->asps = g_list_append(apb->asps, a);
 
         tmp = xmlGetPropASCII(asp, "initial");

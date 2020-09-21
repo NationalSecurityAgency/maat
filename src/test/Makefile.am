@@ -155,6 +155,12 @@ test_split_asp_SOURCES = test_split.c
 test_split_asp_LDADD = $(LDADD_APB)
 endif
 
+if BUILD_send_request_ASP
+check_PROGRAMS += test_sendrequest
+test_sendrequest_SOURCES = test_sendrequest.c
+test_sendrequest_LDADD = $(LDADD_APB)
+endif
+
 if BUILD_kernel_msmt_ASP
 check_PROGRAMS += test_kernel_msmt
 test_kernel_msmt_SOURCES = test_kernel_msmt.c

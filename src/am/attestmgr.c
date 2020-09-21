@@ -531,6 +531,7 @@ static int handle_connection(am_config *config, int clientfd, int may_skip_negot
                            &eof_encountered,
                            config->am_comm_timeout, -1);
     if(check_receive_result(NULL, res) < 0 || eof_encountered != 0) {
+        dlog(1, "Failed to receive contract from peer\n");
         rc = -1;
         goto out;
     }

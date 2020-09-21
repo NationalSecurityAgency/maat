@@ -20,5 +20,6 @@ dist_selector_DATA = selector.xml \
 	master_ui_selector.xml \
 	userspace-selector.xml \
 	verified-us-selector.xml \
-	quiot-selector.xml 
+	quiot-selector.xml \
+	complex-att-selector.xml
 

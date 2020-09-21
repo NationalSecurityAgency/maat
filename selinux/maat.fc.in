@@ -85,14 +85,18 @@
 @aspdir@/system_appraise_asp          -- gen_context(system_u:object_r:system_appraise_asp_exe_t)
 @aspdir@/sign_send_asp         	      -- gen_context(system_u:object_r:sign_send_asp_exe_t)
 @aspdir@/got_measure          	      -- gen_context(system_u:object_r:got_measure_asp_exe_t)
-@aspdir@/requestor_asp          	-- gen_context(system_u:object_r:requestor_asp_exe_t)
+@aspdir@/send_execute_asp          	-- gen_context(system_u:object_r:send_execute_asp_exe_t)
+@aspdir@/send_request_asp          	-- gen_context(system_u:object_r:send_request_asp_exe_t)
 #
 # APB implementations
 #
 @apbdir@				-d gen_context(system_u:object_r:apb_dir_t,s0)
 @apbdir@/appraiser_apb		-- gen_context(system_u:object_r:appraiser_apb_exe_t)
+@apbdir@/complex_att_apb		-- gen_context(system_u:object_r:complex_att_apb_exe_t)
 @apbdir@/userspace_apb		-- gen_context(system_u:object_r:userspace_apb_exe_t)
 @apbdir@/process_measurement_apb		-- gen_context(system_u:object_r:process_measurement_apb_exe_t)
+@apbdir@/forwarding_apb                  -- gen_context(system_u:object_r:forwarding_apb_exe_t)
+@apbdir@/no_op_apb                  -- gen_context(system_u:object_r:no_op_apb_exe_t)
 @apbdir@/hashdir_apb                  -- gen_context(system_u:object_r:hashdir_apb_exe_t)
 @apbdir@/kim_apb                  -- gen_context(system_u:object_r:kim_apb_exe_t)
 @apbdir@/userspace_appraiser_apb	-- gen_context(system_u:object_r:userspace_appraiser_apb_exe_t)

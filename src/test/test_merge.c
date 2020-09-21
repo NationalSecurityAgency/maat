@@ -35,7 +35,7 @@
 
 #include <maat-basetypes.h>
 
-#define TIMEOUT 1000
+#define TIMEOUT 60
 #define NUM_ARGS 6
 #define ASP_NAME "merge_asp"
 //Assumes 32 bit signed
@@ -168,8 +168,8 @@ START_TEST(test_merge)
     }
 
     args[0] = l_fd;
-    args[1] = r_fd;
-    args[2] = o_fd;
+    args[1] = o_fd;
+    args[2] = r_fd;
     args[3] = pre;
     args[4] = sep;
     args[5] = suf;

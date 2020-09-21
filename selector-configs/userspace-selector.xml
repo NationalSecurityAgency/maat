@@ -25,7 +25,7 @@
     <!--Inital Phase and Appraiser Role.
 	Check Identity of Client, and offer copland phrase(s)-->
     <rule role="appraiser" phase="initial">
-      <match_condition attr="client"  operator="in" value="known-clients" />
+        <match_condition attr="client"  operator="in" value="known-clients" />
         <action selector_action="accept">
 	      <condition name="userspace"            apb_phrase="((USM full) -> SIG)"/>
 	      <condition name="userspace-processes"  apb_phrase="((USM processes) -> SIG)"/>

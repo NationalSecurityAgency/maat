@@ -123,6 +123,7 @@ interface(`define_asp', `
 #     + asp_t: domain of the ASP
 interface(`allow_apb_asp',`
 	allow $1 $2:file {execute read open getattr};
+	allow $3 $1:fifo_file { read write };
 	allow $1 $3:process {transition rlimitinh siginh noatsecure};
 	type_transition $1 $2:process $3;
 	allow $3 $1:process {sigchld};

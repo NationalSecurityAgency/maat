@@ -120,7 +120,6 @@ asp_PROGRAMS    += system_appraise_asp
 system_appraise_asp_SOURCES = system_appraise_asp.c
 endif
 
-
 if BUILD_rpminv_ASP
 asp_PROGRAMS    += rpm_inv_asp
 rpm_inv_asp_SOURCES = rpm_inv_asp.c
@@ -202,10 +201,10 @@ asp_PROGRAMS += dummy_appraisal
 dummy_appraisal_SOURCES = dummy_appraisal.c
 endif
 
-if BUILD_requestor_ASP
-asp_PROGRAMS += requestor_asp
-requestor_asp_SOURCES = requestor_asp.c
-requestor_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS)
+if BUILD_send_execute_ASP
+asp_PROGRAMS += send_execute_asp
+send_execute_asp_SOURCES = send_execute_asp.c
+send_execute_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS)
 endif
 
 if BUILD_tlm_ret_ASP
@@ -297,6 +296,12 @@ endif
 if BUILD_split_ASP
 asp_PROGRAMS += split_asp
 merge_asp_SOURCES = split_asp.c
+endif
+
+if BUILD_send_request_ASP
+asp_PROGRAMS += send_request_asp
+send_request_asp_SOURCES = send_request_asp.c
+send_request_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS)
 endif
 
 AM_CPPFLAGS = -O2 -DDEFAULT_ASP_DIR="\"$(ASP_INFO_DIR)\"" \

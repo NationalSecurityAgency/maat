@@ -51,7 +51,7 @@ def maat_read_sz_buf(fd, max_sz):
         return (size, buf)
 
 def create_integrity_request(target_type, target_id, target_portnum, 
-                             resource=None, tunnel=None, fingerprint=None, info=None):
+                             resource=None, nonce=None, tunnel=None, fingerprint=None, info=None):
         #if target_portnum != -1 and tunnel != None:
                 #raise Exception("target_portnum != -1 and tunnel != NULL!")
 
@@ -68,6 +68,10 @@ def create_integrity_request(target_type, target_id, target_portnum,
 
         if resource:
                 ET.SubElement(root, "resource").text=resource
+       
+        if nonce:
+                ET.SubElement(root, "nonce").text=nonce
+
 
         if tunnel:
                 ET.SubElement(root, "tunnel").text=tunnel

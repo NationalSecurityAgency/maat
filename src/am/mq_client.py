@@ -54,7 +54,8 @@ def mq_callback(mq, method, prop, msg):
                                                 request['appraiser_port']))
 
         reqcon = maatclient.create_integrity_request(1, request['target_address'],
-                        request['target_port'], resource=request['resource'], 
+                        request['target_port'], resource=request['resource'],
+                        nonce=request['nonce'],
                         fingerprint=request['target_fingerprint'])
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -348,8 +348,7 @@ To take the measurement, you must invoke the test client on VM_0 using
 the following:
 
     /opt/maat/bin/test_client -l 192.168.0.10 -t 192.168.0.10 -a 2343 \
-      -p 2343 -k /opt/maat/etc/maat/credentials/client.key \
-      -r complex-attestation
+      -p 2343 -r complex-attestation
 
 The expected output at the test client is similar to the following (with the 
 measurement, signature, and certificate info omitted for brevity): 

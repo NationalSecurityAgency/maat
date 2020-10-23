@@ -201,6 +201,7 @@ int main(int argc, char **argv)
                                        (xmlChar*)targ_portnum,
                                        (xmlChar*)resource,
                                        NULL,
+                                       NULL,
                                        (xmlChar*)targ_fingerprint,
                                        NULL,
                                        (xmlChar **)&tmp,

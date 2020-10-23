@@ -72,11 +72,16 @@ target_id_type_t parse_target_id_type(unsigned char *typname);
  *                the interpretation of this string is governed by the
  *                @target_typ. See the documentation for
  *                @target_id_type_t for details.
+ *   @target_portnum:  a value representing the port number for the target
+ *   		       of the attestation.
  *   @resource:   a string describing the resource that is being guarded
  *                by this attestation. The receiving AM will use this
  *                as an input to the selection process to by comparing
  *                it against match_condition nodes with
  *                attr="resource".
+ *   @nonce:      a string indicating freshness of the attestation.
+ *                The nonce is preserved through use cases where
+ *                multiple negotiations occur.
  *   @tunnel:     optional. if given will add a <tunnel> node to the
  *                output contract with the given string. The string
  *                should indicate a UNIX-domain socket that can be
@@ -95,6 +100,7 @@ int create_integrity_request(target_id_type_t target_typ,
                              xmlChar *target_id,
                              xmlChar *target_portnum,
                              xmlChar *resource,
+                             xmlChar *nonce,
                              xmlChar *tunnel,
                              xmlChar *cert_fingerprint,
                              xmlChar *info,

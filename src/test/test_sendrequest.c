@@ -31,10 +31,11 @@
 #include <apb/apb.h>
 
 #define LISTEN_BACK 1
-#define ASP_ARG_NO 5
+#define ASP_ARG_NO 6
 #define ATT_PORT "6666"
 #define ATT_ADDR "127.0.0.1"
 #define RESOURCE "test"
+#define NONCE "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 #define READ_TO 100
 
 /* Global variables  */
@@ -197,6 +198,7 @@ START_TEST(test_sendrequest)
     asp_argv[2] = ATT_ADDR;
     asp_argv[3] = ATT_PORT;
     asp_argv[4] = RESOURCE;
+    asp_argv[5] = NONCE;
 
     fail_if(asp_argv[0] == NULL || asp_argv[2] == NULL || rc < 0,
             "Unable to convert address or port ASP arguments");

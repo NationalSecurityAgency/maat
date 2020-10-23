@@ -62,8 +62,8 @@ int asp_measure(int argc, char *argv[])
     struct hostent *app_host = NULL, *att_host = NULL;
 
     /* Parse args */
-    if((argc != 8) || (out_fd = atoi(argv[2])) == 0) {
-        dlog(0, "Usage: "ASP_NAME" <infd [UNUSED]> <outfd> <app_addr> <app_port> <att_addr> <att_port> <resource>\n");
+    if((argc != 9) || (out_fd = atoi(argv[2])) == 0) {
+        dlog(0, "Usage: "ASP_NAME" <infd [UNUSED]> <outfd> <app_addr> <app_port> <att_addr> <att_port> <resource> <nonce>\n");
         return -EINVAL;
     }
 
@@ -126,7 +126,7 @@ int asp_measure(int argc, char *argv[])
 
     /* Write request contract */
     ret_val = create_integrity_request(TARGET_TYPE_HOST_PORT, (xmlChar *)att_host_addr, (xmlChar *)argv[6],
-                                       (xmlChar *)argv[7], NULL, NULL, NULL, (xmlChar **)&msg, &msg_len);
+                                       (xmlChar *)argv[7], (xmlChar *)argv[8], NULL, NULL, NULL, (xmlChar **)&msg, &msg_len);
 
     if(ret_val < 0 || msg == NULL) {
         dlog(0, "Create_integrity_request failed: %d\n", ret_val);

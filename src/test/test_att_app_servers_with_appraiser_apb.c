@@ -200,7 +200,7 @@ START_TEST(test_appraiser_apb)
     int msglen;
     //need to fill in the target_id
     create_integrity_request(TARGET_TYPE_HOST_PORT, host, att_port, resource,
-                             NULL, NULL, NULL, (xmlChar **)&request_contract, &msglen);
+                             NULL, NULL, NULL, NULL, (xmlChar **)&request_contract, &msglen);
 
     fail_if(request_contract == NULL, "Failed to create request contract");
 

@@ -90,7 +90,7 @@ START_TEST(test_exampleam)
 
     fail_if(create_integrity_request(TARGET_TYPE_HOST_PORT,
                                      (xmlChar*)"127.0.0.1", (xmlChar*)"2342",
-                                     (xmlChar*)"test", NULL, NULL, NULL,
+                                     (xmlChar*)"test", NULL, NULL, NULL, NULL,
                                      &request_contract, &request_sz) != 0,
             "Failed to create integrity request contract");
 

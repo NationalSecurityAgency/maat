@@ -83,6 +83,8 @@ Example:
             <!-- request a measurement of 10.0.0.2 on port 2432 -->
             <resource>ipsec</resource>
             <!-- allow access to the ipsec resource -->
+            <nonce>NULL</nonce>
+            <!-- carry the nonce value in the contract to be used for subsequent negotiations -->
             <tunnel>/tmp/tunnel.sock</tunnel>
             <!-- tunnel communications through this socket rather than connecting directly -->
         </contract>

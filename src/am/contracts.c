@@ -157,7 +157,10 @@ static int initcon_new_xml(struct scenario *scen, xmlDoc *doc,
         return -1;
 
     xmlNewProp(root, (xmlChar*)"type", (xmlChar*)"initial");
-    *nonce = gen_nonce_str();
+    if(!*nonce) {
+        *nonce = gen_nonce_str();
+        dlog(4,"generating a new nonce\n");
+    }
     if (!*nonce)
         return -1;
 
@@ -264,6 +267,7 @@ static int get_targ_and_resource_info(struct scenario *scenario,
     char *target_type;
     char *target_fingerprint;
     char *resource;
+    char *nonce;
     char *info;
     char *tunnel;
 
@@ -333,6 +337,11 @@ static int get_targ_and_resource_info(struct scenario *scenario,
     }
     scenario->resource = resource;
     dlog(4, "DEBUG: resource = %s\n", scenario->resource);
+
+    nonce = xpath_get_content(doc, "/contract/nonce");
+
+    scenario->nonce = nonce;
+    dlog(4, "DEBUG: nonce = %s\n", scenario->nonce);
 
     info = xpath_get_content(doc, "/contract/info");
     if(info != NULL) {

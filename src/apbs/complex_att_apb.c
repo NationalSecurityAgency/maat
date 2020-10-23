@@ -417,7 +417,7 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
     char *workdir                = NULL;
     char *partner_cert           = NULL;
     char *kim_fd_str             = NULL;
-    char *req_args[5];
+    char *req_args[6];
     char *serialize_args[1];
     char *encrypt_args[1];
     char *create_con_args[8];
@@ -501,9 +501,11 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
     req_args[2] = (char *)rhost;
     req_args[3] = (char *)rport;
     req_args[4] = "runtime-meas";
+    req_args[5] = (char *)scen->nonce;
+
 
     /* infd is not used, just given to make the ASP happy */
-    ret_val = fork_and_buffer_async_asp(send_request_asp, 5, req_args, STDIN_FILENO, &kim_fd);
+    ret_val = fork_and_buffer_async_asp(send_request_asp, 6, req_args, STDIN_FILENO, &kim_fd);
     if(ret_val == -2) {
         dlog(0, "Failed to execute fork and buffer for %s ASP\n", send_request_asp->name);
     } else if(ret_val == -1) {
@@ -682,7 +684,8 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
         free_meas_spec(mspec);
         return -EIO;
     }
-
+    dlog(4, "Here in the complex att apb\n");
+    dlog(4, "the nonce is: %s \n", scen->nonce);
     if(scen->certfile) {
         certfile = strdup(scen->certfile);
     }

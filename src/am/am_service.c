@@ -153,6 +153,7 @@ static void handle_method_call(GDBusConnection *connection,
                                        NULL,
                                        NULL,
                                        NULL,
+                                       NULL,
                                        (xmlChar **)&tmp,
                                        &msglen);
         if(ret != 0) {

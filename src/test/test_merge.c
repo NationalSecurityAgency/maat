@@ -261,7 +261,7 @@ int main (void)
     int nfail;
 
     pid_t pid = getpid();
-    dlog(0, "Tester PID: %u\n", pid);
+    dlog(6, "Tester PID: %u\n", pid);
 
     s = suite_create("merge");
     mergeservice = tcase_create("merge");

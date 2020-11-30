@@ -197,7 +197,7 @@ int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
         signature = sign_buffer_tpm(buf, &size, bnonce, nsize, tpm_password);
         free(bnonce);
 #else
-        dlog(1, "WARNING: TPM support disabled at compile time, "
+        dlog(4, "WARNING: TPM support disabled at compile time, "
              "using OPENSSL\n");
         signature = sign_buffer_openssl(buf, &size, privkey_file,
                                         privkey_pass);
@@ -342,7 +342,7 @@ int verify_xml(xmlDoc *doc, xmlNode *root, const char *prefix,
             goto non_out;
         }
 
-        dlog(4, "Retained Nonce: %s Nonce in Contract: %s\n", nonce, contract_nonce);
+        dlog(7, "Retained Nonce: %s Nonce in Contract: %s\n", nonce, contract_nonce);
 
         if(memcmp((char *)nonce, contract_nonce, nonce_len)) {
             dlog(0, "Nonce in the contract did not match\n");
@@ -370,7 +370,7 @@ int verify_xml(xmlDoc *doc, xmlNode *root, const char *prefix,
                                 cacertfile, bin_nonce, nsize);
         free(bin_nonce);
 #else
-        dlog(1,"WARNING: TPM support disabled at compile time"
+        dlog(4,"WARNING: TPM support disabled at compile time"
              "using OPENSSL\n");
         ret = verify_buffer_openssl(buf, (size_t) size, signature, sigsize,
                                     certfile, cacertfile);

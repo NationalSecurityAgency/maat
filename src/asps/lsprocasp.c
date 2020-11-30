@@ -213,19 +213,19 @@ static int read_process_metadata(long p, process_metadata_measurement **out,
 
     rc = snprintf(path, PATH_MAX, "/proc/%ld/stat", p);
     if(rc < 0 || rc >= PATH_MAX) {
-        dlog(0, "snprintf of process stat file failed with code: %d\n", rc);
+        dlog(3, "snprintf of process stat file failed with code: %d\n", rc);
         goto error;
     }
     if((f = fopen(path, "r")) == NULL) {
-        dlog(0, "Failed to open file %s\n", path);
+        dlog(3, "Failed to open file %s\n", path);
         goto error;
     }
     if(fgets(buf, sizeof(buf), f) == NULL) {
-        dlog(0, "Failed to read file %s\n", path);
+        dlog(3, "Failed to read file %s\n", path);
         goto error;
     }
     if(parse_stats(buf, proc_data) != 0) {
-        dlog(0, "Failed to parse process stat file\n");
+        dlog(3, "Failed to parse process stat file\n");
         goto error;
     }
     fclose(f);
@@ -233,24 +233,24 @@ static int read_process_metadata(long p, process_metadata_measurement **out,
 
     rc = snprintf(path, PATH_MAX, "/proc/%ld/status", p);
     if(rc < 0 || rc >= PATH_MAX) {
-        dlog(0, "snprintf of process status file failed with code: %d\n", rc);
+        dlog(3, "snprintf of process status file failed with code: %d\n", rc);
         goto error;
     }
 
     if((f = fopen(path, "r")) == NULL) {
-        dlog(0, "Failed to open file %s\n", path);
+        dlog(3, "Failed to open file %s\n", path);
         goto error;
     }
     while(!feof(f)) {
         if(fgets(buf, sizeof(buf), f) == NULL) {
             if(!feof(f)) {
-                dlog(0, "Failed to read line from file %s\n", path);
+                dlog(3, "Failed to read line from file %s\n", path);
                 goto error;
             }
             continue;
         }
         if(parse_process_status_line(buf, proc_data) != 0) {
-            dlog(0, "Failed to parse process status file\n");
+            dlog(3, "Failed to parse process status file\n");
             goto error;
         }
     }
@@ -299,7 +299,7 @@ static int read_process_metadata(long p, process_metadata_measurement **out,
         goto error;
     }
     if((f = fopen(path, "r")) == NULL) {
-        dlog(0, "Failed to open file %s\n", path);
+        dlog(3, "Failed to open file %s\n", path);
         goto error;
     }
 
@@ -342,7 +342,7 @@ static int read_process_metadata(long p, process_metadata_measurement **out,
 
     if((f = fopen(path, "r")) != NULL) {
         if(fgets(buf, sizeof(buf), f) == NULL) {
-            dlog(0, "Warning: failed to read security context file.\n");
+            dlog(4, "Warning: failed to read security context file.\n");
         } else {
             len = strlen(buf)+1;
 

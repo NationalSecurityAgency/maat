@@ -184,7 +184,7 @@ int asp_measure(int argc, char *argv[])
         ret_val = -1;
         goto read_failed;
     } else if (ret_val == -EAGAIN) {
-        dlog(0, "Warning: timeout occured before read could complete\n");
+        dlog(4, "Warning: timeout occured before read could complete\n");
         //XXX: TODO: develop a better solution for error handling, esp. when used with Copland
         //     (no APB intervention between ASP execution)
     } else if (eof_enc != 0) {
@@ -215,9 +215,9 @@ int asp_measure(int argc, char *argv[])
         ret_val = -1;
         goto write_failed;
     } else if (ret_val == EAGAIN) {
-        dlog(0, "Warning: timeout occured before write could complete\n");
+        dlog(4, "Warning: timeout occured before write could complete\n");
     }
-    dlog(0, "buffer size: %zu, bytes_written: %zu\n", encsize, bytes_written);
+    dlog(5, "buffer size: %zu, bytes_written: %zu\n", encsize, bytes_written);
 
     ret_val = maat_write_sz_buf(fd_out, keybuf, keysize, &bytes_written, TIMEOUT);
     if(ret_val < 0) {
@@ -225,9 +225,9 @@ int asp_measure(int argc, char *argv[])
         ret_val = -1;
         goto write_key_failed;
     } else if (ret_val == EAGAIN) {
-        dlog(0, "Warning: timeout occured before write could complete\n");
+        dlog(4, "Warning: timeout occured before write could complete\n");
     }
-    dlog(0, "key size: %zu, bytes_written: %zu\n", keysize, bytes_written);
+    dlog(6, "key size: %zu, bytes_written: %zu\n", keysize, bytes_written);
 
     ret_val = ASP_APB_SUCCESS;
     asp_loginfo("encrypt ASP returning with success\n");

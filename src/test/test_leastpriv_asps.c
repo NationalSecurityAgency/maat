@@ -177,7 +177,7 @@ void setup(void)
     fd_out[0] = maat_io_channel_new(fd_out[0]); //read end
     fd_out[1] = maat_io_channel_new(fd_out[1]); // write end
 
-    dlog(0, "Setup finished\n");
+    dlog(6, "Setup finished\n");
 }
 
 void teardown(void)

@@ -445,7 +445,7 @@ static inline int measurement_data_get_feature(measurement_data *d, char *featur
     if(d->type->get_feature != NULL) {
         return d->type->get_feature(d, feature, out);
     } else {
-        dlog(1, "Warning: measurement data type %s does not implement ->get_feature()\n",
+        dlog(4, "Warning: measurement data type %s does not implement ->get_feature()\n",
              d->type->name == NULL ? "<unknown>" : d->type->name);
     }
     return -1;

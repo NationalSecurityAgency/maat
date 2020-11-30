@@ -186,7 +186,7 @@ int asp_measure(int argc, char *argv[])
                 continue;
             }
             inode_address *inode_addr = container_of(addr, inode_address, a);
-            dlog(0, "%s\n", filename);
+            dlog(6, "%s\n", filename);
             if(sscanf(filename, "%[^:]:[%lu]", inode_type, &inode_addr->inum) != 2) {
                 asp_logerror("fd link contents didn't match expected format\n");
                 free_address(addr);

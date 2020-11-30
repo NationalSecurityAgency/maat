@@ -107,12 +107,12 @@ START_TEST(test_all_apbs)
         if (!strcasecmp(apb->name, "proc_open_files")) {
             //XXX: Ugly, but to test both mspecs.. RPM one here, then other below
             uuid_parse("3db1c1b2-4d44-45ea-83f5-8de858b1a5a5", spec_uuid);
-            dlog(1, "Running APB %s\n", apb->name);
+            dlog(6, "Running APB %s\n", apb->name);
             ret = run_apb(apb,
                           /* for test purposes only we'll suppress the desired execution context. */
                           EXECCON_IGNORE_DESIRED, EXECCON_USE_DEFAULT_CATEGORIES,
                           &scen, spec_uuid, devnull, -1, NULL);
-            dlog(0, "APB: %s, ret = %d\n", apb->name, ret);
+            dlog(6, "APB: %s, ret = %d\n", apb->name, ret);
 
             uuid_parse("3db1c1b2-4d44-45ea-83f5-8de858b1a4d0", spec_uuid);
         } else if (!strcasecmp(apb->name, "appraiser")) {
@@ -128,7 +128,7 @@ START_TEST(test_all_apbs)
                       /* for test purposes only we'll suppress the desired execution context. */
                       EXECCON_IGNORE_DESIRED, EXECCON_USE_DEFAULT_CATEGORIES,
                       &scen, spec_uuid, devnull, -1, NULL);
-        dlog(0, "APB: %s, ret = %d\n", apb->name, ret);
+        dlog(6, "APB: %s, ret = %d\n", apb->name, ret);
         fail_if(ret != 0, "APB %s returned non-zero", apb->name);
     }
     close(devnull);

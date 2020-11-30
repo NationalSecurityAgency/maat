@@ -66,7 +66,7 @@ int asp_exit(int status)
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(0, "IN serialize_graph ASP MEASURE\n");
+    dlog(6, "IN serialize_graph ASP MEASURE\n");
 
     measurement_graph *graph = NULL;
     unsigned char *evidence  = NULL;
@@ -103,9 +103,9 @@ int asp_measure(int argc, char *argv[])
         ret_val = -1;
         goto write_failed;
     } else if (ret_val == EAGAIN) {
-        dlog(0, "Warning: timeout occured before write could complete\n");
+        dlog(4, "Warning: timeout occured before write could complete\n");
     }
-    dlog(0, "evidence size: %zu, bytes_written: %zu\n", evidence_size, bytes_written);
+    dlog(6, "evidence size: %zu, bytes_written: %zu\n", evidence_size, bytes_written);
 
     ret_val = ASP_APB_SUCCESS;
     asp_loginfo("serialize_graph ASP returning with success\n");

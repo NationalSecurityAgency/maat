@@ -190,7 +190,7 @@ int asp_measure(int argc, char *argv[])
         goto eof_enc;
     }
 
-    dlog(4, "buffer size: %zu, bytes read: %zu\n", bufsize, bytes_read);
+    dlog(5, "buffer size: %zu, bytes read: %zu\n", bufsize, bytes_read);
 
     /* Operate on the left and right side according to defined policy */
     ret_val = handle_consumer(arg_set.fd_left, arg_set.left_flag, buf, bufsize);

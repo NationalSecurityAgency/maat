@@ -287,7 +287,7 @@ int main(void)
     srunner_run_all(sr, CK_NORMAL);
     number_failed = srunner_ntests_failed (sr);
     srunner_free(sr);
-    dlog(0, "Finished testing!\n");
+    dlog(6, "Finished testing!\n");
 
     /* Clean up mongo table */
     if(old_coll == NULL) {

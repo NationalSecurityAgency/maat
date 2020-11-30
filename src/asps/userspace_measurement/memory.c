@@ -315,7 +315,7 @@ GSList *get_elf_mapping_groups(const char *pid)
         char *file_path = line + chars_consumed;
 
         if (conversions != 4) {
-            dlog(0, "Failed to parse mapping: '%s'\n", line);
+            dlog(4, "Failed to parse mapping: '%s'\n", line);
             continue;
         }
 

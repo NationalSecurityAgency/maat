@@ -355,7 +355,7 @@ int asp_exit(int status)
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(0, "IN create_contract ASP MEASURE\n");
+    dlog(6, "IN create_contract ASP MEASURE\n");
 
     // Cmd line args
     int fd_in            = -1;
@@ -420,7 +420,7 @@ int asp_measure(int argc, char *argv[])
         ret_val = -1;
         goto read_failed;
     } else if (ret_val == -EAGAIN) {
-        dlog(0, "Warning: timeout occured before read could complete\n");
+        dlog(4, "Warning: timeout occured before read could complete\n");
     } else if (eof_enc != 0) {
         dlog(0, "Error: EOF encountered before complete buffer read\n");
         ret_val = -1;
@@ -434,7 +434,7 @@ int asp_measure(int argc, char *argv[])
             ret_val = -1;
             goto read_key_failed;
         } else if (ret_val == -EAGAIN) {
-            dlog(0, "Warning: timeout occured before read could complete\n");
+            dlog(4, "Warning: timeout occured before read could complete\n");
         } else if (eof_enc != 0) {
             dlog(0, "Error: EOF encountered before complete buffer read\n");
             ret_val = -1;
@@ -466,10 +466,10 @@ int asp_measure(int argc, char *argv[])
         ret_val = -1;
         goto write_failed;
     } else if (ret_val == EAGAIN) {
-        dlog(0, "Warning: timeout occured before write could complete\n");
+        dlog(4, "Warning: timeout occured before write could complete\n");
     }
 
-    dlog(3, "buffer size: %zu, bytes_written: %zu\n", outsize, bytes_written);
+    dlog(6, "buffer size: %zu, bytes_written: %zu\n", outsize, bytes_written);
 
     ret_val = ASP_APB_SUCCESS;
     asp_loginfo("create_contract ASP returning with success\n");

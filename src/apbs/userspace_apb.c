@@ -94,7 +94,7 @@ static int create_basic_variable(char *val, address_space *space,
         goto err;
     }
 
-    dlog(3, "Created variable (%s *)%s\n", ttype->name, human_readable);
+    dlog(6, "Created variable (%s *)%s\n", ttype->name, human_readable);
     *out = v;
     free(human_readable);
     return 0;
@@ -106,7 +106,7 @@ err:
 static GQueue *enumerate_variables(void *ctxt UNUSED, target_type *ttype,
                                    address_space *space, char *op, char *val)
 {
-    dlog(3, "Enumerating variables matching %s\n", val);
+    dlog(6, "Enumerating variables matching %s\n", val);
     GQueue *q = g_queue_new();
     if(q!= NULL) {
 
@@ -128,7 +128,7 @@ static GQueue *enumerate_variables(void *ctxt UNUSED, target_type *ttype,
                 goto err;
             }
 
-            dlog(3, "Queueing variable (%s *)\n", ttype->name);
+            dlog(6, "Queueing variable (%s *)\n", ttype->name);
             g_queue_push_tail(q, v);
 
         } else if((ttype == &file_target_type) &&
@@ -268,7 +268,7 @@ static struct asp *select_asp(measurement_graph *g, measurement_type *mtype,
                               measurement_variable *var)
 {
 
-    dlog(4, "mtype=%s, var->type=%s, var->address->space=%s\n",
+    dlog(6, "mtype=%s, var->type=%s, var->address->space=%s\n",
          mtype->name, var->type->name, var->address->space->name);
 
     if(mtype == &process_metadata_measurement_type) {
@@ -298,7 +298,7 @@ static struct asp *select_asp(measurement_graph *g, measurement_type *mtype,
             return find_asp(apb_asps, "memorymapping");
 #ifdef LIMIT_PROCS
         } else {
-            dlog(0, "Skipping: mcount = %d\n", mcount);
+            dlog(4, "Skipping: mcount = %d\n", mcount);
         }
 #endif
         mcount ++;
@@ -307,7 +307,7 @@ static struct asp *select_asp(measurement_graph *g, measurement_type *mtype,
         return find_asp(apb_asps, "system_asp");
     } else if((mtype == &pkginv_measurement_type) ||
               (mtype == &pkg_details_measurement_type)) {
-        dlog(4, "About to try to launch pkg_inv apb.\n");
+        dlog(6, "About to try to launch pkg_inv apb.\n");
         return find_inventory_asp(g, mtype);
     } else if (mtype == &mtab_measurement_type) {
         return find_asp(apb_asps, "mtab");
@@ -336,7 +336,7 @@ static int measure_variable(void *ctxt, measurement_variable *var,
     int rc;
 
     char *addr_str = address_human_readable(var->address);
-    dlog(3, "Measuring variable (%s *) %s with mtype %s\n",
+    dlog(6, "Measuring variable (%s *) %s with mtype %s\n",
          var->type->name, addr_str ? addr_str : "(null)",
          mtype->name);
 
@@ -344,7 +344,7 @@ static int measure_variable(void *ctxt, measurement_variable *var,
 
     rc = measurement_graph_add_node(g, var, NULL, &n);
     if(rc == 0 || rc == 1) {
-        dlog(4, "\tAdded node "ID_FMT"\n", n);
+        dlog(6, "\tAdded node "ID_FMT"\n", n);
     } else {
         dlog(0, "Error adding node\n");
     }
@@ -466,7 +466,7 @@ static int execute_sign_send_pipeline(measurement_graph *graph,
     if(!scen->partner_cert ||
             ((partner_cert = strdup(scen->partner_cert)) == NULL) ) {
 
-        dlog(3, "Warning: no partner certificate for sign_send_asp\n");
+        dlog(4, "Warning: no partner certificate for sign_send_asp\n");
 
         char *sign_send_asp_argv[8] = {graph_path, peerchan_str,
                                        certfile, keyfile, keypass,
@@ -506,7 +506,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
                 char *target_type UNUSED, char *resource UNUSED,
                 struct key_value **arg_list UNUSED, int argc UNUSED)
 {
-    dlog(3, "Hello from the USERSPACE_APB\n");
+    dlog(6, "Hello from the USERSPACE_APB\n");
     int ret_val = 0;
     time_t start, end;
 
@@ -565,7 +565,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
         sign_tpm_str = "";
     }
 
-    dlog(3, "Evaluating measurement spec\n");
+    dlog(6, "Evaluating measurement spec\n");
     evaluate_measurement_spec(mspec, &callbacks, graph);
 
     free_meas_spec(mspec);

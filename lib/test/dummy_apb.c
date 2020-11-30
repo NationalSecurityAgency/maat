@@ -40,12 +40,12 @@ int appraise(struct scenario *scen UNUSED,
 {
     struct measurement_graph *graph = NULL;
     char *buf;
-    dlog(2, "In appraise function.\n");
+    dlog(6, "In appraise function.\n");
 
     if((buf = malloc(msmtsize + 1)) != NULL) {
         memcpy(buf, msmt, msmtsize);
         buf[msmtsize] = '\0';
-        dlog(2, "Measurement is: \"%s\"\n", buf);
+        dlog(6, "Measurement is: \"%s\"\n", buf);
         free(buf);
     }
 
@@ -64,7 +64,7 @@ int appraiser(struct scenario *scen, int peerchan)
     int ret;
     dlog(2, "Appraiser APB checking in!\n");
     receive_measurement_contract(peerchan, scen, -1);
-    dlog(3, "Got measurement contract\n");
+    dlog(6, "Got measurement contract\n");
     ret = handle_measurement_contract(scen, appraise, &failed);
     if (ret != 0) {
         dlog(0, "handle_measurement_contract failed: %d\n", ret);
@@ -74,13 +74,13 @@ int appraiser(struct scenario *scen, int peerchan)
         dlog(0, "Appraisal failed\n");
         return failed;
     }
-    dlog(0, "Appraisal succeeded\n");
+    dlog(5, "Appraisal succeeded\n");
     return 0;
 }
 
 int attester(struct scenario *scen, int peerchan)
 {
-    dlog(2, "Attester APB checking in!\n");
+    dlog(6, "Attester APB checking in!\n");
     GList *loaded_asps = load_all_asps_info(ASP_DIR);
     struct asp *asp;
     struct measurement_graph *graph = NULL;
@@ -88,7 +88,7 @@ int attester(struct scenario *scen, int peerchan)
     size_t evidence_size;
     int ret;
 
-    dlog(3, "Attester contract: \"%s\"", scen->contract);
+    dlog(6, "Attester contract: \"%s\"", scen->contract);
     graph = create_measurement_graph(NULL);
 
     if(graph == NULL) {

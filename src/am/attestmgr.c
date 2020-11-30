@@ -112,7 +112,7 @@ static inline int connect_to_attester(struct scenario *scen)
     if(scen->attester_tunnel_path != NULL) { //unix sock connection
         dlog(1,"connecting to: %s\n", scen->attester_tunnel_path);
         if(strcmp(":receive:", scen->attester_tunnel_path) == 0) {
-            dlog(0, "Tunnel path is :receive: attempt to read fd from socket\n");
+            dlog(6, "Tunnel path is :receive: attempt to read fd from socket\n");
             struct msghdr msg = {0};
             char m_buffer[256];
             char c_buffer[256];
@@ -610,7 +610,7 @@ out:
 
 out_mk_client_channel:
     if(!config->keep_workdir) {
-        dlog(0, "Clearing out workdir %s\n", workdir);
+        dlog(6, "Clearing out workdir %s\n", workdir);
         rmrf(workdir);
     }
 out_mk_workdir:
@@ -716,7 +716,7 @@ int setup_interfaces(am_config *cfg, am_iface **listeners, size_t *nr_listeners)
             dlog(4, "Listening on INET interface %s:%hu\n", iface_cfg->address, iface_cfg->port);
             ifaces[*nr_listeners].fd = setup_listen_server(iface_cfg->address, iface_cfg->port);
             if(ifaces[*nr_listeners].fd < 0) {
-                dlog(1, "Warning: failed to open inet listen interface %s:%hd\n",
+                dlog(2, "Warning: failed to open inet listen interface %s:%hd\n",
                      iface_cfg->address, iface_cfg->port);
                 continue;
             }
@@ -724,7 +724,7 @@ int setup_interfaces(am_config *cfg, am_iface **listeners, size_t *nr_listeners)
             dlog(4, "Listening on UNIX interface %s\n", iface_cfg->address);
             ifaces[*nr_listeners].fd = setup_local_listen_server(iface_cfg->address);
             if(ifaces[*nr_listeners].fd < 0) {
-                dlog(1, "Warning failed to open UNIX listen interface %s\n",
+                dlog(2, "Warning failed to open UNIX listen interface %s\n",
                      iface_cfg->address);
                 continue;
             }
@@ -736,13 +736,13 @@ int setup_interfaces(am_config *cfg, am_iface **listeners, size_t *nr_listeners)
             */
             if(cfg->uid_set != 0) {
                 if(chown(iface_cfg->address, cfg->uid, (gid_t)-1) != 0) {
-                    dlog(1, "Warning: failed to chown UNIX socket at path %s. File may be leaked at exit.\n",
+                    dlog(2, "Warning: failed to chown UNIX socket at path %s. File may be leaked at exit.\n",
                          iface_cfg->address);
                 }
             }
             if(cfg->gid_set != 0) {
                 if(chown(iface_cfg->address, (gid_t)-1, cfg->gid) != 0) {
-                    dlog(1, "Warning: failed to chown UNIX socket at path %s. File may be leaked at exit.\n",
+                    dlog(2, "Warning: failed to chown UNIX socket at path %s. File may be leaked at exit.\n",
                          iface_cfg->address);
                 }
             }
@@ -806,8 +806,8 @@ int setup_dispatch_loop(int argc, char **argv)
        ports
     */
     if( (sigif.fd = setup_signalfd()) < 0) {
-        dlog(0, "Non-fatal Error: failed to setup signal handling: %s\n", strerror(sigif.fd));
-        dlog(0, "Artifacts could be left on exit\n");
+        dlog(2, "Non-fatal Error: failed to setup signal handling: %s\n", strerror(sigif.fd));
+        dlog(2, "Artifacts could be left on exit\n");
     }
 
     if(setup_interfaces(&cfg, &listeners, &nr_listeners) <= 0) {
@@ -882,7 +882,7 @@ int setup_dispatch_loop(int argc, char **argv)
         dlog(2, "Accepting a connection\n");
         clientfd = accept(conn_if->fd, NULL, NULL);
         if(clientfd < 0) {
-            dlog(0, "Error accept() failed: %s\n", strerror(errno));
+            dlog(2, "Error accept() failed: %s\n", strerror(errno));
             continue;
         }
 

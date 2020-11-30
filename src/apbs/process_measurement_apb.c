@@ -55,7 +55,7 @@ static struct asp *listdir = NULL;
 static GQueue *enumerate_variables(void *ctxt, target_type *ttype, address_space *space,
                                    char *op, char *val)
 {
-    dlog(3, "Enumerating variables matching %s\n", val);
+    dlog(6, "Enumerating variables matching %s\n", val);
     GQueue *q = g_queue_new();
     if(q != NULL) {
         if(ttype == &process_target_type && space == &pid_address_space
@@ -120,7 +120,7 @@ static GQueue *enumerate_variables(void *ctxt, target_type *ttype, address_space
                 free_address(&fa->address);
                 goto err;
             }
-            dlog(3, "Queueing variable (%s *)%s\n", ttype->name, fa->fullpath_file_name);
+            dlog(6, "Queueing variable (%s *)%s\n", ttype->name, fa->fullpath_file_name);
             g_queue_push_tail(q, v);
         }
     }
@@ -143,14 +143,14 @@ static int measure_variable(void *ctxt, measurement_variable *var, measurement_t
     int rc = -1;
 
     char *addr_str = address_human_readable(var->address);
-    dlog(3, "Measuring variable (%s *) %s with mtype %s\n",
+    dlog(6, "Measuring variable (%s *) %s with mtype %s\n",
          var->type->name, addr_str ? addr_str : "(null)",
          mtype->name);
     free(addr_str);
 
     rc = measurement_graph_add_node(g, var, NULL, &n);
     if(rc == 0 || rc == 1) {
-        dlog(4, "\tAdded node "ID_FMT"\n", n);
+        dlog(6, "\tAdded node "ID_FMT"\n", n);
     } else {
         dlog(0, "Error adding node\n");
     }
@@ -210,7 +210,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
                 int peerchan, int resultchan, char *target UNUSED, char *target_type UNUSED,
                 char *resource UNUSED, struct key_value **arg_list UNUSED, int argc UNUSED)
 {
-    dlog(0, "Hello from the PROCESS_MEASUREMENT_APB\n");
+    dlog(6, "Hello from the PROCESS_MEASUREMENT_APB\n");
     int ret_val = 0;
 
     unsigned char *evidence;
@@ -327,7 +327,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
         return -EIO;
     }
 
-    dlog(3, "Evaluating measurement spec\n");
+    dlog(6, "Evaluating measurement spec\n");
     evaluate_measurement_spec(mspec, &callbacks, graph);
 
     free_meas_spec(mspec);

@@ -186,7 +186,7 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
     if (infd > -1) {
         len = snprintf(NULL, 0, "%d", infd);
         if(len < 0) {
-            dlog(1, "Unable to represent the in file descriptor as a string\n");
+            dlog(0, "Unable to represent the in file descriptor as a string\n");
             return -1;
         }
 
@@ -203,7 +203,7 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
          * maximum semantic length of an int, which should be smaller than a size_t */
         err = snprintf(aspmain_argv[aspmain_argc], (size_t)(len + 1), "%d", infd);
         if(err < len) {
-            dlog(1, "Unable to convert the in file descriptor to a string\n");
+            dlog(0, "Unable to convert the in file descriptor to a string\n");
             free(aspmain_argv[aspmain_argc]); /* infd slot */
             return -1;
         }
@@ -212,7 +212,7 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
     if(outfd > -1) {
         len = snprintf(NULL, 0, "%d", outfd);
         if(len < 0) {
-            dlog(1, "Unable to represent the out file descriptor as a string\n");
+            dlog(0, "Unable to represent the out file descriptor as a string\n");
             free(aspmain_argv[aspmain_argc]); /* infd slot */
             return -1;
         }
@@ -231,7 +231,7 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
          * maximum semantic length of an int, which should be smaller than a size_t */
         err = snprintf(aspmain_argv[aspmain_argc], (size_t)(len + 1), "%d", outfd);
         if(err < len) {
-            dlog(1, "Unable to convert the out file descriptor to a string\n");
+            dlog(0, "Unable to convert the out file descriptor to a string\n");
             free(aspmain_argv[aspmain_argc]);    /* outfd */
             free(aspmain_argv[aspmain_argc-1]);  /* infd */
             return -1;
@@ -262,7 +262,7 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
                              libmaat_apbmain_asps_use_unique_categories,
                              256, 0, 0);
 
-    dlog(4, "Executing ASP executable: %s\n", asp->file->full_filename);
+    dlog(6, "Executing ASP executable: %s\n", asp->file->full_filename);
     execv(asp->file->full_filename, aspmain_argv);
     dlog(0, "Failed to exec the ASP \"%s\": %s\n", asp->name, strerror(errno));
 
@@ -464,7 +464,7 @@ int fork_and_buffer_async_asp(struct asp *asp, const int argc, char *argv[], con
     pid_t pid;
 
     if(asp == NULL || outfd == NULL || (argv == NULL && argc != 0)) {
-        dlog(1, "Inavild arguments provided to function\n");
+        dlog(0, "Inavild arguments provided to function\n");
         return -2;
     }
 
@@ -478,7 +478,7 @@ int fork_and_buffer_async_asp(struct asp *asp, const int argc, char *argv[], con
     rc = run_asp(asp, infd, data[1], true, argc, argv, data[0], -1);
     close(data[1]);
     if(rc < 0) {
-        dlog(1, "Unable to run ASP %s\n", asp->name);
+        dlog(0, "Unable to run ASP %s\n", asp->name);
         close(data[0]);
         return -2;
     }
@@ -486,13 +486,13 @@ int fork_and_buffer_async_asp(struct asp *asp, const int argc, char *argv[], con
     rc = fork_and_buffer(&pid, outfd, data[0], -1);
     close(data[0]);
     if(rc < 0) {
-        dlog(1, "Error in fork and buffer\n");
+        dlog(0, "Error in fork and buffer\n");
         stop_asp(asp);
         return -2;
     } else if(rc > 0) {
         rc = wait_asp(asp);
         if(rc < 0) {
-            dlog(1, "Error in wait ASP\n");
+            dlog(0, "Error in wait ASP\n");
             return -1;
         }
 

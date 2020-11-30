@@ -254,7 +254,7 @@ static int add_file_region_node(measurement_graph *graph, node_id_t process_node
 
         fd = open(fr_addr->path, O_RDONLY|O_NONBLOCK);
         if (fd < 0) {
-            dlog(0, "Failed to open file for reading\n");
+            dlog(3, "Failed to open file for reading\n");
             goto out;
         }
 

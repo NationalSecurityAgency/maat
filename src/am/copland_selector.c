@@ -471,7 +471,7 @@ static int load_rule(unsigned int xml_version, xmlNode *child,
     }
 
     if(g_list_length(match_conditions) == 0 )
-        dlog(0, "Warning: Rule has no match_conditions\n");
+        dlog(4, "Warning: Rule has no match_conditions\n");
 
     if(g_list_length(actions) == 0) {
         dlog(0, "Error: Rule has no action nodes\n");
@@ -591,7 +591,7 @@ static int load_selector_copl_internal(char *path, GList *apbs, selectordb_t **o
     }
 
     if(g_list_length(collections) == 0)
-        dlog(1, "Warning: no collections in xml schema\n");
+        dlog(4, "Warning: no collections in xml schema\n");
 
     if(g_list_length(select_config) == 0) {
         dlog(0, "Error: No rules listed in xml schema\n");
@@ -754,7 +754,7 @@ static int compare(void *value, attr_pair *attr)
         i = 1;
     }
 
-    dlog(0, "Exiting the compare method with i=%d\n", i);
+    dlog(6, "Exiting the compare method with i=%d\n", i);
 
     return i;
 }

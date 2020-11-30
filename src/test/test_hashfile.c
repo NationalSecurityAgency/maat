@@ -152,7 +152,7 @@ static int measure_file(char *path, uint8_t *sha1_hash)
         goto error;
     }
 
-    dlog(4, "Alloced buffer of size %d\n", filelen);
+    dlog(6, "Alloced buffer of size %d\n", filelen);
     //Read file contents into buffer
     if(read(fd, buffer, filelen) < filelen) {
         ret_val = -errno;
@@ -191,7 +191,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
     sha1hash_measurement_data *sha1_data = NULL;
 
     str_of_node_id(node, node_str);
-    dlog(4, "Appraising node %s\n", node_str);
+    dlog(6, "Appraising node %s\n", node_str);
 
     // For every piece of data on the node
     for (data_it = measurement_node_iterate_data(mg, node);
@@ -238,7 +238,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
 static int appraise(struct scenario *scen, GList *values UNUSED,
                     void *msmt, size_t msmtsize)
 {
-    dlog(0, "APPRAISE IN HASHFILE TEST\n");
+    dlog(6, "APPRAISE IN HASHFILE TEST\n");
     int ret = 0;
     int appraisal_stat = 0;
     struct measurement_graph *mg = NULL;

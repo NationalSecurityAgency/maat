@@ -503,7 +503,7 @@ int main(int argc, char *argv[])
                 goto out;
             }
             if(peerfd_l >= 0) {
-                dlog(0, "peer channel fd = %ld\n", peerfd_l);
+                dlog(6, "peer channel fd = %ld\n", peerfd_l);
                 peerchan = maat_io_channel_new((int)peerfd_l);
             }
             break;
@@ -518,7 +518,7 @@ int main(int argc, char *argv[])
                 goto out;
             }
             if(resultfd_l >= 0) {
-                dlog(0, "result channel fd = %ld\n", resultfd_l);
+                dlog(6, "result channel fd = %ld\n", resultfd_l);
                 resultchan = maat_io_channel_new((int)resultfd_l);
             }
             break;
@@ -531,7 +531,7 @@ int main(int argc, char *argv[])
             break;
         case 'i':
             if(scen.info != NULL) {
-                dlog(0, "Warning: Info specified multiple times. Ignoring.");
+                dlog(4, "Warning: Info specified multiple times. Ignoring.");
                 break;
             }
             scen.info = file_to_buffer(optarg, &scen.info_size);

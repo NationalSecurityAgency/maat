@@ -49,7 +49,7 @@ mspec_info *load_measurement_specification_info(const char *xmlfile)
     mspec_info *meas_spec;
     char *rootname;
 
-    dlog(2,"parsing file %s\n", xmlfile);
+    dlog(5,"parsing file %s\n", xmlfile);
     /* FIXME: we should validate the document before untainting it! */
     doc = xmlReadFile(xmlfile, NULL, 0);
     if(doc == NULL) {
@@ -149,12 +149,12 @@ GList *load_all_measurement_specifications_info(const char *dirname)
         char *d_name     = UNTAINT(dent->d_name);
         char *xml_suffix = strstr(d_name, ".xml");
         if (xml_suffix && *(xml_suffix + 4) == '\0') {
-            dlog(0, "Loading meas spec: %s\n", d_name);
+            dlog(6, "Loading meas spec: %s\n", d_name);
             mspec_info *p;
             int rc;
             rc = snprintf(scratch, 256, "%s/%s", dirname, d_name);
             if(rc < 0 || rc >= 256) {
-                dlog(0, "Error creating path string %s/%s?", dirname, d_name);
+                dlog(3, "Error creating path string %s/%s?", dirname, d_name);
                 continue;
             }
 

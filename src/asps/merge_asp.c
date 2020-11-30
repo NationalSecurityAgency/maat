@@ -231,7 +231,7 @@ int asp_measure(int argc, char *argv[])
     ret_val = maat_read_sz_buf(arg_set.fd_left, &buf_left, &bufsize_left,
                                &bytes_read_left, &eof_enc, TIMEOUT, -1);
     if (ret_val == -EAGAIN) {
-        dlog(1, "Warning: timeout occured before left channel read could complete\n");
+        dlog(2, "Warning: timeout occured before left channel read could complete\n");
     } else if(ret_val < 0) {
         dlog(0, "Error reading evidence from left channel\n");
         ret_val = -1;
@@ -247,7 +247,7 @@ int asp_measure(int argc, char *argv[])
     ret_val = maat_read_sz_buf(arg_set.fd_right, &buf_right, &bufsize_right,
                                &bytes_read_right, &eof_enc, TIMEOUT, -1);
     if (ret_val == -EAGAIN) {
-        dlog(1, "Warning: timeout occured before right channel read could complete\n");
+        dlog(2, "Warning: timeout occured before right channel read could complete\n");
     } else if(ret_val < 0) {
         dlog(0, "Error reading evidence from right channel\n");
         ret_val = -1;
@@ -264,7 +264,7 @@ int asp_measure(int argc, char *argv[])
     ret_val = combine_channels(buf_left, bytes_read_left, buf_right, bytes_read_right, arg_set.seperator,
                                arg_set.prefix, arg_set.suffix, arg_set.fd_out);
     if(ret_val == -EAGAIN) {
-        dlog(1, "Warning: timeout occurred before full write of combined channels could occur\n");
+        dlog(2, "Warning: timeout occurred before full write of combined channels could occur\n");
     } else if(ret_val < 0) {
         dlog(0, "Error: Failed to merge channels\n");
         ret_val = -1;

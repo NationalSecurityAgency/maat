@@ -43,14 +43,14 @@ static struct asp *hashserv = NULL;
 static GQueue *enumerate_variables(void *ctxt UNUSED, target_type *ttype, address_space *space,
                                    char *op, char *val)
 {
-    dlog(3, "Enumerating variables matching %s\n", val);
+    dlog(6, "Enumerating variables matching %s\n", val);
     GQueue *q = g_queue_new();
     if(q != NULL && ttype == &file_target_type &&
             space == &file_addr_space && strcmp(op, "equal") == 0) {
         file_addr *fa = NULL;
         fa = (file_addr*)address_from_human_readable(space, val);
         if(fa != NULL) {
-            dlog(3, "Queueing variable (%s *)%s\n", ttype->name, fa->fullpath_file_name);
+            dlog(6, "Queueing variable (%s *)%s\n", ttype->name, fa->fullpath_file_name);
             measurement_variable *v = new_measurement_variable(ttype, &fa->address);
             g_queue_push_tail(q, v);
         }
@@ -141,7 +141,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
         return -ENOENT;
     }
 
-    dlog(4, "Assigned ASPS\n");
+    dlog(6, "Assigned ASPS\n");
     /* Allocate a new measurement graph, add a node */
     measurement_graph *graph = create_measurement_graph(NULL);
     if(!graph) {
@@ -150,7 +150,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
         return -1;
     }
 
-    dlog(4, "Evaluating measurement spec\n");
+    dlog(6, "Evaluating measurement spec\n");
     evaluate_measurement_spec(mspec, &callbacks, graph);
 
     free_meas_spec(mspec);

@@ -476,7 +476,7 @@ static int future_send_asp(int peerchan, char *buf, size_t buf_size)
 {
     gsize bytes_written = 0;
     int status;
-    dlog(0, "ASP writing response buf\n");
+    dlog(6, "ASP writing response buf\n");
     if(((status = maat_write_sz_buf(peerchan, buf, buf_size,
                                     &bytes_written,
                                     WRITE_TO_PEER_TIMEOUT)) != 0) ||
@@ -489,7 +489,7 @@ static int future_send_asp(int peerchan, char *buf, size_t buf_size)
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(0, "IN sign_send ASP MEASURE\n");
+    dlog(6, "IN sign_send ASP MEASURE\n");
 
     // These all come in command line
     measurement_graph *graph  = NULL;

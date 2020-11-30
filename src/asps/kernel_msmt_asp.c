@@ -74,7 +74,7 @@ static unsigned char *virtual_file_to_buffer(const char *filename,
 
     fd = open(filename, O_RDONLY);
     if (fd < 0) {
-        dlog(0, "Failed to open file %s\n", filename);
+        dlog(3, "Failed to open file %s\n", filename);
         return NULL;
     }
 
@@ -270,7 +270,7 @@ int asp_measure(int argc, char *argv[])
         goto error;
     }
 
-    dlog(1, "Attaching kernel measurement to the graph\n");
+    dlog(6, "Attaching kernel measurement to the graph\n");
 
     // attach measurement data to node
     if(measurement_node_add_rawdata(graph, node_id, &kernel_data->meas_data) < 0) {

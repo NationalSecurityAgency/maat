@@ -178,7 +178,7 @@ int asp_measure(int argc, char *argv[])
         kd = container_of(data, kmod_data, d);
 
         strncpy(scratch, kd->name, 255);
-        dlog(0, "Checking module %s against blacklist\n", kd->name);
+        dlog(6, "Checking module %s against blacklist\n", kd->name);
         if (g_list_find_custom(mod_blacklist, kd->name, (GCompareFunc)strcmp)) {
             found = 1;
         }
@@ -198,7 +198,7 @@ int asp_measure(int argc, char *argv[])
         pmd = container_of(data, process_metadata_measurement, d);
 
         sscanf(pmd->command_line, "%255s ", scratch);
-        dlog(0, "Checking process %s against blacklist\n", scratch);
+        dlog(6, "Checking process %s against blacklist\n", scratch);
         if (g_list_find_custom(proc_blacklist, scratch, (GCompareFunc)strcmp)) {
             found = 1;
         }
@@ -218,7 +218,7 @@ int asp_measure(int argc, char *argv[])
         }
         pkgaddr = container_of(addr, package_address, a);
 
-        dlog(0, "Checking package %s against blacklist\n", pkgaddr->name);
+        dlog(6, "Checking package %s against blacklist\n", pkgaddr->name);
 
         strncpy(scratch, pkgaddr->name, 255);
         if (g_list_find_custom(pkg_blacklist, pkgaddr->name,

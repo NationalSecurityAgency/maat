@@ -57,7 +57,7 @@ static int send(int peerchan, char *buf, size_t buf_size)
 {
     gsize bytes_written = 0;
     int status;
-    dlog(0, "ASP writing response buf to peerchan (%d)\n", peerchan);
+    dlog(6, "ASP writing response buf to peerchan (%d)\n", peerchan);
     if(((status = maat_write_sz_buf(peerchan, buf, buf_size,
                                     &bytes_written,
                                     TIMEOUT)) != 0) ||
@@ -90,7 +90,7 @@ int asp_exit(int status)
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(0, "IN send ASP MEASURE\n");
+    dlog(6, "IN send ASP MEASURE\n");
 
     int fd_out   = -1;
     int fd_in      = -1;
@@ -125,8 +125,8 @@ int asp_measure(int argc, char *argv[])
         goto read_failed;
     } else if (ret_val == -EAGAIN) {
         /* XXX: Handle timeouts properly, do you retry? how many times? */
-        dlog(0, "Warning: timeout occured before read could complete\n");
-        dlog(0, "This is treated as a read failure error for now\n");
+        dlog(3, "Warning: timeout occured before read could complete\n");
+        dlog(3, "This is treated as a read failure error for now\n");
         goto read_failed;
     } else if (eof_enc != 0) {
         dlog(0, "Error: EOF encountered before complete buffer read\n");

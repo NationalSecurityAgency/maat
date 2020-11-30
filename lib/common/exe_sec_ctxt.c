@@ -140,7 +140,7 @@ int parse_exe_sec_ctxt(exe_sec_ctxt *ctxt, xmlNode *node)
                 free(content);
                 return -1;
             }
-            dlog(4, "Info: setting target capabilities to %s\n", content);
+            dlog(6, "Info: setting target capabilities to %s\n", content);
             ctxt->cap_set = 1;
 #endif
             free(content);
@@ -154,10 +154,10 @@ int parse_exe_sec_ctxt(exe_sec_ctxt *ctxt, xmlNode *node)
                 free(content);
                 return -1;
             }
-            dlog(4, "Info: setting target selinux context to %s\n", content);
+            dlog(6, "Info: setting target selinux context to %s\n", content);
             ctxt->selinux_set = 1;
 #else
-            dlog(4, "Info: selinux support disabled. Skipping SELinux ctxt %s\n", content);
+            dlog(6, "Info: selinux support disabled. Skipping SELinux ctxt %s\n", content);
 #endif
             free(content);
             continue;
@@ -204,7 +204,7 @@ void exe_sec_ctxt_set_execcon(char *exe_path,
              * libselinux has no mechanism for setting just one
              * component of the destination context.
              */
-            dlog(4, "Desired SELinux context %s, computing default transition\n",
+            dlog(6, "Desired SELinux context %s, computing default transition\n",
                  execcon_behavior == EXECCON_RESPECT_DESIRED ? "not set" : "ignored");
 
             security_context_t my_context, file_context, new_context;
@@ -256,7 +256,7 @@ void exe_sec_ctxt_set_execcon(char *exe_path,
         }
 
         security_context_t sec_ctxt = context_str(ctxt);
-        dlog(4, "Setting SELinux security context to %s\n", sec_ctxt);
+        dlog(6, "Setting SELinux security context to %s\n", sec_ctxt);
         if(setexeccon(sec_ctxt) < 0) {
             int the_error = errno;
             dlog(0, "Failed to set SELinux security context: %s\n",

@@ -239,7 +239,7 @@ int maat_read_sz_buf(int chan, char **buf,
     sizeval      = ntohl(sizeval);
 
     /* Check that the size of the message is less than max_size */
-    dlog(3, "size read from stream: %d. Max size is %d\n", sizeval, max_size);
+    dlog(7, "DEBUG: size read from stream: %d. Max size is %d\n", sizeval, max_size);
     if(sizeval > max_size) {
         dlog(0, "Stream size exceeds maximum size\n");
         return -EMSGSIZE;

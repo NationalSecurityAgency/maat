@@ -59,7 +59,7 @@ int asp_exit(int status)
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(0, "IN system ASP MEASURE\n");
+    dlog(6, "IN system ASP MEASURE\n");
     measurement_data *data    = NULL;
     system_data *s_data       = NULL;
     measurement_graph *graph  = NULL;
@@ -92,7 +92,7 @@ int asp_measure(int argc, char *argv[])
     /* Open the os-release file to gather data from it */
     fp = fopen("/etc/os-release", "r");
     if(!fp) {
-        dlog(0, "Failed to open file for reading (%s)\n", strerror(errno));
+        dlog(3, "Failed to open file for reading (%s)\n", strerror(errno));
         ret_val = -EIO;
         goto error_open;
     }
@@ -101,7 +101,7 @@ int asp_measure(int argc, char *argv[])
     while(getline(&line, &len, fp) != -1) {
         key = strtok(line, delim);
         if(key == NULL) {
-            dlog(0, "Invalid key\n");
+            dlog(3, "Invalid key\n");
             continue;
         }
 
@@ -136,7 +136,7 @@ int asp_measure(int argc, char *argv[])
     free_measurement_data(data);
     unmap_measurement_graph(graph);
 
-    dlog(0, "system ASP returning with success\n");
+    dlog(6, "system ASP returning with success\n");
     return ASP_APB_SUCCESS;
 
 error_add_data:

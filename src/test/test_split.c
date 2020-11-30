@@ -233,7 +233,7 @@ START_TEST(test_split)
         goto eof_enc_read;
     }
 
-    dlog(0, "right read buffer size: %zd, right bytes read %zu\n", buf_sz, transferred);
+    dlog(6, "right read buffer size: %zd, right bytes read %zu\n", buf_sz, transferred);
 
     fail_unless(strlen(res) == RES_LEN && strncmp(RESULT, res, RES_LEN) == 0,
                 "Incorrect response %s from ASP, result expected: %s\n", res,
@@ -276,7 +276,7 @@ int main (void)
     int nfail;
 
     pid_t pid = getpid();
-    dlog(0, "Tester PID: %u\n", pid);
+    dlog(6, "Tester PID: %u\n", pid);
 
     s = suite_create("split");
     splitservice = tcase_create("split");

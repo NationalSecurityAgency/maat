@@ -123,7 +123,7 @@ int parse_contract_type(char *contract, size_t size, am_contract_type *ctype)
         return -1;
     }
 
-    dlog(3, "root->name = %s\n", root->name);
+    dlog(6, "root->name = %s\n", root->name);
 
     typestr = xmlGetPropASCII(root,"type");
     if (!typestr) {
@@ -302,7 +302,7 @@ static int get_targ_and_resource_info(struct scenario *scenario,
         goto error;
     }
     scenario->target_type = target_type;
-    dlog(4, "DEBUG: target type = %s\n", scenario->target_type);
+    dlog(7, "DEBUG: target type = %s\n", scenario->target_type);
 
     if(strcmp(scenario->target_type, "host-port") == 0) {
         if(get_target_host_port(scenario, doc) < 0) {
@@ -336,7 +336,7 @@ static int get_targ_and_resource_info(struct scenario *scenario,
         goto error;
     }
     scenario->resource = resource;
-    dlog(4, "DEBUG: resource = %s\n", scenario->resource);
+    dlog(7, "DEBUG: resource = %s\n", scenario->resource);
 
     nonce = xpath_get_content(doc, "/contract/nonce");
 
@@ -349,14 +349,14 @@ static int get_targ_and_resource_info(struct scenario *scenario,
         if(scenario->info == NULL) {
             goto error;
         }
-        dlog(4, "DEBUG: info block is %zd bytes\n", scenario->info_size);
+        dlog(7, "DEBUG: info block is %zd bytes\n", scenario->info_size);
     }
 
     target_fingerprint = xpath_get_content(doc, "/contract/cert_fingerprint");
     if(target_fingerprint != NULL) {
         scenario->target_fingerprint = target_fingerprint;
     }
-    dlog(4, "DEBUG: target_fingerprint = %s\n", scenario->target_fingerprint);
+    dlog(7, "DEBUG: target_fingerprint = %s\n", scenario->target_fingerprint);
 
     xmlXPathFreeObject(obj);
     xmlFreeDoc(doc);
@@ -384,7 +384,7 @@ error:
 int handle_request_contract(struct attestation_manager *manager,
                             struct scenario *scen)
 {
-    dlog(0,"Entering handle request contract\n");
+    dlog(6,"Entering handle request contract\n");
     xmlDoc *doc = NULL;
     int ret=0;
     GList *options = NULL;
@@ -497,7 +497,7 @@ int handle_initial_contract(struct attestation_manager *manager,
         dlog(1, "Failed to get root element of contract document\n");
         goto get_root_node_failed;
     }
-    dlog(3, "root->name = %s\n", root->name);
+    dlog(6, "root->name = %s\n", root->name);
 
     typestr = xmlGetPropASCII(root, "type");
     if(typestr == NULL) {
@@ -734,7 +734,7 @@ int handle_modified_contract(struct attestation_manager *manager,
         goto out;
     }
 
-    dlog(3, "root->name = %s\n", root->name);
+    dlog(6, "root->name = %s\n", root->name);
 
     contract_type = xmlGetPropASCII(root,"type");
     if (contract_type == NULL || strcasecmp(contract_type, "modified") != 0) {
@@ -843,7 +843,7 @@ int handle_modified_contract(struct attestation_manager *manager,
     do {
         char contractfile[201];
         snprintf(contractfile, 200, "%s/execute_contract.xml", scen->workdir);
-        dlog(3, "Saving execute contract to %s\n", contractfile);
+        dlog(6, "Saving execute contract to %s\n", contractfile);
         save_document(doc, contractfile);
     } while(0);
 
@@ -914,7 +914,7 @@ int handle_execute_cache_hit_setup(struct attestation_manager *manager,
         goto out;
     }
 
-    dlog(4, "NONCE: %s\n", scen->nonce);
+    dlog(7, "NONCE: %s\n", scen->nonce);
 
     /* Save off glist of options */
     obj = xpath(doc, "/contract/subcontract/option");
@@ -929,7 +929,7 @@ int handle_execute_cache_hit_setup(struct attestation_manager *manager,
         }
 
         if(phrase != NULL) {
-            dlog(3, "Found option.\n");
+            dlog(6, "Found option.\n");
 
             ret = am_parse_copland(manager, phrase, &copl);
             if(ret != 0) {
@@ -1047,7 +1047,7 @@ int handle_execute_contract(struct attestation_manager *manager,
         }
 
         if(phrase != NULL) {
-            dlog(3, "Found satisfying option.\n");
+            dlog(6, "Found satisfying option.\n");
 
             ret = am_parse_copland(manager, phrase, &copl);
             if(ret != 0) {
@@ -1184,11 +1184,11 @@ int create_error_response(struct scenario *scen)
     if(outsize_tmp >= 0) {
         *outsize = (size_t)outsize_tmp;
     } else {
-        dlog(1, "Warning: while generating response contract invalid output size %d\n",
+        dlog(2, "Warning: while generating response contract invalid output size %d\n",
              outsize_tmp);
         *outsize = 0;
     }
-    dlog(4, "DEBUG!: %s\n", *out ? (char*)*out : "(null)");
+    dlog(7, "DEBUG!: %s\n", *out ? (char*)*out : "(null)");
     ret = 0;
 
 integrity_response_cleanup:

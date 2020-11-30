@@ -150,6 +150,10 @@ appraiser execution. Example:
     sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr -i 127.0.0.1:2342 \
          -u /tmp/app.sock -C /opt/maat/etc/maat/minimal-am-config.xml
 
+The verbosity can be further controlled by the environment variable
+'LIBMAAT_DEBUG_LEVEL'. More verbosity is achieved by increasing this
+value. See maat_environment_variables.txt for more information.
+
 Demo 2 - Appraiser vs. Attester
 -------------------------------
 

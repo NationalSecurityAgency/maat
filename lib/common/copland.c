@@ -658,7 +658,7 @@ static int find_copland_template(const char *phrase, const GList *phrase_pairs,
     for(a = (GList *)phrase_pairs; a && a->data; a = a->next) {
         pair = (struct phrase_meas_spec_pair *)a->data;
 
-        dlog(4, "COMPARING %s:%s / %d:%d in find_copland_template\n", phr, pair->copl->phrase, num_args, pair->copl->num_args);
+        dlog(6, "COMPARING %s:%s / %d:%d in find_copland_template\n", phr, pair->copl->phrase, num_args, pair->copl->num_args);
 
         if(strcmp(pair->copl->phrase, phr) == 0 && num_args == pair->copl->num_args) {
             if(template != NULL) {
@@ -1044,18 +1044,18 @@ int parse_copland_from_pair_list(const char *phrase_and_args, const GList *phras
 
     err = find_copland_template(phrase_and_args, phrase_pairs, &template);
     if(err < 0) {
-        dlog(1, "Warning: unable to find a matching template for the phrase %s\n", phrase_and_args);
+        dlog(4, "Warning: Unable to find a matching template for the phrase %s in this APB\n", phrase_and_args);
         return -1;
     }
 
     err = split_copland(phrase_and_args, &phr, &args);
     if(err < 0) {
         free_phrase_meas_spec_pair(template);
-        dlog(1, "Warning: Unable to match provided Copland Phrase to format: %s\n", phrase_and_args);
+        dlog(4, "Warning: Unable to match provided Copland Phrase to format: %s\n", phrase_and_args);
         return -1;
     }
 
-    dlog(0, "ARGS ARE: %s\n", args);
+    dlog(6, "ARGS ARE: %s\n", args);
 
     err = parse_copland_phrase(phr, args, template->copl, phrase);
     free(phr);
@@ -1077,7 +1077,7 @@ int parse_copland_from_apb_list(const char *phrase_and_args, const GList *apbs, 
         return -1;
     }
 
-    dlog(4, "Parsing Copland phrase: %s\n", phrase_and_args);
+    dlog(6, "Parsing Copland phrase: %s\n", phrase_and_args);
 
     for(l = (GList *) apbs; l && l->data; l = g_list_next(l)) {
         apb = (struct apb *)l->data;
@@ -1088,7 +1088,7 @@ int parse_copland_from_apb_list(const char *phrase_and_args, const GList *apbs, 
 
     }
 
-    dlog(4, "Unable to parse the Copland phrase \"%s\" from the list of APBs\n", phrase_and_args);
+    dlog(3, "Unable to parse the Copland phrase \"%s\" from the list of APBs\n", phrase_and_args);
     return -1;
 }
 
@@ -1207,7 +1207,7 @@ static int parse_arg_entry(xmlDocPtr doc, xmlNode *arg_entry, phrase_arg **arg)
         name = validate_cstring_ascii(entry->name, SIZE_MAX);
 
         if(entry->type != XML_ELEMENT_NODE || name == NULL) {
-            dlog(0, "Unable to parse argument entry\n");
+            dlog(3, "Unable to parse argument entry\n");
             continue;
         }
 
@@ -1215,7 +1215,7 @@ static int parse_arg_entry(xmlDocPtr doc, xmlNode *arg_entry, phrase_arg **arg)
             /* String buffer of characters, so type coercion is justified */
             unstripped = (char *)xmlNodeListGetString(doc, entry->xmlChildrenNode, 1);
             if (unstripped == NULL) {
-                dlog(0, "Unable to get type information from Copland section\n");
+                dlog(3, "Unable to get type information from Copland section\n");
                 continue;
             }
 
@@ -1283,12 +1283,12 @@ int parse_arg_block(xmlDocPtr doc, xmlNode *arg_block, phrase_arg ***args)
         name = validate_cstring_ascii(arg->name, SIZE_MAX);
 
         if(arg->type != XML_ELEMENT_NODE || name == NULL) {
-            dlog(0, "Warning: unable to process child argument block");
+            dlog(4, "Warning: unable to process child argument block");
             continue;
         }
 
         if(strcmp(name, "arg")) {
-            dlog(2, "Warning: non argument element found in argument list");
+            dlog(4, "Warning: non argument element found in argument list");
             continue;
         }
 
@@ -1389,7 +1389,7 @@ void parse_copland(xmlDocPtr doc, struct apb *apb, xmlNode *copl_node, GList *me
 
             tmp = xmlGetPropASCII(copl_pair_ele, "uuid");
             if (!tmp) {
-                dlog(0, "Err: Spec entry without UUID, skipping\n");
+                dlog(3, "Err: Spec entry without UUID, skipping\n");
                 continue;
             }
 

@@ -209,7 +209,7 @@ ssize_t buffer_to_file_perm(const char *filename, const unsigned char *buf,
 
     ret = write(fd, buf, size);
     if (ret != (ssize_t)size) {
-        dlog(0, "only wrote %zd bytes to %s\n", ret, filename);
+        dlog(6, "only wrote %zd bytes to %s\n", ret, filename);
     }
 
     close(fd);
@@ -235,7 +235,7 @@ unsigned char *file_to_buffer(const char *filename, size_t *size)
     unsigned char *buf;
     ret = stat(filename, &stbuf);
     if (ret) {
-        dlog(4, "stat returned %zd\n", ret);
+        dlog(6, "stat returned %zd\n", ret);
         return NULL;
     }
 
@@ -278,7 +278,7 @@ char *file_to_string(const char *filename)
 
     ret = stat(filename, &stbuf);
     if (ret) {
-        dlog(4, "stat returned %zd\n", ret);
+        dlog(6, "stat returned %zd\n", ret);
         return NULL;
     }
 

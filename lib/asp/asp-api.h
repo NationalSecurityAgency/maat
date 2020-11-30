@@ -79,12 +79,12 @@ int asp_measure(int argc, char *argv[]);
  * these work.
  */
 #define asp_loginfo(fmt, ...) \
-    dlog(2, "[ASP:" ASP_NAME "] " fmt, ##__VA_ARGS__)
+    dlog(6, "[ASP:" ASP_NAME "] " fmt, ##__VA_ARGS__)
 #define asp_logerror(fmt, ...) \
-    dlog(0, "[ASP:" ASP_NAME "] " fmt, ##__VA_ARGS__)
+    dlog(3, "[ASP:" ASP_NAME "] " fmt, ##__VA_ARGS__)
 #define asp_logwarn(fmt, ...) \
-    dlog(1, "[ASP:" ASP_NAME "] " fmt, ##__VA_ARGS__)
-#define asp_logdebug(fmt, ...) \
     dlog(4, "[ASP:" ASP_NAME "] " fmt, ##__VA_ARGS__)
+#define asp_logdebug(fmt, ...) \
+    dlog(7, "[ASP:" ASP_NAME "] " fmt, ##__VA_ARGS__)
 
 #endif /* __ASP_API_H__ */

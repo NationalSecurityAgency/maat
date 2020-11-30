@@ -444,7 +444,7 @@ static int elfheader_type_unserialize_data(char *sd, size_t sd_size, measurement
             goto error_alloc_elfsecthdr;
         }
 
-        dlog(4, "Unpack Section Name %s\n", sectName ? sectName : "(null)");
+        dlog(5, "Unpack Section Name %s\n", sectName ? sectName : "(null)");
         elfSectHdr->section_hdr.sh_name		= sh_name;
         elfSectHdr->section_hdr.sh_type		= sh_type;
         elfSectHdr->section_hdr.sh_flags	= sh_flags;

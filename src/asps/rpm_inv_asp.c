@@ -147,7 +147,7 @@ error_pipe:
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(0, "IN rpm_inv ASP MEASURE\n");
+    dlog(6, "IN rpm_inv ASP MEASURE\n");
 
     measurement_graph *graph   = NULL;
     measurement_data *inv_data = NULL;
@@ -167,7 +167,7 @@ int asp_measure(int argc, char *argv[])
         return -EINVAL;
     }
 
-    dlog(0, "Measuring node "ID_FMT" of graph @ %s\n", node_id, argv[1]);
+    dlog(6, "Measuring node "ID_FMT" of graph @ %s\n", node_id, argv[1]);
 
     inv_data = alloc_measurement_data(&pkginv_measurement_type);
     if(!inv_data) {
@@ -176,7 +176,7 @@ int asp_measure(int argc, char *argv[])
         goto error_alloc_data;
     }
 
-    dlog(0, "Looking for all packages on the system\n");
+    dlog(6, "Looking for all packages on the system\n");
 
     /*
      * If the address space is a filename, find the package owning the file.
@@ -191,7 +191,7 @@ int asp_measure(int argc, char *argv[])
             goto error_argument;
         }
 
-        dlog(0, "\t with file: %s\n", filename);
+        dlog(6, "\t with file: %s\n", filename);
 
         fp = exec_list_pkgs("-qf", filename);
     } else if (argc == 4) {
@@ -238,7 +238,7 @@ cleanup:
     free_measurement_data(inv_data);
     unmap_measurement_graph(graph);
 
-    dlog(0, "rpm_inv ASP returning with success\n");
+    dlog(6, "rpm_inv ASP returning with success\n");
     return ASP_APB_SUCCESS;
 
 error_argument:

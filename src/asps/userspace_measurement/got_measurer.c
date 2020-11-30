@@ -3705,7 +3705,7 @@ int measure_got(const uint32_t pid_u)
         }
     }
 
-    dlog(3, "Scanning PID %ld\n", (long int)pid);
+    dlog(6, "Scanning PID %ld\n", (long int)pid);
 
     if(res >= 0) {
         scan_process(pid);

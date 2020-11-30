@@ -184,7 +184,7 @@ int register_address_space(address_space* addr_space)
     }
 
     registered_address_spaces = g_list_append(registered_address_spaces, addr_space);
-    dlog(3, "Registered address space with id %"PRIx32"\n", addr_space->magic);
+    dlog(6, "Registered address space with id %"PRIx32"\n", addr_space->magic);
     return 0;
 }
 

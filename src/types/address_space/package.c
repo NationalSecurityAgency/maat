@@ -190,12 +190,12 @@ char *package_addr_to_machine_readable(package_address *paddr)
     }
 
     if(!paddr->version) {
-        dlog(0, "Warning: package version is NULL\n");
+        dlog(4, "Warning: package version is NULL\n");
         if((tmp = g_strdup_printf("%s", paddr->name)) == NULL) {
             goto error;
         }
     } else if(!paddr->arch) {
-        dlog(0, "Warning: package architecture is NULL\n");
+        dlog(4, "Warning: package architecture is NULL\n");
         if((tmp = g_strdup_printf("%s-%s", paddr->name, paddr->version)) == NULL) {
             goto error;
         }

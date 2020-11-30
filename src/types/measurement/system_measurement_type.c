@@ -167,7 +167,7 @@ static int get_attr(char *feature)
 
 static int system_get_feature(measurement_data *d, char *feature, GList **out)
 {
-    dlog(0, "system measurement type getting feature %s\n", feature);
+    dlog(6, "system measurement type getting feature %s\n", feature);
 
     system_data *rd = container_of(d, system_data, meas_data);
     GList *res   = NULL;

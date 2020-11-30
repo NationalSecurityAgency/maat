@@ -221,7 +221,7 @@ static int get_feature(measurement_data *d, char *feature, GList **out)
 {
     filename_measurement_data *fmd = (filename_measurement_data*)d;
 
-    dlog(1, "filename measurement type getting feature %s\n", feature);
+    dlog(6, "filename measurement type getting feature %s\n", feature);
     if(strcmp(feature, "file_address") == 0) {
         char *p = strdup(fmd->contents);
         if(p == NULL) {

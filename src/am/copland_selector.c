@@ -297,7 +297,7 @@ static int load_condition(unsigned int xml_version UNUSED, xmlNode *node,
     }
 
     if(temp == NULL) {
-        dlog(0, "Error: Unable to parse Copland Phrase %s in condition\n", stripped);
+        dlog(0, "Error: Unable to find APB to execute Copland Phrase %s in selection policy\n", stripped);
         free(stripped);
         return -1;
     }
@@ -471,7 +471,7 @@ static int load_rule(unsigned int xml_version, xmlNode *child,
     }
 
     if(g_list_length(match_conditions) == 0 )
-        dlog(4, "Warning: Rule has no match_conditions\n");
+        dlog(5, "Notice: Rule has no match_conditions\n");
 
     if(g_list_length(actions) == 0) {
         dlog(0, "Error: Rule has no action nodes\n");

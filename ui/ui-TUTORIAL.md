@@ -1,6 +1,4 @@
-COPYRIGHT
-=========
-
+<!--
 Copyright 2020 United States Government
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,9 +12,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+-->
 
-INTRODUCTION
-============
+Maat UI Tutorial
+================
 
 This tutorial will guide you through the setup of Maat, and will enable you to
 execute a few simple Maat demos. Some of the demos depend on configurations made
@@ -24,7 +23,7 @@ in preceding demos, so complete them in order for best results.
 
 
 Setup
-========
+-----
 
 Please follow the steps in `documentation/source/quick_start.txt` to build Maat,
 with one modification: when compiling Maat, pass the `--enable-web-ui` flag to 
@@ -36,7 +35,7 @@ The tutorials that follow assume Maat is installed in `/opt/maat`. If you
 installed in a different directory, please modify accordingly.
 
 DEMO 1: SIMPLE ATTESTATION
-==========================
+--------------------------
 
 Set the following variables:
 
@@ -76,7 +75,7 @@ Where the <result>PASS</result> indicates successful measurement and
 appraisal (whereas <result>FAIL</result> would indicate failure).
 
 DEMO 2: ATTESTATION WITH SINGLE AM
-==================================
+----------------------------------
 
 This demonstration illustrates how a single AM can be used as both the Attester
 and the Appraiser, even within a single measurement request. 
@@ -94,7 +93,7 @@ Run each of these commands in a separate terminal:
 The output should be similar to the output from the previous demo.
 
 DEMO 3: ATTESTATION WITH GOT/PLT MEASURE ASP
-===========================================
+--------------------------------------------
 
 This demo walks you through making changes to the selection policy to 
 cause it to choose a different ASP.
@@ -133,7 +132,7 @@ Run each of these commands in a separate terminal:
 The output should be similar to the output from the previous two demos.
 
 DEMO 4: SCHEDULING MEASUREMENTS VIA MESSAGE QUEUES
-==================================================
+--------------------------------------------------
 
 Install these dependencies:
 
@@ -170,7 +169,7 @@ succeeded and false otherwise.
 
 
 DEMO 5: SCHEDULING MEASUREMENTS FROM THE UI
-===========================================
+-------------------------------------------
 
 Install the dependency:
 
@@ -181,8 +180,7 @@ edit `/etc/lighttpd/lighttpd.conf`:
 + set server.document-root = "/opt/maat/web"
 + add ".py" to the list of static-file.exclude-extensions
 
-On Ubuntu:
-----------
+### On Ubuntu:
 
 edit `/etc/lighttpd/conf-available/10-cgi.conf`:
 
@@ -195,8 +193,7 @@ To start web server, run:
     sudo /etc/init.d/lighttpd restart
 
 
-On Fedora/CentOS:
------------------
+### On Fedora/CentOS:
 
 edit `/etc/lighttpd/modules.conf`:
 
@@ -217,8 +214,7 @@ command:
 
     sudo setsebool -P httpd_can_network_connect=on
 
-Running the Demo
-----------------
+### Running the Demo
 
 Run the following commands in separate terminals:
 

@@ -204,6 +204,18 @@ credentials for your AM. If you would rather skip to a demonstration of taking
 measurements with Maat, please continue to the
 :ref:`Basic Tutorial <basic_tutorial>`.
 
+Maat also has a unit test suite built with the `check` unit test framework, 
+however it is currently incompatible with the SELinux policy in Maat. In order 
+to execute the Maat unit tests on your system, re-configure and execute the 
+unit tests with the commands : 
+
+.. code-block:: bash
+
+   cd maat/
+   ./configure --prefix=/opt/maat --disable-selinux --enable-tests
+   make check
+
+
 Configuration
 =============
 

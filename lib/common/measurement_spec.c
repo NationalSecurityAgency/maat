@@ -49,7 +49,7 @@ mspec_info *load_measurement_specification_info(const char *xmlfile)
     mspec_info *meas_spec;
     char *rootname;
 
-    dlog(5,"parsing file %s\n", xmlfile);
+    dlog(6, "parsing file %s\n", xmlfile);
     /* FIXME: we should validate the document before untainting it! */
     doc = xmlReadFile(xmlfile, NULL, 0);
     if(doc == NULL) {

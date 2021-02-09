@@ -13,6 +13,7 @@ AC_CONFIG_LINKS([documentation/source/quick_start_maat_configuration.txt:documen
 AC_CONFIG_LINKS([documentation/source/quick_start.txt:documentation/source/quick_start.txt])
 AC_CONFIG_LINKS([documentation/source/basic_tutorial.txt:documentation/source/basic_tutorial.txt])
 AC_CONFIG_LINKS([documentation/source/multirealm_tutorial.txt:documentation/source/multirealm_tutorial.txt])
+AC_CONFIG_LINKS([documentation/source/ui_tutorial.md:documentation/source/ui_tutorial.md])
 AC_CONFIG_LINKS([documentation/source/readme.txt:documentation/source/readme.txt])
 AC_CONFIG_LINKS([documentation/source/types_info.txt:documentation/source/types_info.txt])
 AC_CONFIG_LINKS([documentation/source/understanding_contracts.txt:documentation/source/understanding_contracts.txt])

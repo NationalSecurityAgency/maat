@@ -39,6 +39,7 @@ Maat User Guide / Documentation
       maat_use_cases
       basic_tutorial
       multirealm_tutorial
+      ui_tutorial
       measurement_specifications
       apbs
       asps

@@ -669,7 +669,6 @@ static int find_copland_template(const char *phrase, const GList *phrase_pairs,
         }
     }
 
-    dlog(3, "Unable to find a matching template for the phrase %s\n", phrase);
     res = -1;
 
 free_info:
@@ -775,7 +774,7 @@ static int parse_phrase_args(const char *args,
     tmp->num_args = 0;
 
     if(args == NULL) {
-        dlog(3, "No arguments to parse for phrase\n");
+        dlog(6, "No arguments to parse for phrase\n");
         goto skip_args;
     }
 
@@ -1044,7 +1043,6 @@ int parse_copland_from_pair_list(const char *phrase_and_args, const GList *phras
 
     err = find_copland_template(phrase_and_args, phrase_pairs, &template);
     if(err < 0) {
-        dlog(4, "Warning: Unable to find a matching template for the phrase %s in this APB\n", phrase_and_args);
         return -1;
     }
 
@@ -1088,7 +1086,7 @@ int parse_copland_from_apb_list(const char *phrase_and_args, const GList *apbs, 
 
     }
 
-    dlog(3, "Unable to parse the Copland phrase \"%s\" from the list of APBs\n", phrase_and_args);
+    dlog(3, "Error: Unable to find the Copland phrase \"%s\" from the APBs provided\n", phrase_and_args);
     return -1;
 }
 

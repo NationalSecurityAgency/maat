@@ -41,8 +41,8 @@
  * ASP that provides very simple information about the kernel.  It is simply
  * a stand-in for a more complete measurement to show how kernel measurements
  * can integrate into Maat. For now it is simply a hash of /vmlinuz (though no
- * measures are taken to verify that is the currently running kernel) and the 
- * contents of /proc/version and /proc/cmdline.  
+ * measures are taken to verify that is the currently running kernel) and the
+ * contents of /proc/version and /proc/cmdline.
  *
  * A more complete kernel integrity measurement would be contain much more
  * information.

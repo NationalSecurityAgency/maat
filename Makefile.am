@@ -35,7 +35,7 @@ endif
 EXTRA_DIST = debian
 
 if WEB_INTERFACE
-SUBDIRS += ui
+SUBDIRS += management-ui
 endif
 
 if ENABLE_SELINUX

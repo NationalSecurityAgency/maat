@@ -111,8 +111,8 @@ int apb_execute(struct apb *apb UNUSED, struct scenario *scen UNUSED,
     bytes_written = 0;
     dlog(4,"Send response from appraiser APB: %s.\n", response_buf);
     sz = sz+1; // include the terminating '\0'
-    ret_val = maat_write_sz_buf(resultchan, response_buf, sz,
-                                &bytes_written, 5);
+    ret_val = write_response_contract(resultchan, response_buf, sz,
+                                      &bytes_written, 5);
 
     if(ret_val != 0) {
         dlog(0, "Failed to send response from appraiser!: %s\n",

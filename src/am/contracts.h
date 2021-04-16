@@ -267,4 +267,5 @@ int handle_execute_contract(struct attestation_manager *manager,
  */
 int create_error_response(struct scenario *scen);
 
+
 #endif

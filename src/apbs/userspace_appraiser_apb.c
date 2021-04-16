@@ -505,7 +505,6 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
         } else {
             struct asp *appraiser_asp = NULL;
             appraiser_asp = select_appraisal_asp(node, data_type);
-
             if(!appraiser_asp) {
                 dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", type_str);
                 ret = 0;
@@ -608,7 +607,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     // Load all apbs we need
     char *apbdir = getenv(ENV_MAAT_APB_DIR);
     if(apbdir == NULL) {
-       dlog(3, "Warning: environment variable " ENV_MAAT_APB_DIR
+        dlog(3, "Warning: environment variable " ENV_MAAT_APB_DIR
              " not set. Using default path " DEFAULT_APB_DIR "\n");
         apbdir = DEFAULT_APB_DIR;
     }
@@ -671,17 +670,17 @@ int apb_execute(struct apb *apb, struct scenario *scen,
         return ret;
     }
 
-    dlog(4, "Resp contract: %s\n", response_buf);
+    dlog(6, "Resp contract: %s\n", response_buf);
     if(sz == 0) {
         sz = (size_t)xmlStrlen(response_buf);
         dlog(0, "Error: sz is 0, using strlen (Need to fix this! Why is xmlDocDumpMemory not giving back the size!?\n");
     }
 
     size_t bytes_written = 0;
-    dlog(4,"Send response from appraiser APB: %s.\n", response_buf);
+    dlog(6,"Send response from appraiser APB: %s.\n", response_buf);
     sz = sz+1; // include the terminating '\0'
-    ret = maat_write_sz_buf(resultchan, response_buf, sz,
-                            &bytes_written, 5);
+    ret = write_response_contract(resultchan, response_buf, sz,
+                                  &bytes_written, 5);
 
     if(ret != 0) {
         dlog(0, "Failed to send response from appraiser!: %s\n",

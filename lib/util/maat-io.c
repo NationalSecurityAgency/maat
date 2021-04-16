@@ -18,6 +18,9 @@
 /**
  * maat-io.c: Implementation of Maat I/O helpers.
  */
+
+#define _GNU_SOURCE
+#include <stdio.h>
 #include <config.h>
 
 #include <arpa/inet.h>
@@ -31,8 +34,9 @@
 #include <glib.h>
 #include <inttypes.h>
 #include <common/taint.h>
+#include <common/scenario.h>
+#include <common/copland.h>
 #include <fcntl.h>
-
 
 int maat_io_channel_new(int fd)
 {
@@ -424,3 +428,77 @@ int maat_write_sz_buf(int chan, const unsigned char *buf,
 
     return res;
 }
+
+
+
+void print_options_string_from_scenario(GList *current_options)
+{
+    GList *op = NULL;
+    for(op = current_options; op && current_options->data != NULL; op = g_list_next(op)) {
+        dlog(5, "PRESENTATION MODE (self): %s\n", ((copland_phrase *)(op->data))->phrase);
+    }
+}
+
+
+int write_initial_contract(int chan, const unsigned char *buf,
+                           size_t bufsize, size_t *bytes_written,
+                           time_t timeout_secs)
+{
+    dlog(5, "PRESENTATION MODE (out): Sends initial contract with set of measurements\n");
+
+    return maat_write_sz_buf(chan, buf,
+                             bufsize, bytes_written,
+                             timeout_secs);
+}
+
+int write_modified_contract(int chan, const unsigned char *buf,
+                            size_t bufsize, size_t *bytes_written,
+                            time_t timeout_secs)
+{
+    dlog(5, "PRESENTATION MODE (out): Sends modified contract.\n");
+    return maat_write_sz_buf(chan, buf,
+                             bufsize, bytes_written,
+                             timeout_secs);
+}
+int write_measurement_contract(int chan, const unsigned char *buf,
+                               size_t bufsize, size_t *bytes_written,
+                               time_t timeout_secs)
+{
+
+    dlog(5, "PRESENTATION MODE (out): Completed measurement is sent.\n");
+    return maat_write_sz_buf(chan, buf,
+                             bufsize, bytes_written,
+                             timeout_secs);
+}
+
+int write_response_contract(int chan, const unsigned char *buf,
+                            size_t bufsize, size_t *bytes_written,
+                            time_t timeout_secs)
+{
+    dlog(5, "PRESENTATION MODE (out): Response contract is sent to requestor\n");
+    return maat_write_sz_buf(chan, buf,
+                             bufsize, bytes_written,
+                             timeout_secs);
+}
+
+int write_request_contract(int chan, const unsigned char *buf,
+                           size_t bufsize, size_t *bytes_written,
+                           time_t timeout_secs)
+{
+    dlog(5, "PRESENTATION MODE (out): Request contract is sent.\n");
+    return maat_write_sz_buf(chan, buf,
+                             bufsize, bytes_written,
+                             timeout_secs);
+}
+int write_execute_contract(int chan, const unsigned char *buf,
+                           size_t bufsize, size_t *bytes_written,
+                           time_t timeout_secs)
+{
+    dlog(5, "PRESENTATION MODE (out): Sends execute contract with selected option\n");
+    return maat_write_sz_buf(chan, buf,
+                             bufsize, bytes_written,
+                             timeout_secs);
+
+}
+
+

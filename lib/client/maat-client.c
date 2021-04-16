@@ -36,7 +36,7 @@ int create_integrity_request(target_id_type_t target_typ,
                              xmlChar *target_id,
                              xmlChar *target_portnum,
                              xmlChar *resource,
-			     xmlChar *nonce,
+                             xmlChar *nonce,
                              xmlChar *tunnel,
                              xmlChar *cert_fingerprint,
                              xmlChar *info,
@@ -109,7 +109,7 @@ int create_integrity_request(target_id_type_t target_typ,
         fprintf(stderr, "Failed to add resource identifier node to integrity request\n");
         goto out;
     }
-    
+
     if((nonce != NULL) &&
             (xmlNewTextChild(root, NULL, (xmlChar*)"nonce", nonce) == NULL)) {
         fprintf(stderr, "Failed to add nonce node to integrity request\n");

@@ -134,7 +134,7 @@ int asp_measure(int argc, char *argv[])
         goto int_err;
     }
 
-    ret_val = maat_write_sz_buf(appr_chan, msg, (size_t)msg_len, &bytes_written, 20);
+    ret_val = write_request_contract(appr_chan, msg, (size_t)msg_len, &bytes_written, 20);
     if(ret_val < 0) {
         dlog(0, "Unable to write to appraiser, error: %d\n", ret_val);
         ret_val = -1;

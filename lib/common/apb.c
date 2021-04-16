@@ -316,6 +316,7 @@ int run_apb_async(struct apb *apb,
                   int peerchan, int resultchan, char *target,
                   char *target_typ, char *resource, char *args)
 {
+    dlog(5, "PRESENTATION MODE (self): AM spawns APB of name %s\n", apb->name);
     dlog(6, "Running APB of name: %s\n", apb->name);
     pid_t pid;
 

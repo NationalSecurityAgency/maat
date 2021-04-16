@@ -174,9 +174,11 @@ static int handle_satisfier(struct scenario *scen, xmlNode *sat,
                 close(fd);
             }
             xmlNewTextChild(sat, NULL, (xmlChar*)"result", (xmlChar*)"FAIL");
+            dlog(5, "PRESENTATION MODE (self): Appraisal result: FAIL\n");
             *failed = 1;
         } else {
             dlog(2, "Appraisal succeeded\n");
+            dlog(5, "PRESENTATION MODE (self): Appraisal result: PASS\n");
             xmlNewTextChild(sat, NULL, (xmlChar*)"result", (xmlChar*)"PASS");
             fail = 0;
             /* Maat would add a POM here */
@@ -249,6 +251,7 @@ int handle_measurement_contract(struct scenario *scen, appraise_fn *appraise, in
     }
     free(contract_type);
     contract_type = NULL;
+
 
     snprintf(tmpstr, 200, "%s/measurement_contract.xml", scen->workdir);
     save_document(doc, tmpstr);
@@ -695,9 +698,9 @@ int generate_and_send_back_measurement_contract(int chan, struct scenario *scen,
         return -1;
     }
 
-    if(((status = maat_write_sz_buf(chan, scen->response, scen->respsize,
-                                    &bytes_written,
-                                    MAAT_APB_ASP_TIMEOUT)) != 0) ||
+    if(((status = write_measurement_contract(chan, scen->response, scen->respsize,
+                  &bytes_written,
+                  MAAT_APB_ASP_TIMEOUT)) != 0) ||
             (bytes_written != scen->respsize + sizeof(uint32_t))) {
         dlog(0, "Failed to send size of measurement contract: %s\n",
              strerror(status < 0 ? -status : status));
@@ -741,6 +744,9 @@ int receive_measurement_contract(int chan, struct scenario *scen, int32_t max_si
         dlog(2, "Measurement contract too large!\n");
         goto error;
     }
+
+    dlog(5, "PRESENTATION MODE (in): Receives measurement contract.\n");
+
     scen->size = tmpsize;
     return ret;
 

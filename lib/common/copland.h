@@ -25,7 +25,7 @@
 #define __COPLAND_H__
 
 #include <glib.h>
-
+#include <libxml/xpath.h>
 #include <util/keyvalue.h>
 
 /*******************************************************************************

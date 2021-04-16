@@ -262,6 +262,7 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
                              libmaat_apbmain_asps_use_unique_categories,
                              256, 0, 0);
 
+    dlog(5, "PRESENTATION MODE (self): APB forks ASP of name %s.\n", asp->name);
     dlog(6, "Executing ASP executable: %s\n", asp->file->full_filename);
     execv(asp->file->full_filename, aspmain_argv);
     dlog(0, "Failed to exec the ASP \"%s\": %s\n", asp->name, strerror(errno));

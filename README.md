@@ -46,22 +46,25 @@ there are:
 - ROADMAP.md : Current status of Maat supported features, and items on our 
   	       roadmap.
 
+- am-ui/maat-attestation-manager-ui-TUTORIAL.md: Tutorial for setting up the Attestation Manager User 
+						 Interface to step through a recent measurement.
+
 - documentation/source/
-  - quick_start.txt :	     Contains building, installation, and configuration
-    		    	     instructions for installing Maat from source
+  - quick_start.txt :	     	Contains building, installation, and configuration
+    		    	     	instructions for installing Maat from source
 
-  - basic_tutorial.txt :     Contains a series of tutorials for getting Maat 
-    		       	     running in different basic scenarios to perform 
-			     userspace measurement (to be followed after 
-			     completion of quick_start.txt)
+  - basic_tutorial.txt :     	Contains a series of tutorials for getting Maat 
+    		       	     	running in different basic scenarios to perform 
+			     	userspace measurement (to be followed after 
+			     	completion of quick_start.txt)
 
-  - multirealm_tutorial.txt: A series of tutorials to demonstate execution of 
-    		      	     Maat in a multi-realm attestation scenario. 
-		      	     Introduces Copland and some more complex use cases.
+  - multirealm_tutorial.txt: 	A series of tutorials to demonstate execution of 
+    		      	     	Maat in a multi-realm attestation scenario. 
+		      	     	Introduces Copland and some more complex use cases.
 
-- ui/ui-TUTORIAL.md : 	     Basic tutorials for Maat that use a prototype Maat
-  		    	     web interface in lieu of the command line to 
-			     request attestations from Maat
+- management-ui/ui-TUTORIAL.md: Basic tutorials for Maat that use a prototype Maat
+  		    	     	web interface in lieu of the command line to 
+			     	request attestations from Maat
 
 BUILDING 
 ============
@@ -71,6 +74,10 @@ of dependencies and build instructions.
 
 SOURCE LAYOUT
 ==============
+
++ am-ui/		-- Code and tutorials for setting up a Python 
+  			   Flask-based web server to act as a GUI for
+			   stepping through a recent measurement
 
 + CHANGELOG.md		-- Markup file of major changes for each version
 
@@ -101,6 +108,10 @@ SOURCE LAYOUT
 + MaatDox		-- Maat Doxygen configuration file
 
 + Makefile.am		-- Maat makefile to build everything
+
++ management-ui/	-- Code and tutorials for setting up a basic 
+  			   lighttpd-based web server to act as a GUI for
+			   Maat requests
 
 + measurement-specs/	-- Measurement specifications that, when paired
   			   with an appropriate APB, are used to complete
@@ -137,9 +148,6 @@ SOURCE LAYOUT
     		           measurement types, and target types used by
 			   the ASPs/APBs
 
-+ ui/			-- Code and tutorials for setting up a basic 
-  			   lighttpd-based web server to act as a GUI for
-			   Maat requests
 
 RUNNING
 =======

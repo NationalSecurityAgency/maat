@@ -477,9 +477,9 @@ static int future_send_asp(int peerchan, char *buf, size_t buf_size)
     gsize bytes_written = 0;
     int status;
     dlog(6, "ASP writing response buf\n");
-    if(((status = maat_write_sz_buf(peerchan, buf, buf_size,
-                                    &bytes_written,
-                                    WRITE_TO_PEER_TIMEOUT)) != 0) ||
+    if(((status = write_measurement_contract(peerchan, buf, buf_size,
+                  &bytes_written,
+                  WRITE_TO_PEER_TIMEOUT)) != 0) ||
             (bytes_written != buf_size + sizeof(uint32_t))) {
         dlog(0, "Failed to send size of measurement contract: %s\n", strerror(status < 0 ? -status : status));
         return -1;

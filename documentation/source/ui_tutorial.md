@@ -1,1 +1,1 @@
-../../ui/ui-TUTORIAL.md
+../../management-ui/ui-TUTORIAL.md

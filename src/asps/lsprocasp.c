@@ -350,7 +350,7 @@ static int read_process_metadata(long p, process_metadata_measurement **out,
                 memcpy(proc_data->selinux_domain_label, buf,
                        sizeof(proc_data->selinux_domain_label)-1);
                 proc_data->selinux_domain_label[
-                    sizeof(proc_data->selinux_domain_label)-1] = '\0';
+                sizeof(proc_data->selinux_domain_label)-1] = '\0';
             } else {
                 memcpy(proc_data->selinux_domain_label, buf, len);
             }

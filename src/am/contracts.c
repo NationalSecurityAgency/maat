@@ -398,6 +398,8 @@ int handle_request_contract(struct attestation_manager *manager,
         goto out;
     }
 
+    dlog(5, "PRESENTATION MODE (in): Receives request contract to measure resource: %s\n", scen->resource);
+
     doc = xmlNewDoc((xmlChar*)"1.0");
     if (doc == NULL) {
         dlog(0, "Failed to create base contract\n");
@@ -1048,6 +1050,8 @@ int handle_execute_contract(struct attestation_manager *manager,
 
         if(phrase != NULL) {
             dlog(6, "Found satisfying option.\n");
+            dlog(5, "PRESENTATION MODE (in): Attester receives execute contract with option:\n");
+            dlog(5, "PRESENTATION MODE (self): %s\n", phrase);
 
             ret = am_parse_copland(manager, phrase, &copl);
             if(ret != 0) {
@@ -1195,7 +1199,6 @@ integrity_response_cleanup:
     xmlFreeDoc(doc);
     return ret;
 }
-
 /* Local Variables:  */
 /* mode: c           */
 /* c-basic-offset: 4 */

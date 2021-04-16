@@ -246,11 +246,10 @@ static void handle_appraiser(am_config *config, struct scenario *scen)
             scen->state = AM_ERROR;
             goto out;
         }
-
         dlog(2, "Sending INITIAL contract\n");
-        res = maat_write_sz_buf(scen->peer_chan, scen->response,
-                                scen->respsize, NULL,
-                                config->am_comm_timeout);
+        res = write_initial_contract(scen->peer_chan, scen->response,
+                                     scen->respsize, NULL,
+                                     config->am_comm_timeout);
         if(check_send_result(res, "initial") != 0) {
             scen->state = AM_ERROR;
             dlog(1, "sending INITIAL contract failed: %d\n", res);
@@ -267,17 +266,17 @@ static void handle_appraiser(am_config *config, struct scenario *scen)
             goto out;
         }
         scen->state = MODIFIED_RECEIVED;
+        dlog(5, "PRESENTATION MODE (in): Appraiser received modified contract with subset of measurements\n");
         //TODO pass in the resource and target_id_type also for run_apb_async
         if((handle_modified_contract(am, scen)) != 0) {
             dlog(0, "Failure while handling modified contract\n");
             scen->state = AM_ERROR;
             goto out;
         }
-
         dlog(2, "Sending EXECUTE contract\n");
-        res = maat_write_sz_buf(scen->peer_chan, scen->response,
-                                scen->respsize, NULL,
-                                config->am_comm_timeout);
+        res = write_execute_contract(scen->peer_chan, scen->response,
+                                     scen->respsize, NULL,
+                                     config->am_comm_timeout);
 
         if(check_send_result(res, "execute") != 0) {
             scen->state = AM_ERROR;
@@ -364,10 +363,10 @@ static void handle_attester(struct am_config *config, struct scenario *scen)
             //Attester sends a modified contract back to Appraiser
             //****************************************************
             dlog(1,"Attester: Sending Modified Contract (size = %zu)\n", scen->respsize);
-            res = maat_write_sz_buf(scen->peer_chan, scen->response,
-                                    scen->respsize,
-                                    NULL,
-                                    config->am_comm_timeout);
+            res = write_modified_contract(scen->peer_chan, scen->response,
+                                          scen->respsize,
+                                          NULL,
+                                          config->am_comm_timeout);
             if(check_send_result(res, "modified") != 0) {
                 scen->state = AM_ERROR;
                 goto out;
@@ -409,7 +408,6 @@ static void handle_attester(struct am_config *config, struct scenario *scen)
             scen->state = AM_ERROR;
             goto out;
         }
-
         scen->state = EXECUTE_RECEIVED;
         rc = handle_execute_contract(am, scen);
         if(rc < 0) {
@@ -547,6 +545,8 @@ static int handle_connection(am_config *config, int clientfd, int may_skip_negot
     dlog(3, "Contract type is %s (%d)\n", get_contract_name(ctype), ctype);
 
     if(ctype == AM_CONTRACT_INITIAL) {
+
+        dlog(5, "PRESENTATION MODE (in): Attester receives initial contract\n");
         dlog(3, "Received INITIAL contract...I must be an attester\n");
         init_scenario(scenario, config->cacert_file, config->cert_file,
                       config->privkey_file, config->privkey_pass, config->tpm_pass,

@@ -34,7 +34,7 @@
 #include "selector.h"
 #include <util/xml_util.h>
 #include <util/util.h>
-
+#include <util/maat-io.h>
 #include <client/maat-client.h>
 
 //INFO took place of userspace's at_manager
@@ -123,6 +123,8 @@ int appraiser_initial_options (struct attestation_manager *self,
     }
 
     scen->current_options = g_list_copy(*out);
+    dlog(5, "PRESENTATION MODE (self): Appraiser selects the following initial options  to fulfill request:\n");
+    print_options_string_from_scenario(scen->current_options);
     dlog(6, "Recieved %d initial options\n", res);
     return AM_OK;
 
@@ -171,6 +173,8 @@ int attester_select_options(struct attestation_manager *self, struct scenario *s
 
     scen->current_options = g_list_copy(final);
     dlog(6, "Found %d matching options\n", g_list_length(*selected));
+    dlog(5, "PRESENTATION MODE (self): From set of initial options, attester selects subset for inclusion in modified contract:\n");
+    print_options_string_from_scenario(scen->current_options);
     return AM_OK;
 
 error_selector:
@@ -321,9 +325,9 @@ int appraiser_select_option(struct attestation_manager *self, struct scenario *s
         goto out;
     }
 
+    dlog(5, "PRESENTATION MODE (self): From subset of options in modified contract, appraiser selects option for execution: %s\n", phrase->phrase);
     scen->current_options =  g_list_append(scen->current_options, (gpointer)phrase);
     *selected = phrase;
-
 out:
     return rtn;
 }

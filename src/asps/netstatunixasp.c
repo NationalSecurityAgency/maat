@@ -101,7 +101,7 @@ netstat_unix_line *chunk_line_data(char *raw_line)
     if(tmp != NULL)
         strncpy(ret->Path, tmp, (size_t)127);
     else
-        memset(ret->Path, 0 , (size_t)128);
+        memset(ret->Path, 0, (size_t)128);
 
     return ret;
 }

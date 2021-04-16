@@ -499,7 +499,7 @@ AC_CONFIG_FILES([lib/Makefile lib/util/Makefile lib/graph/Makefile lib/asp/Makef
 		 lib/libmaat_client.pc
 		 lib/libmaat_sgraph.pc
 		 Makefile
-		 ui/Makefile
+		 management-ui/Makefile
 		 pam/Makefile
 		 src/Makefile
 		 src/asps/Makefile

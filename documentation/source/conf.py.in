@@ -279,6 +279,7 @@ latex_appendices = [
     'basic_tutorial',
     'multirealm_tutorial',
     'ui_tutorial',
+    'maat_attestation_manager_ui_tutorial',
     'measurement_specifications',
     'apbs',
     'asps',

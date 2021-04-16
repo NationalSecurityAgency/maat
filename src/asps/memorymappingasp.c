@@ -454,19 +454,19 @@ int asp_measure(int argc, char *argv[])
             goto next_entry;
         }
 
-	if (entry->pathlen > 1) {
-	    if(add_file_region_node(graph, process_node, mem_segment_node, entry,
-				    &file_region_node) < 0) {
-		asp_logwarn("Failed to add file region node\n");
-		goto next_entry;
-	    }
+        if (entry->pathlen > 1) {
+            if(add_file_region_node(graph, process_node, mem_segment_node, entry,
+                                    &file_region_node) < 0) {
+                asp_logwarn("Failed to add file region node\n");
+                goto next_entry;
+            }
 
-	    if(add_file_node(graph, process_node, mem_segment_node,
-			     file_region_node, entry, &file_node) < 0) {
-		asp_logwarn("Failed to file node\n");
-		goto next_entry;
-	    }
-	}
+            if(add_file_node(graph, process_node, mem_segment_node,
+                             file_region_node, entry, &file_node) < 0) {
+                asp_logwarn("Failed to file node\n");
+                goto next_entry;
+            }
+        }
 
 next_entry:
         free_map_entry(entry);

@@ -293,6 +293,8 @@ manner.
 The demo setup will look as follows, with the test client being spawned 
 on the distinct VM_0:
 
+Directions to set up the VMs are located in the :ref:`Setup Multirealms Guide <setup_multirealms>`. 
+
 ```
  ____________     ____________     _____________
 |    VM_0    |   |    VM_1    |   |    VM_2    |
@@ -303,31 +305,17 @@ on the distinct VM_0:
 |____________|   |____________|   |____________|
 ```
 
-Clone your Maat VM twice to get the three VMs needed for this demonstration. 
-When cloning, you must ensure that the MAC address for each VM is distinct so 
-that they may communicate.
-
-Each VM must be placed within an internal network, and their IPs and ports must 
-be correctly set. For this exercise, we will assume that the internal network is
-on the interface enp0s8. This may be different for your configuration.
-
 On VM_0:
 
-    $ sudo ifconfig enp0s8 192.168.0.5 netmask 255.255.255.0 \
-      broadcast 192.168.0.255
-    $ firewall-cmd --zone=public --add-port=2342/tcp
+    Set IP to 192.168.0.5 and open port 2342
 
 On VM_1:
 
-    $ sudo ifconfig enp0s8 192.168.0.10 netmask 255.255.255.0 \
-      broadcast 192.168.0.255
-    $ firewall-cmd --zone=public --add-port=2343/tcp
+   Set IP to 192.168.0.10 and open port 2343
 
 On VM_2:
 
-    $ sudo ifconfig enp0s8 192.168.0.7 netmask 255.255.255.0 \
-      broadcast 192.168.0.255
-    $ firewall-cmd --zone=public --add-port=2342/tcp
+   Set IP to 192.168.0.7 and open port 2342
 
 
 To start the scenario, you must start AM_0 and AM_1. To do so, run

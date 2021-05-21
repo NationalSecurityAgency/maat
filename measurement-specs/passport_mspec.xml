@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<measurement_specification>
+  <name>passport mspec</name>
+  <uuid>57a053fd-9046-4c0d-9c5d-0e79d0b1fce5</uuid>
+  <description>
+    This is a measurement spec for passport measurement
+  </description>
+  
+  <instructions>
+    <instruction type="simple" name="passport">
+      <target_type   name="file_target_type" magic="1001"/>
+      <address_type  name="file_address_space" magic="2000"/>
+      <measurement_type name="blob_measurement_type" magic="0xB10BB10B"/>
+    </instruction>
+  </instructions>	 
+  
+  <variables>
+    <variable instruction="passport">
+      <address operation="equal">self</address>
+    </variable>
+  </variables>
+</measurement_specification>

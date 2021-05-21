@@ -280,6 +280,9 @@ DEFAULT_ASP(lsproc)
 DEFAULT_ASP(procroot)
 DEFAULT_ASP(procenv)
 DEFAULT_ASP(procmem)
+EXTRA_ASP(passport_retriever)
+EXTRA_ASP(passport_storer)
+DEFAULT_ASP(passport_maker)
 DEFAULT_ASP(system)
 DEFAULT_ASP(rpminv)
 DEFAULT_ASP(rpm_details)
@@ -315,6 +318,16 @@ IF_ASP([elf_reader],
 			[AC_MSG_FAILURE([Can't find gelf.h. Please install the libelf development package])])
          ])
 
+IF_ASP([passport_retriever],
+      [PKG_CHECK_MODULES(LIBMONGOC, libmongoc-1.0 >= 1.0)
+      PKG_CHECK_MODULES(LIBBSON, libbson-1.0 >= 1.0)]
+      )
+
+IF_ASP([passport_storer],
+      [PKG_CHECK_MODULES(LIBMONGOC, libmongoc-1.0 >= 1.0)
+      PKG_CHECK_MODULES(LIBBSON, libbson-1.0 >= 1.0)]
+      )
+
 # Enable macros for each APB
 
 AC_DEFUN([DEFAULT_APB],
@@ -348,6 +361,11 @@ DEFAULT_APB([userspace])
 DEFAULT_APB([appraiser])
 DEFAULT_APB([hashdir])
 DEFAULT_APB([complex_att])
+EXTRA_APB([passport_ret])
+EXTRA_APB([passport_appraiser])
+EXTRA_APB([passport_storage])
+DEFAULT_APB([request_passport])
+DEFAULT_APB([passport_userspace_appraiser])
 DEFAULT_APB([hashfile])
 DEFAULT_APB([kim])
 DEFAULT_APB([forwarding])
@@ -355,6 +373,22 @@ DEFAULT_APB([no_op])
 DEFAULT_APB([userspace_appraiser])
 EXTRA_APB([quiot_tlm])
 EXTRA_APB([quiot_tlm_appraiser])
+
+
+IF_APB([passport_ret],
+      [PKG_CHECK_MODULES(LIBMONGOC, libmongoc-1.0 >= 1.0)
+      PKG_CHECK_MODULES(LIBBSON, libbson-1.0 >= 1.0)]
+      )
+
+IF_APB([passport_storage],
+      [PKG_CHECK_MODULES(LIBMONGOC, libmongoc-1.0 >= 1.0)
+      PKG_CHECK_MODULES(LIBBSON, libbson-1.0 >= 1.0)]
+      )
+
+IF_APB([passport_appraiser],
+      [PKG_CHECK_MODULES(LIBMONGOC, libmongoc-1.0 >= 1.0)
+      PKG_CHECK_MODULES(LIBBSON, libbson-1.0 >= 1.0)]
+      )
 
 AC_ARG_WITH([apb-install-dir], 
             AS_HELP_STRING([Directory in which to install APBs default is [LIBDIR/maat/apbs]]),

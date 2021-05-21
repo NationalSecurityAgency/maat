@@ -57,7 +57,7 @@ For Ubuntu Machines:
 
    sudo apt install build-essential autoconf automake libtool check    \
         libglib2.0-dev libxml2-dev libssl-dev uuid-dev libcap-dev make \
-        libelf-dev libjson-c-dev
+        libelf-dev libjson-c-dev 
 
 For CentOS Machines: 
 
@@ -66,7 +66,8 @@ For CentOS Machines:
    sudo yum install autoconf automake libtool check-devel glib2-devel   \
         libxml2-devel openssl-devel libuuid-devel libcap-devel make     \
         elfutils-devel json-c-devel selinux-policy-devel \
-        libselinux-devel
+        libselinux-devel 
+
 
 
 +----------------------------+----------------------------+
@@ -230,8 +231,10 @@ Using the Demonstration Credentials
 
 The ``demo/credentials`` directory of this repository contains demonstration
 credentials that may be used to run through the tutorials provided in 
-the :ref:`Basic Tutorial <basic_tutorial>`
-and :ref:`Multirealm Tutorial <multirealm_tutorial>`.
+the :ref:`Basic Tutorial <basic_tutorial>`,
+:ref:`Multirealm Tutorial <multirealm_tutorial>`,
+:ref:`Passport Creation Tutorial <passport_creation_tutorial>`,
+and :ref:`Passport Use Tutorial <passport_use_tutorial>`.
 **DO NOT USE THESE CREDENTIALS IN A REAL DEPLOYMENT.**
 
 Note: there is no fundamental difference between the client and server keys, 
@@ -276,7 +279,8 @@ Create a keypair for the appraiser
     openssl rsa -des3 -in appraiser.key -out appraiser.key
 
 Copy the CA certificate, appraiser key, and appraiser certificate to your
-appraiser (you can delete them from the CA afterwards)
+appraiser (you can delete them from the CA afterwards). Make another pair for
+your trusted third party appraiser. 
 
 Create a keypair for the attester
 ---------------------------------

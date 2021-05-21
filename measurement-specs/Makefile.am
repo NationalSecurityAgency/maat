@@ -32,4 +32,5 @@ dist_spec_DATA=hashdir_mspec.xml \
 	quiot_tlm_hour.xml \
 	quiot_tlm_tmin.xml \
 	userspace_packages_mspec.xml \
-	got_measure_mspec.xml
+	got_measure_mspec.xml \
+	passport_mspec.xml

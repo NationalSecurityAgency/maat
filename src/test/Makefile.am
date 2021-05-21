@@ -17,7 +17,7 @@
 check_PROGRAMS = test_am_config test_am_getopt test_selector test_all_apbs \
 	test_measurement_marshalling test_address_spaces \
 	test_att_app_servers_with_appraiser_apb test_measurement_spec test_pkg_asps \
-	test_leastpriv_asps test_hashfile test_contract
+	test_leastpriv_asps test_hashfile test_contract 
 
 if ENABLE_MONGO_SELECTOR
 check_PROGRAMS += test_mongo_selector
@@ -97,6 +97,24 @@ test_hashfile_SOURCES = test_hashfile.c
 test_hashfile_LDADD = $(LDADD_APB)
 endif
 
+if BUILD_passport_maker_ASP
+check_PROGRAMS += test_passport_maker
+test_passport_maker_SOURCES = test_passport_maker.c
+test_passport_maker_LDADD = $(LDADD_APB) 
+endif
+
+if BUILD_passport_storer_ASP
+check_PROGRAMS += test_storer
+test_storer_SOURCES = test_storer.c
+test_storer_LDADD = $(LDADD_APB)
+endif
+
+if BUILD_passport_retriever_ASP
+check_PROGRAMS += test_retriever
+test_retriever_SOURCES = test_retriever.c
+test_retriever_LDADD = $(LDADD_APB)
+endif
+
 if BUILD_listdirectoryservice_ASP
 check_PROGRAMS += test_listdirectoryservice
 test_listdirectoryservice_SOURCES = test_listdirectoryservice.c
@@ -114,7 +132,6 @@ check_PROGRAMS += test_procroot
 test_procroot_SOURCES = test_procroot.c
 test_procroot_LDADD = $(LDADD_APB)
 endif
-
 
 if BUILD_proc_namespaces_ASP
 check_PROGRAMS += test_proc_namespaces_asp

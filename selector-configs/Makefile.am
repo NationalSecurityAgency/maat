@@ -21,5 +21,7 @@ dist_selector_DATA = selector.xml \
 	userspace-selector.xml \
 	verified-us-selector.xml \
 	quiot-selector.xml \
-	complex-att-selector.xml
+	complex-att-selector.xml\
+	passport-selector.xml\
+	passport-maker-selector.xml
 

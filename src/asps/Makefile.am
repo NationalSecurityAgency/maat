@@ -229,6 +229,11 @@ if BUILD_procroot_ASP
 suid_asp_PROGRAMS    += procrootasp
 endif
 
+if BUILD_passport_maker_ASP
+asp_PROGRAMS    += passport_maker_asp
+passport_maker_asp_SOURCES = passport_maker_asp.c
+endif
+
 if BUILD_whitelist_ASP
 asp_PROGRAMS    += whitelist
 aspinfo_DATA    += datafiles/modules.whitelist \
@@ -306,10 +311,27 @@ endif
 
 AM_CPPFLAGS = -O2 -DDEFAULT_ASP_DIR="\"$(ASP_INFO_DIR)\"" \
 		-I$(top_srcdir)/src/types \
-		-I$(top_srcdir)/src $(LIBMAAT_CFLAGS)
+		-I$(top_srcdir)/src $(LIBMAAT_CFLAGS) \
+		-DDEFAULT_MAAT_MONGO_LOC="\"mongodb://localhost:27017/\"" \
+		-DDEFAULT_MONGO_DB="\"maat\""
+
 AM_LDFLAGS = -L../types
 
 LIBS = -lmaat_basetypes $(LIBMAAT_ASP_LIBS) -ldl -lelf
+
+if BUILD_passport_retriever_ASP
+AM_CPPFLAGS  += -Wno-error=conversion -Wno-sign-conversion $(LIBMONGOC_CFLAGS) $(LIBBSON_CFLAGS)
+asp_PROGRAMS    += passport_retriever_asp
+passport_retriever_asp_SOURCES = passport_retriever_asp.c
+passport_retriever_asp_LDADD = $(LIBMONGOC_LIBS) $(LIBSON_LIBS) $(LDADD_APB)
+endif
+
+if BUILD_passport_storer_ASP
+AM_CPPFLAGS  += -Wno-error=conversion -Wno-sign-conversion $(LIBMONGOC_CFLAGS) $(LIBBSON_CFLAGS)
+asp_PROGRAMS    += passport_storer_asp
+passport_storer_asp_SOURCES = passport_storer_asp.c
+passport_storer_asp_LDADD = $(LIBMONGOC_LIBS) $(LIBSON_LIBS) $(LDADD_APB)
+endif
 
 if ENABLE_TESTS
 AM_CPPFLAGS += -DENABLE_TESTS

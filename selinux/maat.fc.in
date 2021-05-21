@@ -87,6 +87,9 @@
 @aspdir@/got_measure          	      -- gen_context(system_u:object_r:got_measure_asp_exe_t)
 @aspdir@/send_execute_asp          	-- gen_context(system_u:object_r:send_execute_asp_exe_t)
 @aspdir@/send_request_asp          	-- gen_context(system_u:object_r:send_request_asp_exe_t)
+#@aspdir@/passport_retriever_asp          	-- gen_context(system_u:object_r:passport_retriever_asp_exe_t)
+#@aspdir@/passport_storer_asp          	-- gen_context(system_u:object_r:passport_storer_asp_exe_t)
+@aspdir@/passport_maker_asp          	-- gen_context(system_u:object_r:passport_maker_asp_exe_t)
 #
 # APB implementations
 #
@@ -101,4 +104,9 @@
 @apbdir@/kim_apb                  -- gen_context(system_u:object_r:kim_apb_exe_t)
 @apbdir@/userspace_appraiser_apb	-- gen_context(system_u:object_r:userspace_appraiser_apb_exe_t)
 @apbdir@/hashfile_apb                  -- gen_context(system_u:object_r:hashfile_apb_exe_t)
+#@apbdir@/passport_ret_apb                  -- gen_context(system_u:object_r:passport_ret_apb_exe_t)
+#@apbdir@/passport_appraiser_apb                  -- gen_context(system_u:object_r:passport_appraiser_apb_exe_t)
+@apbdir@/request_passport_apb                  -- gen_context(system_u:object_r:request_passport_apb_exe_t)
+#@apbdir@/passport_storage_apb                  -- gen_context(system_u:object_r:passport_storage_apb_exe_t)
+@apbdir@/passport_userspace_appraiser_apb                  -- gen_context(system_u:object_r:passport_userspace_appraiser_apb_exe_t)
 

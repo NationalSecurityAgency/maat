@@ -297,26 +297,15 @@ Test_client and AM_0 will be running on VM_0, while AM_2 and AM_1 are on VM_1:
    |______________________|    |_______________________|
 
 
-Put both VMs on an internal network, set their IPs, open the correct port for 
-each, and add the maat user by running the following commands on each machine:
+Directions to set up the VMs are located in the :ref:`Setup Multirealms Guide <setup_multirealms>`.
 
 On VM_0 (appraising machine)
 
-.. code-block:: bash
-
-    sudo ifconfig enp0s3 192.168.0.10 netmask 255.255.255.0 \
-         broadcast 192.168.0.255
-    firewall-cmd --zone=public --add-port=2342/tcp
+   Set IP to 192.168.0.10 and open port 2342
 
 On VM_1 (attesting machine)
 
-.. code-block:: bash
-
-    sudo ifconfig enp0s3 192.168.0.7 netmask 255.255.255.0 \
-         broadcast 192.168.0.255
-    firewall-cmd --zone=public --add-port=2342/tcp
-
-Make sure the VMs are able to ping each other at these IPs.
+   Set IP to 192.168.0.7 and open port 2342
 
 Start the AMs and finally the test client by running the following commands for
 each :
@@ -358,11 +347,11 @@ You should see movement from each AM corresponding to the expected actions in
 the diagram above. A `<result>PASS</result>` in the test client's terminal
 indicates success.
 
-Note: if you restart your machines, the ports opened in the commands above will
-need to be reopened (can add `--permanent` flag to avoid this; see 
-`firewall-cmd` man pages).
 
 For a demonstration for the usage of Maat in a Complex Attestation scenario,
 please continue to the
 :ref:`Complex Attestation Tutorial<complex_attestation_tutorial>`.
+For a demonstration for the passport use case in Maat,
+please continue to the
+:ref:`Passport Creation Tutorial<passport_creation_tutorial>`.
 

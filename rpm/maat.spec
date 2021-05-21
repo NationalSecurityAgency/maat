@@ -26,7 +26,8 @@ BuildRequires: autoconf, automake, libtool, glib2-devel, libxml2-devel
 BuildRequires: openssl-devel, libuuid-devel, make, python3-devel
 BuildRequires: selinux-policy-devel, libselinux
 BuildRequires: elfutils-devel, libcap-devel, json-c-devel
-Requires:       libcap, json-c
+BuildRequires: mongo-c-driver
+Requires:       libcap, json-c, mongo-c-driver-devel, libbson
 %{?el7:Requires: systemd}
 Provides:       maat
 
@@ -208,6 +209,8 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/apbs/complex_att_apb
 %{_libexecdir}/maat/apbs/forwarding_apb
 %{_libexecdir}/maat/apbs/no_op_apb
+%{_libexecdir}/maat/apbs/request_passport_apb
+%{_libexecdir}/maat/apbs/passport_userspace_appraiser_apb
 # ASPs, enumerated explicitly because some need suid
 # %{_libexecdir}/maat/asps/*
 %{_libexecdir}/maat/asps/blacklist
@@ -253,6 +256,7 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/asps/encrypt_asp
 %{_libexecdir}/maat/asps/create_contract_asp
 %{_libexecdir}/maat/asps/send_asp
+%{_libexecdir}/maat/asps/passport_maker_asp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/proc_namespaces_asp
 %{_libexecdir}/maat/asps/kernel_msmt_asp
 %{_datadir}/maat/selector-configurations/*

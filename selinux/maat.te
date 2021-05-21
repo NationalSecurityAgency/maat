@@ -688,6 +688,7 @@ allow send_request_asp_t attestmgr_port_t:udp_socket { rw_socket_perms };
 allow send_request_asp_t attestmgr_t:unix_stream_socket { connectto rw_socket_perms };
 allow send_request_asp_t self:tcp_socket { create rw_socket_perms name_connect };
 allow send_request_asp_t complex_att_apb_t:fifo_file write;
+allow send_request_asp_t request_passport_apb_t:fifo_file write;
 allow send_request_asp_t net_conf_t:file { getattr open read };
 # XXX the attester should be updated to make this a maat-specific type
 allow send_request_asp_t tmp_t:sock_file { rw_file_perms };
@@ -780,6 +781,29 @@ domain_getattr_all_domains(got_measure_asp_t)
 domain_search_all_domains_state(got_measure_asp_t)
 domain_read_all_domains_state(got_measure_asp_t)
 
+# Passport Maker ASP
+type passport_maker_asp_t;
+type passport_maker_asp_exe_t;
+define_asp(passport_maker_asp_t, passport_maker_asp_exe_t);
+
+# Passport Retriever ASP
+#type passport_retriever_asp_t;
+#type passport_retriever_asp_exe_t;
+#define_asp(passport_retriever_asp_t, passport_retriever_asp_exe_t);
+#allow passport_retriever_asp_t attestmgr_t:tcp_socket { rw_socket_perms };
+#allow passport_retriever_asp_t attestmgr_t:udp_socket { rw_socket_perms };
+#allow passport_retriever_asp_t attestmgr_t:unix_stream_socket { connectto rw_socket_perms };
+# XXX the attester should be updated to make this a maat-specific type
+allow send_request_asp_t tmp_t:sock_file { rw_file_perms };
+
+# Passport Storer ASP
+#type passport_storer_asp_t;
+#type passport_storer_asp_exe_t;
+#define_asp(passport_storer_asp_t, passport_storer_asp_exe_t);
+#allow passport_storer_asp_t attestmgr_t:tcp_socket { rw_socket_perms };
+#allow passport_storer_asp_t attestmgr_t:udp_socket { rw_socket_perms };
+#allow passport_storer_asp_t attestmgr_t:unix_stream_socket { rw_socket_perms };
+
 # Userspace APB
 type userspace_apb_t;
 type userspace_apb_exe_t;
@@ -870,6 +894,43 @@ allow_apb_asp(complex_att_apb_t, send_asp_exe_t, send_asp_t)
 allow_apb_asp(complex_att_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_t)
 allow_apb_asp(complex_att_apb_t, encrypt_asp_exe_t, encrypt_asp_t)
 
+# Request Passport APB
+type request_passport_apb_t;
+type request_passport_apb_exe_t;
+define_apb(request_passport_apb_t, request_passport_apb_exe_t)
+allow_apb_asp(request_passport_apb_t, send_request_asp_exe_t, send_request_asp_t)
+allow_apb_asp(request_passport_apb_t, compress_asp_exe_t, compress_asp_t)
+allow_apb_asp(request_passport_apb_t, encrypt_asp_exe_t, encrypt_asp_t)
+allow_apb_asp(request_passport_apb_t, create_contract_asp_exe_t, create_contract_asp_t)
+allow_apb_asp(request_passport_apb_t, send_asp_exe_t, send_asp_t)
+allow_apb_asp(request_passport_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_t)
+
+# Passport Ret APB
+#type passport_ret_apb_t;
+#type passport_ret_apb_exe_t;
+#define_apb(passport_ret_apb_t, passport_ret_apb_exe_t)
+#allow_apb_asp(passport_ret_apb_t, passport_retriever_asp_exe_t, passport_retriever_asp_t)
+
+# Passport Storage APB
+#type passport_storage_apb_t;
+#type passport_storage_apb_exe_t;
+#define_apb(passport_storage_apb_t, passport_storage_apb_exe_t)
+#apb_metadata_reader(passport_storage_apb_t)
+#allow passport_storage_apb_t passport_storage_apb_t:fifo_file {rw_file_perms};
+#allow_apb_asp(passport_storage_apb_t, passport_storer_asp_exe_t, passport_storer_asp_t)
+
+# Passport Appraiser APB
+#require {
+#	type attestmgr_t;
+#}
+#type passport_appraiser_apb_t;
+#type passport_appraiser_apb_exe_t;
+#define_apb(passport_appraiser_apb_t, passport_appraiser_apb_exe_t)
+#apb_metadata_reader(passport_appraiser_apb_t)
+#allow passport_appraiser_apb_t passport_appraiser_apb_t:fifo_file {rw_file_perms};
+
+gen_require(`type user_tmp_t;')
+
 # Userspace Appraiser APB
 require {
 	type attestmgr_t;
@@ -891,5 +952,30 @@ allow_apb_asp(userspace_appraiser_apb_t, system_appraise_asp_exe_t, system_appra
 allow_spawn_any_apb(userspace_appraiser_apb_t)
 allow_apb_asp(userspace_appraiser_apb_t, kim_apb_exe_t, kim_apb_t)
 allow_apb_asp(userspace_appraiser_apb_t, userspace_appraiser_apb_exe_t, userspace_appraiser_apb_t)
+
+gen_require(`type user_tmp_t;')
+
+# Passport Userspace Appraiser APB
+require {
+	type attestmgr_t;
+}
+type passport_userspace_appraiser_apb_t;
+type passport_userspace_appraiser_apb_exe_t;
+define_apb(passport_userspace_appraiser_apb_t, passport_userspace_appraiser_apb_exe_t)
+apb_metadata_reader(passport_userspace_appraiser_apb_t)
+allow passport_userspace_appraiser_apb_t passport_userspace_appraiser_apb_t:fifo_file {rw_file_perms};
+
+allow_apb_asp(passport_userspace_appraiser_apb_t, blacklist_asp_exe_t, blacklist_asp_t)
+allow_apb_asp(passport_userspace_appraiser_apb_t, whitelist_asp_exe_t, whitelist_asp_t)
+allow_apb_asp(passport_userspace_appraiser_apb_t, dpkg_check_asp_exe_t, dpkg_check_asp_t)
+allow_apb_asp(passport_userspace_appraiser_apb_t, system_appraise_asp_exe_t, system_appraise_asp_t)
+allow_apb_asp(passport_userspace_appraiser_apb_t, passport_maker_asp_exe_t, passport_maker_asp_t)
+
+# this is needed because the passport userspace appraiser launches 'subordinate' apbs. 
+# if we want to continue to allow this model of execution, should replace
+# with an allow_spawn_apb(passport_usespace_appraiser_apb_t, kim_apb_t), etc.
+allow_spawn_any_apb(passport_userspace_appraiser_apb_t)
+allow_apb_asp(passport_userspace_appraiser_apb_t, kim_apb_exe_t, kim_apb_t)
+allow_apb_asp(passport_userspace_appraiser_apb_t, passport_userspace_appraiser_apb_exe_t, passport_userspace_appraiser_apb_t)
 
 gen_require(`type user_tmp_t;')

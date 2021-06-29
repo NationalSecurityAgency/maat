@@ -307,7 +307,7 @@ static int create_msmt_contract(char *workdir, char *certfile,
     xmlDocDumpMemory(doc, &response, &response_int);
 
     if(response_int > 0) {
-        response_size = (size_t)response_int;
+        response_size = (size_t)(response_int + 1); // include the null terminator
         ret = 0;
     } else {
         free(response);

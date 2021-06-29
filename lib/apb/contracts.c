@@ -734,7 +734,7 @@ int receive_measurement_contract(int chan, struct scenario *scen, int32_t max_si
                               MAAT_APB_PEER_TIMEOUT, max_size_supported);
 
     if(status != 0 || eof_encountered != 0 || bytes_read != tmpsize) {
-        dlog(0, "Failed to read measurement contract\n");
+        dlog(0, "Failed to read measurement contract, status=%d\n", status);
         goto error;
     }
 

@@ -531,7 +531,7 @@ measurement_graph *parse_measurement_graph(char *s, size_t size)
     node_map_capacity = 64;
 
     /* FIXME: we should do schema validation here */
-    if((doc = xmlReadMemory(s, (int)size, NULL, NULL, 0)) == NULL) {
+    if((doc = xmlReadMemory(s, (int)size, NULL, NULL, XML_PARSE_HUGE)) == NULL) {
         dlog(1, "Error Parsing MG: doc is null\n");
     }
 

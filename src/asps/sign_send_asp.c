@@ -489,7 +489,7 @@ static int future_send_asp(int peerchan, char *buf, size_t buf_size)
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(6, "IN sign_send ASP MEASURE\n");
+    dlog(4, "IN sign_send ASP MEASURE\n");
 
     // These all come in command line
     measurement_graph *graph  = NULL;
@@ -585,7 +585,6 @@ int asp_measure(int argc, char *argv[])
                   1, 0,
                   &response, &response_size);
     }
-
 
     if(ret_val < 0) {
         dlog(0, "Error: Failed to create signed measurement contract\n");

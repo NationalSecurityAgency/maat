@@ -120,7 +120,7 @@ int maat_read(int chan, char *buf,
     }
 
     if(check_nonblocking(chan) <= 0) {
-        dlog(2, "Write channel %d is set to blocking instead of non blocking\n", chan);
+        dlog(2, "Read channel %d is set to blocking instead of non blocking\n", chan);
         return -EINVAL;
     }
 
@@ -208,7 +208,7 @@ int maat_read_sz_buf(int chan, char **buf,
     }
 
     if(check_nonblocking(chan) <= 0) {
-        dlog(2, "Write channel %d is set to blocking instead of non blocking\n", chan);
+        dlog(2, "Read channel %d is set to blocking instead of non blocking\n", chan);
         return -EINVAL;
     }
 
@@ -221,11 +221,12 @@ int maat_read_sz_buf(int chan, char **buf,
     dlog(DEBUG_MAAT_IO_LEVEL, "reading buffer size\n");
     if((res = maat_read(chan, (char*)&sizeval, sizeof(uint32_t), &bread,
                         eof_encountered, timeout_secs)) != 0) {
-        dlog(0, "failed to read size: %s\n", strerror(errno));
+        dlog(0, "Failed to read size: %s\n", strerror(errno));
         return res;
     }
 
     if(*eof_encountered != 0) {
+        dlog(2, "Encountered EOF during read\n");
         return 0;
     }
 
@@ -243,9 +244,9 @@ int maat_read_sz_buf(int chan, char **buf,
     sizeval      = ntohl(sizeval);
 
     /* Check that the size of the message is less than max_size */
-    dlog(7, "DEBUG: size read from stream: %d. Max size is %d\n", sizeval, max_size);
+    dlog(4, "DEBUG: size read from stream: %d. Max size is %d\n", sizeval, max_size);
     if(sizeval > max_size) {
-        dlog(0, "Stream size exceeds maximum size\n");
+        dlog(1, "Stream size exceeds maximum size\n");
         return -EMSGSIZE;
         // Alternatively could read max_size below instead of quitting out here
     }
@@ -334,7 +335,7 @@ int maat_write(int chan, const unsigned char *buf,
         errno = 0;
         bytes_written_tmp = write(chan, buf, bufsize);
         if(bytes_written_tmp < 0 && errno != EAGAIN) {
-            dlog(0, "Error when writing to maat channel: %d\n", rc);
+            dlog(0, "Error when writing to maat channel: %d:%s\n", errno, strerror(errno));
             return -errno;
         }
 

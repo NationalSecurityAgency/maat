@@ -173,9 +173,9 @@ int strip(const char *str, int (*fun_ptr)(int), char **out);
 int strip_whitespace(const char *str, char **out);
 
 int rmrf(char *path);
-int is_reg(const char *filename);
-int is_dir(const char *dirname);
-int is_exe(const char *exename);
+int path_is_reg(const char *filename);
+int path_is_dir(const char *dirname);
+int path_is_exe(const char *exename);
 int file_exists(const char *filename);
 char *file_one_line_to_str(const char *filename);
 int runcmd(const char *cmd, char **sout, char **serr);

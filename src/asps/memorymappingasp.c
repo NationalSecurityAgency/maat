@@ -358,7 +358,7 @@ static int add_file_node(measurement_graph *graph, node_id_t process_node,
         asp_logwarn("Failed to add mappings.files edge to process node\n");
     }
 
-    if (is_reg(sf_addr->filename)) {
+    if (path_is_reg(sf_addr->filename)) {
         if((rc = measurement_graph_add_edge(graph, process_node, "mappings.reg_files",
                                             tmpnode, &edge)) < 0) {
             asp_logwarn("Failed to add mappings.files edge to process node\n");

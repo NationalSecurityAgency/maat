@@ -560,7 +560,7 @@ int file_exists(const char *filename)
     return 1;
 }
 
-int is_dir(const char *dirname)
+int path_is_dir(const char *dirname)
 {
     int ret;
     struct stat stbuf;
@@ -573,7 +573,7 @@ int is_dir(const char *dirname)
     return 1;
 }
 
-int is_reg(const char *filename)
+int path_is_reg(const char *filename)
 {
     int ret;
     struct stat stbuf;
@@ -586,7 +586,7 @@ int is_reg(const char *filename)
     return 1;
 }
 
-int is_exe(const char *exename)
+int path_is_exe(const char *exename)
 {
     int ret;
     struct stat stbuf;

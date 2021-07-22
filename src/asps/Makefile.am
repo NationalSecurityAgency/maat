@@ -29,6 +29,20 @@ asp_PROGRAMS=
 suid_asp_PROGRAMS=
 noinst_LTLIBRARIES=
 
+if BUILD_iot_uart_ASP
+asp_PROGRAMS += iot_uart_asp
+iot_uart_asp_SOURCES = iot_uart_asp.c libiota.c libiota.h libiota_helper.h \
+                   libiota_helper.c iota_certs.h iota_certs.c
+iot_uart_asp_LDADD   = $(LIBMAAT_ASP_LIBS) $(OPENSSL_LIBS) -lssl -lcrypto 
+endif
+
+if BUILD_iot_appraiser_ASP
+asp_PROGRAMS += iot_appraiser_asp
+iot_appraiser_asp_SOURCES = iot_appraiser_asp.c libiota.c libiota.h libiota_helper.h \
+                   libiota_helper.c iota_certs.h iota_certs.c
+iot_appraiser_asp_LDADD  = $(LIBMAAT_ASP_LIBS) $(OPENSSL_LIBS) -lssl -lcrypto
+endif
+
 if BUILD_procopenfiles_ASP
 suid_asp_PROGRAMS += procopenfileasp
 procopenfileasp_SOURCES = procopenfileasp.c procopenfileasp.h

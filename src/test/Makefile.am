@@ -81,6 +81,18 @@ test_leastpriv_asps_LDADD = $(LDADD_APB)
 test_contract_SOURCES			= test_contract.c
 test_contract_LDADD = $(LDADD_APB)
 
+if BUILD_iot_uart_ASP 
+check_PROGRAMS += test_libiota
+test_libiota_SOURCES				= test_libiota.c \
+						  ../asps/libiota.c \
+                                                  ../asps/libiota.h \
+                                                  ../asps/libiota_helper.h \
+                                                  ../asps/libiota_helper.c \
+                                                  ../asps/iota_certs.h \
+                                                  ../asps/iota_certs.c
+test_libiota_LDADD = $(LDADD_APB)
+endif
+
 if BUILD_procenv_ASP
 check_PROGRAMS += test_procenv
 test_procenv = test_procenv.c

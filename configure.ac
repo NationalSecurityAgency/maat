@@ -18,7 +18,7 @@
 AC_INIT([maat], [1.2], [APL_Maat_Developers@listserv.jhuapl.edu])
 AC_CONFIG_AUX_DIR([build-aux])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
-AM_INIT_AUTOMAKE([foreign -Wall tar-pax])
+AM_INIT_AUTOMAKE([foreign -Wall tar-pax subdir-objects])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AC_CONFIG_MACRO_DIR([m4])
 AC_PROG_LIBTOOL
@@ -258,6 +258,8 @@ AS_IF([test "x$build_$1_asp" = "xyes"], [AC_DEFINE([BUILD_$1_ASP], [1], [Build t
 AC_DEFUN([IF_ASP],
 	 [AS_IF([test "x$build_$1_asp" = "xyes"], [$2], m4_default([$3],[]))])
 
+EXTRA_ASP(iot_uart)
+EXTRA_ASP(iot_appraiser)
 DEFAULT_ASP(procopenfiles)
 DEFAULT_ASP(hashservice)
 DEFAULT_ASP(hashfileservice)
@@ -356,6 +358,8 @@ AS_IF([test "x$build_$1_apb" = "xyes"], [AC_DEFINE([BUILD_$1_APB], [1], [Build t
 AC_DEFUN([IF_APB],
 	 [AS_IF([test "x$build_$1_apb" = "xyes"], [$2], m4_default([$3],[]))])
 
+EXTRA_APB([iot_uart])
+EXTRA_APB([iot_appraiser])
 DEFAULT_APB([process_measurement])
 DEFAULT_APB([userspace])
 DEFAULT_APB([appraiser])

@@ -1,0 +1,22 @@
+#! armclang --target=arm-arm-none-eabi -march=armv8-m.base -E -xc
+#define SCATTER_FILE
+#include "..\..\Secure\partition_M2351.h"
+
+LR_ROM 0x0 FMC_SECURE_ROM_SIZE
+{
+    EXE_ROM +0
+    {
+        *.o(RESET, +First)
+        *(+RO)
+    }
+
+    NSC_ROM +0
+    {
+        *(Veneer$$CMSE)
+    }
+
+    EXE_RAM 0x20000000 SCU_SECURE_SRAM_SIZE
+    {
+        *(+RW, +ZI)
+    }
+}

@@ -249,6 +249,7 @@ function pretty_print_results(cell) {
  * selected when clicked on.
  */
 function build_table(title, table_id, headers, content, clickable) {
+
     if (headers == null) { headers = []; }
     div = document.createElement('div');
 
@@ -287,21 +288,23 @@ function build_table(title, table_id, headers, content, clickable) {
 	for (i in headers) {
 	    col = headers[i];
 	    cell = row[col];
-
-            entry_col = document.createElement('td');
+	    	    
+	    entry_col = document.createElement('td');
 
 	    if (cell == null) { cell = ""; }
 	    if(col == "Result") {
-		if(cell == false) { 
+	        if(cell == false) { 
 		    cell = "FAIL";		    
 		    entry_row.className += "failure";
 		} else if (cell == true) {
 		    cell = "PASS";
 		    entry_row.className += "pass";
 		}
+		
 		entry_col.innerHTML = cell;		
 		entry_col.setAttribute("style", "text-align: left;");
-	    } else if (col == "Time") {
+	    }
+	    else if (col == "Time") {
 		entry_col.innerHTML = cell.split(".")[0];
 	    } else {
 		if(typeof(cell) == "object") {
@@ -311,9 +314,10 @@ function build_table(title, table_id, headers, content, clickable) {
 		    entry_col.innerHTML = cell;
 		}
 	    }
+	    
 	    entry_row.appendChild(entry_col);
 	}
-
+	
 	// Search for potential new columns
 	for (a in row) {
 	    if ((a != '_id') && (a != 'request_id') && (headers.indexOf(a) < 0)) {
@@ -341,7 +345,7 @@ function build_table(title, table_id, headers, content, clickable) {
 	table.appendChild(entry_row);
     }	 
 
-    div.appendChild(table);   
+    div.appendChild(table);
     return div;
 }
 

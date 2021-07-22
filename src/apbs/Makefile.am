@@ -145,14 +145,26 @@ endif
 
 if BUILD_kim_APB
 apb_PROGRAMS                   += kim_apb
-kim_apb_SOURCES			= kim_apb.c  $(APB_COMMON_SOURCES)
+kim_apb_SOURCES		= kim_apb.c  $(APB_COMMON_SOURCES)
 kim_apb_LDADD			= $(AM_LIBADD)
+endif
+
+if BUILD_iot_uart_APB
+apb_PROGRAMS                   += iot_uart_apb
+iot_uart_apb_SOURCES		= iot_uart_apb.c  $(APB_COMMON_SOURCES)
+iot_uart_apb_LDADD		= $(AM_LIBADD)
+endif
+
+if BUILD_iot_appraiser_APB
+apb_PROGRAMS                   += iot_appraiser_apb
+iot_appraiser_apb_SOURCES	= iot_appraiser_apb.c  $(APB_COMMON_SOURCES)
+iot_appraiser_apb_LDADD	= $(AM_LIBADD)
 endif
 
 if BUILD_userspace_appraiser_APB
 apb_PROGRAMS			+= userspace_appraiser_apb
 userspace_appraiser_apb_SOURCES  = userspace_appraiser_apb.c
-userspace_appraiser_apb_LDADD    = $(AM_LIBADD) $(LIBMAAT_CLIENT_LIBS) $(LIBMAAT_AM_LIBS)
+userspace_appraiser_apb_LDADD    = $(AM_LIBADD)
 endif
 
 if BUILD_forwarding_APB

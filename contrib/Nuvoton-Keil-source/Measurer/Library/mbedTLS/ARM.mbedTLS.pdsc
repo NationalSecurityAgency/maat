@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package schemaVersion="1.6" xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:noNamespaceSchemaLocation="PACK.xsd">
+  <vendor>ARM</vendor>
+  <name>mbedTLS</name>
+  <description>ARM mbed Cryptographic and SSL/TLS library for Cortex-M devices</description>
+  <!-- web download link -->
+  <url>http://www.keil.com/pack/</url>
+  <releases>
+    <release version="1.6.0" date="2019-04-02">
+      Updated to mbedTLS V2.17.0
+      Removed mbedTLS.h header (not part of mbedTLS)
+      Updated platform dependency
+    </release>
+    <release version="1.5.0" date="2018-06-07">
+      Updated to mbedTLS V2.9.0
+      Updated support for MDK-Network
+    </release>
+    <release version="1.4.0" date="2018-04-20">
+      Updated to mbedTLS V2.8.0
+      Added support for IoT Socket
+    </release>
+    <release version="1.3.1" date="2018-01-25">
+      Updated to mbedTLS V2.6.1
+      Added support for CMSIS-RTOS2
+      Added support for Cortex-M23/33 and ARMv8M
+    </release>
+    <release version="1.3.0" date="2017-10-11">
+      Updated to mbedTLS V2.6.0
+    </release>
+    <release version="1.2.0" date="2017-04-27">
+      Updated to mbedTLS V2.4.2; documentation states V2.4.1 (same as original mbedTLS documentation)
+    </release>
+    <release version="1.1.1" date="2016-11-28">
+      Removed the requirement for the 'RTE' folder being an implicit project include path (build failure MDK-ARM 5.22 or greater)
+    </release>
+    <release version="1.1.0" date="2016-05-09">
+      Updated to mbedTLS V2.2.1
+    </release>
+    <release version="1.0.0">
+      Initial release based on mbedTLS V2.1.2
+    </release>
+  </releases>
+  <conditions>
+    <condition id="Cortex-M Device">
+      <description>Cortex-M processor based device: Cortex-M0, Cortex-M0+, Cortex-M3, Cortex-M4, Cortex-M7, Cortex-M23, Cortex-M33, SC000 or SC3000</description>
+      <accept Dcore="Cortex-M0"/>
+      <accept Dcore="Cortex-M0+"/>
+      <accept Dcore="Cortex-M3"/>
+      <accept Dcore="Cortex-M4"/>
+      <accept Dcore="Cortex-M7"/>
+      <accept Dcore="Cortex-M23"/>
+      <accept Dcore="Cortex-M33"/>
+      <accept Dcore="ARMV8MBL"/>
+      <accept Dcore="ARMV8MML"/>
+      <accept Dcore="SC000"/>
+      <accept Dcore="SC300"/>
+    </condition>
+    <condition id="CMSIS RTOS">
+      <description>CMSIS RTOS (API1 or API2)</description>
+      <require Cclass="CMSIS" Cgroup="CORE" Cversion="5.0.1"/>
+      <accept  Cclass="CMSIS" Cgroup="RTOS"/>
+      <accept  Cclass="CMSIS" Cgroup="RTOS2"/>
+    </condition>
+    <condition id="MDK-Pro Network">
+      <description>MDK-Pro Network CORE component</description>
+      <require Cbundle="MDK-Pro" Cclass="Network" Cgroup="CORE" Cversion="7.9.0"/>
+    </condition>
+    <condition id="IoT Socket">
+      <description>IoT Socket component</description>
+      <require Cclass="IoT Utility" Cgroup="Socket"/>
+      <deny Cbundle="MDK-Pro" Cclass="Network" Cgroup="CORE"/>
+    </condition>
+    <condition id="Generic Network">
+      <description>Generic Network CORE component</description>
+      <deny Cbundle="MDK-Pro" Cclass="Network" Cgroup="CORE"/>
+      <deny Cclass="IoT Utility" Cgroup="Socket"/>
+    </condition>
+  </conditions>
+  <components>
+    <component Cclass="Security" Cgroup="mbed TLS" Cversion="2.17.0" condition="Cortex-M Device">
+      <description>ARM mbed Cryptographic and SSL/TLS library</description>
+      <RTE_Components_h>
+        #define RTE_Security_mbedTLS            /* Security mbed TLS */
+      </RTE_Components_h>
+      <files>
+        <file category="doc"     name="doxygen/html/index.html"/>
+        <file category="include" name="include/"/>
+        <file category="header"  name="configs/mbedTLS_config.h" attr="config" version="2.17.0"/>
+        <file category="source"  name="library/aes.c"/>
+   <!-- <file category="source"  name="library/aesni.c"/> -->
+        <file category="source"  name="library/arc4.c"/>
+        <file category="source"  name="library/aria.c"/>
+        <file category="source"  name="library/asn1parse.c"/>
+        <file category="source"  name="library/asn1write.c"/>
+        <file category="source"  name="library/base64.c"/>
+        <file category="source"  name="library/bignum.c"/>
+        <file category="source"  name="library/blowfish.c"/>
+        <file category="source"  name="library/camellia.c"/>
+        <file category="source"  name="library/ccm.c"/>
+        <file category="source"  name="library/chacha20.c"/>
+        <file category="source"  name="library/chachapoly.c"/>
+        <file category="source"  name="library/certs.c"/>
+        <file category="source"  name="library/cipher.c"/>
+        <file category="source"  name="library/cipher_wrap.c"/>
+        <file category="source"  name="library/cmac.c"/>
+        <file category="source"  name="library/ctr_drbg.c"/>
+        <file category="source"  name="library/debug.c"/>
+        <file category="source"  name="library/des.c"/>
+        <file category="source"  name="library/dhm.c"/>
+        <file category="source"  name="library/ecdh.c"/>
+        <file category="source"  name="library/ecdsa.c"/>
+        <file category="source"  name="library/ecjpake.c"/>
+        <file category="source"  name="library/ecp.c"/>
+        <file category="source"  name="library/ecp_curves.c"/>
+        <file category="source"  name="library/entropy.c"/>
+        <file category="source"  name="library/entropy_poll.c"/>
+        <file category="source"  name="MDK/library/entropy_poll_hw.c" condition="CMSIS RTOS"/>
+        <file category="source"  name="library/error.c"/>
+        <file category="source"  name="library/gcm.c"/>
+        <file category="source"  name="library/havege.c"/>
+        <file category="source"  name="library/hkdf.c"/>
+        <file category="source"  name="library/hmac_drbg.c"/>
+        <file category="source"  name="library/md.c"/>
+        <file category="source"  name="library/md_wrap.c"/>
+        <file category="source"  name="library/md2.c"/>
+        <file category="source"  name="library/md4.c"/>
+        <file category="source"  name="library/md5.c"/>
+        <file category="source"  name="library/memory_buffer_alloc.c"/>
+        <file category="source"  name="library/net_sockets.c"                condition="Generic Network"/>
+        <file category="source"  name="MDK/library/mw_network/net_sockets.c" condition="MDK-Pro Network"/>
+        <file category="source"  name="MDK/library/iot_socket/net_sockets.c" condition="IoT Socket"/>
+        <file category="source"  name="library/nist_kw.c"/>
+        <file category="source"  name="library/oid.c"/>
+   <!-- <file category="source"  name="library/padlock.c"/> -->
+        <file category="source"  name="library/pem.c"/>
+        <file category="source"  name="library/pk.c"/>
+        <file category="source"  name="library/pk_wrap.c"/>
+        <file category="source"  name="library/pkcs5.c"/>
+        <file category="source"  name="library/pkcs11.c"/>
+        <file category="source"  name="library/pkcs12.c"/>
+        <file category="source"  name="library/pkparse.c"/>
+        <file category="source"  name="library/pkwrite.c"/>
+        <file category="source"  name="library/platform.c"/>
+        <file category="source"  name="library/platform_util.c"/>
+        <file category="source"  name="library/poly1305.c"/>
+        <file category="source"  name="library/ripemd160.c"/>
+        <file category="source"  name="library/rsa.c"/>
+        <file category="source"  name="library/rsa_internal.c"/>
+        <file category="source"  name="library/sha1.c"/>
+        <file category="source"  name="library/sha256.c"/>
+        <file category="source"  name="library/sha512.c"/>
+        <file category="source"  name="library/ssl_cache.c"/>
+        <file category="source"  name="library/ssl_ciphersuites.c"/>
+        <file category="source"  name="library/ssl_cli.c"/>
+        <file category="source"  name="library/ssl_cookie.c"/>
+        <file category="source"  name="library/ssl_srv.c"/>
+        <file category="source"  name="library/ssl_ticket.c"/>
+        <file category="source"  name="library/ssl_tls.c"/>
+        <file category="source"  name="library/threading.c"/>
+        <file category="source"  name="library/timing.c"/>
+        <file category="source"  name="library/version.c"/>
+        <file category="source"  name="library/version_features.c"/>
+        <file category="source"  name="library/x509.c"/>
+        <file category="source"  name="library/x509_create.c"/>
+        <file category="source"  name="library/x509_crl.c"/>
+        <file category="source"  name="library/x509_crt.c"/>
+        <file category="source"  name="library/x509_csr.c"/>
+        <file category="source"  name="library/x509write_crt.c"/>
+        <file category="source"  name="library/x509write_csr.c"/>
+        <file category="source"  name="library/xtea.c"/>
+      </files>
+    </component>
+  </components>
+  <examples>
+    <example name="ssl_client1" doc="Abstract.txt" folder="MDK/examples/ssl_client1">
+      <description>Simple SSL/TLS client</description>
+      <board name="MCB1800" vendor="Keil"/>
+      <project>
+        <environment name="uv" load="ssl_client1.uvprojx"/>
+      </project>
+      <attributes>
+        <component Cclass="Security" Cgroup="mbed TLS"/>
+        <category>mbed TLS</category>
+        <keyword>SSL</keyword>
+      </attributes>
+    </example>
+    <example name="ssl_client1" doc="Abstract.txt" folder="MDK/examples/ssl_client1">
+      <description>Simple SSL/TLS client</description>
+      <board name="MCB4300" vendor="Keil"/>
+      <project>
+        <environment name="uv" load="ssl_client1.uvprojx"/>
+      </project>
+      <attributes>
+        <component Cclass="Security" Cgroup="mbed TLS"/>
+        <category>mbed TLS</category>
+        <keyword>SSL</keyword>
+      </attributes>
+    </example>
+    <example name="ssl_server" doc="Abstract.txt" folder="MDK/examples/ssl_server">
+      <description>SSL/TLS server</description>
+      <board name="MCB1800" vendor="Keil"/>
+      <project>
+        <environment name="uv" load="ssl_server.uvprojx"/>
+      </project>
+      <attributes>
+        <component Cclass="Security" Cgroup="mbed TLS"/>
+        <category>mbed TLS</category>
+        <keyword>SSL</keyword>
+      </attributes>
+    </example>
+    <example name="ssl_server" doc="Abstract.txt" folder="MDK/examples/ssl_server">
+      <description>SSL/TLS server</description>
+      <board name="MCB4300" vendor="Keil"/>
+      <project>
+        <environment name="uv" load="ssl_server.uvprojx"/>
+      </project>
+      <attributes>
+        <component Cclass="Security" Cgroup="mbed TLS"/>
+        <category>mbed TLS</category>
+        <keyword>SSL</keyword>
+      </attributes>
+    </example>
+  </examples>
+</package>

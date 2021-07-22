@@ -65,7 +65,7 @@ void setup(void)
 
 void teardown(void)
 {
-  destroy_measurement_graph(g_graph);
+    destroy_measurement_graph(g_graph);
 }
 
 START_TEST(test_gotmeasure)

@@ -115,7 +115,7 @@ def parse_integrity_response(response):
                         resource = child.text
 
                 if child.tag.lower() == 'result':
-                        if (child.text.lower() == "pass"):
+                 	if (child.text.lower() == "pass"):
                                 result = True
 
                 if child.tag.lower() == 'data':

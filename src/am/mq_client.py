@@ -52,7 +52,7 @@ def mq_callback(mq, method, prop, msg):
                                                         request['target_port']))
         print('Connecting to AM %s : %d' % (request['appraiser_address'],
                                                 request['appraiser_port']))
-
+                                                
         reqcon = maatclient.create_integrity_request(1, request['target_address'],
                         request['target_port'], resource=request['resource'],
                         fingerprint=request['target_fingerprint'])
@@ -108,7 +108,7 @@ def mq_callback(mq, method, prop, msg):
 
 if __name__ == '__main__':
         while True:
-                mq_conn = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+                mq_conn = pika.BlockingConnection(pika.ConnectionParameters('localhost', heartbeat=600, blocked_connection_timeout=300))
                 mq = mq_conn.channel()
                 mq.queue_declare(queue='maat_requests')
                 mq.queue_declare(queue='maat_results')

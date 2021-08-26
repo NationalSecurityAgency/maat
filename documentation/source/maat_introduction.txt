@@ -1,0 +1,129 @@
+Introduction
+************
+
+.. Copyright
+
+   Copyright 2020 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+   
+.. currentmodule:: maat
+
+
+Trust
+=====
+
+Trust decisions are common in today’s computing environments. For example, when logging into an online banking site, users must trust the integrity of both their local software and the software running the bank’s website. When outsourcing computation to a cloud computing provider, users must trust that the cloud infrastructure will faithfully execute their software without allowing third parties to interfere with or observe their actions. When a client joins a network, a mutual integrity decision is made: the user generally must trust the integrity of the services provided by the network, such as DNS configuration, and the network operator generally trusts the client and grants access to internal services, such as a local file sharing server that would not be addressable from the global internet. No single set of integrity evidence can be used to justify trust in all of these scenarios. In each case, a balance must be struck between the trusting party’s desire for a complete evaluation and the trusted party’s desire to limit disclosure of sensitive data.
+
+
+.. _PAM: http://tulip.bu.ac.th/~nattakorn.c/ldap_radius/pam.pdf
+
+.. |cp| raw:: latex
+
+   \clearpage
+
+.. |tab| raw:: html
+
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+What is Maat?
+=============
+
+Maat is named after the Egyptian goddess of truth, balance and justice.
+Maat lives up to this moniker by providing a framework and API
+for policy-driven selection of measurement utilities and attestation protocols
+suitable for a wide variety of common scenarios.
+The framework is portable, so Maat can run on all the components of a system
+that require trust decisions about other system components.
+
+|cp|
+
+
+Example Usage
+=============
+
+These example scenarios demonstrate how Maat can provide security protection to systems we use every day.
+
+
+Client/Server Connection Example
+--------------------------------
+
+.. figure:: images/attestationgoals.jpg
+   :align:  center
+
+   Using Maat to establish trust for a client/server connection.
+
+The figure above shows an example use case for Maat,
+representing a bank user logging into the bank server to see their account information.
+The bank server will not allow access until it determines that the user's machine can be trusted.
+The procedure for making that trust decision is as follows:
+
+#. Authentication starts when the client requests a session with the server.
+#. The Gate Keeper intercepts the session request and launches a Maat Appraiser
+   to validate the integrity of the client machine.
+#. The Appraiser requests measurements from the client. The client's Maat instance
+   acts as an Attester, identifing through policy which measurements are possible,
+   and negotiating with the Appraiser to choose an appropriate set of measurements to take.
+#. After negotiations are complete, the Attester generates measurements for all accepted
+   requests and sends them off to the Appraiser.
+#. If the Appraiser evaluates the measurements as valid,
+   then the Appraiser forwards the session request to the Server.
+#. When the Server receives the session request,
+   it knows that the client is trustworthy,
+   so it establishes a session with the client.
+
+
+| Maat can be used to determine a trust decision on either a local machine or a remote target. In the example above, Maat components are running on both the client and server to generate a trust decision. An additional way to use Maat in this scenario is to measure and appraise the local machine by running Maat in a local attestation configuration, where all Maat components run on the target machine.
+  This lets the user know whether the local machine is in a trusted state before they enter their password or any other sensitive information.
+| :ref:`Further details about how Maat preforms local attestation can be found here <localAccessUseCase>`
+
+
+Cloud Computing Example
+-----------------------
+
+As mentioned previously, Maat can be used to establish trust between a cloud computing provider and its customers.
+An example implementation would include integrity checks on the entire cloud system to verify there is no third party interference,
+a mutual integrity check between the server and client when the client joins the network,
+and a separate integrity check before the server grants access to a particular internal service.
+
+| The Maat Appraiser, running on the cloud server,
+  will routinely ask for measurements from all targets of this system to verify
+  that they are still trustworty and have not been corrupted.
+| :ref:`Further details about how Maat performs client monitoring can be found here <clientMonitoringUseCase>`
+
+| The Maat Appraiser will also determine whether a client can be trusted when it requests access to a shared resource.
+| :ref:`Further details about how Maat decides to allow network access can be found here <networkAccessUseCase>`
+
+|cp|
+
+
+Comparison with Pluggable Authentication Modules (PAM)
+======================================================
+
+Much like Pluggable Authentication Modules (PAM_) provide a centralized policy and application programming interface (API) for authentication decisions on UNIX platforms, Maat provides a framework and API for policy-driven selection of measurement utilities and attestation protocols suitable for a wide variety of common scenarios. This centralization is critical to ensure correct administration of integrity policies and systems, rather than attempting to independently manage a multitude of disparate integrity measurement systems.
+
+Maat is extensible, providing simplified mechanisms for implementing and deploying novel measurement agents and attestation protocols. It defines a policy language, a mandatory registration procedure for measurement components, a collection of opt-in APIs and interchange formats for interoperating with existing components, and an external interface for requesting measurements via a variety of platform inter-process communication (IPC) mechanisms. 
+
+
+References
+==========
+
+| Attestation: Evidence and Trust
+| |tab| http://web.cs.wpi.edu/~guttman/pubs/icics_attestation.pdf
+|
+| Making Login Services Independent of Authentication Technologies
+| |tab|  http://tulip.bu.ac.th/~nattakorn.c/ldap_radius/pam.pdf
+| 
+| Linux-PAM System Administrators' Guide
+| |tab|  http://www.linux-pam.org/Linux-PAM-html/Linux-PAM_SAG.html

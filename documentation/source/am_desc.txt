@@ -1,0 +1,107 @@
+Attestation Manager (AM)
+========================
+
+.. Copyright
+
+   Copyright 2020 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+.. currentmodule:: maat
+
+Definition
+-----------
+
+An attestation manager (AM) provides a front door for the M&A
+architecture. AMs are responsible for awaiting connections,
+negotiating the attestation protocol block (APB) to be used, and
+specifying the measurement evidence to be collected. The AM is somewhat 
+similar to the classic UNIX inetd super-server in that it is primarily 
+a connection dispatcher rather than a work unit in its own right. 
+The main difference is that during negotiation the AM is responsible 
+for enforcing a selection criteria that ensures a suitable protocol/evidence 
+pair is used, and a security policy that ensures the other end of the 
+attestation is authorized to use the selected protocol/evidence pair. See the
+documentation for am/am.h and am/contracts.h for more details on the
+structure and role of the AM. The libmaat_am library implements most of the
+attestation manager constructs; the primary element left to clients is
+setting up and listening on communication channels.
+
+The Attestation Manager can run in the role of Attester or Appraiser.  
+
+.. raw:: latex
+
+    \clearpage
+
+AM Taking on the Appraiser Role
+---------------------------------
+
+When an Attestation Manager recieves a measurement request contract, it will automatically take on the
+role of Appraiser. Using the request recieved from a client, the Appraiser will negotiate
+with the Attester and certify that measurements received from the Attester are valid,
+indicating that the machine that the Attester is running on can be trusted.
+
+.. figure:: images/appraiser_selection_process.jpg
+   :align:  center
+
+   Appraiser State Machine
+
+.. note::
+   The security authorization shown in this diagram is currently a work in progress
+
+The figure above demonstrates the state machine for the Attestation Manager acting as an Appraiser. 
+The AM enters its Initial state when it receives a measurement request contract.
+It then obtains security authorization if necessary.
+Next it sends an initial contract to the Attester,
+receives the modified contract,
+and concludes negotiation in the Final Selection state
+by choosing a Copland Phrase from the contract.
+Then it sends the resulting execute contract to the Appraiser,
+moving to the Execute Protocol state.
+Finally, the Appraiser AM receives the measurement results, evaluates them,
+and handles them as appropriate for the situation
+(sending back to the requester, storing in a database, etc.)
+before ultimately moving to the Complete state.
+
+.. raw:: latex
+
+    \clearpage
+
+AM Taking on the Attester Role
+--------------------------------
+
+When an Attestation Manager receives an initial contract, it will automatically assume the role of 
+Attester. As an Attester, the AM will respond to initial contracts by reporting what measurements 
+it is willing and able to take. It will also perform measurements requested by the Appraiser in 
+an appropriately-negotiated execute contract, and send the measurement results to the
+Appraiser for review. 
+
+.. figure:: images/attester_selection_process.jpg
+   :align:  center
+
+   Attester State Machine
+
+The figure above demonstrates the state machine for the Attestation Manager running in the role of Attester.
+The AM receives an initial contract and moves to its Modify state.
+It then obtains security authorization if necessary.
+Next it negotiates with the Appraiser by sending a modified contract,
+receiving the execute contract,
+and validating the contract in the Check Selection state.
+Then it performs any requested measurements in the Execute Protocol state.
+Finally, the Attester AM returns the measurement results to the Appraiser
+and moves into the Complete state.
+
+.. raw:: latex
+
+    \clearpage
+

@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>memorymapping</name>
+	<uuid>cd82c9f7-760d-4535-bcab-74daafaa1f22</uuid>
+	<type>Process</type>
+	<usage>
+		memorymappingasp [graph path] [node id]</usage>
+	<description>
+        Parses /proc/[pid]/maps to record regions of contiguous virtual memory used by target process.
+	</description>
+	<inputdescription>
+        This ASP expects a measurement graph path and a node identifier as arguments on the command line.
+        The node identified must have target type process_target_type and address space pid_address_space
+        to represent the process whose memory mapping (address, permissions, offset, device, inode, and pathname)
+	will be parsed. 
+
+	This ASP does not consume any input from stdin.</inputdescription>
+	<outputdescription>
+        This ASP produces a mappings_measurement_type measurement containing target process memory mapping
+	information including address, permissions, offset, device, inode and pathname. This measurement is 
+	then attached to the node passed as input. 
+
+	This ASP produces no output on stdout.</outputdescription>
+	<seealso>
+		http://manpages.ubuntu.com/manpages/precise/man5/proc.5.html
+                http://manpages.ubuntu.com/manpages/precise/man1/ps.1.html
+	</seealso>
+ <example>
+         Running memorymappingasp with graph configured by graph-shell
+
+           Terminal 1 (run xclock app)
+                > xclock
+
+           Terminal 2 (find pid)
+                >ps -ef | grep xclock
+                userid  3678  3630  0 17:18 pts/25   00:00:00 xcloc
+
+           Terminal 3 (use graph-shell to create graph and insert node)
+                > ./graph-shell
+                graph()> types /opt/maat/lib/libmaat_basetypes.so register_types
+                graph()> new
+                Graph created at /tmp/maatgraph09oAVI
+                graph(/tmp/maatgraphixOhvP)>   add-node 91d091d f1df1df 3678
+                0000000000000000
+
+           Terminal 2 (run asp)
+                > ./memorymappingasp (/tmp/maatgraphixOhvP)0
+
+           Terminal 3 (use graph-shell to create graph and insert node)
+                graph(/tmp/maatgraphixOhvP)> ls-data 0
+		00000ce4: mappings
+		graph(/tmp/maatgraphixOhvP)> cat-data 0 ce4
+		0000000000400000-000000000040a000 r-xp 0000000000000000 8:1 4997	/usr/bin/xclock
+		0000000000609000-000000000060b000 rw-p 0000000000009000 8:1 4997	/usr/bin/xclock
+		000000000060b000-000000000060c000 rw-p 0000000000000000 0:0 0	
+		0000000000f67000-0000000001012000 rw-p 0000000000000000 0:0 0	[heap]
+		...
+</example>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/memorymappingasp</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">GRAPH</value>
+                        <capability target_type="process_target_type"
+				target_magic="0x091D091D"
+				target_desc = "An instance of target tich, which describes attributes of the target process"
+				address_type="pid_address_space"
+				address_magic="0x0F1DF1DF" 
+				address_desc="An instance of address type that describes the process address space. This contains the process id (PID)"
+				measurement_type="mappings_measurement_type"
+				measurement_magic="3300" 
+				measruement_desc="Measurement type for process mappings. Inlcudes Virtual Addresses, Permission Flags, Device Major/Minor Number, Indoe, and Path"
+				/>
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <selinux><type>memory_mapping_asp_t</type></selinux>
+      <capabilities>cap_sys_ptrace+ep</capabilities>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+	</security_context>
+</asp>

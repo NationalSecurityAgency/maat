@@ -1,0 +1,105 @@
+Configuring Attestation Manager (AM)
+*************************************
+
+.. Copyright
+
+   Copyright 2020 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+.. currentmodule:: maat
+
+.. |cp| raw:: latex
+
+   \clearpage
+
+.. _configuring_attestation_manager:
+
+Configuring
+============
+
+The attestation manager configuration file provides necessary information to the attestation manager. 
+Much of this information can also be specified as command line arguments. 
+Specifically the configuration file supports specifying:
+
+* Interfaces to listen on
+
+  * UNIX, INET, IVC
+  * Special rules associated with the interface, such as the ability to short-circuit negotiation
+
+* Credential files to be loaded
+
+  * Certificate
+  * Private key
+  * CA Certificate
+
+* Selector configuration source
+
+  * XML File
+  * Mongo Database
+
+* Work directory
+
+* Metadata directories
+
+  * ASPs
+  * APBs
+  * Measurement Specifications
+
+* User/Group
+
+* Timeout
+
+  * In seconds
+
+|cp|
+
+Format
+======
+The attestation manager configuration uses an XML-based format. An example is below:
+
+.. code-block:: xml
+
+  <?xml version="1.0" ?>
+  <am-config>
+      <interfaces>
+          <interface type="inet" address="0.0.0.0" port="2342" />
+          <interface type="unix" path="/tmp/attestmgr.sock" />
+          <interface type="unix" path="/tmp/attestmgr-priv.sock" skip-negotiation="true" />
+      </interfaces>
+      <timeout seconds="600" />
+      <selector source="file">
+          <path>/opt/maat/share/maat/selector-configurations/selector.xml</path>
+      </selector>
+      <credentials>
+          <private-key>/opt/maat/etc/maat/credentials/client.key</private-key>
+          <certificate>/opt/maat/etc/maat/credentials/client.pem</certificate>
+          <ca-certificate>/opt/maat/etc/maat/credentials/ca.pem</ca-certificate>
+      </credentials>
+      <metadata type="asps" dir="/opt/maat/share/maat/asps" />
+      <metadata type="apbs" dir="/opt/maat/share/maat/apbs" />
+      <metadata type="measurement-specifications"
+                dir="/opt/maat/share/maat/measurement-specifications" />
+      <user>maat</user>
+      <group>maat</group>
+      <work dir="/tmp/attestmgr" />
+  </am-config>
+
+
+|cp|
+
+Maat supplied AM Configurations
+================================
+
+.. include:: ams.txt
+

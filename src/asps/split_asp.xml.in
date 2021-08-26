@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>split_asp</name>
+	<uuid>f4562d33-ce9d-417d-8750-2ce242eedfea</uuid>
+	<type>Split</type>
+	<description>
+        Send output blob from a producer ASP to two consumer ASPS with the output to each contingent on flags provided
+    </description>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/split_asp</aspfile>
+	<measurers>
+	</measurers>
+	<security_context>
+	  <selinux><type>split_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+  	</security_context>
+	<usage>
+          split_asp fd_out fd_left left_flag fd_right right_flag
+	</usage>
+        <inputdescription>
+	  fd_left and fd_right are the file descriptors corresponding to different ASPS which
+      will consume the output of the fd_out ASP. fd_out is a file descriptor corresponding
+      to an ASP that produces a blob. The left and right flags alter how the output blob is
+      written for the left and right ASPS, respectively. As of now, the only modes are "all"
+      or "none, which indicate that the whole blob, or none of it, shall be written to the ASP,
+      respectively.
+	</inputdescription>
+        <outputdescription>
+	  This ASP conditionally writes a blob to fd_left and fd_right
+	</outputdescription>
+</asp>

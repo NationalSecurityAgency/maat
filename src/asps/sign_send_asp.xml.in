@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>sign_send_asp</name>
+	<uuid>cd82c9f7-760d-4535-5197-74daadaa1f44</uuid>
+	<type>Signing</type>
+	<description>Sign and send a measurement contract</description>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/sign_send_asp</aspfile>
+	<measurers>
+	</measurers>
+	<security_context>
+	  <selinux><type>sign_send_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+  	</security_context>
+	<usage>
+          sign_send_asp [graph path] [peerchan] [partner_cert] [certfile]
+	  [keyfile] [keypass] [tpmpass] [sign_tpm] [workdir]
+	</usage>
+        <inputdescription>
+	  graph path should be the path to a valid measurement graph. 
+	  peerchan should be a channel to the measurement requestor.
+	  partner_cert should be the certificate of the partner in the 
+	  attestation.
+	  certfile and keyfile are the files this ASP should use for signing 
+	  the measurement.
+	  sign_tpm is 0 if a TPM should be used for signing, 1 if not.
+	  workdir is the working directory for the current attestation, where
+	  this ASP will find the execute contract.
+	</inputdescription>
+        <outputdescription>
+	  This ASP writes a signed, compressed, and encrypted contract 
+	  containing the serialized contents of the passed measurement graph to
+	  the peerchan passed. 
+	</outputdescription>
+</asp>

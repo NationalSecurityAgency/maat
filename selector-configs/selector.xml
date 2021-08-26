@@ -1,0 +1,208 @@
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<!-- This selector policy chooses between:
+     ((USM procopenfiles) -> SIG)
+     ((USM full) -> SIG)
+     depending on the identity of the peer and whether a resource was specified by the
+     requestor.
+     
+     It is also heavily commented to aid future selection policy creation.
+-->
+<selector_policy>
+    <collection name="known-clients">
+        <entry>127.0.0.1</entry>
+        <entry>client2</entry>
+	<entry>localhost</entry>
+    </collection>
+
+    <!-- The Appraiser is in the process of creating an initial contract after receiving a
+	 request contract.
+	 
+	 If the peer is in the list of known-clients above, then send two options in the
+	 initial contract: ((USM procopenfiles) -> SIG) and ((USM full) -> SIG). These correspond to Copland
+	 phrases an APB claims to support.
+	 
+	 There is no rule for the case where the peer is not in the list of known-clients. If
+	 this occurs, negotiation will fail.
+	 
+	 If no APB XML file lists these phrases, this selector policy will fail to load at
+	 AM startup.
+    -->
+    <rule role="appraiser" phase="initial">
+      <match_condition attr="client"  operator="in" value="known-clients"/>
+      <action selector_action="accept">
+	<condition name="proc"      apb_phrase="((USM procopenfiles) -> SIG)"/>
+	<condition name="userspace" apb_phrase="((USM full) -> SIG)"/>
+      </action>
+    </rule>
+
+    <!-- The Attester has received an initial contract from the appraiser and is in the
+	 process of creating a modified contract from the options received.
+	 
+	 This selector policy has a slew of match conditions, statements which must be met if
+	 this rule is to be used. The fingerprint of the appraiser's certificate must match
+	 the one shown below, and the options provided by the appraiser in the initial
+	 contract must include both ((USM procopenfiles) -> SIG) and ((USM full) -> SIG). If these conditions
+	 are met, the appraiser responds with the same two options.
+	 
+	 Again, if no APB resident on the attester lists these copland phrases, this selector
+	 policy will fail to load at AM startup. This is true for all rules listed herein.
+	 The AM will only load selector policies that list copland phrases that are supported
+	 by the underlying measurement agent(s).
+	 -->
+    <rule role="attester" phase="modify">
+      <match_condition attr="partner_fingerprint" operator="is"
+		       value="87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A"/>
+      <match_condition attr="options" operator="include" value="((USM procopenfiles) -> SIG)" />
+      <match_condition attr="options" operator="include" value="((USM full) -> SIG)" />
+      <action selector_action="accept">
+	<condition name="proc"      apb_phrase="((USM procopenfiles) -> SIG)"/>
+	<condition name="userspace" apb_phrase="((USM full) -> SIG)"/>
+      </action>
+    </rule>
+
+    <!-- The Appraiser has received the modified contract from the attester and is in the
+	 process of creating an execute contract, selecting one option for the attester to
+	 execute from the set of options received.
+	 
+	 Again, there are a set of match conditions which must be met for this rule to be
+	 selected. The attester's certificate fingerprint must match the one listed below,
+	 the options provided by the modify contract must include ((USM full) -> SIG), and the
+	 resource requested by the requestor must be 'userspace'.
+	 
+	 If these conditions are met, the appraiser crafts an execute contract naming the
+	 ((USM full) -> SIG) option for execution.
+    -->
+    <rule role="appraiser" phase="execute">
+      <match_condition attr="partner_fingerprint" operator="is"
+		       value="B9:17:2D:8B:58:FD:9E:6C:62:0A:8A:5C:F6:8A:78:00:A5:1B:90:CF"/>
+      <match_condition attr="client"   operator="in" value="known-clients" />
+      <match_condition attr="resource" operator="is" value="userspace"/>
+      <match_condition attr="options"  operator="include" value="((USM full) -> SIG)" />
+      <action selector_action="accept">
+	<condition name="userspace" apb_phrase="((USM full) -> SIG)"/>
+      </action>
+    </rule>
+
+    <!-- After sending the previous contract to the attester, the appraiser selects a
+	 complementary phrase to spawn itself, in order to receive and appraise the results
+	 from the attester.
+	 
+	 Working through similar match conditions as the previous rules, this rule selects
+	 the (USM app) Copland phrase to appraise results from ((USM full) -> SIG).
+	 
+	 In this rule, the "option" refers to the option listed in the execute contract, not
+	 the option(s) from the modified contract. That is, the appraiser will only spawn an
+	 APB for (USM app) if the attester was instructed to perform ((USM full) -> SIG).
+	 
+	 Future work could include appraiser actions as part of the initial negotiations. 
+    -->
+    <rule role="appraiser" phase="spawn">
+      <match_condition attr="partner_fingerprint" operator="is"
+		       value="B9:17:2D:8B:58:FD:9E:6C:62:0A:8A:5C:F6:8A:78:00:A5:1B:90:CF"/>
+      <match_condition attr="client"    operator="in" value="known-clients"/>
+      <match_condition attr="resource"  operator="is" value="userspace"/>
+      <match_condition attr="option"    operator="is" value="((USM full) -> SIG)" />
+      <action selector_action="accept">
+        <condition name="userspace_appraiser" apb_phrase="(USM app)"/>
+      </action>
+    </rule>
+
+    <!-- This is the same as the appraiser execute rule above, but has a different value for
+	 the partner fingerprint. Though somewhat contrived in this example, this rule is
+	 included to demonstrate how selection could be tailored to the identity of the peer.
+    -->
+    <rule role="appraiser" phase="execute">
+      <match_condition attr="partner_fingerprint" operator="is"
+		       value="87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A"/>
+      <match_condition attr="client"   operator="in"      value="known-clients" />
+      <match_condition attr="resource" operator="is"      value="userspace"/>
+      <match_condition attr="options"  operator="include" value="((USM full) -> SIG)" />
+      <action selector_action="accept">
+	<condition name="userspace" apb_phrase="((USM full) -> SIG)"/>
+      </action>
+    </rule>
+    <!-- Again, the appraiser selecting what copland phrase to spawn itself. Same as the
+	 previous spawn rule above, but with a different partner fingerprint value.
+    -->	 
+    <rule role="appraiser" phase="spawn">
+      <match_condition attr="partner_fingerprint" operator="is"
+		       value="87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A"/>
+      <match_condition attr="client"   operator="in" value="known-clients"/>
+      <match_condition attr="resource" operator="is" value="userspace"/>
+      <match_condition attr="option"   operator="is" value="((USM full) -> SIG)" />
+      <action selector_action="accept">
+        <condition name="userspace_appraiser" apb_phrase="(USM app)"/>
+      </action>
+    </rule>
+
+    <!-- Another Appraiser execute rule. This has the same partner fingerprint as the first,
+	 specifies that the peer must be in the set of known clients, and that the options in
+	 the modified contract must include ((USM procopenfiles) -> SIG).
+	 
+	 If these conditions are met, this rule will select ((USM procopenfiles) -> SIG).
+	 
+	 Again, in a slightly contrived example, note that this rule doesn't specify the
+	 value for 'resource'. So, if any resource other than 'userspace' is requested, this
+	 rule is still valid. If 'userspace' is requested, both the first appraiser execute
+	 rule above and this one are valid. In the case of multiple valid rules, the
+	 appraiser is currently configured to select the first rule.
+    -->
+    <rule role="appraiser" phase="execute">
+      <match_condition attr="partner_fingerprint" operator="is"
+		       value="B9:17:2D:8B:58:FD:9E:6C:62:0A:8A:5C:F6:8A:78:00:A5:1B:90:CF"/>
+      <match_condition attr="client"  operator="in"      value="known-clients" />
+      <match_condition attr="options" operator="include" value="((USM procopenfiles) -> SIG)"/>
+      <action selector_action="accept">
+	<condition name="proc" apb_phrase="((USM procopenfiles) -> SIG)"/>
+      </action>
+    </rule>
+    <!-- Similar to previous spawn rules, the appraiser will spawn (USM procopenapp) if the
+	 peer has the identity listed and the ((USM procopenfiles) -> SIG) option was chosen for the
+	 execute contract.
+    -->	
+    <rule role="appraiser" phase="spawn">
+      <match_condition attr="partner_fingerprint" operator="is"
+		       value="B9:17:2D:8B:58:FD:9E:6C:62:0A:8A:5C:F6:8A:78:00:A5:1B:90:CF"/>
+      <match_condition attr="client" operator="in" value="known-clients"/>
+      <match_condition attr="option" operator="is" value="((USM procopenfiles) -> SIG)" />
+      <action selector_action="accept">
+	<condition name="appraiser" apb_phrase="(USM procopenapp)" />
+      </action>
+    </rule>
+
+    <!-- Same as the previous execute and spawn rules, except different identity for the peer
+	 (via partner_fingerprint field).
+    -->	
+    <rule role="appraiser" phase="execute">
+      <match_condition attr="partner_fingerprint" operator="is"
+		       value="87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A"/>
+      <match_condition attr="client"  operator="in"      value="known-clients" />
+      <match_condition attr="options" operator="include" value="((USM procopenfiles) -> SIG)"/>
+      <action selector_action="accept">
+	<condition name="proc" apb_phrase="((USM procopenfiles) -> SIG)"/>
+      </action>
+    </rule>
+    <rule role="appraiser" phase="spawn">
+      <match_condition attr="partner_fingerprint" operator="is"
+		       value="87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A"/>
+      <match_condition attr="client" operator="in" value="known-clients"/>
+      <match_condition attr="option" operator="is" value="((USM procopenfiles) -> SIG)" />
+      <action selector_action="accept">
+	<condition name="appraiser" apb_phrase="(USM procopenapp)" />
+      </action>
+    </rule>
+</selector_policy>

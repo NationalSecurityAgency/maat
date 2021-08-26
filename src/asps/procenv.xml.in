@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>procenv</name>
+	<uuid>E88EC0CD-FCE1-471B-BB11-79CEB325E2B1</uuid>
+	<type>Process</type>
+	<usage>
+		procenv_asp [graph path] [node id]</usage>
+	<description>
+		Parses /proc/[pid]/env and creates a list of key/value pairs of the target process environment.</description>
+	<inputdescription>
+        This ASP expects a measurement graph path and a node identifier as arguments on the command line.
+        The node identified must have target type process_target_type and address space pid_address_space
+        to represent the process whose environment variables will be parsed.
+
+	This ASP does not consume any input from stdin.</inputdescription>
+	<outputdescription>
+        This ASP produces a process_environment_measurement_type measurement containing list of key/value pairs of target process environment 
+        and attaches it to the node passed as input.
+
+	This ASP produces no output on stdout.</outputdescription>
+	<seealso>
+		http://manpages.ubuntu.com/manpages/precise/man5/proc.5.html
+                http://manpages.ubuntu.com/manpages/precise/man1/ps.1.html
+	</seealso>
+ <example>
+         Running memorymappingasp with graph configured by graph-shell
+
+           Terminal 1 (run xclock app)
+                > xclock
+
+           Terminal 2 (find pid)
+                >ps -ef | grep xclock
+                userid  3678  3630  0 17:18 pts/25   00:00:00 xcloc
+
+           Terminal 3 (use graph-shell to create graph and insert node)
+                > ./graph-shell
+                graph()> types /opt/maat/lib/libmaat_basetypes.so register_types
+                graph()> new
+                Graph created at /tmp/maatgraph4UdZPv
+                graph/tmp/maatgraph4UdZPv>   add-node 91d091d f1df1df 3678
+                0000000000000000
+
+           Terminal 2 (run asp)
+                > ./procenv /tmp/maatgraphixOhvP 0
+
+           Terminal 3 (use graph-shell to create graph and insert node)
+		graph(/tmp/maatgraph4UdZPv)> ls-data 0
+		00000ce5: PROCENV
+		graph(/tmp/maatgraph4UdZPv)> cat-data 0 ce5
+			SESSION = ubuntu
+			TERM = xterm
+			SHELL = /bin/bash
+			USER = maat
+			...
+</example>
+        <aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/procenv</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">PROCENV</value>
+                        <capability target_type="process_target_type"
+				    target_magic="0x091D091D"
+				    address_type="pid_address_space"
+				    address_magic="0x0F1DF1DF"
+				    measurement_type="process_environment_measurement_type"
+				    measurement_magic="3301" />
+		</satisfier>
+	</measurers>
+	<security_context>
+                <selinux><type>proc_env_asp_t</type></selinux>        
+		<user>${MAAT_USER}</user>
+		<group>${MAAT_USER}</group>
+	</security_context>
+</asp>

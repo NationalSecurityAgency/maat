@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<measurement_specification>
+	<name>ls proc mspec</name>
+	<uuid>55042348-e8d5-4443-abf7-3d67317c7dad</uuid>
+	<description>
+	  This measurement spec is a subset of the userspace_measurement_mspec.
+	  
+	  This measurement spec: lists all of the processes on the system,
+	  performs a hash of all of the open files held by the root processes, 
+	  and measures the memory mapping of the processes. 
+	  Additionally, this measurement spec finds the package details of the
+	  packages owning the processes' open files.	  
+	  
+	  This measurement spec requires the 'identify' instruction in order to
+	  perform the package details measurement for each file. The identify 
+	  instruction identifies the environment of the host system.
+	</description>
+
+	<instructions>
+	  <!-- List and gather metadata on all of the processes running on the system.
+	       Then, list all of the open files for each process, and hash each file. -->
+	  <instruction type="submeasure" name="list_processes">
+	    <target_type name="process_target_type" magic="0x091D091D" />
+	    <address_type name="unit_address_space" magic="0x50EC50EC"/>
+	    <measurement_type name="process_metadata_measurement_type" magic="3200" />
+            <!-- XXX - change these to "_sha1hash" for centos, and write 
+                 modify rpm_pkg_inv to save hashs and write rpm_check_asp 
+                 equivalent -->
+	    <action feature="root_pids" instruction="process_openfile_md5hash"/>
+            <action feature="root_pids" instruction="process_memmap_md5hash"/>
+	  </instruction>	  
+<!--	  <instruction type="simple" name="process_openfile_sha1hash">
+	    <target_type      name="process_target_type" magic="0x091D091D" />
+	    <address_type     name="pid_address" magic="0x0F1DF1DF" />
+	    <measurement_type name="path_list" magic="3201" />
+	    <action feature="reg_files" instruction="file_sha1hash" />
+	  </instruction>-->
+	  <instruction type="submeasure" name="process_openfile_md5hash">
+	    <target_type      name="process_target_type" magic="0x091D091D" />
+	    <address_type     name="pid_address" magic="0x0F1DF1DF" />
+	    <measurement_type name="path_list" magic="3201" />
+	    <action feature="reg_files" instruction="file_md5hash" />
+            <action feature="reg_files" instruction="pkg_inv_simple_file" />
+	  </instruction>
+      	  <instruction type="submeasure" name="process_memmap_md5hash">
+	    <target_type      name="process_target_type" magic="0x091D091D" />
+	    <address_type     name="pid_address" magic="0x0F1DF1DF" />
+	    <measurement_type name="mappings_measurement_type" magic="3300" />
+	    <action feature="reg_files" instruction="file_md5hash" />
+            <action feature="reg_files" instruction="pkg_inv_file" />
+	  </instruction>
+<!--	  <instruction type="simple" name="file_sha1hash">
+	    <target_type      name="file_target_type" magic="1001" />
+	    <address_type     name="simple_file" magic="0x5F5F5F5F" />
+	    <measurement_type name="sha1hash_measurement_type" magic="3100" />
+	  </instruction>-->
+
+	  <instruction type="simple" name="file_md5hash">
+	    <target_type      name="file_target_type" magic="1001" />
+	    <address_type     name="simple_file" magic="0x5F5F5F5F" />
+	    <measurement_type name="md5hash_measurement_type" magic="0x000777D5" />
+	  </instruction>
+
+	  <!-- Gather system information -->
+	  <instruction type="simple" name="identify">
+	    <target_type      name="system_target_type" magic="0x57513777"/>
+	    <address_type     name="unit_address_space" magic="0x50EC50EC" />
+	    <measurement_type name="system_measurement_type" magic="5757"/>
+	  </instruction>
+
+          <instruction type="submeasure" name="pkg_inv_simple_file">
+	    <target_type      name="file_target_type" magic="1001" />
+	    <address_type     name="simple_file" magic="0x5F5F5F5F" />
+	    <measurement_type name="pkginv_measurement_type" magic="3244"/>
+            <action feature="packages" instruction="package_detail" />
+	  </instruction>
+          <instruction type="submeasure" name="pkg_inv_file">
+	    <target_type      name="file_target_type" magic="1001" />
+	    <address_type     name="file_address_space" magic="2000" />
+	    <measurement_type name="pkginv_measurement_type" magic="3244"/>
+            <action feature="packages" instruction="package_detail" />
+	  </instruction>
+
+	  <instruction type="simple" name="package_detail">
+	    <target_type      name="package_target_type" magic="0x7F777FC9" />
+	    <address_type     name="release_address_space" magic="0x5F5F5FC9" />
+	    <measurement_type name="pkg_details_measurement_type" magic="3245" />
+	  </instruction>
+
+	</instructions>	 
+	<variables>
+	  <!-- Variable to identify the host system-->
+	  <variable instruction="identify">
+	    <address operation="identify">self</address>
+	  </variable>
+
+	  <!--Variable to enumerate all of the processes running -->
+	  <!-- NOTE: Needs identify variable in order to do whole pid-file-pkg chain-->
+	  <variable instruction="list_processes">
+	    <address operation="enumerate">all</address>
+	  </variable>
+	</variables>
+</measurement_specification>

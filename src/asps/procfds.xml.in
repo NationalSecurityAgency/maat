@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>procfds</name>
+	<uuid>9D7E5286-BF96-45FA-8461-DD5474FE3214</uuid>
+	<type>Process</type>
+	<description>Enumerate the open file descriptors of a process</description>
+	<usage>
+		procfds_asp [graph path] [node id]</usage>
+	<inputdescription>
+        This ASP expects a measurement graph path and a node identifier as arguments on the command line.
+        The node identified must have target type file_contents_target_type and address space pid_address_space
+        to represent the process. This ASP will open the /proc/[pid]/fd directory and stat all file paths found.
+
+	This ASP does not consume any input from stdin.</inputdescription>
+	<outputdescription>
+	This ASP produces a file_address node containing the stat results of all paths found in /proc/[pid]/fd. These
+	new nodes are then added as edges to the input node. 
+
+	This ASP produces no output on stdout.</outputdescription>
+	<seealso>
+	proc/[pid]/fd</seealso>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/procfds</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">GRAPH</value>
+				<capability target_type="file_target_type" target_magic="1001" target_desc = "An instance of target type, which describes atributes of the target file"                                 
+                                address_type="path_address_space" address_magic="0x5F5F5F5F" address_desc = "An instance of address type that decribes the file address, for this asp it is a path. This includes file information such as address, device major/minor, file size, node, and full name."/>
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <selinux><type>proc_fds_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+	</security_context>
+</asp>

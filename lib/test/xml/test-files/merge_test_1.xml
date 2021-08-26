@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!--
+#
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+-->
+<graphml xmlns="http://graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <graph id="G" edgedefault="undirected">
+    <node id="0" type="merge_dummy_0" type_magic="12345678">
+      <address space="aaaaaaaa">11111111</address>
+      <measurement data_size="5" meas_data="YWJj" meas_type_magic="87654321" meas_type_name="merge_dummy_1"></measurement>
+    </node>
+    <node id="1" type="merge_dummy_1" type_magic="87654321">
+      <address space="bbbbbbbb">22222222</address>
+      <measurement data_size="5" meas_data="ZGVm" meas_type_magic="12345678" meas_type_name="merge_dummy_0"></measurement>
+    </node>
+    <edge label="my_edge" source="0" target="1"/>
+  </graph>
+</graphml>

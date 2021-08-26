@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>lsmod</name>
+	<uuid>c06087da-597e-416a-b4dd-cf60b55b8214</uuid>
+	<type>Kernel</type>
+	<description>Lists the loaded Kernel modules</description>
+	<usage>
+        	lsmod [graph path] [node id]</usage>
+	<inputdescription>
+        This ASP expects a measurement graph path and a node identifier as arguments on the command line.
+        The node identified must have target type module_target_type and address space kernel_address_space
+        to represent the list of modules loaded into the system. The modules are located in /proc/modules. 
+	Each module is parsed for name, size, reference count, dependencies, status and load address. 
+
+	This ASP does not consume any input from stdin.</inputdescription>
+	<outputdescription>
+        This ASP produces a kmod_measurement_type measurement containing meta-data for all the modules
+	loaded in the targeted system. 
+
+	This ASP produces no output on stdout.</outputdescription>
+	<example>
+        Running lsmod with graph configured by graph-shell
+
+           Terminal 1 (use graph-shell to create graph and insert node)
+                > ./graph-shell
+                > types /opt/maat/lib/libmaat_basetypes.so register_types
+                >  new
+                Graph created at /tmp/maatgraphP96VdP
+                >  add-node 0d0d0d0d 71d071d0
+                0000000000000000
+
+           Terminal 2 (run asp)
+                > ./lsmod /tmp/maatgraphP96VdP 0
+
+           Terminal 1 (use graph-shell to display node contents)
+		> node-type 0
+		module 0d0d0d0d
+		> ls-data 0
+		0e0d0e0d: kmodule
+		> cat-data 0 0e0d0e0d
+			Module:		"nls_utf8"
+			Size:		12557
+			Refcnt:		1
+			Status:		"Live"
+			Load Address:	0
+		> ls-nodes
+		0000000000000017: (module *)17
+		0000000000000009: (module *)9
+		0000000000000002: (module *)2
+		...
+
+		> cat-data 17 0e0d0e0d
+			Module:		"gf128mul"
+			Size:		14951
+			Refcnt:		1
+			Status:		"Live"
+			Load Address:	23
+
+		> cat-data 9 0e0d0e0d
+			Module:		"snd_seq_midi"
+			Size:		13564
+			Refcnt:		0
+			Status:		"Live"
+			Load Address:	9
+        </example>
+        <seealso>
+	http://manpages.ubuntu.com/manpages/xenial/en/man8/lsmod.8.html
+	http://manpages.ubuntu.com/manpages/precise/en/man5/proc.5.html
+	</seealso>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/lsmod</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">lsmod</value>
+                        <capability target_type="module_target_type"
+				target_magic="0x0D0D0D0D"
+				target_desc = "Target type to identify kenerl module data"
+	   		    	address_type="kernel_address_space"
+				address_magic="0x71D071D0"
+				address_desc = "Addres space for kernel objects to implement functions in address spece"
+				measurement_type="kmod_measurement_type"
+				measurement_magic="0x0E0D0E0D"
+				measurement_desc ="Measure kernel module including name, size, ference count, status and address"/>
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <selinux><type>lsmod_asp_t</type></selinux>
+	  <user>maat</user>
+	</security_context>
+</asp>

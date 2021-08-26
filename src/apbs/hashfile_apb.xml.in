@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<apb>
+	<name>hashfile</name>
+	<desc>Returns a sha1 hash of a file</desc>
+	<uuid>af5e897a-5a1a-4973-afd4-5cf4eec7439e</uuid>
+	<file hash="XXXXX">${APB_INSTALL_DIR}/hashfile_apb</file>
+	<input_type>????</input_type>
+	<output_type>????</output_type>
+	<asps ordered="True">
+		<asp uuid="dff44141-9d3a-4cfe-8a30-2c072bb77025">hashfileservice</asp>
+	</asps>
+	<copland>
+            <phrase copland="((USM hashfile file) -> SIG)">hashfile measurement</phrase>
+            <arguments>
+                <arg name="file">
+                    <type>string</type>
+                </arg>
+            </arguments>
+	</copland>
+	<security_context>
+	  <selinux><type>hashfile_apb_t</type></selinux>
+	</security_context>
+</apb>

@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<apb>
+	<name>appraiser</name>
+	<desc>Initial appraiser APB</desc>
+	<uuid>832431de-6cbb-45ab-8c62-3849449d3d22</uuid>
+	<file hash="XXXXX">${APB_INSTALL_DIR}/appraiser_apb</file>
+	<input_type>????</input_type>
+	<output_type>????</output_type>
+	<asps ordered="False">
+          <asp uuid="ffffe765-b4b3-4808-b0d9-bff7b408dc2a" initial="True">dummy_appraisal</asp>
+	</asps>
+	<copland>
+          <phrase copland="(USM procopenapp)">process openfiles measurement appraiser</phrase>
+	  <spec uuid="3db1c1b2-4d44-45ea-83f5-8de858b1a4d0">proc open files  measurement specification</spec>
+	</copland>
+	<copland>
+	  <phrase copland="(USM netstatapp)">process netstat measurement appraiser</phrase>
+	  <spec uuid="8efb56a7-fcae-40b5-93f4-bf5f8fce759b">netstat mspec</spec>
+	</copland>
+	<copland>
+	  <phrase copland="(USM memapp)">process memory measurement appraiser</phrase>
+	  <spec uuid="3db1c1b2-4d44-45ea-83f5-8de858b1a555">mem mspec</spec>
+	</copland>
+	<security_context>
+	  <selinux>
+	    <type>appraiser_apb_t</type>
+	  </selinux>
+	</security_context>
+</apb>

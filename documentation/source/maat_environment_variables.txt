@@ -1,0 +1,75 @@
+.. Copyright
+
+   Copyright 2020 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+   
+.. currentmodule:: maat
+
+Maat Environment Variables
+****************************
+
+Purpose and Intended Audience
+==============================
+
+This section will provide a user with a summary of the Maat environment.
+A user can modify these environment variables to alter Maat behavior.
+A primary reason to modify the Maat environment is to configure Maat
+to report more verbose information in its logs.
+
+The intended audience for this section is a system administrator who is
+attempting to troubleshoot why attestation results or general behavior
+are not as expected.
+
+Verbose Logging
+================
+
+LIBMAAT_LOG_SYSLOG
+-------------------
+
+.. Table:: LIBMAAT_LOG_SYSLOG Supported Settings
+
+    ======= =========== =============================
+     Value     Enum         Description
+    ======= =========== =============================
+       0     LOG_EMERG	 System Unusuable
+       1     LOG_ALERT   Action Must Be Taken
+    ======= =========== =============================
+
+
+.. seealso:: https://linux.die.net/man/3/syslog
+
+LIBMAAT_DEBUG_LEVEL
+--------------------
+
+.. Table:: LIBMAAT_DEBUG_LEVEL Supported Settings
+
+    ======= ===================== ============================================
+     Value         Enum                         Description
+    ======= ===================== ============================================
+       0    TRACE_EMERG           System is unusable
+       1    TRACE_ALERT           Action must be taken immediately
+       2    TRACE_CRIT            Critical conditions
+       3    TRACE_ERR             Error conditions
+       4    TRACE_WARNING         Warning conditions
+       5    TRACE_NOTICE          Normal, but significant, condition
+       6    TRACE_INFO            Informational Message
+       7    TRACE_DEBUG_SYSTEM    Debug information with system-level scope
+       8    TRACE_DEBUG_PROGRAM   Debug information with program-level scope
+       9    TRACE_DEBUG_PROCESS   Debug information with process-level scope
+      10    TRACE_DEBUG_MODULE    Debug information with module scope
+    ======= ===================== ============================================
+
+
+.. seealso:: http://man7.org/linux/man-pages/man3/tracelog.3.html
+

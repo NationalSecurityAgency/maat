@@ -1,0 +1,54 @@
+Maat User Guide / Documentation
+*******************************
+
+.. Maat documentation master file, created by
+   sphinx-quickstart on Wed Dec  9 15:50:07 2015.
+
+.. only:: html
+
+   .. module:: cloud_sptheme.ext.table_styling
+      :synopsis: adds directives for styling tables
+
+   The sections below will review how Maat generates trust decisions
+   and explain how to configure the Maat platform.
+
+.. toctree::
+   :maxdepth: 2 
+   :numbered:
+
+   maat_introduction
+   quick_start
+   quick_start_maat_configuration
+   understanding_maat_features
+   understanding_contracts
+   understanding_maat_architecture
+   understanding_selection_process
+   configure_selector_config_policy
+   configuring_attestation_manager
+   understanding_security_model
+   maat_environment_variables
+
+.. only:: html
+
+   Additional Info / Appendix
+   ==========================
+
+   .. toctree::
+      :maxdepth: 2
+    
+      maat_use_cases
+      basic_tutorial
+      multirealm_tutorial
+      measurement_specifications
+      apbs
+      asps
+      doxtypes
+
+   Developer Guides
+   ================
+
+   .. toctree::
+      :maxdepth: 2
+
+      apb_readme
+      asp_readme

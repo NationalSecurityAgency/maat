@@ -1,0 +1,117 @@
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<!--Selector Policy to choose different userspace measurements
+    based on resource.-->
+<selector_policy>
+    <collection name="known-clients">
+        <entry>127.0.0.1</entry>
+        <entry>client2</entry>
+	<entry>localhost</entry>
+    </collection>
+
+    <!--Inital Phase and Appraiser Role.
+	Check Identity of Client, and offer copland phrase(s)-->
+    <rule role="appraiser" phase="initial">
+      <match_condition attr="client"  operator="in" value="known-clients" />
+        <action selector_action="accept">
+	      <condition name="userspace"            apb_phrase="((USM full) -> SIG)"/>
+	      <condition name="userspace-processes"  apb_phrase="((USM processes) -> SIG)"/>
+	      <condition name="userspace-packages"   apb_phrase="((USM pkginv) -> SIG)"/>
+	      <condition name="userspace-hashfiles"  apb_phrase="((USM hashfiles) -> SIG)"/>
+              <condition name="userspace-hashfile"   apb_phrase="((USM hashfile file) -> SIG):file=/bin/ls"/>
+	      <condition name="userspace-mtab"       apb_phrase="((USM mtab) -> SIG)"/>
+	      <condition name="got_measure"          apb_phrase="((USM got) -> SIG)"/>
+	</action>
+    </rule>
+
+    <!--Modify Phase and Attester Role.
+	Possible down-select on copland phrase(s)-->
+    <rule role="attester" phase="modify">
+        <action selector_action="accept">
+	      <condition name="userspace"            apb_phrase="((USM full) -> SIG)"/>
+	      <condition name="userspace-processes"  apb_phrase="((USM processes) -> SIG)"/>
+	      <condition name="userspace-packages"   apb_phrase="((USM pkginv) -> SIG)"/>
+	      <condition name="userspace-hashfiles"  apb_phrase="((USM hashfiles) -> SIG)"/>
+              <condition name="userspace-hashfile"   apb_phrase="((USM hashfile file) -> SIG):file=/bin/ls"/>
+	      <condition name="userspace-mtab"       apb_phrase="((USM mtab) -> SIG)"/>
+	      <condition name="got_measure"          apb_phrase="((USM got) -> SIG)"/>
+    	</action>
+    </rule>
+
+    <!--Execute Phase and Appraiser Role.
+	Choose copland phrase for Attester to execute, depending on
+	resource requested-->
+
+    <!--resource == userspace, choose all-encompassing userspace mspec-->
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="userspace"/>
+        <action selector_action="accept">
+	      <condition name="userspace"            apb_phrase="((USM full) -> SIG)"/>
+        </action>
+    </rule>
+    <!--resource == processes, choose ls proc mspec-->
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="processes"/>
+        <action selector_action="accept">
+	      <condition name="userspace-processes"  apb_phrase="((USM processes) -> SIG)"/>
+        </action>
+    </rule>
+    <!--resource == packages, choose package inventory mspec-->
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="packages"/>
+        <action selector_action="accept">
+	      <condition name="userspace-packages"   apb_phrase="((USM pkginv) -> SIG)"/>
+	</action>
+    </rule>
+    <!--resource == hashfiles, choose hashfile mspec-->
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="hashfiles"/>
+        <action selector_action="accept">
+	      <condition name="userspace-hashfiles"  apb_phrase="((USM hashfiles) -> SIG)"/>
+	</action>
+    </rule>
+    <!--resource == mtab, choose mtab mspec-->
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="mtab"/>
+        <action selector_action="accept">
+	      <condition name="userspace-mtab"       apb_phrase="((USM mtab) -> SIG)"/>
+	</action>
+    </rule>
+    <!--resource == got-measure, choose got-measure mspec-->
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="got_measure"/>
+        <action selector_action="accept">
+	      <condition name="got_measure"          apb_phrase="((USM got) -> SIG)"/>
+        </action>
+    </rule>
+    <!--resource == hashfile, choose hashfile mspec -->
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="hashfile"/>
+        <action selector_action="accept">
+              <condition name="userspace-hashfile"   apb_phrase="((USM hashfile file) -> SIG):file=/bin/ls"/>
+        </action>
+    </rule>
+
+
+    <!--Spawn Phase and Appraiser Role.
+	Select Appraiser copland phrase to appraise attester output-->
+    <rule role="appraiser" phase="spawn">
+        <action selector_action="accept">
+                <condition name="userspace_appraiser"  apb_phrase="(USM app)"/>
+        </action>
+    </rule>
+
+</selector_policy>

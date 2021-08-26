@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>proc_namespaces</name>
+	<uuid>F7BC4570-E35A-4033-9E3C-5EC070B1C934</uuid>
+	<description>Record all namespaces associated with a process
+	by inspecting entries in /proc/&lt;pid&gt;/ns/</description>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/proc_namespaces_asp</aspfile>
+	<measurers>
+		<satisfier id="0">
+		  <value name="type">GRAPH</value>
+		  <capability target_type="process_target_type"
+			      target_magic="0x091D091D"
+			      target_desc = "A process"
+			      address_type="pid_address_space"
+			      address_magic="0x0F1DF1DF"
+			      address_desc="A PID"
+			      measurement_type="namespace_measurement_type"
+			      measurement_magic="X"
+			      measurement_desc="An empty measurement type indicating that namespace nodes have been added" />
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <selinux><type>proc_namespaces_asp_t</type></selinux>
+	  <user>maat</user>
+	</security_context>
+	<usage>proc_namespace_asp [graph path] [node id]</usage>
+	<inputdescription>
+	  This ASP expects a measurement graph path and a node
+	  identifier as arguments on the command line. The node
+	  identified must represent a process identified by an address
+	  in the pid_address_aspace.
+
+	  This ASP does not consume any input from stdin.
+	</inputdescription>
+	<outputdescription>
+	  This ASP produces nodes with target_type
+	  namespace_target_type and addresses in the
+	  inode_address_space, and edges connecting the input node to
+	  the nodes representing its various namespaces.
+
+	  This ASP produces no output on stdout
+	</outputdescription>
+	<seealso>
+	  http://manpages.ubuntu.com/manpages/precise/man7/namespaces.7.html
+	</seealso>
+</asp>

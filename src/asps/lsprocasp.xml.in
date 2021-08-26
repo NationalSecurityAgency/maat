@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>lsproc</name>
+	<uuid>906b78d3-4591-4ebb-85a5-592db041df30</uuid>
+	<type>Process</type>
+	<description>List (and gather metadata) on all running processes</description>
+	<usage>
+		lsproc_asp [graph path] [node id]</usage>
+	<inputdescription>
+        This ASP expects a measurement graph path and a node identifier as arguments on the command line.
+        The node identified must have target type process_target_type and address space unit_address_space
+        to represent the process this asp will parse and store metadata from.
+
+	This ASP does not consume any input from stdin.</inputdescription>
+	<outputdescription>
+        This ASP produces a process_metadata_measurement_type measurement containing the metadata (file stats, command line, and security context) 
+        and attaches it to the node passed as input.
+
+	This ASP produces no output on stdout.</outputdescription>
+	<seealso>
+		http://manpages.ubuntu.com/manpages/precise/man5/proc.5.html
+		http://manpages.ubuntu.com/manpages/precise/man1/ps.1.html</seealso>
+<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/lsprocasp</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">GRAPH</value>
+                        <capability target_type="process_target_type"
+				target_magic="0x091D091D"
+				target_desc = "An instance of target tich, which describes attributes of the target process"
+			    	address_type="unit_address_space"
+				address_magic="0x50EC50EC"
+				address_desc="An instance of address type that describes the process address space. This contains the process id (PID)"
+				measurement_type="process_metadata_measurement_type"
+				measurement_magic="3200" 
+				measurement_desc="An instance of measurement type that describes the metadata of a process."/>
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <selinux><type>lsproc_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+	  <capabilities>cap_sys_ptrace+ep</capabilities>
+  	</security_context>
+	<example>
+         Running lsprocasp with graph configured by graph-shell
+
+	   Terminal 1 (run xclock app)
+		> xclock
+
+	   Terminal 2 (find pid)
+		>ps -ef | grep xclock
+		userid  3678  3630  0 17:18 pts/25   00:00:00 xcloc
+
+           Terminal 3 (use graph-shell to create graph and insert node)
+                > ./graph-shell
+                > types /opt/maat/lib/libmaat_basetypes.so register_types
+                >  new
+                Graph created at /tmp/maatgraph09oAVI
+                >  add-node 91d091d f1df1df 3678
+                0000000000000000
+
+           Terminal 2 (run asp)
+		> ./lsprocasp /tmp/maatgraph09oAVI 0
+
+           Terminal 3 (use graph-shell to create graph and insert node)
+                > ls-data 0
+		00000c80: process_metadata
+		> cat-data 0 c80 
+			comm:		xclock
+			exec time:	2
+			pid:		3678
+			ppid:		3630
+			sched class:	TS
+			start time:	
+			tty:		(88,000000)
+			user ids:	{1000 1000 1000 1000}
+			group ids:	{1000 1000 1000 1000}
+			exec shield:	0
+			loginuid:	0
+			capabilities:	0000000000000000
+			selinux label:	unconfined
+	
+			session id:	0
+
+	</example>
+</asp>

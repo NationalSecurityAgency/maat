@@ -1,0 +1,305 @@
+Understanding the Security Model
+********************************
+
+.. Copyright
+
+   Copyright 2020 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+.. currentmodule:: maat
+
+.. _Linux Capabilities: http://lkml.iu.edu/hypermail/linux/kernel/9808.1/0178.html
+
+.. _sVirt: http://namei.org/presentations/svirt-lca-2009.pdf
+
+.. _SELinux: http://selinuxproject.org
+
+.. _security_model:
+
+Purpose and Intended Audience
+===============================
+
+This section will provide details about the security model that
+Maat was designed to meet. It also provides information on Maat's use of
+SELinux Policy to protect the Maat
+architecture from the rest of the system, and Maat components from each 
+other. 
+
+The intended audience for this section is a security policy author
+that seeks to extend Maat's security policy to protect additional
+components, or a system administrator attempting to verify or debug
+permissions errors.
+
+Security Model
+===============
+
+Maat’s security model is designed around building discrete M&A
+functions. The AM, APBs, and ASPs each execute in separate processes
+in order to allow operating system level controls to assign only the
+necessary privileges to each component.
+
+Maat's security provides granular control over the attestation
+process using three access control primitives present on Linux
+systems:
+
+      * POSIX Discretionary Access Controls (DAC)
+      * `Linux Capabilities`_
+      * `SELinux`_ Manadatory Access Controls (MAC)
+
+The DAC model allows each APB and ASP component in Maat to run with
+individual user permissions specified at registration. This allows the
+externally communicating components (the AM and APBs) to run as
+unprivileged users while only the measurement gathering ASPs are run
+with higher privileges.
+
+To further limit the actions of each ASP, a set of `Linux Capabilities`_
+can be specified at registration to limit the administrative
+actions that an ASP running as the super user may perform.
+
+SELinux provides an even greater level of isolation as each APB and
+ASP can be given a unique SELinux domain with exactly the necessary
+privileges.
+
+SELinux provides guarantees that measurements were collected by the
+correct component invoked in the correct way. The AM’s executable is
+given an SELinux type that has sole transition access to the correct
+domain for the AM, files containing keys used to identify the AM are
+given an SELinux type that can only be read by this domain, and APB
+images are given types that can only be launched by this domain. On
+APB launch, SELinux forces a transition into a domain with access to
+exactly the set of credentials and ASPs appropriate for that
+APB. Finally, ASPs run in domains with the minimal privileges
+necessary to execute their particular function, e.g., gathering a TPM
+quote or inspecting platform state via the /proc pseudo filesystem.
+Trust in the Maat executables and SELinux mechanisms and policies,
+combined with careful protocol construction,
+allows an appraiser to conclude that the
+measurements presented by Maat were collected by the correct
+components.
+
+Maat also uses SELinux’s category mechanism to isolate concurrent
+attestations similar to how virtual machines are isolated from one
+another under `sVirt`_. The AM is initially provided with a large set
+of categories. Each attestation session is handled by spawning a child
+process of the AM to perform negotiation and then execute an APB. The
+parent AM gives each child a set of unique categories in which to
+execute. The APB can then similarly apportion its categories to ASPs
+as they are executed. This policy protects the platform from
+subversion of Maat, protects Maat from subversion of the platform
+(excepting attacks that subvert the operating system), and protects
+each component of Maat from subversions in other components.
+
+
+SELinux In Five Minutes
+=======================
+
+This section is intended to provide the briefest introduction to
+SELinux necessary for the rest of this document to make sense. For
+more information see `SELinux`_.
+
+Security Contexts
+-----------------
+SELinux works by assigning every object (file, device, port, process,
+etc.) with a security context. The SELinux policy comprises a set of rules
+that define what accesses a process running in one context is allowed
+to perform on an object of another context (that may be the same
+context).
+
+SELinux contexts are a 4-tuple usually delimited by colons::
+
+> user_u:role_r:type_t:categories
+
+User and Role
+-------------
+Maat does not make use of the user and role fields, but these can be
+used to limit access to an object to processes acting on behalf of a
+particular user in a particular role. Notably, passive objects (e.g.,
+files) are typically given the role ``object_r``.
+
+Types
+-----
+The type field is the most heavily used field of the SELinux security
+context. Policy is typically stated in terms of type enforcement rules
+such as::
+
+     allow foo_t bar_t:file { open read getattr }
+
+Here ``foo_t`` is the type of a process, which is often called a domain,
+and it is being granted the permissions ``open``, ``read``, and ``getattr`` to
+``files`` labeled with the ``bar_t`` type.
+
+Note that even with this rule, a process in the ``foo_t`` domain may be
+denied access to a file with type ``bar_t`` if (a) the POSIX DAC
+permissions deny the access, (b) the user or role of the process's
+SELinux context has not been granted access to the file, or (c) the
+process lacks the categories needed to access the file.
+
+Type transition rules are another form of type enforcement rule.
+Instead of allowing a process in one domain to access objects of
+another type, they allow processes to transition from one domain to
+another (typically at a call to ``exec()``). This allows behaviors
+analogous to (but far safer than) traditional suid binaries where a
+program lacking some permission is able to execute another program
+that has the permission. The following example indicates that when a process
+executing in the ``source_domain_t`` domain calls ``exec()`` on a
+file labeled with the ``target_exe_t`` type, it should transition to the
+``target_domain_t``::
+
+	type_transition source_domain_t target_exe_t : process target_domain_t
+
+Notably, ``type_transition`` rules do not actually grant the permissions
+required to perform the ``exec()`` or to enter the target domain. The
+example above would need to be accompanied by rules like::
+
+	allow source_domain_t target_exe_t:file {execute}
+	allow target_domain_t target_exe_t:file {entrypoint}
+	allow source_domain_t target_domain_t:process {transition}
+
+In order to actually allow the ``exec()`` call and type transition to
+succeed.
+
+Categories
+----------
+Categories on an object's context act as a set of locks; a process
+must have the same categories in its context in order to access the
+object. Objects created by a process are by default given the same
+categories as the calling process. This provides a simple mechanism to
+isolate files created by different executions of the same process.
+
+Policy Organization
+-------------------
+SELinux policy is divided into modules (generally with the suffix
+".pp"). Module definitions are typically split across three
+files:
+
+* Type enforcement files (ending in .te) that define
+  enforcement rules.
+
+* File contexts files (ending in .fc) that define how to
+  compute files' default labels based on their paths (labels
+  are actually maintained at the inode level). This is
+  primarily used for performing initial labeling when SELinux
+  is first enabled or after loading a new policy module.
+
+* Interface files (ending in .if) define macros that other
+  modules use to access the types, etc., defined within the module.
+  It is highly recommended that policy modules use these
+  macros to interact rather than directly accessing the
+  module's base types.
+
+
+Maat SELinux Policy
+===================
+
+The Maat SELinux policy seeks to achieve several goals to protect the
+Maat architecture from the rest of the system, to protect the system
+from rogue Maat components, and to limit interactions between Maat
+components.
+
+	* It should only be possible to introduce M&A components via
+          the M&A registration system.
+
+	* Components that are not part of the M&A architecture should
+          not be able to interfere with M&A operations or pose as M&A
+          components.
+
+	* Each component of the M&A architecture should have access
+          only to the resources it needs to fulfill its role, and it
+          shouldn't be able to interfere with the operation of the
+          system.
+
+	* Multiple concurrent attestations should be isolated from
+          each other (in particular concurrent invocations of the same
+          APB or ASP should not be able to access each other's data).
+
+	* It should be possible to limit access to partial or
+          intermediate measurement results to specific consumers and
+          to enforce processing pipelines.
+
+	* ASPs are invokable only by APBs.
+
+	* APBs are invokable only by the Attestation Manager.
+
+	* All attestations are initiated by the Attestation Manager.
+
+Measurement And Attestation Components
+========================================
+
+The major components of Maat are:
+
+* attestmgr:
+	The attestation manager. Loads metadata for all ASPs and APBs,
+	manages various credentials, listens on a couple of sockets,
+	and spawns APBs (presumably can potentially spawn any APB).
+
+* APB metadata:
+	XML files describing each APB. Should be in one-to-one
+	correspondence with the APB so files.
+
+* APB executables:
+	These are actual APB implementations that will be dlopen()ed
+	by apbmain. At a minimum, APBs receive a file descriptor
+	inherited from their parent -- typically the parent is
+	attestmgr and the fd is a socket connecting the APB to the
+	other side of the attestation (it may actually receive two
+	fds, one to the attestation peer and the other to the entity
+	that requested the attestation in the first place). APBs
+	generally load ASP metadata files and invoke some set of ASPs.
+
+* ASP metadata:
+	XML files describing each ASP. Should be in one-to-one
+	correspondence with the ASP so files.
+
+* ASP executables:
+	Actual ASP implementations. These perform attestation and
+	appraisal tasks. Notably many ASPs may need special access to 
+	do their jobs inspecting parts of the system, and many may use 
+	the libmaat-graph API to inspect the current measurement state 
+	and to store their contributions to the measurement.
+
+Current SELinux Policy Approach
+===================================
+
+The policy is now built as a single maat.pp policy module defining
+types for the Maat infrastructure and all distributed APBs and ASPs.
+
+Filesystem Reference
+====================
+
+The following tables provide an annotated summary of a complete
+installation and filesystem security configuration of the Maat
+framework.
+
+.. include:: security_fs_listing.txt
+
+References
+==========
+
+|  Linux Capabilities
+|    http://lkml.iu.edu/hypermail/linux/kernel/9808.1/0178.html
+|
+|  SVirt: Harding Linux Virtualization with Mandatory Access Control
+|    http://namei.org/presentations/svirt-lca-2009.pdf
+|
+|  SELinux User's And Administrator's Guide
+|    https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7-Beta/html-single/SELinux_Users_and_Administrators_Guide/index.html
+|
+|  SELinux Contexts
+|    https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Security-Enhanced_Linux/chap-Security-Enhanced_Linux-SELinux_Contexts.html
+|
+|  SELinux Role-based access control
+|    https://wiki.gentoo.org/wiki/SELinux/Role-based_access_control
+|
+|  SELinux Type enforcement
+|    https://wiki.gentoo.org/wiki/SELinux/Type_enforcement

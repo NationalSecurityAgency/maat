@@ -1,0 +1,47 @@
+#
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+AUTOMAKE_OPTIONS = -Wno-portability subdir-objects
+
+apbdir=${APB_INSTALL_DIR}
+apbinfodir=${APB_INFO_DIR}
+aspdir=${ASP_INSTALL_DIR}
+suid_aspdir=${aspdir}
+suid_apbdir=${apbdir}
+aspinfodir=${ASP_INFO_DIR}
+specdir=${SPEC_INSTALL_DIR}
+selectordir=${SELECTOR_INSTALL_DIR}
+
+if ENABLE_TESTS
+test-info/%.xml : %.xml.in $(top_srcdir)/src/expandvars.awk
+	${AM_V_GEN}mkdir -p ./test-info/
+	${AM_V_GEN}awk -v apbdir="$(abs_top_builddir)/src/apbs" \
+	    -v aspdir="$(abs_top_builddir)/src/asps" \
+	    -v specdir="$(abs_top_builddir)/src/specs" \
+	    -v maatuser=`whoami` \
+	    -v maatgroup=`groups | cut -d ' ' -f 1` \
+	    -f  $(top_srcdir)/src/expandvars.awk $< > $@
+
+else
+test-info/%.xml : 
+	/bin/true
+endif
+
+%.xml : %.xml.in $(top_srcdir)/src/expandvars.awk 
+	${AM_V_GEN}awk -v apbdir="${apbdir}" -v aspdir="${aspdir}" -v specdir="${specdir}" \
+		-v selectordir="${selectordir}" \
+		-v maatuser=maat -v maatgroup=maat \
+		-f  $(top_srcdir)/src/expandvars.awk $< > $@

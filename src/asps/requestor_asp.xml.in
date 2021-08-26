@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>requestor_asp</name>
+	<uuid>cd82c9f7-760d-4535-bcab-74daafaa1739</uuid>
+	<type>Process</type>
+	<description>Request a measurement from another AM</description>
+	<usage>	requestor_asp [graph path] [node id] [certfile] [keyfile] [keypass] [nonce] [tpmpass] [use_tpm]</usage>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/requestor_asp</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">GRAPH</value>
+                        <capability target_type="system_target_type"
+				target_magic="0x57513777"
+				target_desc = "target type for system data"
+				address_type="measurement_request_address_space"
+				address_magic="0x7EF11777"
+				address_desc="An instance of address type that describes attester, resource, and appraiser for external measurement"
+				measurement_type="blob_measurement_type"
+				measurement_magic="0xB10BB10B"
+				measurement_desc="Opaque data type for transporting a generic buffer."
+				/>
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <selinux><type>requestor_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+	</security_context>
+</asp>

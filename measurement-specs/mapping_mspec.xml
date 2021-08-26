@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<measurement_specification>
+	<name>memory mapping  measurement specification</name>
+	<uuid>3db1c1b2-4d44-45ea-83f5-8de858b1a555</uuid>
+	<description>Simple measurement spec for testing.</description>
+	<instructions>
+          <instruction type="submeasure" name="pid_sha1hash">
+	    <target_type      name="process_target_type" magic="0x091D091D" />
+	    <address_type     name="pid_address_space" magic="0x0F1DF1DF" />
+	    <measurement_type name="mappings_measurement_type" magic="3300"/>
+	    <action feature="paths" instruction="file_sha1hash" />
+	  </instruction>
+	  <instruction type="simple" name="file_sha1hash">
+	    <target_type      name="file_target_type" magic="1001" />
+	    <address_type     name="simple_file_address_space" magic="0x5F5F5F5F" />
+	    <measurement_type name="sha1hash_measurement_type" magic="3100" />
+	  </instruction>	 
+	</instructions>	 
+
+	<variables>
+	  <variable instruction="pid_sha1hash"> 
+	    <address operation="equal">self</address>
+	  </variable>
+	</variables>
+</measurement_specification>

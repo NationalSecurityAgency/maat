@@ -1,0 +1,8 @@
+# 
+# Module whitelist file
+#
+# Module names appearing in this file (one per line) are the only
+# modules allowed on the system.  Any module found not on this
+# list will trigger an attestation failure
+# 
+

@@ -1,0 +1,29 @@
+#
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+In order to setup the pam_svp module, you will need to copy the generated .so
+file into your systems well-known pam module directory.  For Fedora this
+locations is in /lib(64)/security/ (searching for default pam modules could help
+locate the correct directory location, pam_unix.so would be a good one to search
+for) "sudo cp ./pam/.libs/libpam_svp.so.0.0.0 /lib/security/"
+
+Next in order to modify a service to use the pam_svp module, you will need to
+modify it's file in /etc/pam.d/ (in old setups, it will be /etc/pam.conf).
+Within this directory is a file for each pam-aware service. In order to add
+pam_svp to be applied to a service, you will open up the associated file and add
+the following line to the config "auth		[required/requisite/optional]
+pam_svp.so	[cmd-line args]"
+

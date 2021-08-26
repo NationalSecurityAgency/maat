@@ -1,0 +1,7 @@
+# 
+# Modules blacklist file
+#
+# Module names appearing in this file (one per line) will trigger an 
+# attestation failure if found loaded on the system under test. 
+# 
+

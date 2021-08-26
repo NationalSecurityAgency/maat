@@ -1,0 +1,185 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	   targetNamespace="http://www.jhuapl.edu/maat"
+	   xmlns="http://http://www.jhuapl.edu/maat"
+	   elementFormDefault="qualified">
+  <xs:element name="measurement_specification">
+    <xs:complexType>
+      <xs:sequence>
+	<xs:element name="name" type="xs:string"/>
+	<xs:element name="uuid" type="xs:string"/>
+	<xs:element name="desc" type="xs:string"/>
+	<xs:element name="instructions" type="xs:string">
+	  <xs:complexType>
+	    <xs:sequence>
+	      <xs:element name="instruction" minOccurs="0" maxOccurs="unbounded">
+		<xs:complexType>
+		  <xs:choice> <!-- Can you have a choice between a sequence and element? -->
+		    <xs:sequence>
+		      <xs:element name="target_type">
+			<xs:complexType>
+			  <xs:attribute name="name" use="required" type="targettype" />	  
+			  <xs:attribute name="magic" type="xs:string" />	  
+			</xs:complexType>	      
+		      </xs:element> <!-- target_type -->
+		      <xs:element name="address_type" > 
+			<xs:complexType>
+			  <xs:attribute name="name" use="required" type="addresstype" />	  
+			  <xs:attribute name="magic" type="xs:string" />	  
+			</xs:complexType>
+		      </xs:element> <!-- address_type -->
+		      <xs:element name="measurement_type" minOccurs="0" maxOccurs="1">
+			<xs:complexType>
+			  <xs:attribute name="name" use="required" type="measurementtype" />	  
+			  <xs:attribute name="magic" type="xs:string" />	  
+			</xs:complexType>		  
+		      </xs:element> <!-- measurement_type -->
+		      <xs:element name="selectmeasure" minOccurs="0" maxOccurs="unbounded">
+			<xs:complexType>
+			  <xs:sequence>
+			    <xs:element name="select" minOccurs="0" maxOccurs="unbounded" type="xs:string">
+			      <xs:complexType>
+				<xs:attribute name="parameter" use="required" type="xs:string" />
+				<!-- restriction on the parameter here? -->
+				<xs:attribute name="operation" use="required" type="operationtype" />
+			      </xs:complexType>	      
+			    </xs:element> <!-- select -->
+			    <xs:element name="target_type">
+			      <xs:complexType>
+				<xs:attribute name="name" use="required" type="targettype" />	  
+				<xs:attribute name="magic" type="xs:string" />	  
+			      </xs:complexType>	      
+			    </xs:element> <!-- target_type -->
+			    <xs:element name="address_type" > 
+			      <xs:complexType>
+				<xs:attribute name="name" use="required" type="addresstype" />	  
+				<xs:attribute name="magic" type="xs:string" />	  
+			      </xs:complexType>
+			    </xs:element> <!-- address_type -->
+			    <xs:element name="action">
+			      <xs:complexType>
+				<xs:attribute name="name" use="required" type="xs:string" />
+				<!-- restriction on the name here? -->
+			      </xs:complexType>	      
+			    </xs:element> <!-- action -->
+			  </xs:sequence>
+			</xs:complexType>
+		      </xs:element> <!-- selectmeasure -->
+		      <xs:element name="submeasure" minOccurs="0" maxOccurs="unbounded">
+			<xs:complexType>
+			  <xs:sequence>
+			    <xs:element name="attribute" minOccurs="0" maxOccurs="unbounded">
+			      <xs:complexType>
+				<xs:attribute name="name" use="required" type="xs:string" />
+				<!-- restriction on the name here? -->
+			      </xs:complexType>	      
+			    </xs:element> <!-- attribute -->
+			    <xs:element name="target_type">
+			      <xs:complexType>
+				<xs:attribute name="name" use="required" type="targettype" />	  
+				<xs:attribute name="magic" type="xs:string" />	  
+			      </xs:complexType>	      
+			    </xs:element> <!-- target_type -->
+			    <xs:element name="address_type" > 
+			      <xs:complexType>
+				<xs:attribute name="name" use="required" type="addresstype" />	  
+				<xs:attribute name="magic" type="xs:string" />	  
+			      </xs:complexType>
+			    </xs:element> <!-- address_type -->
+			    <xs:element name="action">
+			      <xs:complexType>
+				<xs:attribute name="name" use="required" type="xs:string" />
+				<!-- restriction on the name here? -->
+			      </xs:complexType>	      
+			    </xs:element> <!-- action -->
+			  </xs:sequence>
+			</xs:complexType>
+		      </xs:element> <!-- submeasure -->
+		    </xs:sequence>
+		    <xs:element name="subinstruction">
+		      <xs:complexType>
+			<xs:attribute name="name" use="required" type="xs:string" />	  
+		      </xs:complexType>	      
+		    </xs:element> <!-- subinstruction -->
+		  </xs:choice>
+		</xs:complexType>	      
+	      </xs:element> <!-- measurement_instruction -->
+	    </xs:sequence>
+	  </xs:complexType>	      		      
+	</xs:element> <!-- instructions -->
+	<xs:element name="variables" type="xs:string">
+	  <xs:complexType>
+	    <xs:sequence>
+	      <xs:element name="variable" minOccurs="0" maxOccurs="unbounded" >
+		<xs:complexType>
+		  <xs:sequence>
+		    <xs:element name="address" minOccurs="1" maxOccurs="unbounded" >
+		      <xs:complexType>
+			<xs:attribute name="operation" use="required" type="operationtype" />	  
+		      </xs:complexType>	      
+		    </xs:element> <!-- address -->
+		  </xs:sequence>
+		</xs:complexType>	      
+	      </xs:element> <!-- variable -->
+	    </xs:sequence>
+	  </xs:complexType>
+	</xs:element>  <!-- variables -->
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>  <!-- Measurement_specification -->
+  <xs:simpleType name="addresstype">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="pid_address" />
+      <xs:enumeration value="file_address" />
+      <xs:enumeration value="inode_address" />
+      <!-- Add more address_types here -->
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="targettype">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="process" />
+      <xs:enumeration value="simple_file" />
+      <xs:enumeration value="socket" />
+      <xs:enumeration value="pipe" />
+      <xs:enumeration value="shared_memory" />
+      <xs:enumeration value="device" />
+      <xs:enumeration value="interface" />
+      <!-- Add more target_types here -->
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="measurementtype">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="sha1hash" />
+      <xs:enumeration value="sha2hash" />
+      <xs:enumeration value="file_metadata" />
+      <xs:enumeration value="process_metadata" />
+      <!-- Add more measurement_types here -->
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="operationtype">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="less than" />
+      <xs:enumeration value="greater than" />
+      <xs:enumeration value="less than or equal" />
+      <xs:enumeration value="greater than or equal" />
+      <xs:enumeration value="equal" />
+      <xs:enumeration value="pattern match" />
+      <!-- Add more operaion_types here? -->
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>

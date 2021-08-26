@@ -1,0 +1,8 @@
+# 
+# Process whitelist file
+#
+# Process names appearing in this file (one per line) are the only
+# processes allowed on the system.  Any process found not on this
+# list will trigger an attestation failure
+# 
+

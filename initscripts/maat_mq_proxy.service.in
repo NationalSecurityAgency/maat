@@ -1,0 +1,16 @@
+[Unit]
+Description=Maat ActiveMQ Proxy
+After=syslog.target network.target
+
+[Service]
+TimeoutStartSec=30
+EnvironmentFile=/etc/default/maat
+ExecStart=@bindir@/maat_mq_proxy -f
+KillMode=control-group
+Restart=on-failure
+RestartSec=10s
+User=maat
+Group=maat
+
+[Install]
+WantedBy=multi-user.target

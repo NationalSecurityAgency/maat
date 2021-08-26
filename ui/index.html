@@ -1,0 +1,95 @@
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License
+-->
+
+<!--
+    index.html: Maat example webapp landing page.    
+-->
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Maat Console</title>
+    <link type="text/css" rel="stylesheet" href="style.css" />
+    <script src="https://code.jquery.com/jquery-3.5.0.min.js"></script>
+    <script src="api.js"></script>
+    <script type="text/javascript">
+      clickable_callback = function(response) {
+          $('.clickable').click(function() {
+              var state = $(this).hasClass('selected');
+              if(!state) { $(this).addClass('selected'); }
+              else { $(this).removeClass('selected'); }
+          });
+      }
+
+      $(document).ready(function() {
+          r_m = build_machine_table();
+          r_r = build_resource_table();
+          r_mm = build_measurements_table();
+
+          $.when(r_m, r_r, r_mm).then(clickable_callback);
+      });
+    </script>
+  </head>
+
+  <body>
+    <h1 style='float:left;width:85vh'>Maat Console</h1>
+
+    <!-- Buttons and hidden forms for adding machines and resources-->
+    <div style='float:right;text-align:right' id='form-section'>
+      </br>
+      <div id='machine-form-bucket'>
+	<button onclick='$("#machine-form").toggle();document.activeElement.blur();'>+ Machine</button>
+	<div id='machine-form' class='hidden-on-load'>
+	  Machine Name:<br>
+	  <input class='machine-input' type='text' name='machine-name'>
+	  <br>Certificate Fingerprint:<br>
+	  <input class='machine-input' type='text' name='machine-fingerprint'>
+	  <br>IP address:<br>
+	  <input class='machine-input' type='text' name='machine-ip'>
+	  <br>Port of AM:<br>
+	  <input class='machine-input' type='text' name='machine-port'>
+	  <br>
+	  <button onclick='add_machine();'>Add</button>
+	</div>
+      </div>
+      
+      <div id='resource-form-bucket'>
+	<button onclick='$("#resource-form").toggle();document.activeElement.blur();'>+ Resource</button>
+	<div id='resource-form' class='hidden-on-load'>
+	  Resource Name:<br>
+	  <input class='resource-input' type='text' name='resource-name'>
+	  <br>
+	  <button onclick='add_resource();'>Add</button>
+	</div>
+      </div>
+    </br></br></br></br>
+    
+    </div>
+
+    <!-- Button for scheduling measurement-->
+    <button class='schedule' onclick='schedule_gatherer();'>Schedule</button>
+    <br/>
+    <div id='schedule-bucket'></div>
+
+        <!-- Buckets for machine and resources tables to load-->
+    <div id='table-section'>
+      <div id='machine-bucket'></div>
+      <div id='resource-bucket'></div>
+    </div>
+
+
+    <div id='measurement-bucket'></div>
+  </body>
+</html>

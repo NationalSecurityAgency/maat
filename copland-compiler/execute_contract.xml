@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<contract version="2.0" type="execute">
+  <subcontract>
+    <option>
+      <value name="APB_uuid">832431de-6cbb-45ab-8c62-3849449dddee</value>
+      <value name="Measurement_Spec_uuid">55042348-e8d5-4443-abf7-3d67317c7dad</value>
+    </option>
+  </subcontract>
+  <nonce>3a160a9801e5e183b7bc6ffd40861a6c178a25d3</nonce>
+  <nonce/>
+  <signature>
+    <signedinfo>
+      <canonicalizationmethod algorithm="XML C14N 1.0"/>
+      <signaturemethod algorithm="RSA"/>
+      <digestmethod algorithm="SHA-1"/>
+    </signedinfo>
+    <signaturevalue>mVD7ys+m1grskZrbLszAIDbyMsezC6ozAXu5c1RFxe66ctLvkaYnUjtD2rxKl/muJWp9bIDEFlan6ODHDBFTnv4HSmbfo6diG9ZmvuUqE5RlQu8PgeViuYfN8mIM9Oc8iGwhPvE0VgA1ovtbcE/2i9LDNMM0REag/J9cQ4Sgixq49g50cAxtX1+6IzgEpyH/bp1WGdBNHczlD1+DQkhDc7HsOhU/MfVEGydjyitzL22ZrluLmVmPTq6m3iY1DNBGQxhX5ml0OtG/MsWMT7TKE029JkX3ZrDeTo3uq/ynBjBSCy5mFX3K+rw7TlcheehCUhzxYCVr8igESpodqiEUpQ==</signaturevalue>
+    <keyinfo>EC:59:A3:E2:2D:0A:8C:E3:C7:02:12:E2:95:5F:4D:0C:1D:F9:D7:0F</keyinfo>
+  </signature>
+</contract>

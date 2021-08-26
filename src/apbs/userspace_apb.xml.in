@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<apb>
+	<name>userspace</name>
+	<desc>Userspace measurement APB</desc>
+	<uuid>832431de-6cbb-45ab-8c62-3849449dddee</uuid>
+	<file hash="XXXXX">${APB_INSTALL_DIR}/userspace_apb</file>
+	<input_type>????</input_type>
+	<output_type>????</output_type>
+	<asps ordered="False">
+	  <asp uuid="906b78d3-4591-4ebb-85a5-592db041df30" initial="True">lsproc</asp>
+	  <asp uuid="1f82c9f7-760d-4535-bcab-74daafaa1ff9">procopenfiles</asp>
+	  <asp uuid="dff44141-9d3a-4cfe-8a30-2c072bb77025">filesha1hash</asp>
+	  <asp uuid="cd82c9f7-760d-4535-bcab-74daadaa1f44" initial="True">system</asp>
+	  <asp uuid="cd82c9f7-760d-4535-bcab-74f4debaca9e">dpkg_inv</asp>
+	  <asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1f44">rpm_inv</asp>
+	  <asp uuid="cd82c9f7-760d-4535-bcab-74dadebaca9e">dpkg_details</asp>
+	  <asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1f4f">rpm_details</asp>
+	  <asp uuid="fb3dffdd-c759-435b-8861-811920245450">listdir</asp>
+	  <asp uuid="a721da4a-0ba4-4d35-87db-b9c92da24d48">mtab</asp>
+	  <asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1739">requestor_asp</asp>
+	  <asp uuid="7c912f0b-a75c-4930-914b-9cf45af05b79">got_measure</asp>
+      <asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1f22">memorymapping</asp>
+      <asp uuid="9D7E5286-BF96-45FA-8461-DD5474FE3214">procfds</asp>
+      <asp uuid="F7BC4570-E35A-4033-9E3C-5EC070B1C934">proc_namespaces</asp>
+      <asp uuid="726B1964-1145-4F73-A6BC-DF17BBDEFF8E">procmem</asp>
+      <asp uuid="cd82c9f7-760d-4535-5197-74daadaa1f44">sign_send</asp>
+      <asp uuid="1762695e-b3b9-466e-88d1-df1571e0a073">md5fileservice</asp>
+	</asps>
+    <copland>
+      <phrase copland="((USM full) -> SIG)">full userspace measurement</phrase>
+      <spec uuid= "55042348-e8d5-4443-abf7-3d67317c7dab">Linux userspace mspec</spec>
+    </copland>
+    <copland>
+      <phrase copland="((USM processes) -> SIG)">process measurement</phrase>
+      <spec uuid="55042348-e8d5-4443-abf7-3d67317c7dad">ls proc mspec</spec>
+    </copland>
+    <copland>
+      <phrase copland="((USM pkginv) -> SIG)">package inventory measurement</phrase>
+      <spec uuid="3db1c1b2-4d44-45ea-83f5-8de858b1a5a5">pkg inv mspec</spec>
+    </copland>
+    <copland>
+      <phrase copland="((USM hashfiles) -> SIG)">hashfiles measurement</phrase>
+      <spec uuid="55042348-e8d5-4443-abf7-3d67317c7dae">hashfiles mspec</spec>
+    </copland>
+    <copland>
+      <phrase copland="((USM mtab) -> SIG)">mtab measurement</phrase>
+      <spec uuid="55042348-e8d5-4443-abf7-3d67317c7ddd">mtab mspec</spec>
+    </copland>
+    <copland>
+      <phrase copland="((USM got) -> SIG)">got/plt measurement</phrase>
+      <spec uuid="60742348-e8d5-4443-abf7-3d67317c7dab">got measure</spec>
+    </copland>
+    <copland>
+      <phrase copland="((KIM runtime_meas) -~- @_1((USM pkginv) -> SIG) -> SIG)">package inventory of remote with runtime measurement of self</phrase>
+      <spec uuid="55042348-e8d5-4443-1777-3d67317c7dab">verified userspace mspec</spec>
+    </copland>
+	<security_context>
+	  <selinux><type>userspace_apb_t</type></selinux>
+	</security_context>
+</apb>

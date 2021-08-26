@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>blacklist</name>
+	<uuid>bef082ae-a790-4f5a-a881-72384ab6c9ab</uuid>
+	<type>Appraisal</type>
+	<description>Checks to see if process or module is in blacklist</description>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/blacklist</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">BLOB</value>
+                        <value name="target">blacklist</value>
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <selinux><type>blacklist_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+  	</security_context>
+	<usage>
+	blacklist [graph path] [node id] [measurement type]</usage>
+	 <inputdescription>
+        This ASP expects a measurement graph path, a node identifier, and a measurement type as arguments on the command line.
+        The node identified must have target type module_target_type and address space kernel_address_space
+        to represent the list of modules loaded into the system. The node must also have the measurement type kmod_measurement_type or process module type. Either the name of the process or module will be checked against Maat's blacklist. 
+
+        This ASP does not consume any input from stdin.</inputdescription>
+	<outputdescription>
+		This ASP produces a report_measurement_data measurement containing the result of if the module/process was in Maat's blacklist. 
+	</outputdescription>	
+	<seealso>
+		whitelist
+	</seealso>
+	<example>
+        Running blacklist asp with graph configured by graph-shell
+
+           Terminal 1 (use graph-shell to create graph and insert node)
+                $ ./graph-shell
+                graph()> types /opt/maat/lib/libmaat_basetypes.so register_types
+		graph()> new
+		Graph created at /tmp/maatgraphceHVZu
+		graph(/tmp/maatgraphceHVZu)> add-node 0d0d0d0d 71d071d0
+		0000000000000000
+
+           Terminal 2 (first run lsmod asp to generate a module kernel module node)
+                $ ./lsmod /tmp/maatgraphceHVZu 0
+
+           Terminal 1 (use graph-shell to display node contents)
+		graph(/tmp/maatgraphceHVZu)> node-type 0
+		module 0d0d0d0d
+		graph(/tmp/maatgraph4YCBxh)> ls-data 0
+		0e0d0e0d: kmodule
+		graph(/tmp/maatgraphceHVZu)> cat-data 0 0e0d0e0d
+		Module:		"nls_utf8"
+		Size:		12557
+		Refcnt:		1
+		Status:		"Live"
+		Load Address:	0
+
+	   Terminal 3 
+	   Update blacklist file (/opt/maat/share/maat/asps/module.blacklist) so that 
+	   includes "nls_utf8" module.
+		
+
+	   Terminal 2 (now run blacklist asp)
+		$ ./blacklist /tmp/maatgraphceHVZu 0 0e0d0e0d
+
+	   Terminal 1 (Verify that the report measurement is added and identifies the 
+				module as found)
+		graph(/tmp/maatgraphceHVZu)> ls-data 0
+		10000000: report
+		0e0d0e0d: kmodule
+		graph(/tmp/maatgraphceHVZu)> cat-data 0 10000000
+			Report:		"nls_utf8 found in blacklist"
+        </example>
+</asp>

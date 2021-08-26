@@ -1,0 +1,102 @@
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<!--Selector Policy to choose different quiot demo measurements 
+    based on resource passed-->
+<selector_policy>
+    <collection name="known-clients">
+        <entry>127.0.0.1</entry>
+	<entry>localhost</entry>
+    </collection>
+
+    <!--Inital Phase and Appraiser Role. 
+	Check Identity of Client, and offer copland phrase(s)-->
+    <rule role="appraiser" phase="initial">
+      <match_condition attr="client"  operator="in" value="known-clients" />
+        <action selector_action="accept">
+	  <condition name="quiot-userspace" apb_phrase="((USM mtab) -> SIG)"/>
+	  <condition name="quiot-tlm-rate-min" apb_phrase="((USM quiot_min) -> SIG)"/>
+	  <condition name="quiot-tlm-rate-day" apb_phrase="((USM quiot_day) -> SIG)"/>
+	  <condition name="quiot-tlm-rate-hour" apb_phrase="((USM quiot_hour) -> SIG)"/>
+	  <condition name="quiot-tlm-rate-tmin" apb_phrase="((USM quiot_tmin) -> SIG)"/>
+	</action>
+    </rule>
+
+    <!--Modify Phase and Attester Role.
+	Possible down-select on copland phrase(s)-->
+    <rule role="attester" phase="modify">
+      <action selector_action="accept">
+	  <condition name="quiot-userspace" apb_phrase="((USM mtab) -> SIG)"/>
+	  <condition name="quiot-tlm-rate-min" apb_phrase="((USM quiot_min) -> SIG)"/>
+	  <condition name="quiot-tlm-rate-day" apb_phrase="((USM quiot_day) -> SIG)"/>
+	  <condition name="quiot-tlm-rate-hour" apb_phrase="((USM quiot_hour) -> SIG)"/>
+	  <condition name="quiot-tlm-rate-tmin" apb_phrase="((USM quiot_tmin) -> SIG)"/>
+    	</action>
+    </rule>
+    
+    <!--Execute Phase and Appraiser Role.
+	Choose copland phrase for Attester to execute, depending on 
+	resource requested-->
+
+    <!--resource == userspace, choose quiot userspace mspec (mtab)-->
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="Userspace"/>
+        <action selector_action="accept">
+	  <condition name="quiot-userspace" apb_phrase="((USM mtab) -> SIG)"/>
+        </action>
+    </rule>
+
+    <!--these just differ in time span -->
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="IMU Telemetry Rate"/>
+        <action selector_action="accept">
+	  <condition name="quiot-tlm-rate-min" apb_phrase="((USM quiot_min) -> SIG)"/>
+	</action>
+    </rule>
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="quiot-tlm-rate-day"/>
+        <action selector_action="accept">
+	  <condition name="quiot-tlm-rate-day" apb_phrase="((USM quiot_day) -> SIG)"/>
+	</action>
+    </rule>
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="quiot-tlm-rate-hour"/>
+        <action selector_action="accept">
+	  <condition name="quiot-tlm-rate-hour" apb_phrase="((USM quiot_hour) -> SIG)"/>
+	</action>
+    </rule>
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="quiot-tlm-rate-tmin"/>
+        <action selector_action="accept">
+	  <condition name="quiot-tlm-rate-tmin" apb_phrase="((USM quiot_tmin) -> SIG)"/>
+	</action>
+    </rule>
+
+    <!--Spawn Phase and Appraiser Role.
+	Select Appraiser copland phrase to appraise attester output-->
+    <rule role="appraiser" phase="spawn">
+	<match_condition attr="resource" operator="is" value="Userspace"/>
+        <action selector_action="accept">
+          <condition name="userspace_appraiser" apb_phrase="(USM app)"/>
+        </action>
+    </rule>
+
+    <!-- Else gets the result eval apb and mspec -->
+    <rule role="appraiser" phase="spawn">
+        <action selector_action="accept">
+          <condition name="tlm_appraiser" apb_phrase="(USM tlm_app)"/>
+        </action>
+    </rule>
+</selector_policy>

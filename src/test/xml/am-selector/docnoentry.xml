@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!--
+#
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+-->
+<selector_policy>
+    <collection name="known-clients">
+        <blah>127.0.0.1</blah>
+        <blah>client2</blah>
+    </collection>
+    <rule role="appraiser" phase="initial">
+        <match_condition attr="client" operator="in" value="known-clients" />
+        <action selector_action="accept">
+            <condition name="dummy" apb_phrase="dummy"/>
+	        <condition name="proc" apb_phrase="proc_open_files"/>
+	        <condition name="root" apb_phrase="root_userspace"/>
+	    </action>
+    </rule>
+    <rule role="attester" phase="modify">
+        <match_condition attr="partner_fingerprint" operator="is" value="BB:65:51:9E:4C:5F:18:D6:A7:CA:13:13:7F:5E:32:98:E1:4A:C1:15"/>
+        <match_condition attr="options"    operator="include" value="proc_open_files" />
+        <action selector_action="accept">
+	        <condition apb_phrase="proc_open_files"/>
+	    </action>
+    </rule>
+    <rule role="appraiser" phase="execute">
+        <match_condition attr="partner_fingerprint" operator="is" value="8D:ED:A3:9F:57:4C:4D:9B:4E:99:3E:55:BF:0A:2A:96:3C:A7:1B:5E"/>
+        <match_condition attr="client" operator="in" value="known-clients" />
+        <match_condition attr="options"   operator="include" value="proc_open_files"/>
+        <action selector_action="accept">
+	    <condition apb_phrase="proc_open_files"/>
+	</action>
+    </rule>
+    <rule role="appraiser" phase="spawn">
+        <match_condition attr="client" operator="in" value="known-clients"/>
+        <match_condition attr="option"    operator="is" value="proc_open_files" />
+        <action selector_action="accept">
+	    <condition apb_phrase="appraiser"/>
+	</action>
+    </rule>
+</selector_policy>

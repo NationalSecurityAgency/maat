@@ -1,0 +1,78 @@
+[
+    "LIN",
+    [
+        "SEQ"
+    ],
+    {
+        "first": [
+            "PRIM",
+            {
+                "cmd": "/opt/maat/lib/maat/asps/serialize_graph_asp",
+                "target": "/tmp/maatgraphQeOBSU",
+                "args": []
+            }
+        ],
+        "second": [
+            "LIN",
+            [
+                "SEQ"
+            ],
+            {
+                "first": [
+                    "PRIM",
+                    {
+                        "cmd": "/opt/maat/lib/maat/asps/compress_asp",
+                        "target": "",
+                        "args": []
+                    }
+                ],
+                "second": [
+                    "LIN",
+                    [
+                        "SEQ"
+                    ],
+                    {
+                        "first": [
+                            "PRIM",
+                            {
+                                "cmd": "/opt/maat/lib/maat/asps/encrypt_asp",
+                                "target": "/opt/maat/etc/maat/credentials/client.pem",
+                                "args": []
+                            }
+                        ],
+                        "second": [
+                            "LIN",
+                            [
+                                "SEQ"
+                            ],
+                            {
+                                "first": [
+                                    "PRIM",
+                                    {
+                                        "cmd": "/opt/maat/lib/maat/asps/create_contract_asp",
+                                        "target": "/tmp/workdir",
+                                        "args": [
+                                            "/opt/maat/etc/maat/credentials/client.pem",
+                                            "/opt/maat/etc/maat/credentials/client.key",
+                                            "0",
+                                            "1",
+                                            "1"
+                                        ]
+                                    }
+                                ],
+                                "second": [
+                                    "PRIM",
+                                    {
+                                        "cmd": "/opt/maat/lib/maat/asps/send_asp",
+                                        "target": "1",
+                                        "args": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

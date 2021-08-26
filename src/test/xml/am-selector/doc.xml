@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<!--
+#
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+-->
+<selector_policy>
+  <rule role="appraiser" phase="initial">
+    <action selector_action="accept">
+      <condition apb_phrase="(USM attest)" />
+    </action>    
+  </rule>
+  <rule role="attester" phase="modify">
+    <match_condition attr="options" operator="include"
+		     value="(USM attest)" />
+
+    <!-- <match_condition attr="partner_fingerprint" operator="is" -->
+    <!-- 		     value="BB:65:51:9E:4C:5F:18:D6:A7:CA:13:13:7F:5E:32:98:E1:4A:C1:15" /> -->
+    <action selector_action="accept">
+      <condition apb_phrase="(USM attest)" />
+    </action>
+  </rule>
+  <rule role="appraiser" phase="execute">
+    <action selector_action="accept">
+      <condition apb_phrase="(USM attest)"/>
+    </action>
+  </rule>
+  <rule role="appraiser" phase="spawn">
+    <action selector_action="accept">
+      <condition apb_phrase="(USM attest)"/>
+    </action>
+  </rule>
+  <rule role="attester" phase="spawn">
+    <action selector_action="accept">
+      <condition apb_phrase="(USM appraise)"/>
+    </action>
+  </rule>
+
+</selector_policy>

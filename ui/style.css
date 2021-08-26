@@ -1,0 +1,134 @@
+/*
+ * Copyright 2020 United States Government
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+/*
+ * style.css: Style file for Maat demonstration webapp.
+ */
+body{
+    font-family:arial;
+}
+#machine-bucket table {
+    width:400px;
+    float:left;
+    margin: 0px 20px;
+}
+#machine-bucket td {
+    text-align:center;
+}
+
+#resource-bucket table {
+    width:400px;
+    margin: 20px 20px;
+}
+#resource-bucket td {
+    text-align:center;
+}
+
+#measurement-bucket table {
+    width:1100px;
+    float:left;
+} 
+#measurement-bucket td {
+    text-align:left;
+}
+
+body {
+    background-color:white;
+    color:#031424;
+}
+
+table {
+    border-collapse:collapse;
+}
+
+table,th,td {
+    border: 1px solid #031424;
+}
+
+th {
+    color: white;
+    background:#031424;
+}
+
+tr {
+    background:white;
+}
+
+tr:hover {
+    background:#30415D;
+    color:white;
+}
+
+td:hover {
+    cursor: pointer; cursor:hand;
+}
+
+td {
+    padding: 1em;
+}
+
+.selected {
+    background:#8EAEBD;
+    color:#031424;
+}
+
+.pass {
+    background-color:#e6ffe6;
+}
+
+.failure {
+    background-color:#CF6766;
+}
+
+span.list {
+    font-size:20;
+    display:block;
+    color:#8EAEBD;
+}
+
+span.update {
+    font-size:10;
+    display:inline;
+}
+
+input {
+    text-align:right;
+}
+
+button { 
+    margin:5px 0px;
+    float:center;
+    width:105px;
+}
+
+button.schedule {
+    text-align:center;
+    font-size:18;    
+    height:50px;
+    width:400px;
+    color:#031424;
+    margin: 0px 240px;
+}
+
+button:hover {
+    box-shadow: 0px 0px 5px #8EAEBD;
+}
+
+div.hidden-on-load {
+    display: none;
+}
+

@@ -684,8 +684,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
         free_meas_spec(mspec);
         return -EIO;
     }
-    dlog(4, "Here in the complex att apb\n");
-    dlog(4, "the nonce is: %s \n", scen->nonce);
+
     if(scen->certfile) {
         certfile = strdup(scen->certfile);
     }

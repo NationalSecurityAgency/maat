@@ -118,7 +118,9 @@ START_TEST(test_proc_namespaces_asp_valid)
                     strcmp(label, "pid") == 0 ||
                     strcmp(label, "pid_for_children") == 0 ||
                     strcmp(label, "user") == 0 ||
-                    strcmp(label, "uts") == 0,
+                    strcmp(label, "uts") == 0 ||
+                    strcmp(label, "time_for_children") == 0 ||
+                    strcmp(label, "time") == 0,
                     "Unknown namespace label \"%s\"", label);
         free(label);
         node_id_t ns = measurement_edge_get_destination(graph, e);

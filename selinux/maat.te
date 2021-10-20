@@ -512,7 +512,11 @@ require {
 	type rpm_exec_t;
 	type rpm_var_lib_t;
 }
+
+allow rpm_details_asp_t rpm_exec_t:file {execute_no_trans};
+allow rpm_details_asp_t rpm_var_lib_t:file {map};
 domain_entry_file(rpm_details_asp_t, rpm_exec_t)
+read_files_pattern(rpm_details_asp_t, rpm_var_lib_t, rpm_var_lib_t)
 read_files_pattern(rpm_details_asp_t, rpm_var_lib_t, rpm_var_lib_t)
 
 # The RPM command does a bunch of random crud. It actually seems to
@@ -552,6 +556,7 @@ domain_entry_file(rpm_inv_asp_t, rpm_exec_t)
 
 allow rpm_inv_asp_t rpm_exec_t:file {execute_no_trans};
 allow rpm_inv_asp_t rpm_inv_asp_t:udp_socket {connect create};
+allow rpm_inv_asp_t rpm_var_lib_t:file {map};
 
 files_read_all_dirs_except(rpm_inv_asp_t, )
 files_getattr_all_files(rpm_inv_asp_t)
@@ -810,6 +815,7 @@ type userspace_apb_exe_t;
 define_apb(userspace_apb_t, userspace_apb_exe_t)
 
 allow userspace_apb_t lib_t:file { entrypoint };
+allow userspace_apb_t init_var_run_t:dir { search };
 
 allow_apb_asp(userspace_apb_t, hash_file_service_asp_exe_t, hash_file_service_asp_t)
 allow_apb_asp(userspace_apb_t, lsproc_asp_exe_t, lsproc_asp_t)
@@ -934,12 +940,15 @@ gen_require(`type user_tmp_t;')
 # Userspace Appraiser APB
 require {
 	type attestmgr_t;
+	type init_var_run_t;
 }
+
 type userspace_appraiser_apb_t;
 type userspace_appraiser_apb_exe_t;
 define_apb(userspace_appraiser_apb_t, userspace_appraiser_apb_exe_t)
 apb_metadata_reader(userspace_appraiser_apb_t)
 allow userspace_appraiser_apb_t userspace_appraiser_apb_t:fifo_file {rw_file_perms};
+allow userspace_appraiser_apb_t init_var_run_t:dir {search};
 
 allow_apb_asp(userspace_appraiser_apb_t, blacklist_asp_exe_t, blacklist_asp_t)
 allow_apb_asp(userspace_appraiser_apb_t, whitelist_asp_exe_t, whitelist_asp_t)

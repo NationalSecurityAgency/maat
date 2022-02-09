@@ -27,6 +27,10 @@
 @sysconfdir@/maat/credentials/.*\.pem		-- gen_context(system_u:object_r:maat_certificate_t,s0)
 @sysconfdir@/maat/credentials/.*\.key		-- gen_context(system_u:object_r:maat_private_key_t,s0)
 #
+# Places file
+@sysconfigdir@/maat/places.csv                  -- gen_context(system_u:object_r:maat_places_file_t)
+#
+#
 # The Attestation Manager itself.
 #
 @bindir@/attestmgr				-- gen_context(system_u:object_r:attestmgr_exec_t,s0)

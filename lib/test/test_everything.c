@@ -98,7 +98,7 @@ START_TEST(test_exampleam)
                   CA_CERT,
                   ATTESTER_CERT,
                   ATTESTER_KEY,
-                  NULL, 0, ATTESTER);
+                  NULL, NULL, 0, ATTESTER);
 
     attester_scen->workdir		= WORKDIR_CLIENT;
     attester_scen->peer_chan            = maat_io_channel_new(the_pipe[1]);
@@ -108,6 +108,7 @@ START_TEST(test_exampleam)
                   CA_CERT,
                   APPRAISER_CERT,
                   APPRAISER_KEY,
+                  NULL,
                   (char*)request_contract,
                   (size_t)request_sz,
                   APPRAISER);

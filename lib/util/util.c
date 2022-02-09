@@ -185,13 +185,8 @@ ssize_t construct_path(char *path, size_t space, char *base, ...)
     return used;
 }
 
-ssize_t buffer_to_file(const char *filename, const unsigned char *buf, size_t size)
-{
-    return buffer_to_file_perm(filename, buf, size, S_IRUSR|S_IWUSR);
-}
-
-ssize_t buffer_to_file_perm(const char *filename, const unsigned char *buf,
-                            size_t size, int mode)
+static ssize_t buffer_to_file_perm_flags(const char *filename, const unsigned char *buf,
+        size_t size, int mode, int flags)
 {
     int fd;
     ssize_t ret;
@@ -201,7 +196,7 @@ ssize_t buffer_to_file_perm(const char *filename, const unsigned char *buf,
         return -1;
     }
 
-    fd = open(filename, O_CREAT|O_WRONLY|O_CLOEXEC, mode);
+    fd = open(filename, flags, mode);
     if (fd < 0) {
         dperror("Error opening filename");
         return fd;
@@ -214,6 +209,24 @@ ssize_t buffer_to_file_perm(const char *filename, const unsigned char *buf,
 
     close(fd);
     return ret;
+}
+
+ssize_t buffer_to_file_perm(const char *filename, const unsigned char *buf,
+                            size_t size, int mode)
+{
+    return buffer_to_file_perm_flags(filename, buf, size, mode,
+                                     O_CREAT|O_WRONLY|O_CLOEXEC);
+}
+
+ssize_t append_buffer_to_file(const char *filename, const unsigned char *buf, size_t size)
+{
+    return buffer_to_file_perm_flags(filename, buf, size, S_IRUSR|S_IWUSR,
+                                     O_CREAT|O_WRONLY|O_CLOEXEC|O_APPEND);
+}
+
+ssize_t buffer_to_file(const char *filename, const unsigned char *buf, size_t size)
+{
+    return buffer_to_file_perm(filename, buf, size, S_IRUSR|S_IWUSR);
 }
 
 ssize_t buffer_to_dir_file(const char *dir, const char *file,

@@ -317,6 +317,14 @@ On VM_2:
 
    Set IP to 192.168.0.7 and open port 2342
 
+The complex attestation use case will rely upon a backend database on VM_1 with the
+IP address and port information for VM_1 and VM_2. This is intended to simulate
+an environment in which machines are registed with the appraiser in some fashion
+and the appraiser can use this information about other AMs in order to carry out
+functionality within APBs. A simple CSV example file is provided with Maat,
+and can be placed where Maat will use it with the following command:
+
+    sudo mv demo/ancillary_files/places.csv /opt/maat/etc/maat
 
 To start the scenario, you must start AM_0 and AM_1. To do so, run
 

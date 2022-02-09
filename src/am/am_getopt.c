@@ -33,7 +33,7 @@
 
 #define DEFAULT_AM_PORT 2342
 
-static const char *short_options = "hi:s:m:a:f:k:I:M:S:w:Wu:C:U:G:t:XZ";
+static const char *short_options = "hi:s:m:a:f:k:I:M:S:p:w:Wu:C:U:G:t:XZ";
 static const struct option long_options[] = {
     {
         .name           = "help",
@@ -108,6 +108,12 @@ static const struct option long_options[] = {
         .val            = 'S'
     },
     {
+        .name           = "place-file",
+        .has_arg        = 1,
+        .flag           = NULL,
+        .val            = 'p'
+    },
+    {
         .name           = "work-directory",
         .has_arg        = 1,
         .flag           = NULL,
@@ -172,14 +178,14 @@ void print_usage(char *progname)
          "[--work-directory <dir>] [--keep-workdir] [-m COPLAND|MONGO [-s <selector-config>]]\n\t"
          "[--ignore-desired-contexts] [--use-default-categories]\n\t"
          "[--user username] [--group groupname] [-C <config-file>] [-t <timeout>]\n\t"
-         "-a <cacert file> -f <certfile> -k <private key file>\n", progname);
+         "-a <cacert file> -f <certfile> -k <private key file> -p <place file name>\n", progname);
     fprintf(stderr,
             "Usage: %s [-i <address>[:<port>]]* [-u <socket-path]* [--apb-directory <dir>]\n\t"
             "[--measurement-spec-directory <dir>] [--asp-directory <dir>]\n\t"
             "[--work-directory <dir>] [--keep-workdir] [-m COPLAND|MONGO [-s <selector-config>]]\n\t"
             "[--ignore-desired-contexts] [--use-default-categories]\n\t"
             "[--user username] [--group groupname] [-C <config-file>] [-t <timeout>]\n\t"
-            "-a <cacert file> -f <certfile> -k <private key file>\n", progname);
+            "-a <cacert file> -f <certfile> -k <private key file> -p <place file name>\n", progname);
 
 }
 
@@ -189,13 +195,13 @@ void print_usage(char *progname)
 	dlog(0, "Usage error: "#key" option must be specified at most once\n"); \
 	print_usage(argv[0]);						\
 	free(config_file);						\
-	return -1;							\
+	goto err;							\
     }									\
     dlog(5, "Got key "#key". setting "#var" to %s\n", optarg);		\
     if((var= strdup(optarg)) == NULL){					\
 	dlog(0, "Error: failed to set config option "#key"\n");		\
 	free(config_file);						\
-	return -1;							\
+	goto err;							\
     }									\
     break
 
@@ -214,7 +220,7 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
         case 'h':
             print_usage(argv[0]);
             free(config_file);
-            return -1;
+            goto err;
             break;
 
         case 'i': {
@@ -227,12 +233,12 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
                 print_usage(argv[0]);
                 free(addr);
                 free(config_file);
-                return -1;
+                goto err;
             }
             if(am_config_add_inet_iface(addr, portnum, cfg) < 0) {
                 free(addr);
                 free(config_file);
-                return -1;
+                goto err;
             }
             free(addr);
         }
@@ -248,13 +254,13 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
                     dlog(0, "Invalid user \"%s\"\n", optarg);
                     print_usage(argv[0]);
                     free(config_file);
-                    return -1;
+                    goto err;
                 }
             } else {
                 dlog(0, "Option -U/--user may be specified at most once.\n");
                 print_usage(argv[0]);
                 free(config_file);
-                return -1;
+                goto err;
             }
         }
         break;
@@ -269,13 +275,13 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
                     dlog(0, "Invalid group \"%s\"\n", optarg);
                     print_usage(argv[0]);
                     free(config_file);
-                    return -1;
+                    goto err;
                 }
             } else {
                 dlog(0, "Option -G/--group may be specified at most once.\n");
                 print_usage(argv[0]);
                 free(config_file);
-                return -1;
+                goto err;
             }
         }
         break;
@@ -283,7 +289,7 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
         case 'u': {
             if(am_config_add_unix_iface(optarg, 0, cfg) < 0) {
                 free(config_file);
-                return -1;
+                goto err;
             }
         }
         break;
@@ -304,7 +310,7 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
                          optarg, MAX_AM_COMM_TIMEOUT);
                     print_usage(argv[0]);
                     free(config_file);
-                    return -1;
+                    goto err;
                 }
                 cfg->am_comm_timeout = timeout_l;
                 cfg->timeout_set = 1;
@@ -312,7 +318,7 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
                 dlog(0, "Option -t/--timeout may be specified at most once\n");
                 print_usage(argv[0]);
                 free(config_file);
-                return -1;
+                goto err;
             }
         }
         break;
@@ -323,6 +329,7 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
         OPT_CASE('a', cfg->cacert_file);
         OPT_CASE('f', cfg->cert_file);
         OPT_CASE('k', cfg->privkey_file);
+        OPT_CASE('p', cfg->place_file);
         OPT_CASE('S', cfg->asp_metadata_dir);
         OPT_CASE('I', cfg->apb_metadata_dir);
         OPT_CASE('M', cfg->mspec_dir);
@@ -346,7 +353,7 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
         default:
             print_usage(argv[0]);
             free(config_file);
-            return -1;
+            goto err;
         }
     }
 
@@ -377,7 +384,7 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
         dlog(0, "Error: Cannot give selector location without specifying method\n");
         print_usage(argv[0]);
         free(config_file);
-        return -1;
+        goto err;
     }
 
     /*
@@ -406,7 +413,7 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
             if((cfg->selector_source.method = strdup(temp)) == NULL) {
                 dlog(0, "Error: failed to set selector method from environment variable\n");
                 free(config_file);
-                return -1;
+                goto err;
             }
         }
     }
@@ -417,7 +424,7 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
             if((cfg->selector_source.loc = strdup(temp)) == NULL) {
                 dlog(0, "Error: failed to set selector location from environment variable\n");
                 free(config_file);
-                return -1;
+                goto err;
             }
         }
     }
@@ -426,7 +433,7 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
         if(attestmgr_load_config(config_file, cfg) != 0) {
             dlog(0, "Error: failed to load XML configuration file\n");
             free(config_file);
-            return -1;
+            goto err;
         }
         free(config_file);
     }
@@ -453,7 +460,7 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
         cfg->selector_source.method = strdup(SELECTOR_COPL);
         if(cfg->selector_source.method == NULL) {
             dlog(0, "Error: failed to load default Selector method\n");
-            return -1;
+            goto err;
         }
     }
 
@@ -469,7 +476,7 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
 
     if(cfg->selector_source.loc == NULL) {
         dlog(0, "Error: failed to load default Selector location\n");
-        return -1;
+        goto err;
     }
 
     /*
@@ -489,20 +496,24 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
     if(cfg->cacert_file == NULL) {
         dlog(0, "No CA certificate specified\n");
         print_usage(argv[0]);
-        return -1;
+        goto err;
     }
 
     if(cfg->privkey_file == NULL) {
         dlog(0, "No private key specified\n");
         print_usage(argv[0]);
-        return -1;
+        goto err;
     }
 
     if(cfg->cert_file == NULL) {
         dlog(0, "No certificate specified\n");
         print_usage(argv[0]);
-        return -1;
+        goto err;
     }
 
     return 0;
+
+err:
+    free_am_config_data(cfg);
+    return -1;
 }

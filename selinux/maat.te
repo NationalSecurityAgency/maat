@@ -36,6 +36,9 @@ maat_file(maat_certificate_t)
 type maat_private_key_t;
 maat_file(maat_private_key_t)
 
+type maat_places_file_t;
+maat_file(maat_places_file_t)
+
 type maat_tmp_t;
 maat_file(maat_tmp_t)
 files_tmp_file(maat_tmp_t)
@@ -243,6 +246,7 @@ allow_spawn_apbs(attestmgr_t)
 type attestmgr_conf_t;
 maat_file(attestmgr_conf_t)
 read_files_pattern(attestmgr_t, attestmgr_conf_dir_t, attestmgr_conf_t)
+read_files_pattern(attestmgr_t, attestmgr_conf_dir_t, maat_places_file_t);
 allow attestmgr_t attestmgr_conf_dir_t:dir{read};
 maat_credentials_reader(attestmgr_t)
 maat_tmp_access(attestmgr_t)

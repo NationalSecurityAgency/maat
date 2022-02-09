@@ -166,6 +166,10 @@ struct scenario {
     size_t info_size;           /**
 				 * Size (in bytes) of the info blob.
 				 */
+    char *place_file;             /**
+                                 * Filename of CSV file containing place
+                                 * information
+                                 */
 
     scenario_state state;
     GList *current_options;
@@ -195,8 +199,9 @@ struct scenario {
 static inline int init_scenario(struct scenario *scen,
                                 char *cacert, char *certfile,
                                 char *keyfile, char *keypass,
-                                char *tpmpass, char *contract,
-                                size_t contract_size, role_t role)
+                                char *tpmpass, char *place_file,
+                                char *contract, size_t contract_size,
+                                role_t role)
 {
     bzero(scen, sizeof(struct scenario));
     scen->cacert	= cacert;
@@ -204,6 +209,7 @@ static inline int init_scenario(struct scenario *scen,
     scen->keyfile	= keyfile;
     scen->keypass       = keypass;
     scen->tpmpass       = tpmpass;
+    scen->place_file    = place_file;
     scen->contract	= contract;
     scen->size		= contract_size;
     scen->role		= role;
@@ -218,9 +224,9 @@ static inline void free_scenario(struct scenario *scen)
 {
     if(scen != NULL) {
         /*
-          Don't free cacert, certfile, keyfile, keypass, tpmpass, or workdir.
-          These fields are expected to be shared/stack allocated.  All other
-          fields get free()d.
+          Don't free cacert, certfile, keyfile, keypass, place_file, tpmpass,
+          or workdir. These fields are expected to be shared/stack allocated.
+          All other fields get free()d.
         */
         free(scen->contract);
         free(scen->response);

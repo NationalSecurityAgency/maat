@@ -550,7 +550,7 @@ static int handle_connection(am_config *config, int clientfd, int may_skip_negot
         dlog(3, "Received INITIAL contract...I must be an attester\n");
         init_scenario(scenario, config->cacert_file, config->cert_file,
                       config->privkey_file, config->privkey_pass, config->tpm_pass,
-                      contract, contract_size, ATTESTER);
+                      config->place_file, contract, contract_size, ATTESTER);
         scenario->workdir      	= workdir;
         scenario->peer_chan	= clientchan;
         scenario->state	       	= IDLE;
@@ -563,7 +563,7 @@ static int handle_connection(am_config *config, int clientfd, int may_skip_negot
         dlog(3, "Received REQUEST...I must be an appraiser\n");
         init_scenario(scenario, config->cacert_file, config->cert_file,
                       config->privkey_file, config->privkey_pass, config->tpm_pass,
-                      contract, contract_size, APPRAISER);
+                      config->place_file, contract, contract_size, APPRAISER);
         scenario->workdir          = workdir;
         scenario->requester_chan   = clientchan;
         scenario->state	           = IDLE;
@@ -577,7 +577,7 @@ static int handle_connection(am_config *config, int clientfd, int may_skip_negot
         dlog(3, "Received skip-negotiation EXECUTE contract...off to the races\n");
         init_scenario(scenario, config->cacert_file, config->cert_file,
                       config->privkey_file, config->privkey_pass, config->tpm_pass,
-                      contract, contract_size, ATTESTER);
+                      config->place_file, contract, contract_size, ATTESTER);
         scenario->state	       	= IDLE;
         scenario->workdir      	= workdir;
         scenario->peer_chan	= clientchan;

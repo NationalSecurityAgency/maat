@@ -130,6 +130,11 @@ int chase_links(const char *in, char *out, size_t sz);
 ssize_t buffer_to_file(const char *filename, const unsigned char *buf, size_t size);
 
 /**
+ * Appends @size bytes from @buf to the file @filename. Uses default creation mode of S_IRUSR | S_IWUSR
+ */
+ssize_t append_buffer_to_file(const char *filename, const unsigned char *buf, size_t size);
+
+/**
  * Write @size bytes from @buf to the file @filename with the given mode (perm = (mode & ~umask)).
  */
 ssize_t buffer_to_file_perm(const char *filename, const unsigned char *buf, size_t size, int mode);

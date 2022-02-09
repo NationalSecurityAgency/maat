@@ -32,112 +32,136 @@
 		<asp uuid="5b2ec00a-ca8a-4215-8a5f-4782599c6df0">send_request_asp</asp>
 	</asps>
 	<copland>
-		<phrase copland="@_1(@_2((KIM runtime_meas)->SIG)-&lt;-(USM full))"></phrase>
-		<spec uuid="55042348-e8d5-4443-abf7-3d67317c7dab">userspace mspec</spec>
-		<arguments>
-			<arg name="@_2ip">
-				<type>string</type>
-			</arg>
-			<arg name="@_2port">
-				<type>integer</type>
-			</arg>
-			<arg name="@_1ip">
-				<type>string</type>
-			</arg>
-			<arg name="@_1port">
-				<type>integer</type>
-			</arg>
-		</arguments>
+	  <phrase copland="@_1(@_2((KIM runtime_meas)->SIG)-&lt;-(USM full))"></phrase>
+	  <spec uuid="55042348-e8d5-4443-abf7-3d67317c7dab">userspace mspec</spec>
+ 	  <arguments>
+	    <arg name="@_1">
+	      <type>place</type>
+	    </arg>
+	    <arg name="@_2">
+	      <type>place</type>
+	    </arg>
+	  </arguments>
+	  <places>
+	    <place id="@_1">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	    <place id="@_2">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	  </places>
 	</copland>
 	<copland>
-		<phrase copland="@_1(@_2((KIM runtime_meas)->SIG)-&lt;-(USM proc))"></phrase>
-		<spec uuid="55042348-e8d5-4443-abf7-3d67317c7dad">ls proc mspec</spec>
-        <arguments>
-            <arg name="@_2ip">
-                <type>string</type>
-            </arg>
-            <arg name="@_2port">
-                <type>integer</type>
-            </arg>
-            <arg name="@_1ip">
-                <type>string</type>
-            </arg>
-            <arg name="@_1port">
-                <type>integer</type>
-            </arg>
-        </arguments>
+	  <phrase copland="@_1(@_2((KIM runtime_meas)->SIG)-&lt;-(USM proc))"></phrase>
+	  <spec uuid="55042348-e8d5-4443-abf7-3d67317c7dad">ls proc mspec</spec>
+          <arguments>
+	    <arg name="@_1">
+	      <type>place</type>
+	    </arg>
+	    <arg name="@_2">
+	      <type>place</type>
+	    </arg>
+	  </arguments>
+	  <places>
+	    <place id="@_1">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	    <place id="@_2">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	  </places>
 	</copland>
 	<copland>
-		<phrase copland="@_1(@_2((KIM runtime_meas)->SIG)-&lt;-(USM pkginv))"></phrase>
-		<spec uuid="3db1c1b2-4d44-45ea-83f5-8de858b1a5a5">pkg inv mspec</spec>
-        <arguments>
-            <arg name="@_2ip">
-                <type>string</type>
-            </arg>
-            <arg name="@_2port">
-                <type>integer</type>
-            </arg>
-            <arg name="@_1ip">
-                <type>string</type>
-            </arg>
-            <arg name="@_1port">
-                <type>integer</type>
-            </arg>
-        </arguments>
+	  <phrase copland="@_1(@_2((KIM runtime_meas)->SIG)-&lt;-(USM pkginv))"></phrase>
+	  <spec uuid="3db1c1b2-4d44-45ea-83f5-8de858b1a5a5">pkg inv mspec</spec>
+          <arguments>
+	    <arg name="@_1">
+	      <type>place</type>
+	    </arg>
+	    <arg name="@_2">
+	      <type>place</type>
+	    </arg>
+	  </arguments>
+	  <places>
+	    <place id="@_1">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	    <place id="@_2">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	  </places>
 	</copland>
 	<copland>
-		<phrase copland="@_1(@_2((KIM runtime_meas)->SIG)-&lt;-(USM hashfile))"></phrase>
-		<spec uuid="55042348-e8d5-4443-abf7-3d67317c7dae">hashfiles mspec</spec>
-        <arguments>
-            <arg name="@_2ip">
-                <type>string</type>
-            </arg>
-            <arg name="@_2port">
-                <type>integer</type>
-            </arg>
-            <arg name="@_1ip">
-                <type>string</type>
-            </arg>
-            <arg name="@_1port">
-                <type>integer</type>
-            </arg>
-        </arguments>
+	  <phrase copland="@_1(@_2((KIM runtime_meas)->SIG)-&lt;-(USM hashfile))"></phrase>
+	  <spec uuid="55042348-e8d5-4443-abf7-3d67317c7dae">hashfiles mspec</spec>
+          <arguments>
+	    <arg name="@_1">
+	      <type>place</type>
+	    </arg>
+	    <arg name="@_2">
+	      <type>place</type>
+	    </arg>
+	  </arguments>
+	  <places>
+	    <place id="@_1">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	    <place id="@_2">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	  </places>
 	</copland>
 	<copland>
-		<phrase copland="@_1(@_2((KIM runtime_meas)-&gt;SIG)-&lt;-(USM mtab))"></phrase>
-		<spec uuid="55042348-e8d5-4443-abf7-3d67317c7ddd">mtab mspec</spec>
-        <arguments>
-            <arg name="@_2ip">
-                <type>string</type>
-            </arg>
-            <arg name="@_2port">
-                <type>integer</type>
-            </arg>
-            <arg name="@_1ip">
-                <type>string</type>
-            </arg>
-            <arg name="@_1port">
-                <type>integer</type>
-            </arg>
-        </arguments>
+	  <phrase copland="@_1(@_2((KIM runtime_meas)-&gt;SIG)-&lt;-(USM mtab))"></phrase>
+	  <spec uuid="55042348-e8d5-4443-abf7-3d67317c7ddd">mtab mspec</spec>
+          <arguments>
+	    <arg name="@_1">
+	      <type>place</type>
+	    </arg>
+	    <arg name="@_2">
+	      <type>place</type>
+	    </arg>
+	  </arguments>
+	  <places>
+	    <place id="@_1">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	    <place id="@_2">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	  </places>
 	</copland>
 	<copland>
-		<phrase copland="@_1(@_2((KIM runtime_meas)->SIG)-&lt;-(USM got))"></phrase>
-		<spec uuid="60742348-e8d5-4443-abf7-3d67317c7dab">got measure</spec>
-        <arguments>
-            <arg name="@_2ip">
-                <type>string</type>
-            </arg>
-            <arg name="@_2port">
-                <type>integer</type>
-            </arg>
-            <arg name="@_1ip">
-                <type>string</type>
-            </arg>
-            <arg name="@_1port">
-                <type>integer</type>
-            </arg>
-        </arguments>
+	  <phrase copland="@_1(@_2((KIM runtime_meas)->SIG)-&lt;-(USM got))"></phrase>
+	  <spec uuid="60742348-e8d5-4443-abf7-3d67317c7dab">got measure</spec>
+          <arguments>
+	    <arg name="@_1">
+	      <type>place</type>
+	    </arg>
+	    <arg name="@_2">
+	      <type>place</type>
+	    </arg>
+	  </arguments>
+	  <places>
+	    <place id="@_1">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	    <place id="@_2">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	  </places>
 	</copland>
 	<security_context>
 		<selinux><type>complex_att_apb_t</type></selinux>

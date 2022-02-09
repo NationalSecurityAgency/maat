@@ -250,6 +250,13 @@ int attester_spawn_protocol(struct attestation_manager *self,
         goto out_err;
     }
 
+    if (has_place_args(phrase) == 1) {
+        ret = query_place_information(apb, scen, phrase);
+        if(ret < 0) {
+            dlog(1, "Error writing place information to the csv file, launching will continue\n");
+        }
+    }
+
     ret = copland_args_to_string((const phrase_arg **)phrase->args, phrase->num_args, &args);
     if(ret < 0) {
         dlog(0, "Unable to get the arguments for the selected Copland Phrase\n");
@@ -373,6 +380,13 @@ int appraiser_spawn_protocol(struct attestation_manager *self, struct scenario *
             scen->error_message = strdup(msg);
             dlog(0, "%s\n", msg);
             goto out;
+        }
+
+        if (has_place_args(copl) == 1) {
+            ret = query_place_information(apb, scen, copl);
+            if(ret < 0) {
+                dlog(1, "Error writing place information to the csv file, launching will continue\n");
+            }
         }
 
         dlog(2, "Appraiser: calling run_apb_async on APB %s\n", apb->name);

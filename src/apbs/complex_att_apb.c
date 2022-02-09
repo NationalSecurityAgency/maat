@@ -35,6 +35,7 @@
 #include <common/measurement_spec.h>
 #include <apb/apb.h>
 #include <common/asp.h>
+#include <common/copland.h>
 #include <maat-envvars.h>
 #include <apb/contracts.h>
 
@@ -638,6 +639,9 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
 {
     dlog(3, "Hello from the COMPLEX_ATTESTATION_APB\n");
     int ret_val = 0;
+    int i;
+    place_info *place1_info;
+    place_info *place2_info;
     struct meas_spec *mspec = NULL;
     measurement_graph *graph = NULL;
 
@@ -645,36 +649,60 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
         return ret_val;
     }
 
-    if(argc != 4) {
-        dlog(1, "USAGE: APB_NAME <Remote KIM Appraiser Host> <Remote KIM Appraiser Port> <Local AM Host> <Local AM Port>\n");
+    if(argc != 2) {
+        dlog(1, "USAGE: APB_NAME <@_1> <@_2>\n");
         return -1;
     }
 
     apb_asps = apb->asps;
 
     /* Get host and port arguments */
-    if(strcmp(arg_list[0]->key, "@_2ip") != 0) {
-        dlog(1, "Did not receive rhost argument, instead received %s\n", arg_list[0]->key);
-        return -1;
+    for(i = 0; i < argc; i++) {
+        if(strcmp(arg_list[i]->key, "@_1") == 0) {
+            if (place1_info != NULL) {
+                dlog(2, "Multiple copies of @_1 arg, ignoring second\n");
+                continue;
+            }
+            ret_val = get_place_information(scen,
+                                            arg_list[i]->value,
+                                            &place1_info);
+            if (ret_val < 0) {
+                dlog(1, "Unable to get place information for id: %s\n",
+                     arg_list[i]->value);
+                free(place2_info);
+                return -1;
+
+            }
+        } else if (strcmp(arg_list[i]->key, "@_2") == 0) {
+            if (place2_info != NULL) {
+                dlog(2, "Multiple copies of @_2 arg, ignoring second\n");
+                continue;
+            }
+            ret_val = get_place_information(scen,
+                                            arg_list[i]->value,
+                                            &place2_info);
+            if (ret_val < 0) {
+                dlog(1, "Unable to get place information for id: %s\n",
+                     arg_list[i]->value);
+                free(place1_info);
+                return -1;
+
+            }
+        } else {
+            dlog(2, "Received unknown argument with key %s\n",
+                 arg_list[i]->key);
+        }
     }
 
-    if(strcmp(arg_list[1]->key, "@_2port") != 0) {
-        dlog(1, "Did not receive rport argument, instead received %s\n", arg_list[1]->key);
-        return -1;
-    }
-
-    if(strcmp(arg_list[2]->key, "@_1ip") != 0) {
-        dlog(1, "Did not receive lip argument, instead received %s\n", arg_list[2]->key);
-        return -1;
-    }
-
-    if(strcmp(arg_list[3]->key, "@_1port") != 0) {
-        dlog(1, "Did not receive lport argument, instead received %s\n", arg_list[3]->key);
+    if (place1_info == NULL || place2_info == NULL) {
+        dlog(0, "APB not given complete set of place information\n");
         return -1;
     }
 
     ret_val = get_target_meas_spec(meas_spec_uuid, &mspec);
     if(ret_val != 0) {
+        free(place1_info);
+        free(place2_info);
         return ret_val;
     }
 
@@ -682,6 +710,8 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
     if(!graph) {
         dlog(0, "Failed to create measurement graph\n");
         free_meas_spec(mspec);
+        free(place1_info);
+        free(place2_info);
         return -EIO;
     }
 
@@ -696,10 +726,12 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
 
     /* Execute the measurement ASPs and the ASPs to combine, sign, and send the
        measurements to the appraiser */
-    ret_val = execute_measurement_and_asp_pipeline(graph, mspec, arg_list[0]->value,
-              arg_list[1]->value, arg_list[2]->value,
-              arg_list[3]->value, scen, peerchan);
+    ret_val = execute_measurement_and_asp_pipeline(graph, mspec, place2_info->addr,
+              place2_info->port, place1_info->addr, place1_info->port, scen,
+              peerchan);
 
+    free_place_information(place1_info);
+    free_place_information(place2_info);
     free_meas_spec(mspec);
     destroy_measurement_graph(graph);
     graph = NULL;

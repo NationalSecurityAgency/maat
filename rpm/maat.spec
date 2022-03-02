@@ -15,7 +15,7 @@
 #
 
 Name:           maat
-Version:        1.2
+Version:        1.3
 Release:        1%{?dist}
 Summary:        Maat Measurement & Attestation Framework
 Group:          Administration/Monitoring
@@ -291,6 +291,14 @@ setsebool -P httpd_can_network_connect=off
 %{_datadir}/selinux/targeted/maat.pp
 
 %changelog
+* Mon Feb 28 2022 Maat Developers <APL_Maat_Developers@listserv.jhuapl.edu> 1.3-1
+- Carry nonce through scenarios with multiple negotiations
+- Add sequence diagram based user interface for observing attestation manager interactions
+- Add Passport use case demonstration 
+- Add IoT Assurance work to contributions
+- Add CentOS 8 support
+- Add notion of Copland 'place' to selection/negotiation policy
+
 * Thu Mar 12 2020 Maat Developers <APL_Maat_Developers@listserv.jhuapl.edu> 1.2-1
 - Initial Open Source Release
 

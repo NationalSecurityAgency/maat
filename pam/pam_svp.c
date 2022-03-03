@@ -212,7 +212,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags,
     if(targ_fingerprint == NULL) {
         dlog(4, "Warning: no target fingerprint specified, using default\n");
         targ_fingerprint =
-            "87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A";
+            "D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34";
     }
     if(app_portnum < 0) {
         app_portnum = 2342;

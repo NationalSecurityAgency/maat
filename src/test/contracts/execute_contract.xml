@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
-<contract version="2.0" type="modified"><subcontract><option><value name="APB_phrase">((USM full) -&gt; SIG)</value></option><option><value name="APB_phrase">((USM processes) -&gt; SIG)</value></option><option><value name="APB_phrase">((USM pkginv) -&gt; SIG)</value></option><option><value name="APB_phrase">((USM hashfiles) -&gt; SIG)</value></option><option><value name="APB_phrase">((USM hashfile file) -&gt; SIG):file=/bin/ls</value></option><option><value name="APB_phrase">((USM mtab) -&gt; SIG)</value></option><option><value name="APB_phrase">((USM got) -&gt; SIG)</value></option></subcontract><nonce>54a371fdfdb02407cfa265b835e19d03a54e2e63</nonce><AttestationCredential fingerprint="B9:17:2D:8B:58:FD:9E:6C:62:0A:8A:5C:F6:8A:78:00:A5:1B:90:CF">-----BEGIN CERTIFICATE-----
+<contract version="2.0" type="modified"><subcontract><option><value name="APB_phrase">((USM full) -&gt; SIG)</value></option><option><value name="APB_phrase">((USM processes) -&gt; SIG)</value></option><option><value name="APB_phrase">((USM pkginv) -&gt; SIG)</value></option><option><value name="APB_phrase">((USM hashfiles) -&gt; SIG)</value></option><option><value name="APB_phrase">((USM hashfile file) -&gt; SIG):file=/bin/ls</value></option><option><value name="APB_phrase">((USM mtab) -&gt; SIG)</value></option><option><value name="APB_phrase">((USM got) -&gt; SIG)</value></option></subcontract><nonce>dd586e37ecc7a9fecd5cc00152031d7c18866aea</nonce><AttestationCredential fingerprint="A5:2C:D0:4E:1A:75:1F:7D:60:9F:2B:A6:D1:7D:EA:53:BD:42:B7:FD">-----BEGIN CERTIFICATE-----
 MIIEpzCCAw+gAwIBAgIMXm+m/ygH8hfgqAyLMA0GCSqGSIb3DQEBCwUAMF4xCzAJ
 BgNVBAMTAmNhMQ0wCwYDVQQLEwRNYWF0MQ8wDQYDVQQKEwZKSFVBUEwxDzANBgNV
-BAcTBkxhdXJlbDERMA8GA1UECBMITWFyeWxhbmQxCzAJBgNVBAYTAk1EMB4XDTIw
-MDMxNjE2MTkxMVoXDTIyMDIxNDE2MTkxMVowYjEPMA0GA1UEAxMGY2xpZW50MQ0w
+BAcTBkxhdXJlbDERMA8GA1UECBMITWFyeWxhbmQxCzAJBgNVBAYTAk1EMB4XDTIy
+MDMwMjE3MDI1NVoXDTI0MTEyNjE3MDI1OFowYjEPMA0GA1UEAxMGY2xpZW50MQ0w
 CwYDVQQLEwRNYWF0MQ8wDQYDVQQKEwZKSFVBUEwxDzANBgNVBAcTBkxhdXJlbDER
 MA8GA1UECBMITWFyeWxhbmQxCzAJBgNVBAYTAk1EMIIBojANBgkqhkiG9w0BAQEF
 AAOCAY8AMIIBigKCAYEAzI7mzPjbLPagebzqjz0W0E1ULZxxMn3YGqHdBZXnioIN
@@ -16,15 +16,14 @@ pW9i6fFRzhyK7Ug7NP/OfNGICA0GNQa6kGr4Ulp0cuG5pypU1FuRfuZ1ld5dNhS8
 nrCqGXvXc0H7QBeOyA59XoMv9MSDEqo+KYvY44u0E10qswjTfneDcd5GlPMGfmqc
 ejFvCMMmniPecVUPWQCdAgMBAAGjYTBfMAwGA1UdEwEB/wQCMAAwDwYDVR0PAQH/
 BAUDAwegADAdBgNVHQ4EFgQUXHIJJsIfX7/6QGBS/TgD3M+k2XIwHwYDVR0jBBgw
-FoAUc+ELifRtxw5wIm06IQYqWAyk50owDQYJKoZIhvcNAQELBQADggGBAFcdSib7
-anWwLQ21NDuqschcb6mPFLhPbx2eYOZUxovezBNB7NzihIH2T2SRZbbvl8LridC/
-bNMHTtl4TOgef7r5OpeMyT3uXn7uRFKzAarLDngN7uBGoqmoTLxvMd1/W+2c0PSi
-QTZRuo2cOu5qtK3QNOQ2RALFC0ogskSjsOLeal2IZxPCy5qLAo0x5cyljXF7r8l+
-k/EH3q4infPNZUV0RyXYf6ZYYdSViX6vyQ1zmdhNescA8kafkiz/KceJZh+CMQx4
-UPh5ceKZS73TLS2hHaCkgQjbZrPxZglNCRzz8XK96pe8eoArPoC7NHCp1cAq/DjV
-Vp/dyLjQLu7+aGxqG3ph0i0n0Mo1w/yVAqxkAwfJD4i9TuCwNxhbnm8xmmZPijRU
-W5FqD7nXIpM0GVBzzm9DEEm3fUwNqPVyieoyS9Ydp0sy4BTEO+6R6tZbovpqbgGA
-vueavNfvJULMk9P0yLqZqNRhaI7Wn6J/IjHieDgpPvpczWuaD+jG7HeybQ==
+FoAUc+ELifRtxw5wIm06IQYqWAyk50owDQYJKoZIhvcNAQELBQADggGBAH4eLzuT
+SMnk8LYdCUJViCmspIiW4J9FjVHFzsdKrUen/2Am2FKRa1yHOsqpaCbvhl802un6
+bs8NnrerqK71Iwpq2JS/CMHW3oHGJXtX8aqsvymMp57zCtEAVfNu4f+W7k/3yXjA
+NSZTGBwUWwvvSLNsMUOTPLf3HHdxthg4JjtekI9+FWVVhwNQ9sUsxW1UujQ0ibYa
+74n+gflI6IjcGWfia29AOOyejfaSCIgM2HQtezo9+GaDQlUSVMEiSwiK4ftyjF8L
+66zkzOHeWtkcFj9tWnr6N0rS9vIgufR5t64ceZ0JCgThlHZFoJsYP7m4J4twA9pW
+6dmWoELDxSr6dte1IrmGPkys3Dag+nXVgjwlPrS9aqrvzXVzKR139kWs4DiqGo8O
+w4l0DlKIlGcqek3U8kEkHn0d7wziBwzCs7daXJZ0nN+dhVWEWoM7Yi9m+ASnoPZh
+RWzd5sNEZ2MPix164O32/1BgkdgW6w3GaXDZTt20pUBETQ5mozc+eCLSkw==
 -----END CERTIFICATE-----
-</AttestationCredential><signature><signedinfo><canonicalizationmethod algorithm="XML C14N 1.0"/><signaturemethod algorithm="RSA"/><digestmethod algorithm="SHA-1"/></signedinfo><signaturevalue>AwAILUu4NT8BJB+EhrDYcAOc+HVQsVxNjzkUFfYC+WwKJ1zPIcgGaq4udfRIm9BZ20YGq9867NrN9KlTMT+3wD0I9EG/ulJYESFhT72NJPfn09qHEI0m1GcYXVxcK1+mrsvmP4EZPJGO89gspnOZT6J1djMAX2/DtCq9uzmY+QVhC50t08QmweO5sURW3UAg8K/nWlwKGB98e7Qb4xtojZzjqBrlw8U5AhUYPt3V8HW2c22akN4xZAAc4M467xW97Fi9iSoY1t9Ep6ivadlwp9Y9Q4YZPV6bV0g9jSzAhw6Au0QtaJSEz90mb4poEDpA2TlQlqRgxr8QcYwZgdTgtTW2XtpiHt3hYYU+nABczy1p6rW+5M8MvNheS152nbIeoERicDvTxt96bXhUnTggKQ/2MEjcJIjUr/EjS/k+y6ukRL6EFj6o7DH5CJDuYQqaQMbP+mq2RDsRPFRQEuUbl22PrabPbXSJsjAUiCzp+Sfwuw3JJLVHlT7GQ7/4CJR3</signaturevalue><keyinfo>B9:17:2D:8B:58:FD:9E:6C:62:0A:8A:5C:F6:8A:78:00:A5:1B:90:CF</keyinfo></signature></contract>
-
+</AttestationCredential><signature><signedinfo><canonicalizationmethod algorithm="XML C14N 1.0"/><signaturemethod algorithm="RSA"/><digestmethod algorithm="SHA-1"/></signedinfo><signaturevalue>osEnVx9hG9EwFDC9dnAFqLtwtIPpgEngQ4bcaFxewMCvyOfOrlXl0kyWik1Ge63SB44YvGdF8QgZyaTn0JzfqQjjeZxrTTOeRn+ozbf1p7zyiMl8ekvoqIa8WMVKiSS9WZEBOFz9v/uRmK2KaQlJiKKgQV3tAWrVhOoyUOikV8aqqGSMbA4zJQgTRhS5BM17E8ezexEtkFwKfB8p/qZvUa7zlp/hxVuQ1oTBd9Urhsjr3Nq/LnzT0UPLBHbfv559Kwx9Jsi8h3D/UddAh+2InJZXEufEnH1FdlCs0+D012LhcOTo5QqiIGIbAoTOpVnJjrPlb//01vqAW2KAcETTxxhIDPEs9ei2OenAEQQJUjcpRUN1td8zjG+UC3OseDbSo2UzcfrXuLBRCW32i5V3jooMIyh5IcyL69fgUCsf4UAYzOquh1T5vWxkiejCGbps1CyamWPAOyzzlzLFpTcvIWKImgKNxZxjqXXUNZoHYmKvK0gH6SaR6slRAMjiKWhf</signaturevalue><keyinfo>A5:2C:D0:4E:1A:75:1F:7D:60:9F:2B:A6:D1:7D:EA:53:BD:42:B7:FD</keyinfo></signature></contract>

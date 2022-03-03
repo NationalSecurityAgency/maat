@@ -33,7 +33,7 @@ target_port = 2342
 appraiser_address = 'localhost'
 appraiser_port = 2342
 resource = "MQ test driver"
-fingerprint = "87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A"
+fingerprint = "D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34"
 
 if len(sys.argv) > 1:
         target_address = sys.argv[1]

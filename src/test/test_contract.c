@@ -40,7 +40,7 @@
 #define PRIV_KEY SRCDIR "/credentials/client.key"
 #define CERT_FILE SRCDIR "/credentials/client.pem"
 
-#define CORR_NONCE "1da08f3d14672270fa36650b65c8388a20a17e44"
+#define CORR_NONCE "dd586e37ecc7a9fecd5cc00152031d7c18866aea"
 
 #define ASP_DIR       SRCDIR "/xml/asp-info"
 #define SPEC_DIR      SRCDIR "/xml/meas-info"

@@ -42,7 +42,7 @@
 #define WORKDIR SRCDIR "/workdirs/workdir-test-hashfile"
 #define PRIV_KEY SRCDIR "/credentials/client.key"
 #define CERT_FILE SRCDIR "/credentials/client.pem"
-#define NONCE "d52438cebb61d4eef9d15aac0c54d6df0abb325e"
+#define NONCE "dd586e37ecc7a9fecd5cc00152031d7c18866aea"
 
 GList *asps = NULL;
 GList *apbs = NULL;

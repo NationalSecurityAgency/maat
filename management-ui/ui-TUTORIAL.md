@@ -233,7 +233,7 @@ Next, add a resource and machine definitions to the database.
   Add a machine definition for localhost to the database
 
       python3 ~/maat/ui/addMachineToDatabase.py localhost \
-        87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A \
+        D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34 \
         127.0.0.1 2342
 
 - Or through the user interface:
@@ -241,7 +241,7 @@ Next, add a resource and machine definitions to the database.
   Open browser, go to localhost. Click the `+ Machine` button and fill out the 
   information as follows:
   - Machine Name : localhost
-  - Fingerprint  : 87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A
+  - Fingerprint  : D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34
   - IP Address   : 127.0.0.1
   - Port of AM   : 2342
 

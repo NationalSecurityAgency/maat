@@ -37,7 +37,7 @@
 	</action>
     </rule>
     <rule role="attester" phase="modify">
-        <match_condition attr="partner_fingerprint" operator="is"      value="87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A"/>
+        <match_condition attr="partner_fingerprint" operator="is"      value="D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34"/>
         <action selector_action="accept">
 	     <condition name="proc" apb_phrase="((USM procopenfiles) -> SIG)"/>
 	     <condition name="memmap" apb_phrase="((USM mem) -> SIG)"/>
@@ -47,7 +47,7 @@
 
     <!--Rules for Proc open files--> 
     <rule role="appraiser" phase="execute">
-        <match_condition attr="partner_fingerprint" operator="is"      value="B9:17:2D:8B:58:FD:9E:6C:62:0A:8A:5C:F6:8A:78:00:A5:1B:90:CF"/>
+        <match_condition attr="partner_fingerprint" operator="is"      value="A5:2C:D0:4E:1A:75:1F:7D:60:9F:2B:A6:D1:7D:EA:53:BD:42:B7:FD"/>
         <match_condition attr="client"              operator="in"      value="known-clients" />
         <match_condition attr="options"             operator="include" value="((USM procopenfiles) -> SIG)"/>
 	<match_condition attr="resource"            operator="is"      value="files" />
@@ -56,7 +56,7 @@
         </action>
     </rule>
     <rule role="appraiser" phase="spawn">
-        <match_condition attr="partner_fingerprint" operator="is" value="B9:17:2D:8B:58:FD:9E:6C:62:0A:8A:5C:F6:8A:78:00:A5:1B:90:CF"/>
+        <match_condition attr="partner_fingerprint" operator="is" value="A5:2C:D0:4E:1A:75:1F:7D:60:9F:2B:A6:D1:7D:EA:53:BD:42:B7:FD"/>
         <match_condition attr="client"              operator="in" value="known-clients"/>
         <match_condition attr="option"              operator="is" value="((USM procopenfiles) -> SIG)" />
 	<match_condition attr="resource"            operator="is" value="files" />
@@ -66,7 +66,7 @@
     </rule>
     <!--For single AM-->
     <rule role="appraiser" phase="execute">
-        <match_condition attr="partner_fingerprint" operator="is"      value="87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A"/>
+        <match_condition attr="partner_fingerprint" operator="is"      value="D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34"/>
         <match_condition attr="client"              operator="in"      value="known-clients" />
         <match_condition attr="options"             operator="include" value="((USM procopenfiles) -> SIG)"/>
 	<match_condition attr="resource"            operator="is"      value="files" />
@@ -75,7 +75,7 @@
         </action>
     </rule>
     <rule role="appraiser" phase="spawn">
-        <match_condition attr="partner_fingerprint" operator="is" value="87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A"/>
+        <match_condition attr="partner_fingerprint" operator="is" value="D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34"/>
         <match_condition attr="client"              operator="in" value="known-clients"/>
         <match_condition attr="option"              operator="is" value="((USM procopenfiles) -> SIG)" />
 	<match_condition attr="resource"            operator="is" value="files" />
@@ -86,7 +86,7 @@
 
     <!--Rules for netstat-->
     <rule role="appraiser" phase="execute">
-        <match_condition attr="partner_fingerprint" operator="is"      value="B9:17:2D:8B:58:FD:9E:6C:62:0A:8A:5C:F6:8A:78:00:A5:1B:90:CF"/>
+        <match_condition attr="partner_fingerprint" operator="is"      value="A5:2C:D0:4E:1A:75:1F:7D:60:9F:2B:A6:D1:7D:EA:53:BD:42:B7:FD"/>
         <match_condition attr="client"              operator="in"      value="known-clients" />
         <match_condition attr="options"             operator="include" value="((USM netstat) -> SIG)"/>
 	<match_condition attr="resource"            operator="is"      value="netstat" />
@@ -95,7 +95,7 @@
         </action>
     </rule>
     <rule role="appraiser" phase="spawn">
-        <match_condition attr="partner_fingerprint" operator="is" value="B9:17:2D:8B:58:FD:9E:6C:62:0A:8A:5C:F6:8A:78:00:A5:1B:90:CF"/>
+        <match_condition attr="partner_fingerprint" operator="is" value="A5:2C:D0:4E:1A:75:1F:7D:60:9F:2B:A6:D1:7D:EA:53:BD:42:B7:FD"/>
         <match_condition attr="client"              operator="in" value="known-clients"/>
         <match_condition attr="option"              operator="is" value="((USM netstat) -> SIG)"/>
 	<match_condition attr="resource"            operator="is" value="netstat" />
@@ -105,7 +105,7 @@
     </rule>
     <!--For single AM-->
     <rule role="appraiser" phase="execute">
-        <match_condition attr="partner_fingerprint" operator="is"      value="87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A"/>
+        <match_condition attr="partner_fingerprint" operator="is"      value="D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34"/>
         <match_condition attr="client"              operator="in"      value="known-clients" />
         <match_condition attr="options"             operator="include" value="((USM netstat) -> SIG)"/>
 	<match_condition attr="resource"            operator="is"      value="netstat" />
@@ -114,7 +114,7 @@
         </action>
     </rule>
     <rule role="appraiser" phase="spawn">
-        <match_condition attr="partner_fingerprint" operator="is" value="87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A"/>
+        <match_condition attr="partner_fingerprint" operator="is" value="D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34"/>
         <match_condition attr="client"              operator="in" value="known-clients"/>
         <match_condition attr="option"              operator="is" value="((USM netstat) -> SIG)"/>
 	<match_condition attr="resource"            operator="is" value="netstat" />
@@ -125,7 +125,7 @@
 
     <!--Rules for memmap-->
     <rule role="appraiser" phase="execute">
-        <match_condition attr="partner_fingerprint" operator="is"      value="B9:17:2D:8B:58:FD:9E:6C:62:0A:8A:5C:F6:8A:78:00:A5:1B:90:CF"/>
+        <match_condition attr="partner_fingerprint" operator="is"      value="A5:2C:D0:4E:1A:75:1F:7D:60:9F:2B:A6:D1:7D:EA:53:BD:42:B7:FD"/>
         <match_condition attr="client"              operator="in"      value="known-clients" />
         <match_condition attr="options"             operator="include" value="((USM mem) -> SIG)"/>
 	<match_condition attr="resource"            operator="is"      value="memmap" />
@@ -134,7 +134,7 @@
         </action>
     </rule>
     <rule role="appraiser" phase="spawn">
-        <match_condition attr="partner_fingerprint" operator="is" value="B9:17:2D:8B:58:FD:9E:6C:62:0A:8A:5C:F6:8A:78:00:A5:1B:90:CF"/>
+        <match_condition attr="partner_fingerprint" operator="is" value="A5:2C:D0:4E:1A:75:1F:7D:60:9F:2B:A6:D1:7D:EA:53:BD:42:B7:FD"/>
         <match_condition attr="client"              operator="in" value="known-clients"/>
         <match_condition attr="option"              operator="is" value="((USM mem) -> SIG)"/>
 	<match_condition attr="resource"            operator="is" value="memmap" />
@@ -144,7 +144,7 @@
     </rule>
     <!--For single AM-->
     <rule role="appraiser" phase="execute">
-        <match_condition attr="partner_fingerprint" operator="is"      value="87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A"/>
+        <match_condition attr="partner_fingerprint" operator="is"      value="D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34"/>
         <match_condition attr="client"              operator="in"      value="known-clients" />
         <match_condition attr="options"             operator="include" value="((USM mem) -> SIG)"/>
 	<match_condition attr="resource"            operator="is"      value="memmap" />
@@ -153,7 +153,7 @@
         </action>
     </rule>
     <rule role="appraiser" phase="spawn">
-        <match_condition attr="partner_fingerprint" operator="is" value="87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A"/>
+        <match_condition attr="partner_fingerprint" operator="is" value="D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34"/>
         <match_condition attr="client"              operator="in" value="known-clients"/>
         <match_condition attr="option"              operator="is" value="((USM mem) -> SIG)" />
 	<match_condition attr="resource"            operator="is" value="memmap" />

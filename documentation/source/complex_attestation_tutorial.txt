@@ -352,11 +352,11 @@ measurement, signature, and certificate info omitted for brevity):
 ```
 <contract version="2.0" type="response"><target type="host-port">192.168.0.10</target><resource>complex-attestation</resource><result>UNKN</result><data><entry><key>No-op appraisal</key><value>
 (...)
-</value></entry></data><AttestationCredential fingerprint="B9:17:2D:8B:58:FD:9E:6C:62:0A:8A:5C:F6:8A:78:00:A5:1B:90:CF">
+</value></entry></data><AttestationCredential fingerprint="A5:2C:D0:4E:1A:75:1F:7D:60:9F:2B:A6:D1:7D:EA:53:BD:42:B7:FD">
 (...)
 </AttestationCredential><signature><signedinfo><canonicalizationmethod algorithm="XML C14N 1.0"/><signaturemethod algorithm="RSA"/><digestmethod algorithm="SHA-1"/></signedinfo><signaturevalue>
 (...)
-</signaturevalue><keyinfo>B9:17:2D:8B:58:FD:9E:6C:62:0A:8A:5C:F6:8A:78:00:A5:1B:90:CF</keyinfo></signature></contract>
+</signaturevalue><keyinfo>A5:2C:D0:4E:1A:75:1F:7D:60:9F:2B:A6:D1:7D:EA:53:BD:42:B7:FD</keyinfo></signature></contract>
 
 ```
 

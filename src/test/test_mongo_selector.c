@@ -82,7 +82,7 @@ START_TEST (test_get_first_action_with_no_matches)
         GList *list = NULL;
         struct scenario* scen = malloc(sizeof(struct scenario));
         scen->attester_hostname = "127.0.0.1";
-        scen->partner_cert = "87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A";
+        scen->partner_cert = "D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34";
         scen->resource = "default";
         loc_result = selector_get_first_action(selector_ref, r, p, a, scen, list, &phrase);
         fail_unless(loc_result != 0, "Returned record instead of empty set");
@@ -107,7 +107,7 @@ START_TEST (test_get_first_action_success)
         GList *list = NULL;
         struct scenario* scen = malloc(sizeof(struct scenario));
         scen->attester_hostname = "127.0.0.1";
-        scen->partner_cert = "87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A";
+        scen->partner_cert = "D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34";
         scen->resource = "default";
         loc_result = selector_get_first_action(selector_ref, r, p, a, (struct scenario *) scen, list, &phrase);
         fail_unless(loc_result == 0, "Returned empty set instead of record");
@@ -133,8 +133,8 @@ START_TEST (test_get_all_conditions_success)
         GList *list = NULL;
         struct scenario* scen = malloc(sizeof(struct scenario));
         scen->attester_hostname = "127.0.0.1";
-        scen->partner_cert = "87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A";
-        scen->resource = "87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A";
+        scen->partner_cert = "D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34";
+        scen->resource = "D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34";
         loc_result = selector_get_all_conditions(selector_ref, r, p, a, (struct scenario*) scen, list, &condition_list);
         fail_unless(loc_result == 1, "1 condition should be returned.");
     }

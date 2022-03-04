@@ -466,7 +466,7 @@ static GQueue *enumerate_variables(void *ctxt, target_type *ttype,
     GQueue *q = g_queue_new();
     address *addr = alloc_address(aspace);
 
-    dlog(5, "Enumerating variables\n");
+    dlog(6, "Enumerating variables\n");
     fail_if(q == NULL, "Failed to allocate queue");
     fail_if(addr == NULL, "Failed to allocate an address");
     g_queue_push_tail(q, new_measurement_variable(ttype, addr));
@@ -476,7 +476,7 @@ static GQueue *enumerate_variables(void *ctxt, target_type *ttype,
 static int measure_variable(void *ctxt, measurement_variable *v,
                             measurement_type *t)
 {
-    dlog(5, "measuring variable\n");
+    dlog(6, "measuring variable\n");
     (*(int*)ctxt)++;
     return 0;
 }
@@ -485,7 +485,7 @@ static GList *get_measurement_feature(void *ctxt, measurement_variable *var,
                                       measurement_type *mtype, char *feature)
 {
     char *res = NULL;
-    dlog(5, "Getting feature %s\n", feature);
+    dlog(6, "Getting feature %s\n", feature);
     if(mtype->magic == 0xdeadbeef) {
         res = strdup(feature);
         if(res) {
@@ -500,7 +500,7 @@ static int check_predicate(void *ctxt, measurement_variable *var, measurement_ty
                            char *operator, char *value)
 {
     int res = -1;
-    dlog(5, "Checking predicate %s %s %s\n", feature, operator, value);
+    dlog(6, "Checking predicate %s %s %s\n", feature, operator, value);
     if(mtype->magic == 0xdeadbeef) {
         GList *x = get_measurement_feature(ctxt, var, mtype, feature);
         if(x != NULL) {

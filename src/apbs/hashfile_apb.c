@@ -97,7 +97,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid UN
                 char *target_type UNUSED, char *resource UNUSED, struct key_value **arg_list,
                 int argc)
 {
-    dlog(3, "Hello from HASHFILE\n");
+    dlog(6, "Hello from HASHFILE\n");
     int ret_val = 0;
     char *file_name;
     unsigned char *evidence = NULL;

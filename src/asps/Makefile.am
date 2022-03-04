@@ -29,6 +29,20 @@ asp_PROGRAMS=
 suid_asp_PROGRAMS=
 noinst_LTLIBRARIES=
 
+if BUILD_iot_uart_ASP
+asp_PROGRAMS += iot_uart_asp
+iot_uart_asp_SOURCES = iot_uart_asp.c libiota.c libiota.h libiota_helper.h \
+                   libiota_helper.c iota_certs.h iota_certs.c
+iot_uart_asp_LDADD   = $(LIBMAAT_ASP_LIBS) $(OPENSSL_LIBS) -lssl -lcrypto 
+endif
+
+if BUILD_iot_appraiser_ASP
+asp_PROGRAMS += iot_appraiser_asp
+iot_appraiser_asp_SOURCES = iot_appraiser_asp.c libiota.c libiota.h libiota_helper.h \
+                   libiota_helper.c iota_certs.h iota_certs.c
+iot_appraiser_asp_LDADD  = $(LIBMAAT_ASP_LIBS) $(OPENSSL_LIBS) -lssl -lcrypto
+endif
+
 if BUILD_procopenfiles_ASP
 suid_asp_PROGRAMS += procopenfileasp
 procopenfileasp_SOURCES = procopenfileasp.c procopenfileasp.h
@@ -120,7 +134,6 @@ asp_PROGRAMS    += system_appraise_asp
 system_appraise_asp_SOURCES = system_appraise_asp.c
 endif
 
-
 if BUILD_rpminv_ASP
 asp_PROGRAMS    += rpm_inv_asp
 rpm_inv_asp_SOURCES = rpm_inv_asp.c
@@ -202,10 +215,10 @@ asp_PROGRAMS += dummy_appraisal
 dummy_appraisal_SOURCES = dummy_appraisal.c
 endif
 
-if BUILD_requestor_ASP
-asp_PROGRAMS += requestor_asp
-requestor_asp_SOURCES = requestor_asp.c
-requestor_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS)
+if BUILD_send_execute_ASP
+asp_PROGRAMS += send_execute_asp
+send_execute_asp_SOURCES = send_execute_asp.c
+send_execute_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS)
 endif
 
 if BUILD_tlm_ret_ASP
@@ -228,6 +241,11 @@ endif
 
 if BUILD_procroot_ASP
 suid_asp_PROGRAMS    += procrootasp
+endif
+
+if BUILD_passport_maker_ASP
+asp_PROGRAMS    += passport_maker_asp
+passport_maker_asp_SOURCES = passport_maker_asp.c
 endif
 
 if BUILD_whitelist_ASP
@@ -299,12 +317,35 @@ asp_PROGRAMS += split_asp
 merge_asp_SOURCES = split_asp.c
 endif
 
+if BUILD_send_request_ASP
+asp_PROGRAMS += send_request_asp
+send_request_asp_SOURCES = send_request_asp.c
+send_request_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS)
+endif
+
 AM_CPPFLAGS = -O2 -DDEFAULT_ASP_DIR="\"$(ASP_INFO_DIR)\"" \
 		-I$(top_srcdir)/src/types \
-		-I$(top_srcdir)/src $(LIBMAAT_CFLAGS)
+		-I$(top_srcdir)/src $(LIBMAAT_CFLAGS) \
+		-DDEFAULT_MAAT_MONGO_LOC="\"mongodb://localhost:27017/\"" \
+		-DDEFAULT_MONGO_DB="\"maat\""
+
 AM_LDFLAGS = -L../types
 
 LIBS = -lmaat_basetypes $(LIBMAAT_ASP_LIBS) -ldl -lelf
+
+if BUILD_passport_retriever_ASP
+AM_CPPFLAGS  += -Wno-error=conversion -Wno-sign-conversion $(LIBMONGOC_CFLAGS) $(LIBBSON_CFLAGS)
+asp_PROGRAMS    += passport_retriever_asp
+passport_retriever_asp_SOURCES = passport_retriever_asp.c
+passport_retriever_asp_LDADD = $(LIBMONGOC_LIBS) $(LIBSON_LIBS) $(LDADD_APB)
+endif
+
+if BUILD_passport_storer_ASP
+AM_CPPFLAGS  += -Wno-error=conversion -Wno-sign-conversion $(LIBMONGOC_CFLAGS) $(LIBBSON_CFLAGS)
+asp_PROGRAMS    += passport_storer_asp
+passport_storer_asp_SOURCES = passport_storer_asp.c
+passport_storer_asp_LDADD = $(LIBMONGOC_LIBS) $(LIBSON_LIBS) $(LDADD_APB)
+endif
 
 if ENABLE_TESTS
 AM_CPPFLAGS += -DENABLE_TESTS

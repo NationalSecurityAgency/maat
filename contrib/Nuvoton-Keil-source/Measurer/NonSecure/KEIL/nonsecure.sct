@@ -1,0 +1,22 @@
+#! armclang --target=arm-arm-none-eabi -march=armv8-m.base -E -xc
+#define SCATTER_FILE
+#include "..\..\Secure\partition_M2351.h"
+
+LR_ROM FMC_NON_SECURE_BASE
+{
+    EXE_ROM +0
+    {
+        *.o(RESET, +First)
+        *(+RO)
+    }
+    
+    EXE_RAM NON_SECURE_SRAM_BASE
+    {
+        *(+RW, +ZI)
+    }
+	
+	/*EXE_RAM2 0x300132B4
+    {
+        (+ZI)           ; .ARM.__at_0x30011000 is selected by +RW
+    }*/
+}

@@ -48,7 +48,7 @@ START_TEST(test_enumeration_data)
 {
     int rc;
     int added_count = 0;
-    dlog(0, "Testing enumeration measurement type\n");
+    dlog(6, "Testing enumeration measurement type\n");
 
     measurement_data *md = alloc_measurement_data(&enumeration_measurement_type);
     fail_if(md == NULL, "Failed to allocate measurement data of enumeration measurement type\n");
@@ -114,7 +114,7 @@ END_TEST
 
 START_TEST(test_filedata)
 {
-    dlog(0, "Testing filedata measurement type\n");
+    dlog(6, "Testing filedata measurement type\n");
     filedata_measurement_data *d = (filedata_measurement_data*)alloc_measurement_data(&filedata_measurement_type);
     size_t size = random() % 65536;
     int i;
@@ -145,7 +145,7 @@ START_TEST(test_filename_data)
     filename_measurement_data *d = (filename_measurement_data*)alloc_measurement_data(&filename_measurement_type);
     size_t size = random() % 1024;
     int i;
-    dlog(0, "Testing filename measurement type\n");
+    dlog(6, "Testing filename measurement type\n");
     fail_if(d == NULL, "Failed to create filedata measurement data");
     d->contents		= malloc(size);
     fail_if(d->contents == NULL, "Failed to allocate %u bytes for file data contents", size);
@@ -168,7 +168,7 @@ START_TEST(test_sha1_data)
 {
     sha1hash_measurement_data *d = (sha1hash_measurement_data*)alloc_measurement_data(&sha1hash_measurement_type);
     int i;
-    dlog(0, "Testing sha1 measurement type\n");
+    dlog(6, "Testing sha1 measurement type\n");
     fail_if(d == NULL, "Failed to create filedata measurement data");
 
     for(i=0; i<SHA1HASH_LEN; i++) {
@@ -188,7 +188,7 @@ START_TEST(test_sha256_data)
 {
     sha256_measurement_data *d = (sha256_measurement_data*)alloc_measurement_data(&sha256_measurement_type);
     int i;
-    dlog(0, "Testing sha256 measurement type\n");
+    dlog(6, "Testing sha256 measurement type\n");
     fail_if(d == NULL, "Failed to create sha256 measurement data");
 
     for(i=0; i<SHA256_TYPE_LEN; i++) {

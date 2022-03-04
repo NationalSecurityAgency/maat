@@ -60,7 +60,7 @@ configuration file or on the command line).
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:bin_t:s0                           |test_client                             |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|A simple command-line client for Maat to request a measurement. (no specific security attributes)                         |
+|A simple command-line client for Maat to request a measurement and appraisal. (no specific security attributes)           |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
@@ -95,6 +95,8 @@ must be readable by the Maat user.
 |drwxr-xr-x. |root  |root   |unconfined_u:object_r:usr_t:s0                       |credentials                             |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:attestmgr_conf_t:s0                |minimal-am-config.xml                   |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:attestmgr_conf_t:s0                |trusted-third-party-config.xml          |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:attestmgr_conf_t:s0                |trusted-sock-am-config.xml              |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
@@ -626,24 +628,27 @@ unlike ASPS, none of these executables is expected to have its SUID or SGID bits
 
 .. tabularcolumns:: |l|l|l|L|l|
 
-+------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|UNIX Perms  |User  |Group  |SELinux Label                                        |Filename                                |
-+============+======+=======+=====================================================+========================================+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:appraiser_apb_exe_t:s0             |appraiser_apb                           |
-+------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:hashdir_apb_exe_t:s0               |hashdir_apb                             |
-+------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:hashfile_apb_exe_t:s0              |hashfile_apb                            |
-+------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r: process_measurement_apb_exe_t:s0  |process_measurement_apb                 |
-+------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:userspace_apb_exe_t:s0             |userspace_apb                           |
-+------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r: userspace_appraiser_apb_exe_t:s0  |userspace_appraiser_apb                 |
-+------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:kim_apb_exe_t:s0                   |kim_apb                                 |
-+------------+------+-------+-----------------------------------------------------+----------------------------------------+
-
++------------+------+-------+-------------------------------------------------------------+--------------------------------+
+|UNIX Perms  |User  |Group  |SELinux Label                                                |Filename                        |
++============+======+=======+=============================================================+================================+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:appraiser_apb_exe_t:s0                     |appraiser_apb                   |
++------------+------+-------+-------------------------------------------------------------+--------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:hashdir_apb_exe_t:s0                       |hashdir_apb                     |
++------------+------+-------+-------------------------------------------------------------+--------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:hashfile_apb_exe_t:s0                      |hashfile_apb                    |
++------------+------+-------+-------------------------------------------------------------+--------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r: process_measurement_apb_exe_t:s0          |process_measurement_apb         |
++------------+------+-------+-------------------------------------------------------------+--------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:userspace_apb_exe_t:s0                     |userspace_apb                   |
++------------+------+-------+-------------------------------------------------------------+--------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r: userspace_appraiser_apb_exe_t:s0          |userspace_appraiser_apb         |
++------------+------+-------+-------------------------------------------------------------+--------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:kim_apb_exe_t:s0                           |kim_apb                         |
++------------+------+-------+-------------------------------------------------------------+--------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:request_passport_apb_exe_t:s0              |request_passport_apb            |
++------------+------+-------+-------------------------------------------------------------+--------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r: passport_userspace_appraiser_apb_exe_t:s0 |passport_userspace_appraiser_apb|
++------------+------+-------+-------------------------------------------------------------+--------------------------------+
 
 /opt/maat/lib/maat/asps
 ----------------------------------------------
@@ -732,7 +737,9 @@ state) should be installed with appropriate ownership, and their SUID or SGID bi
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rwsr-xr-x. |root  |root   |system_u:object_r:proc_root_asp_exe_t:s0             |procrootasp                             |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:requestor_asp_exe_t:s0             |requestor_asp                           |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:send_execute_asp_exe_t:s0          |send_execute_asp                        |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:send_request_asp_exe_t:s0          |send_request_asp                        |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:rpm_details_asp_exe_t:s0           |rpm_details_asp                         |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
@@ -749,6 +756,8 @@ state) should be installed with appropriate ownership, and their SUID or SGID bi
 |-rwxr-xr-x. |root  |root   |system_u:object_r:system_appraise_asp_exe_t:s0       |system_appraise_asp                     |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:system_asp_exe_t:s0                |system_asp                              |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:passport_maker_asp_exe_t:s0        |passport_maker_asp                      |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:whitelist_asp_exe_t:s0             |whitelist                               |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
@@ -906,7 +915,16 @@ directory and its contents world readable (chmod 0755 for the directory, chmod 0
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:apb_info_t:s0                      |userspace_appraiser_apb.xml             |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-
+|-rw-r--r--. |root  |root   |system_u:object_r:apb_info_t:s0                      |passport_ret_apb.xml                    |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:apb_info_t:s0                      |passport_appraiser_apb.xml              |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:apb_info_t:s0                      |request_passport_apb.xml                |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:apb_info_t:s0                      |passport_storage_apb.xml                |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:apb_info_t:s0                      |passport_userspace_appraiser_apb.xml    |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 /opt/maat/share/maat/asps
 ----------------------------------------------
@@ -998,7 +1016,9 @@ directory and its contents world readable (chmod 0755 for the directory, chmod 0
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |procopenfileasp.xml                     |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |requestor_asp.xml                       |
+|-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |send_execute_asp.xml                    |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |send_request_asp.xml                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |rpm_details_asp.xml                     |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
@@ -1015,6 +1035,8 @@ directory and its contents world readable (chmod 0755 for the directory, chmod 0
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |system_appraise_asp.xml                 |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |system_asp.xml                          |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |passport_maker_asp.xml                  |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |whitelist.xml                           |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
@@ -1076,6 +1098,10 @@ but all configuration files must be readable by the AM.
 |-rw-r--r--. |root  |root   |system_u:object_r:usr_t:s0                           |userspace-selector.xml                  |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:usr_t:s0                           |verified-us-selector.xml                |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:usr_t:s0                           |passport-selector.xml                   |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:usr_t:s0                           |passport-maker-selector.xml             |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 

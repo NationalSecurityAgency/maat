@@ -254,7 +254,7 @@ static int add_file_region_node(measurement_graph *graph, node_id_t process_node
 
         fd = open(fr_addr->path, O_RDONLY|O_NONBLOCK);
         if (fd < 0) {
-            dlog(0, "Failed to open file for reading\n");
+            dlog(3, "Failed to open file for reading\n");
             goto out;
         }
 
@@ -358,7 +358,7 @@ static int add_file_node(measurement_graph *graph, node_id_t process_node,
         asp_logwarn("Failed to add mappings.files edge to process node\n");
     }
 
-    if (is_reg(sf_addr->filename)) {
+    if (path_is_reg(sf_addr->filename)) {
         if((rc = measurement_graph_add_edge(graph, process_node, "mappings.reg_files",
                                             tmpnode, &edge)) < 0) {
             asp_logwarn("Failed to add mappings.files edge to process node\n");
@@ -454,19 +454,19 @@ int asp_measure(int argc, char *argv[])
             goto next_entry;
         }
 
-	if (entry->pathlen > 1) {
-	    if(add_file_region_node(graph, process_node, mem_segment_node, entry,
-				    &file_region_node) < 0) {
-		asp_logwarn("Failed to add file region node\n");
-		goto next_entry;
-	    }
+        if (entry->pathlen > 1) {
+            if(add_file_region_node(graph, process_node, mem_segment_node, entry,
+                                    &file_region_node) < 0) {
+                asp_logwarn("Failed to add file region node\n");
+                goto next_entry;
+            }
 
-	    if(add_file_node(graph, process_node, mem_segment_node,
-			     file_region_node, entry, &file_node) < 0) {
-		asp_logwarn("Failed to file node\n");
-		goto next_entry;
-	    }
-	}
+            if(add_file_node(graph, process_node, mem_segment_node,
+                             file_region_node, entry, &file_node) < 0) {
+                asp_logwarn("Failed to file node\n");
+                goto next_entry;
+            }
+        }
 
 next_entry:
         free_map_entry(entry);

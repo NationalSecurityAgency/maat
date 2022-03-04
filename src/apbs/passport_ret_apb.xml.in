@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<apb>
+	<name>passport_ret</name>
+	<desc>Retrieves a passport from the system</desc>
+	<uuid>ce51c9c4-7d69-463f-946a-418da7e8f6f1</uuid>
+	<file hash="XXXXX">${APB_INSTALL_DIR}/passport_ret_apb</file>
+	<input_type>????</input_type>
+	<output_type>????</output_type>
+	<asps ordered="False">
+	  <asp uuid="62ed15b5-529b-4915-be4c-0dc30da554fc">passport_retriever_asp</asp>
+	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa1f41">compress</asp>
+	  <asp uuid="19e44fd6-b752-431a-94d9-6f1a88495a68">encrypt</asp>
+	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa3f41">create_contract</asp>
+	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa4f41">send</asp>
+      	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa1f40">serialize</asp>
+	</asps>
+	<copland>
+          <phrase copland="@_1(@_2((USM passport) -> SIG))">passport</phrase>
+	  <spec uuid= "57a053fd-9046-4c0d-9c5d-0e79d0b1fce5">passport mspec</spec>
+	</copland>
+	<security_context>
+	  <selinux><type>passport_ret_apb_t</type></selinux>
+	</security_context>
+</apb>

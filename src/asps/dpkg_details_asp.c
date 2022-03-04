@@ -211,7 +211,7 @@ int asp_measure(int argc, char *argv[])
         fp = fopen(md5fn, "rb");
 
         if (fp == NULL) {
-            dlog(0, "Failed to open file %s for reading\n", md5fn);
+            dlog(3, "Failed to open file %s for reading\n", md5fn);
             goto error_add_data;
         }
     }

@@ -50,6 +50,9 @@
 #define GRAPH_TEST_FILE_1 SRCDIR "/xml/test-files/merge_test_1.xml"
 #define GRAPH_TEST_FILE_2 SRCDIR "/xml/test-files/merge_test_2.xml"
 
+#define CSV_FILE SRCDIR "/test_data.csv"
+#define CSV_WRITE_FILE SRCDIR "/test_data_write.csv"
+
 #include <util/util.h>
 
 static inline void setup(void)

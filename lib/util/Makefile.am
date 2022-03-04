@@ -19,7 +19,7 @@ UTIL_LIBTOOL_VERSION=1:0:1
 lib_LTLIBRARIES = libmaat_util-@PACKAGE_VERSION@.la
 
 AM_CFLAGS   = -std=gnu99 -Wall
-libmaat_util_@PACKAGE_VERSION@_la_SOURCES = util.c xml_util.c base64.c checksum.c \
+libmaat_util_@PACKAGE_VERSION@_la_SOURCES = util.c csv.c xml_util.c base64.c checksum.c \
 			crypto.c validate.c compress.c sign.c init.c \
 			signfile.c inet-socket.c unix-socket.c maat-io.c \
 			glib-compat.c
@@ -29,7 +29,7 @@ libmaat_util_@PACKAGE_VERSION@_la_SOURCES += sign_tpm.c tpm.c
 endif
 
 library_includedir=$(includedir)/@PACKAGE_NAME@-@PACKAGE_VERSION@/util
-library_include_HEADERS = util.h xml_util.h base64.h checksum.h crypto.h \
+library_include_HEADERS = util.h csv.h xml_util.h base64.h checksum.h crypto.h \
 			validate.h compress.h tpm.h sign.h keyvalue.h signfile.h \
 			inet-socket.h unix-socket.h maat-io.h
 

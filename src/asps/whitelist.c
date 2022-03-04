@@ -173,7 +173,7 @@ int asp_measure(int argc, char *argv[])
         kd = container_of(data, kmod_data, d);
 
         strcpy(scratch, kd->name);
-        dlog(0, "Checking module %s against whitelist\n", kd->name);
+        dlog(6, "Checking module %s against whitelist\n", kd->name);
         if (g_list_find_custom(mod_whitelist, kd->name, (GCompareFunc)strcmp)) {
             found = 1;
         }
@@ -192,7 +192,7 @@ int asp_measure(int argc, char *argv[])
         pmd = container_of(data, process_metadata_measurement, d);
 
         sscanf(pmd->command_line, "%255s ", scratch);
-        dlog(0, "Checking process %s against whitelist\n", scratch);
+        dlog(6, "Checking process %s against whitelist\n", scratch);
         if (g_list_find_custom(proc_whitelist, scratch, (GCompareFunc)strcmp)) {
             found = 1;
         }

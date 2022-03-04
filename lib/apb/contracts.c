@@ -156,27 +156,29 @@ static int handle_satisfier(struct scenario *scen, xmlNode *sat,
             msmtsize = zipsize;
         }
 
-        dlog(2, "About to appraise msmt of size %zu\n", msmtsize);
+        dlog(6, "About to appraise msmt of size %zu\n", msmtsize);
         ret = appraise(scen, values, msmt, msmtsize);
         if (ret) {
             snprintf(scratch, 200, "%s/msmtXXXXXX", workdir);
             dlog(2, "Appraisal failed, saving content to %s\n", scratch);
             fd = mkstemp(scratch);
             if(fd < 0) {
-                dlog(1, "Warning: failed to create scratch file for measurement\n");
+                dlog(4, "Warning: failed to create scratch file for measurement\n");
             } else {
                 ssize_t wrote = write(fd, msmt, msmtsize);
                 if(wrote < 0) {
                     dlog(1, "Error saving measurement file: %s\n", strerror(errno));
                 } else if(msmtsize < SSIZE_MAX && wrote < (ssize_t)msmtsize) {
-                    dlog(1, "Warning: failed to write entire measurement to scratch file\n");
+                    dlog(4, "Warning: failed to write entire measurement to scratch file\n");
                 }
                 close(fd);
             }
             xmlNewTextChild(sat, NULL, (xmlChar*)"result", (xmlChar*)"FAIL");
+            dlog(5, "PRESENTATION MODE (self): Appraisal result: FAIL\n");
             *failed = 1;
         } else {
             dlog(2, "Appraisal succeeded\n");
+            dlog(5, "PRESENTATION MODE (self): Appraisal result: PASS\n");
             xmlNewTextChild(sat, NULL, (xmlChar*)"result", (xmlChar*)"PASS");
             fail = 0;
             /* Maat would add a POM here */
@@ -218,37 +220,38 @@ int handle_measurement_contract(struct scenario *scen, appraise_fn *appraise, in
     *failed = 0;
 
     if(scen->size > INT_MAX) {
-        dlog(1, "Measurement contract is too big\n");
+        dlog(0, "Measurement contract is too big\n");
         goto bad_xml;
     }
 
     doc = xmlReadMemory(scen->contract, (int)scen->size, NULL, NULL, 0);
     if (doc == NULL) {
-        dlog(1, "Failed to parse contract XML.\n");
+        dlog(0, "Failed to parse contract XML.\n");
         goto bad_xml;
     }
 
     root = xmlDocGetRootElement(doc);
 
     if (root == NULL) {
-        dlog(1, "Failed to get contract root node.\n");
+        dlog(0, "Failed to get contract root node.\n");
         goto no_root_node;
     }
 
-    dlog(3, "root->name = %s\n", root->name);
+    dlog(6, "root->name = %s\n", root->name);
 
     contract_type = xmlGetPropASCII(root, "type");
     if(contract_type == NULL) {
-        dlog(1, "Failed to get contract type attribute.\n");
+        dlog(0, "Failed to get contract type attribute.\n");
         goto no_contract_type;
     }
 
     if (strcasecmp(contract_type, "measurement") != 0) {
-        dlog(1, "Not a measurement contract\n");
+        dlog(0, "Not a measurement contract\n");
         goto bad_contract_type;
     }
     free(contract_type);
     contract_type = NULL;
+
 
     snprintf(tmpstr, 200, "%s/measurement_contract.xml", scen->workdir);
     save_document(doc, tmpstr);
@@ -257,11 +260,11 @@ int handle_measurement_contract(struct scenario *scen, appraise_fn *appraise, in
     /* Verify the signature of each subcontract */
     subcobj = xpath(doc, "/contract/subcontract");
     if(subcobj == NULL) {
-        dlog(1, "obj from xpath is null\n");
+        dlog(0, "obj from xpath is null\n");
         goto get_subcontract_failed;
     }
     if (!subcobj->nodesetval) {
-        dlog(1, "No subcontracts?\n");
+        dlog(0, "No subcontracts?\n");
         goto no_subcontracts;
     }
 
@@ -279,7 +282,7 @@ int handle_measurement_contract(struct scenario *scen, appraise_fn *appraise, in
 
 
             if (ret != 1) { /* 1 == good signature */
-                dlog(1, "subcontract signature failed\n");
+                dlog(0, "subcontract signature failed\n");
                 goto subcontract_signature_failed;
             }
         }
@@ -293,11 +296,11 @@ int handle_measurement_contract(struct scenario *scen, appraise_fn *appraise, in
 
     optobj = xpath(doc, "/contract/subcontract/option");
     if(optobj == NULL) {
-        dlog(1, "obj from xpath is null\n");
+        dlog(0, "obj from xpath is null\n");
         goto get_option_failed;
     }
     if (!optobj->nodesetval) {
-        dlog(1, "No subcontracts with satisfying options?\n");
+        dlog(0, "No subcontracts with satisfying options?\n");
         goto no_subcontracts_with_satisfying_options;
     }
     for (i=0; i<optobj->nodesetval->nodeNr; i++) {
@@ -325,7 +328,7 @@ int handle_measurement_contract(struct scenario *scen, appraise_fn *appraise, in
                    scen->nonce, scen->tpmpass, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
 
     if(ret != 0) {
-        dlog(1, "Failed to sign access contract\n");
+        dlog(0, "Failed to sign access contract\n");
         goto signature_failed;
     }
     free(fingerprint_buf);
@@ -477,11 +480,11 @@ int create_integrity_response(target_id_type_t target_typ, xmlChar *target,
     if(outsize_tmp >= 0) {
         *outsize = (size_t)outsize_tmp;
     } else {
-        dlog(1, "Warning: while generating response contract invalid output size %d\n",
+        dlog(4, "Warning: while generating response contract invalid output size %d\n",
              outsize_tmp);
         *outsize = 0;
     }
-    dlog(4, "DEBUG!: %s\n", *out ? (char*)*out : "(null)");
+    dlog(7, "DEBUG!: %s\n", *out ? (char*)*out : "(null)");
     ret = *out == NULL ? -1 : 0;
 
 integrity_response_cleanup:
@@ -625,7 +628,7 @@ unsigned char *generate_measurement_contract(struct scenario *scen,
          */
         obj = xpath(doc, "/contract/subcontract");
         if (!obj || !obj->nodesetval) {
-            dlog(1, "Couldn't find subcontract for my type\n");
+            dlog(4, "Couldn't find subcontract for my type\n");
         } else {
             subc = obj->nodesetval->nodeTab[0];
             xmlXPathFreeObject(obj);
@@ -695,9 +698,9 @@ int generate_and_send_back_measurement_contract(int chan, struct scenario *scen,
         return -1;
     }
 
-    if(((status = maat_write_sz_buf(chan, scen->response, scen->respsize,
-                                    &bytes_written,
-                                    MAAT_APB_ASP_TIMEOUT)) != 0) ||
+    if(((status = write_measurement_contract(chan, scen->response, scen->respsize,
+                  &bytes_written,
+                  MAAT_APB_ASP_TIMEOUT)) != 0) ||
             (bytes_written != scen->respsize + sizeof(uint32_t))) {
         dlog(0, "Failed to send size of measurement contract: %s\n",
              strerror(status < 0 ? -status : status));
@@ -731,16 +734,19 @@ int receive_measurement_contract(int chan, struct scenario *scen, int32_t max_si
                               MAAT_APB_PEER_TIMEOUT, max_size_supported);
 
     if(status != 0 || eof_encountered != 0 || bytes_read != tmpsize) {
-        dlog(0, "Failed to read measurement contract\n");
+        dlog(0, "Failed to read measurement contract, status=%d\n", status);
         goto error;
     }
 
-    dlog(4, "Read buffer with tmp size %zd and bytes read %zd\n", tmpsize, bytes_read);
+    dlog(6, "Read buffer with tmp size %zd and bytes read %zd\n", tmpsize, bytes_read);
 
     if(tmpsize > INT_MAX) {
         dlog(2, "Measurement contract too large!\n");
         goto error;
     }
+
+    dlog(5, "PRESENTATION MODE (in): Receives measurement contract.\n");
+
     scen->size = tmpsize;
     return ret;
 

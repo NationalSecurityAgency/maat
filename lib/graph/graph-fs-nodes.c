@@ -295,7 +295,7 @@ int measurement_graph_delete_node(measurement_graph *g, node_id_t n)
         if(measurement_graph_delete_edge(g, e) == 0) {
             eit = edge_iterator_reset(eit);
         } else {
-            dlog(1, "WARNING: Failed to remove edge "ID_FMT" from graph.", e);
+            dlog(4, "WARNING: Failed to remove edge "ID_FMT" from graph.", e);
             eit = edge_iterator_next(eit);
             rc = -1;
         }
@@ -305,7 +305,7 @@ int measurement_graph_delete_node(measurement_graph *g, node_id_t n)
         if(measurement_graph_delete_edge(g, e) == 0) {
             eit = edge_iterator_reset(eit);
         } else {
-            dlog(1, "WARNING: Failed to remove edge "ID_FMT" from graph.", e);
+            dlog(4, "WARNING: Failed to remove edge "ID_FMT" from graph.", e);
             eit = edge_iterator_next(eit);
             rc = -1;
         }
@@ -324,7 +324,7 @@ int measurement_graph_delete_node(measurement_graph *g, node_id_t n)
     }
 
     if(rc != 0) {
-        dlog(1, "WARNING: Failed to fully remove node "ID_FMT" from graph.\n", n);
+        dlog(4, "WARNING: Failed to fully remove node "ID_FMT" from graph.\n", n);
     }
     return rc;
 }

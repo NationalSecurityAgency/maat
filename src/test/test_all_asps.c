@@ -109,7 +109,7 @@ START_TEST(test_run_procopenfileasp)
     fail_unless(procOpenFileAsp != NULL, "Could not find procopenfile");
 
     if (procOpenFileAsp->dlh == NULL) {
-        dlog(1, "Automatically starting non-running ASP\n");
+        dlog(5, "Automatically starting non-running ASP\n");
         start_asp(procOpenFileAsp);
     }
 
@@ -129,7 +129,7 @@ START_TEST(test_measure_procopenfileasp)
     fail_unless(procOpenFileAsp != NULL, "Could not find procopenfile");
 
     if (procOpenFileAsp->dlh == NULL) {
-        dlog(1, "Automatically starting non-running ASP\n");
+        dlog(5, "Automatically starting non-running ASP\n");
         start_asp(procOpenFileAsp);
     }
 
@@ -170,7 +170,7 @@ START_TEST(test_hash_bin_bash)
     fail_unless(hashfileserviceasp != NULL, "Could Not Find ASP hashfileservice?");
 
     if (hashfileserviceasp->dlh == NULL) {
-        dlog(1, "Automatically starting non-running ASP\n");
+        dlog(5, "Automatically starting non-running ASP\n");
         start_asp(hashfileserviceasp);
     }
 
@@ -190,7 +190,7 @@ START_TEST(test_measure_hash_bin_bash)
     fail_unless(hashfileserviceasp != NULL, "Could Not Find ASP hashfileservice?");
 
     if (hashfileserviceasp->dlh == NULL) {
-        dlog(1, "Automatically starting non-running ASP\n");
+        dlog(5, "Automatically starting non-running ASP\n");
         start_asp(hashfileserviceasp);
     }
 

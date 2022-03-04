@@ -1477,13 +1477,13 @@ static int enqueue_obligations_by_feature(measurement_spec_callbacks *callbacks,
         child_addr   = address_from_human_readable(target_instr->address_space,
                        attr_value);
         if(child_addr == NULL) {
-            dlog(0, "Error: Failed to parse address from \"%s\"\n", attr_value);
+            dlog(3, "Error: Failed to parse address from \"%s\"\n", attr_value);
             continue;
         }
 
         child_var = new_measurement_variable(target_instr->target_type, child_addr);
         if(child_var == NULL) {
-            dlog(0, "Error: failed to allocate measurement variable\n");
+            dlog(3, "Error: failed to allocate measurement variable\n");
             free_address(child_addr);
             continue;
         }
@@ -1696,7 +1696,7 @@ int get_target_meas_spec(uuid_t meas_spec_uuid, struct meas_spec **mspec)
         dlog(0, "Couldn't find measurement specification with uuid: %s\n", buf);
         goto exit;
     } else {
-        dlog(0, "Parsing %s\n", mspec_info->filename);
+        dlog(6, "Parsing %s\n", mspec_info->filename);
         *mspec = parse_measurement_spec(mspec_info->filename);
     }
 

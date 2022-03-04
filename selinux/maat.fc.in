@@ -27,6 +27,10 @@
 @sysconfdir@/maat/credentials/.*\.pem		-- gen_context(system_u:object_r:maat_certificate_t,s0)
 @sysconfdir@/maat/credentials/.*\.key		-- gen_context(system_u:object_r:maat_private_key_t,s0)
 #
+# Places file
+@sysconfigdir@/maat/places.csv                  -- gen_context(system_u:object_r:maat_places_file_t)
+#
+#
 # The Attestation Manager itself.
 #
 @bindir@/attestmgr				-- gen_context(system_u:object_r:attestmgr_exec_t,s0)
@@ -85,16 +89,28 @@
 @aspdir@/system_appraise_asp          -- gen_context(system_u:object_r:system_appraise_asp_exe_t)
 @aspdir@/sign_send_asp         	      -- gen_context(system_u:object_r:sign_send_asp_exe_t)
 @aspdir@/got_measure          	      -- gen_context(system_u:object_r:got_measure_asp_exe_t)
-@aspdir@/requestor_asp          	-- gen_context(system_u:object_r:requestor_asp_exe_t)
+@aspdir@/send_execute_asp          	-- gen_context(system_u:object_r:send_execute_asp_exe_t)
+@aspdir@/send_request_asp          	-- gen_context(system_u:object_r:send_request_asp_exe_t)
+#@aspdir@/passport_retriever_asp          	-- gen_context(system_u:object_r:passport_retriever_asp_exe_t)
+#@aspdir@/passport_storer_asp          	-- gen_context(system_u:object_r:passport_storer_asp_exe_t)
+@aspdir@/passport_maker_asp          	-- gen_context(system_u:object_r:passport_maker_asp_exe_t)
 #
 # APB implementations
 #
 @apbdir@				-d gen_context(system_u:object_r:apb_dir_t,s0)
 @apbdir@/appraiser_apb		-- gen_context(system_u:object_r:appraiser_apb_exe_t)
+@apbdir@/complex_att_apb		-- gen_context(system_u:object_r:complex_att_apb_exe_t)
 @apbdir@/userspace_apb		-- gen_context(system_u:object_r:userspace_apb_exe_t)
 @apbdir@/process_measurement_apb		-- gen_context(system_u:object_r:process_measurement_apb_exe_t)
+@apbdir@/forwarding_apb                  -- gen_context(system_u:object_r:forwarding_apb_exe_t)
+@apbdir@/no_op_apb                  -- gen_context(system_u:object_r:no_op_apb_exe_t)
 @apbdir@/hashdir_apb                  -- gen_context(system_u:object_r:hashdir_apb_exe_t)
 @apbdir@/kim_apb                  -- gen_context(system_u:object_r:kim_apb_exe_t)
 @apbdir@/userspace_appraiser_apb	-- gen_context(system_u:object_r:userspace_appraiser_apb_exe_t)
 @apbdir@/hashfile_apb                  -- gen_context(system_u:object_r:hashfile_apb_exe_t)
+#@apbdir@/passport_ret_apb                  -- gen_context(system_u:object_r:passport_ret_apb_exe_t)
+#@apbdir@/passport_appraiser_apb                  -- gen_context(system_u:object_r:passport_appraiser_apb_exe_t)
+@apbdir@/request_passport_apb                  -- gen_context(system_u:object_r:request_passport_apb_exe_t)
+#@apbdir@/passport_storage_apb                  -- gen_context(system_u:object_r:passport_storage_apb_exe_t)
+@apbdir@/passport_userspace_appraiser_apb                  -- gen_context(system_u:object_r:passport_userspace_appraiser_apb_exe_t)
 

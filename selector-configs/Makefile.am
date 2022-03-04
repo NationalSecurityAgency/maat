@@ -16,9 +16,13 @@
 
 include ../src/common.mk.am
 
-dist_selector_DATA = selector.xml \
+dist_selector_DATA = iot_selector.xml \
+	selector.xml \
 	master_ui_selector.xml \
 	userspace-selector.xml \
 	verified-us-selector.xml \
-	quiot-selector.xml 
+	quiot-selector.xml \
+	complex-att-selector.xml\
+	passport-selector.xml\
+	passport-maker-selector.xml
 

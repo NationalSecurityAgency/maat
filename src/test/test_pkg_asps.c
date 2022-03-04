@@ -421,7 +421,7 @@ START_TEST (test_file_pkg)
     fail_unless(edge_id != INVALID_EDGE_ID, "Edge found by edge iterator is null\n");
 
     char * label = measurement_edge_get_label(graph, edge_id);
-    dlog(0, "LABEL: %s\n", label);
+    dlog(6, "LABEL: %s\n", label);
 
     node_id_t node_id = measurement_edge_get_destination(graph, edge_id);
     fail_unless(node_id != INVALID_NODE_ID, "Destination node of edge is INVALID\n");

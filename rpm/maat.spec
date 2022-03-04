@@ -15,7 +15,7 @@
 #
 
 Name:           maat
-Version:        1.2
+Version:        1.3
 Release:        1%{?dist}
 Summary:        Maat Measurement & Attestation Framework
 Group:          Administration/Monitoring
@@ -26,7 +26,8 @@ BuildRequires: autoconf, automake, libtool, glib2-devel, libxml2-devel
 BuildRequires: openssl-devel, libuuid-devel, make, python3-devel
 BuildRequires: selinux-policy-devel, libselinux
 BuildRequires: elfutils-devel, libcap-devel, json-c-devel
-Requires:       libcap, json-c
+BuildRequires: mongo-c-driver
+Requires:       libcap, json-c, mongo-c-driver-devel, libbson
 %{?el7:Requires: systemd}
 Provides:       maat
 
@@ -205,6 +206,11 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/apbs/process_measurement_apb
 %{_libexecdir}/maat/apbs/userspace_apb
 %{_libexecdir}/maat/apbs/userspace_appraiser_apb
+%{_libexecdir}/maat/apbs/complex_att_apb
+%{_libexecdir}/maat/apbs/forwarding_apb
+%{_libexecdir}/maat/apbs/no_op_apb
+%{_libexecdir}/maat/apbs/request_passport_apb
+%{_libexecdir}/maat/apbs/passport_userspace_appraiser_apb
 # ASPs, enumerated explicitly because some need suid
 # %{_libexecdir}/maat/asps/*
 %{_libexecdir}/maat/asps/blacklist
@@ -213,6 +219,7 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/asps/dpkg_inv_asp
 %{_libexecdir}/maat/asps/dummy_appraisal
 %{_libexecdir}/maat/asps/elf_reader
+%{_libexecdir}/maat/asps/send_request_asp
 %{_libexecdir}/maat/asps/hashfileserviceasp
 %{_libexecdir}/maat/asps/hashserviceasp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/ima_asp
@@ -243,12 +250,13 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/asps/system_appraise_asp
 %{_libexecdir}/maat/asps/system_asp
 %{_libexecdir}/maat/asps/whitelist
-%{_libexecdir}/maat/asps/requestor_asp
+%{_libexecdir}/maat/asps/send_execute_asp
 %{_libexecdir}/maat/asps/serialize_graph_asp
 %{_libexecdir}/maat/asps/compress_asp
 %{_libexecdir}/maat/asps/encrypt_asp
 %{_libexecdir}/maat/asps/create_contract_asp
 %{_libexecdir}/maat/asps/send_asp
+%{_libexecdir}/maat/asps/passport_maker_asp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/proc_namespaces_asp
 %{_libexecdir}/maat/asps/kernel_msmt_asp
 %{_datadir}/maat/selector-configurations/*
@@ -283,6 +291,14 @@ setsebool -P httpd_can_network_connect=off
 %{_datadir}/selinux/targeted/maat.pp
 
 %changelog
+* Mon Feb 28 2022 Maat Developers <APL_Maat_Developers@listserv.jhuapl.edu> 1.3-1
+- Carry nonce through scenarios with multiple negotiations
+- Add sequence diagram based user interface for observing attestation manager interactions
+- Add Passport use case demonstration 
+- Add IoT Assurance work to contributions
+- Add CentOS 8 support
+- Add notion of Copland 'place' to selection/negotiation policy
+
 * Thu Mar 12 2020 Maat Developers <APL_Maat_Developers@listserv.jhuapl.edu> 1.2-1
 - Initial Open Source Release
 

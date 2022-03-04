@@ -27,4 +27,5 @@
     <metadata type="apbs" dir="@apbinfodir@" />
     <metadata type="measurement-specifications" dir="@specdir@" />
     <work dir="/tmp/attestmgr" />
+    <place name="@sysconfdir@/places.csv" />
 </am-config>

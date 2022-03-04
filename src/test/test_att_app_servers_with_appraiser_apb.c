@@ -97,7 +97,7 @@ int parse_resp_contract(char* contract)
 {
     char* tmp;
     xmlNode *node, *root;
-    dlog(0, "strlen of contract: %zu\n", strlen(contract));
+    dlog(7, "strlen of contract: %zu\n", strlen(contract));
     xmlDoc *doc = xmlReadMemory(contract, ((int)(strlen(contract)+1)), NULL, NULL, 0);
     root = xmlDocGetRootElement(doc);
     if(root == NULL) {
@@ -153,7 +153,7 @@ START_TEST(test_appraiser_apb)
     if(0 == attester_pid) {
         // Child
         //prctl(PR_SET_PDEATHSIG, SIGHUP);  // kill child when parent dies (Linux only!)
-        dlog(1, "startup attester process: %d\n", getpid());
+        dlog(6, "startup attester process: %d\n", getpid());
         setup_dispatch_loop(attargc, attargv);
         return;
     }
@@ -176,40 +176,40 @@ START_TEST(test_appraiser_apb)
     if(0 == appraiser_pid) {
         // Child
         //        prctl(PR_SET_PDEATHSIG, SIGHUP);  // kill child when parent dies (Linux only!)
-        dlog(1, "startup appraiser process\n");
+        dlog(6, "startup appraiser process\n");
         setup_dispatch_loop(appargc, appargv);
         return;
     }
 
     // run the test
-    dlog(1, "Starting test of att and app servers\n");
+    dlog(6, "Starting test of att and app servers\n");
 
     uint16_t targ_portnum = att_portint;
     uint16_t app_portnum = app_portint;
 
     // get addr for target
-    dlog(1, "measuring localhost:%d\n", targ_portnum);
-    dlog(1, "connecting to appraiser localhost:%d\n", app_portnum);
+    dlog(6, "measuring localhost:%d\n", targ_portnum);
+    dlog(6, "connecting to appraiser localhost:%d\n", app_portnum);
 
     // connect to appraiser
     int appraiser_chan = connect_to_server("127.0.0.1", app_portnum);
 
-    fail_if(appraiser_chan < 0, "Failed to connect to appraiser!");
+    fail_if(appraiser_chan < 0, "Failed to connect to appraiser with error: %d", -appraiser_chan);
 
     // send request
     int msglen;
     //need to fill in the target_id
     create_integrity_request(TARGET_TYPE_HOST_PORT, host, att_port, resource,
-                             NULL, NULL, NULL, (xmlChar **)&request_contract, &msglen);
+                             NULL, NULL, NULL, NULL, (xmlChar **)&request_contract, &msglen);
 
     fail_if(request_contract == NULL, "Failed to create request contract");
 
-    dlog(1, "Created integrity request: %s\n", request_contract);
+    dlog(6, "Created integrity request: %s\n", request_contract);
     msglen = strlen(request_contract)+1;
     maat_write_sz_buf(appraiser_chan, request_contract, msglen, NULL, 2);
     free(request_contract);
 
-    dlog(1, "Sent data to appraiser.\n");
+    dlog(6, "Sent data to appraiser.\n");
 
     char *resp_contract = NULL;
     size_t resp_contract_sz = 0;
@@ -228,10 +228,10 @@ START_TEST(test_appraiser_apb)
                               &eof_encountered,
                               6666660, -1);
     close(appraiser_chan);
-    dlog(1, "Received response from appraiser\n");
+    dlog(6, "Received response from appraiser\n");
     fail_if(status != 0, "Reading from appraiser returned unexpected status: "
             "%d (expected %d)", status, 0);
-    dlog(1, "Parsing response from appraiser\n");
+    dlog(6, "Parsing response from appraiser\n");
     ret = parse_integrity_response(resp_contract, (int)resp_contract_sz, &target_type,
                                    (xmlChar **)&target_id, (xmlChar **)&resource,
                                    &result, &data_count, (xmlChar ***)&data_idents,

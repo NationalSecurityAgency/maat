@@ -41,7 +41,6 @@
 #include <apb/contracts.h>
 #include <apb.h>
 
-
 #ifdef ENABLE_SELINUX
 #include <selinux/context.h>
 #include <selinux/selinux.h>
@@ -134,7 +133,7 @@ int stop_asp(struct asp *asp)
 /*
  * Spawns a child process which will run the asp specified by the asp struct. The specified infd and
  * outfd will be passed to the command line as a file descriptor to read from and a file descriptor to
- * write to, respectively. to the child as long as they are non-negative, otherwise, they are ignored.
+ * write to, respectively, to the child as long as they are non-negative, otherwise, they are ignored.
  * If the async flag is true, then the asp will execute asynchronously, and must be waited upon using
  * wait_asp and can be killed using stop_asp. The asp_argv should contain arguments for the ASP and should
  * contain a number of arguments equal to asp_argc. The arguments will be provided to the ASP as:
@@ -182,12 +181,12 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
     aspmain_argv[aspmain_argc] = asp->file->full_filename; /* max(aspmain_argc) = 0 */
 
     /* Only hand descriptors to child if they represent possible descriptors usable by the child
-     * Note: this does not only fulfill a protective purpose: some ASPs do not take an Infd, and Outfd,
+     * Note: this does not only fulfill a protective purpose: some ASPs do not take an Infd and Outfd,
      * or at least not in this order. Defining these as negative 1 allows you to do this manually in argv */
     if (infd > -1) {
         len = snprintf(NULL, 0, "%d", infd);
         if(len < 0) {
-            dlog(1, "Unable to represent the in file descriptor as a string\n");
+            dlog(0, "Unable to represent the in file descriptor as a string\n");
             return -1;
         }
 
@@ -204,7 +203,7 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
          * maximum semantic length of an int, which should be smaller than a size_t */
         err = snprintf(aspmain_argv[aspmain_argc], (size_t)(len + 1), "%d", infd);
         if(err < len) {
-            dlog(1, "Unable to convert the in file descriptor to a string\n");
+            dlog(0, "Unable to convert the in file descriptor to a string\n");
             free(aspmain_argv[aspmain_argc]); /* infd slot */
             return -1;
         }
@@ -213,7 +212,7 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
     if(outfd > -1) {
         len = snprintf(NULL, 0, "%d", outfd);
         if(len < 0) {
-            dlog(1, "Unable to represent the out file descriptor as a string\n");
+            dlog(0, "Unable to represent the out file descriptor as a string\n");
             free(aspmain_argv[aspmain_argc]); /* infd slot */
             return -1;
         }
@@ -232,7 +231,7 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
          * maximum semantic length of an int, which should be smaller than a size_t */
         err = snprintf(aspmain_argv[aspmain_argc], (size_t)(len + 1), "%d", outfd);
         if(err < len) {
-            dlog(1, "Unable to convert the out file descriptor to a string\n");
+            dlog(0, "Unable to convert the out file descriptor to a string\n");
             free(aspmain_argv[aspmain_argc]);    /* outfd */
             free(aspmain_argv[aspmain_argc-1]);  /* infd */
             return -1;
@@ -263,7 +262,8 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
                              libmaat_apbmain_asps_use_unique_categories,
                              256, 0, 0);
 
-    dlog(4, "Executing ASP executable: %s\n", asp->file->full_filename);
+    dlog(5, "PRESENTATION MODE (self): APB forks ASP of name %s.\n", asp->name);
+    dlog(6, "Executing ASP executable: %s\n", asp->file->full_filename);
     execv(asp->file->full_filename, aspmain_argv);
     dlog(0, "Failed to exec the ASP \"%s\": %s\n", asp->name, strerror(errno));
 
@@ -449,4 +449,67 @@ int fork_and_buffer(pid_t *pidout, int *pipe_read_out, int infd, ...)
     exit(0);
     /* unreachable return statement to make the compiler happy */
     return 0;
+}
+
+/*
+ * This function asynchronously executes an ASP and executes a fork_and_buffer call where the parent waits
+ * on the ASP and the child to terminate execution while the child returns immediately after the fork_and_buffer call
+ * with the read end of the pipe stored in the address pointed to by outfd. This can enable you to chain the
+ * execution of several ASPs in sequence without personally maintaining the buffering boilerplate. Returns -2
+ * on error before the fork, -1 on error in the parent after the fork, 0 for execution in the child, and >0 in the
+ * parent, assuming no errors.
+ */
+int fork_and_buffer_async_asp(struct asp *asp, const int argc, char *argv[], const int infd, int *outfd)
+{
+    int rc, status, data[2];
+    pid_t pid;
+
+    if(asp == NULL || outfd == NULL || (argv == NULL && argc != 0)) {
+        dlog(0, "Inavild arguments provided to function\n");
+        return -2;
+    }
+
+    rc = pipe(data);
+    if(rc < 0) {
+        dlog(0, "Unable to create pipe\n");
+        return -2;
+    }
+
+    /* Cast is justified because arguments are not modified */
+    rc = run_asp(asp, infd, data[1], true, argc, argv, data[0], -1);
+    close(data[1]);
+    if(rc < 0) {
+        dlog(0, "Unable to run ASP %s\n", asp->name);
+        close(data[0]);
+        return -2;
+    }
+
+    rc = fork_and_buffer(&pid, outfd, data[0], -1);
+    close(data[0]);
+    if(rc < 0) {
+        dlog(0, "Error in fork and buffer\n");
+        stop_asp(asp);
+        return -2;
+    } else if(rc > 0) {
+        rc = wait_asp(asp);
+        if(rc < 0) {
+            dlog(0, "Error in wait ASP\n");
+            return -1;
+        }
+
+        rc = waitpid(pid, &status, 0);
+        if(rc < 0) {
+            /* There's no format specified specifically for PID, so cast to widest
+             * integer type */
+            dlog(0, "Error in waitpid for PID %ld\n", (long)pid);
+            rc = -1;
+        } else if(WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+            dlog(0, "Child process %ld exited with error code %d\n", (long)pid, WEXITSTATUS(status));
+            rc = -1;
+        } else {
+            rc = 1;
+        }
+    }
+
+    return rc;
 }

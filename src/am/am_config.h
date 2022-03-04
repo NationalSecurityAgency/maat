@@ -95,6 +95,8 @@ typedef struct am_config {
     uid_t uid;
     gid_t gid;
 
+    char *place_file;
+
     char *workdir;
     int keep_workdir;
 

@@ -16,8 +16,6 @@
 library_includedir=$(includedir)/@PACKAGE_NAME@-@PACKAGE_VERSION@/common
 library_include_HEADERS = asp-errno.h taint.h asp_info.h exe_sec_ctxt.h scenario.h measurement_spec.h apb_info.h asp.h copland.h
 
-
-AM_CPPFLAGS =  -I$(srcdir) -I$(srcdir)/..
 noinst_LTLIBRARIES = libcommon.la
 libcommon_la_SOURCES = exe_sec_ctxt.c asp_info.c apb.c asp.c measurement_spec.c copland.c
-
+libcommon_la_CPPFLAGS =  -I$(srcdir) -I$(srcdir)/.. -DPREFIX="\"$(prefix)\""

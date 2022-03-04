@@ -1,0 +1,206 @@
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<!--This selector policy demonstrates the appraisal of a resource and 
+    generation of a passport as part of the passport use case -->
+<selector_policy>
+  <collection name="known-clients">
+    <entry>127.0.0.1</entry>
+    <entry>client2</entry>
+    <entry>localhost</entry>
+    <entry>192.168.0.7</entry>
+    <entry>192.168.0.6</entry>
+  </collection>
+
+  <collection name="userspace-resources">
+    <entry></entry>
+    <entry>userspace</entry>
+    <entry>processes</entry>
+    <entry>packages</entry>
+    <entry>hashfiles</entry>
+    <entry>hashfile</entry>
+    <entry>mtab</entry>
+    <entry>got_measure</entry>
+  </collection>
+  <collection name="passport-resources">
+    <entry>passport_userspace</entry>
+    <entry>passport_processes</entry>
+    <entry>passport_packages</entry>
+    <entry>passport_hashfiles</entry>
+    <entry>passport_hashfile</entry>
+    <entry>passport_mtab</entry>
+    <entry>passport_got_measure</entry>
+  </collection>
+
+  <!--Appraiser creates an initial contract after receiving a request contract.
+      Check identity of client and send copland phrase.
+  -->
+  <rule role="appraiser" phase="initial">
+    <match_condition attr="client"  operator="in" value="known-clients" />
+    <match_condition attr="resource" operator="in" value="userspace-resources"/>
+    <action selector_action="accept">
+      <condition name="userspace"  apb_phrase="((USM full) -> SIG)"/>
+      <condition name="userspace-processes"  apb_phrase="((USM processes) -> SIG)"/>
+      <condition name="userspace-packages"  apb_phrase="((USM pkginv) -> SIG)"/>
+      <condition name="userspace-hashfiles"  apb_phrase="((USM hashfiles) -> SIG)"/>
+      <condition name="userspace-hashfile"  apb_phrase="((USM hashfile file) -> SIG):file=/bin/ls"/>
+      <condition name="userspace-mtab"  apb_phrase="((USM mtab) -> SIG)"/>
+      <condition name="got-measure"  apb_phrase="((USM got) -> SIG)"/>
+    </action>
+  </rule>
+
+  <rule role="appraiser" phase="initial">
+    <match_condition attr="client"  operator="in" value="known-clients" />
+    <match_condition attr="resource" operator="in" value="passport-resources"/>
+    <action selector_action="accept">
+      <condition name="passport-userspace"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=userspace,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+      <condition name="passport-processes"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=processes,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+      <condition name="passport-packages"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=packages,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+      <condition name="passport-hashfiles"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=hashfiles,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+      <condition name="passport-hashfile"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=hashfile,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+      <condition name="passport-mtab"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=mtab,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+      <condition name="passport-got-measure"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=got_measure,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+    </action>
+  </rule>
+
+  <!--Attester has received an initial contract from the appraiser
+      and creates a modified contract from the otpions received. 
+  -->
+  <rule role="attester" phase="modify">
+    <action selector_action="accept">
+      <condition name="userspace"  apb_phrase="((USM full) -> SIG)"/>
+      <condition name="userspace-processes"  apb_phrase="((USM processes) -> SIG)"/>
+      <condition name="userspace-packages"  apb_phrase="((USM pkginv) -> SIG)"/>
+      <condition name="userspace-hashfiles"  apb_phrase="((USM hashfiles) -> SIG)"/>
+      <condition name="userspace-hashfile"  apb_phrase="((USM hashfile file) -> SIG):file=/bin/ls"/>
+      <condition name="userspace-mtab"  apb_phrase="((USM mtab) -> SIG)"/>
+      <condition name="got-measure"  apb_phrase="((USM got) -> SIG)"/>
+      <condition name="passport-userspace"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=userspace,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+      <condition name="passport-processes"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=processes,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+      <condition name="passport-packages"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=packages,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+      <condition name="passport-hashfiles"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=hashfiles,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+      <condition name="passport-hashfile"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=hashfile,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+      <condition name="passport-mtab"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=mtab,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+      <condition name="passport-got-measure"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=got_measure,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+    </action>
+  </rule>
+
+  <!--Appraiser received the modified contract from the attester
+      and creates an execute contract with only one option. 
+  -->
+  <rule role="appraiser" phase="execute">
+    <match_condition attr="resource" operator="is" value="userspace"/>
+    <action selector_action="accept">
+      <condition name="userspace"            apb_phrase="((USM full) -> SIG)"/>
+    </action>
+  </rule>
+  <rule role="appraiser" phase="execute">
+    <match_condition attr="resource" operator="is" value="processes"/>
+    <action selector_action="accept">
+      <condition name="userspace-processes"  apb_phrase="((USM processes) -> SIG)"/>
+    </action>
+  </rule>
+  <rule role="appraiser" phase="execute">
+    <match_condition attr="resource" operator="is" value="packages"/>
+    <action selector_action="accept">
+      <condition name="userspace-packages"   apb_phrase="((USM pkginv) -> SIG)"/>
+    </action>
+  </rule>
+  <rule role="appraiser" phase="execute">
+    <match_condition attr="resource" operator="is" value="hashfiles"/>
+    <action selector_action="accept">
+      <condition name="userspace-hashfiles"  apb_phrase="((USM hashfiles) -> SIG)"/>
+    </action>
+  </rule>
+  <rule role="appraiser" phase="execute">
+    <match_condition attr="resource" operator="is" value="mtab"/>
+    <action selector_action="accept">
+      <condition name="userspace-mtab"       apb_phrase="((USM mtab) -> SIG)"/>
+    </action>
+  </rule>
+  <rule role="appraiser" phase="execute">
+    <match_condition attr="resource" operator="is" value="got_measure"/>
+    <action selector_action="accept">
+      <condition name="got-measure"          apb_phrase="((USM got) -> SIG)"/>
+    </action>
+  </rule>
+  <rule role="appraiser" phase="execute">
+    <match_condition attr="resource" operator="is" value="hashfile"/>
+    <action selector_action="accept">
+      <condition name="userspace-hashfile"   apb_phrase="((USM hashfile file) -> SIG):file=/bin/ls"/>
+    </action>
+  </rule>
+  
+  <rule role="appraiser" phase="execute">
+    <match_condition attr="resource" operator="is" value="passport_userspace"/>
+    <action selector_action="accept">
+      <condition name="passport-userspace"            apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=userspace,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+        </action>
+  </rule>
+  <rule role="appraiser" phase="execute">
+    <match_condition attr="resource" operator="is" value="passport_processes"/>
+    <action selector_action="accept">
+      <condition name="passport-processes"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=processes,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+    </action>
+  </rule>
+  <rule role="appraiser" phase="execute">
+    <match_condition attr="resource" operator="is" value="passport_packages"/>
+    <action selector_action="accept">
+      <condition name="passport-packages"   apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=packages,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+    </action>
+  </rule>
+  <rule role="appraiser" phase="execute">
+    <match_condition attr="resource" operator="is" value="passport_hashfiles"/>
+    <action selector_action="accept">
+      <condition name="passport-hashfiles"  apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=hashfiles,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+    </action>
+  </rule>
+  <rule role="appraiser" phase="execute">
+    <match_condition attr="resource" operator="is" value="passport_mtab"/>
+    <action selector_action="accept">
+      <condition name="passport-mtab"       apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=mtab,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+    </action>
+  </rule>
+  <rule role="appraiser" phase="execute">
+    <match_condition attr="resource" operator="is" value="passport_got_measure"/>
+    <action selector_action="accept">
+      <condition name="passport-got-measure"          apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=got_measure,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+    </action>
+  </rule>
+  <rule role="appraiser" phase="execute">
+    <match_condition attr="resource" operator="is" value="passport_hashfile"/>
+    <action selector_action="accept">
+      <condition name="passport-hashfile"   apb_phrase="@_1(@_2((USM get_passport) -> SIG)):resource=hashfile,@_2ip=192.168.0.7,@_2port=2342,@_1ip=192.168.0.6,@_1port=2343"/>
+    </action>
+  </rule>
+
+  <!--Appraiser selects a complementary phrase to spawn itself
+      in order to receive and appraise the results from the attester.
+  -->
+  <rule role="appraiser" phase="spawn">
+    <match_condition attr="resource" operator="in" value="userspace-resources"/>
+    <action selector_action="accept">
+      <condition name="userspace_appraiser"  apb_phrase="(USM app_passport)"/>
+    </action>
+  </rule>
+
+  <rule role="appraiser" phase="spawn">
+    <match_condition attr="resource" operator="in" value="passport-resources"/>
+    <action selector_action="accept">
+      <condition name="passport_storer"  apb_phrase="(USM storepass)"/>
+    </action>
+  </rule>  
+  
+</selector_policy>

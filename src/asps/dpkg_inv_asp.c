@@ -310,7 +310,7 @@ int asp_measure(int argc, char *argv[])
             dlog(0, "Error allocating package name, exiting\n");
             goto error;
         }
-        dlog(0, "\t that match %s\n", package);
+        dlog(4, "\t that match %s\n", package);
     }
 
     fp = exec_list_pkgs(package);
@@ -423,7 +423,7 @@ static int filename_get_package(char* filename, char **package)
         goto error;
     }
 
-    dlog(0, "File corresponds to package %s\n", *package);
+    dlog(6, "File corresponds to package %s\n", *package);
 
 error:
     return ret_val;

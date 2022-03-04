@@ -58,7 +58,7 @@ void parse_asps(struct apb *apb, GList *asps, xmlNode *asps_node)
 
         tmp = xmlGetPropASCII(asp, "uuid");
         if (tmp == NULL) {
-            dlog(0, "Error: ASP entry without UUID, skipping\n");
+            dlog(3, "Error: ASP entry without UUID, skipping\n");
             continue;
         }
 
@@ -71,8 +71,6 @@ void parse_asps(struct apb *apb, GList *asps, xmlNode *asps_node)
         }
 
         ret = uuid_parse(stripped, uuid);
-        free(stripped);
-        stripped = NULL;
         if (ret) {
             dlog(1, "Error: Invalid UUID in entry, skipping\n");
             apb->valid = false;
@@ -81,11 +79,15 @@ void parse_asps(struct apb *apb, GList *asps, xmlNode *asps_node)
 
         a = find_asp_uuid(asps, uuid);
         if (!a) {
-            dlog(3, "ASP with UUID %s not found in ASPs list\n", tmp);
+            dlog(2, "ASP with UUID %s not found in ASPs list\n", stripped);
+            free(stripped);
+            stripped = NULL;
             uuid_clear(uuid);
             apb->valid = false;
             continue;
         }
+        free(stripped);
+        stripped = NULL;
         apb->asps = g_list_append(apb->asps, a);
 
         tmp = xmlGetPropASCII(asp, "initial");
@@ -118,7 +120,7 @@ struct apb *load_apb_info(const char *xmlfile, GList *asps, GList *meas_specs)
     struct apb *apb;
     char *rootname, *unstripped, *stripped;
     int apb_copland_set = 0;
-    dlog(4, "Parsing file %s\n", xmlfile);
+    dlog(6, "Parsing file %s\n", xmlfile);
 
     apb = (struct apb *)malloc(sizeof(*apb));
     if (!apb) {
@@ -216,7 +218,7 @@ struct apb *load_apb_info(const char *xmlfile, GList *asps, GList *meas_specs)
             }
 
             apb->file->hash = xmlGetPropASCII(tmp,"hash");
-            dlog(4, "file: %s\n",apb->file->full_filename);
+            dlog(6, "file: %s\n",apb->file->full_filename);
             continue;
         }
 
@@ -272,7 +274,7 @@ struct apb *load_apb_info(const char *xmlfile, GList *asps, GList *meas_specs)
         goto error;
     }
 
-    dlog(4, "Registering APB: %s\n", apb->name);
+    dlog(6, "Registering APB: %s\n", apb->name);
 
     return apb;
 
@@ -300,7 +302,7 @@ int run_apb(struct apb *apb,
 
     while(((pid = wait(&status)) > 0) && !(pid == apb_pid)) {
         /* should call the normal signal handler */
-        dlog(1, "Unexpected: wait() returned %d (expected %d) exited: %d status: %d\n",
+        dlog(3, "Unexpected: wait() returned %d (expected %d) exited: %d status: %d\n",
              pid, apb_pid, WIFEXITED(status), WEXITSTATUS(status));
     }
 
@@ -314,7 +316,8 @@ int run_apb_async(struct apb *apb,
                   int peerchan, int resultchan, char *target,
                   char *target_typ, char *resource, char *args)
 {
-    dlog(4, "Running APB of name: %s\n", apb->name);
+    dlog(5, "PRESENTATION MODE (self): AM spawns APB of name %s\n", apb->name);
+    dlog(6, "Running APB of name: %s\n", apb->name);
     pid_t pid;
 
     pid = fork();
@@ -346,7 +349,7 @@ int run_apb_async(struct apb *apb,
 
         memcpy(contract_buf, scen->contract, scen->size);
         contract_buf[scen->size] = '\0';
-        dlog(4, "Calling exec() on apbmain (%s)\n", apb->file->full_filename);
+        dlog(6, "Calling exec() on apbmain (%s)\n", apb->file->full_filename);
 
         char *info_file = g_strdup_printf("%s/info", scen->workdir);
 
@@ -492,7 +495,7 @@ GList *load_all_apbs_info(const char *dirname, GList *asps, GList *meas_specs)
             int rc;
             rc = snprintf(scratch, 256, "%s/%s", dirname, dent->d_name);
             if(rc < 0 || rc >= 256) {
-                dlog(0, "Error creating path string %s/%s?", dirname, dent->d_name);
+                dlog(3, "Error creating path string %s/%s?", dirname, dent->d_name);
                 continue;
             }
             p = load_apb_info(scratch, asps, meas_specs);

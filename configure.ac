@@ -15,10 +15,10 @@
 #
 #
 
-AC_INIT([maat], [1.2], [APL_Maat_Developers@listserv.jhuapl.edu])
+AC_INIT([maat], [1.3], [APL_Maat_Developers@listserv.jhuapl.edu])
 AC_CONFIG_AUX_DIR([build-aux])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
-AM_INIT_AUTOMAKE([foreign -Wall tar-pax])
+AM_INIT_AUTOMAKE([foreign -Wall tar-pax subdir-objects])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AC_CONFIG_MACRO_DIR([m4])
 AC_PROG_LIBTOOL
@@ -258,6 +258,8 @@ AS_IF([test "x$build_$1_asp" = "xyes"], [AC_DEFINE([BUILD_$1_ASP], [1], [Build t
 AC_DEFUN([IF_ASP],
 	 [AS_IF([test "x$build_$1_asp" = "xyes"], [$2], m4_default([$3],[]))])
 
+EXTRA_ASP(iot_uart)
+EXTRA_ASP(iot_appraiser)
 DEFAULT_ASP(procopenfiles)
 DEFAULT_ASP(hashservice)
 DEFAULT_ASP(hashfileservice)
@@ -280,6 +282,9 @@ DEFAULT_ASP(lsproc)
 DEFAULT_ASP(procroot)
 DEFAULT_ASP(procenv)
 DEFAULT_ASP(procmem)
+EXTRA_ASP(passport_retriever)
+EXTRA_ASP(passport_storer)
+DEFAULT_ASP(passport_maker)
 DEFAULT_ASP(system)
 DEFAULT_ASP(rpminv)
 DEFAULT_ASP(rpm_details)
@@ -290,7 +295,7 @@ DEFAULT_ASP(blacklist)
 DEFAULT_ASP(lsmod)
 DEFAULT_ASP(system_appraise)
 DEFAULT_ASP(dpkg_check)
-DEFAULT_ASP(requestor)
+DEFAULT_ASP(send_execute)
 DEFAULT_ASP(serialize_graph)
 DEFAULT_ASP(compress)
 DEFAULT_ASP(encrypt)
@@ -302,6 +307,7 @@ DEFAULT_ASP(got_measure)
 DEFAULT_ASP(merge)
 DEFAULT_ASP(split)
 DEFAULT_ASP(kernel_msmt)
+DEFAULT_ASP(send_request)
 EXTRA_ASP(tlm_ret)
 
 # End asp enable macros.
@@ -313,6 +319,16 @@ IF_ASP([elf_reader],
          AC_CHECK_HEADER([gelf.h], [],
 			[AC_MSG_FAILURE([Can't find gelf.h. Please install the libelf development package])])
          ])
+
+IF_ASP([passport_retriever],
+      [PKG_CHECK_MODULES(LIBMONGOC, libmongoc-1.0 >= 1.0)
+      PKG_CHECK_MODULES(LIBBSON, libbson-1.0 >= 1.0)]
+      )
+
+IF_ASP([passport_storer],
+      [PKG_CHECK_MODULES(LIBMONGOC, libmongoc-1.0 >= 1.0)
+      PKG_CHECK_MODULES(LIBBSON, libbson-1.0 >= 1.0)]
+      )
 
 # Enable macros for each APB
 
@@ -342,15 +358,41 @@ AS_IF([test "x$build_$1_apb" = "xyes"], [AC_DEFINE([BUILD_$1_APB], [1], [Build t
 AC_DEFUN([IF_APB],
 	 [AS_IF([test "x$build_$1_apb" = "xyes"], [$2], m4_default([$3],[]))])
 
+EXTRA_APB([iot_uart])
+EXTRA_APB([iot_appraiser])
 DEFAULT_APB([process_measurement])
 DEFAULT_APB([userspace])
 DEFAULT_APB([appraiser])
 DEFAULT_APB([hashdir])
+DEFAULT_APB([complex_att])
+EXTRA_APB([passport_ret])
+EXTRA_APB([passport_appraiser])
+EXTRA_APB([passport_storage])
+DEFAULT_APB([request_passport])
+DEFAULT_APB([passport_userspace_appraiser])
 DEFAULT_APB([hashfile])
 DEFAULT_APB([kim])
+DEFAULT_APB([forwarding])
+DEFAULT_APB([no_op])
 DEFAULT_APB([userspace_appraiser])
 EXTRA_APB([quiot_tlm])
 EXTRA_APB([quiot_tlm_appraiser])
+
+
+IF_APB([passport_ret],
+      [PKG_CHECK_MODULES(LIBMONGOC, libmongoc-1.0 >= 1.0)
+      PKG_CHECK_MODULES(LIBBSON, libbson-1.0 >= 1.0)]
+      )
+
+IF_APB([passport_storage],
+      [PKG_CHECK_MODULES(LIBMONGOC, libmongoc-1.0 >= 1.0)
+      PKG_CHECK_MODULES(LIBBSON, libbson-1.0 >= 1.0)]
+      )
+
+IF_APB([passport_appraiser],
+      [PKG_CHECK_MODULES(LIBMONGOC, libmongoc-1.0 >= 1.0)
+      PKG_CHECK_MODULES(LIBBSON, libbson-1.0 >= 1.0)]
+      )
 
 AC_ARG_WITH([apb-install-dir], 
             AS_HELP_STRING([Directory in which to install APBs default is [LIBDIR/maat/apbs]]),
@@ -495,7 +537,7 @@ AC_CONFIG_FILES([lib/Makefile lib/util/Makefile lib/graph/Makefile lib/asp/Makef
 		 lib/libmaat_client.pc
 		 lib/libmaat_sgraph.pc
 		 Makefile
-		 ui/Makefile
+		 management-ui/Makefile
 		 pam/Makefile
 		 src/Makefile
 		 src/asps/Makefile

@@ -105,7 +105,7 @@ static int mk_report_node_identifier(measurement_graph *graph,
         dlog(0, "Turned out null\n");
         return -EINVAL;
     }
-    dlog(0, "returning 0\n");
+    dlog(6, "returning 0\n");
     return 0;
 }
 
@@ -128,24 +128,24 @@ static int gather_and_check_report_data(measurement_graph *g, GList **report_val
         GList *tmp_list;
         struct key_value *kv;
 
-        dlog(0, "ON NODE "ID_FMT"\n", node);
+        dlog(6, "ON NODE "ID_FMT"\n", node);
 
         if(!measurement_node_has_data(g, node, &report_measurement_type)) {
-            dlog(0, "doesn't have report data\n");
+            dlog(3, "doesn't have report data\n");
             continue;
         }
 
         if((measurement_node_get_rawdata(g, node, &report_measurement_type,
                                          &data)) != 0) {
-            dlog(0, "Failed to read report data from node?");
+            dlog(3, "Failed to read report data from node?");
             continue;
         }
         rmd = container_of(data, report_data, d);
 
-        dlog(4,"rmd= %p,\n ",rmd);
-        dlog(4," text = %s\n", rmd->text_data);
-        dlog(4," len = %zd\n", rmd->text_data_len);
-        dlog(4," loglevel = %d\n", rmd->loglevel);
+        dlog(6,"rmd= %p,\n ",rmd);
+        dlog(6," text = %s\n", rmd->text_data);
+        dlog(6," len = %zd\n", rmd->text_data_len);
+        dlog(6," loglevel = %d\n", rmd->loglevel);
 
         if (rmd->loglevel > default_report_level) {
             dlog(0, "..Filtered based on log level..\n");
@@ -231,7 +231,7 @@ static int appraise(struct scenario *scen, GList *values,
 
     ret = gather_and_check_report_data(mg, &report_data_list);
 
-    dlog(0, "Gathered list of length %d\n", g_list_length(report_data_list));
+    dlog(6, "Gathered list of length %d\n", g_list_length(report_data_list));
 
     destroy_measurement_graph(mg);
     return ret;
@@ -243,7 +243,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
                 char *target, char *target_type, char *resource,
                 struct key_value **arg_list UNUSED, int argc UNUSED)
 {
-    dlog(0, "Hello from the QUIOT_TLM_APPRAISER_APB\n");
+    dlog(6, "Hello from the QUIOT_TLM_APPRAISER_APB\n");
 
     unsigned char *response_buf;
     xmlChar *evaluation;
@@ -259,7 +259,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     }
 
     ret_val = receive_measurement_contract(peerchan, scen, -1);
-    dlog(0, "Received Measurement Contract in quiot tlm appraiser APB\n");
+    dlog(6, "Received Measurement Contract in quiot tlm appraiser APB\n");
 
     if(scen->contract == NULL) {
         dlog(0, "No measurement contract received by quiot tlm appraiser APB\n");
@@ -276,7 +276,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     }
 
     /* Generate and send integrity check response */
-    dlog(4, "Target type: %s\n", target_type);
+    dlog(6, "Target type: %s\n", target_type);
     err = create_integrity_response(
               parse_target_id_type((xmlChar*)target_type),
               (xmlChar*)target,
@@ -290,7 +290,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
         return err;
     }
 
-    dlog(4, "Resp contract: %s\n", response_buf);
+    dlog(6, "Resp contract: %s\n", response_buf);
     if(sz == 0) {
         sz = xmlStrlen(response_buf);
         dlog(0, "Error: sz is 0, using strlen (Need to fix this! Why is xmlDocDumpMemory not giving back the size!?\n");
@@ -298,7 +298,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
 
     int iostatus = -1;
     size_t bytes_written = 0;
-    dlog(4,"Send response from appraiser APB: %s.\n", response_buf);
+    dlog(6,"Send response from appraiser APB: %s.\n", response_buf);
     sz = sz+1; // include the terminating '\0'
     iostatus = maat_write_sz_buf(resultchan, response_buf, sz,
                                  &bytes_written, 5);

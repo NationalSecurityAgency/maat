@@ -54,7 +54,7 @@ START_TEST (test_appraiser_initial_options)
     GList *out = NULL;
     struct scenario scen;
 
-    init_scenario(&scen, NULL, NULL, NULL, NULL, 0, APPRAISER);
+    init_scenario(&scen, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, APPRAISER);
     am = new_attestation_manager(ASP_DIR, SPEC_DIR, APB_DIR,
                                  SELECTOR_NAME_XML, SELECTOR_CFG,
                                  EXECCON_RESPECT_DESIRED,
@@ -82,8 +82,8 @@ START_TEST (test_attester_select_options)
     GList *init_opts = NULL;
     struct scenario appraiser_scen, attester_scen;
 
-    init_scenario(&attester_scen, NULL, NULL, NULL, NULL, 0, APPRAISER);
-    init_scenario(&appraiser_scen, NULL, NULL, NULL, NULL, 0, ATTESTER);
+    init_scenario(&attester_scen, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, APPRAISER);
+    init_scenario(&appraiser_scen, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, ATTESTER);
 
     am = new_attestation_manager(ASP_DIR, SPEC_DIR, APB_DIR,
                                  SELECTOR_NAME_XML, SELECTOR_CFG,
@@ -119,8 +119,8 @@ START_TEST (test_appraiser_select_option)
     struct attestation_manager* am;
     struct scenario appraiser_scen, attester_scen;
 
-    init_scenario(&attester_scen, NULL, NULL, NULL, NULL, 0, APPRAISER);
-    init_scenario(&appraiser_scen, NULL, NULL, NULL, NULL, 0, ATTESTER);
+    init_scenario(&attester_scen, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, APPRAISER);
+    init_scenario(&appraiser_scen, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, ATTESTER);
 
     GList *init_opts = NULL;
     am = new_attestation_manager(ASP_DIR, SPEC_DIR, APB_DIR,

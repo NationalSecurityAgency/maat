@@ -83,7 +83,7 @@ START_TEST(test_readelf)
     char *asp_argv[] = { graph_path, nid};
     str_of_node_id(file_node, nid);
 
-    dlog(0, "Starting Unit Test\n");
+    dlog(6, "Starting Unit Test\n");
     fail_unless(elfreaderasp != NULL, "ASP NOT FOUND");
 
     int rc = run_asp(elfreaderasp, -1, -1, false, 2, asp_argv, -1);

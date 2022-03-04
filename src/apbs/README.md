@@ -290,3 +290,9 @@ installation.
 
 An APB must be a default APB in order to be included into the RPM. If you never want to include your APB
 as part of the RPM, consider making it an extra APB.
+
+### Documentation
+
+Modify `documentation/source/security_fs_listing.txt` to include a reference to the Maat user permissions
+for your APB by extending the table for the APB executable installation directory. Also add a
+reference to the permissions for your APB metadata files to the table for the APB metadata directory.

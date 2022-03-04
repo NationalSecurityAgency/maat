@@ -46,7 +46,9 @@ AM_CPPFLAGS = $(CPPFLAGS) -I$(top_srcdir)/src/include -I$(srcdir) \
 		$(LIBMAAT_CFLAGS) \
 		-DDEFAULT_APB_DIR="\"$(APB_INFO_DIR)\"" \
 		-DDEFAULT_ASP_DIR="\"$(ASP_INFO_DIR)\"" \
-		-DDEFAULT_MEAS_SPEC_DIR="\"$(SPEC_INSTALL_DIR)\""
+		-DDEFAULT_MEAS_SPEC_DIR="\"$(SPEC_INSTALL_DIR)\"" \
+		-DDEFAULT_MAAT_MONGO_LOC="\"mongodb://localhost:27017/\"" \
+		-DDEFAULT_MONGO_DB="\"maat\""
 
 AM_LIBADD = ../types/libmaat_basetypes.la \
 		../measurement_spec/libmeasurement_spec.la \
@@ -69,6 +71,45 @@ if BUILD_userspace_APB
 apb_PROGRAMS                   += userspace_apb
 userspace_apb_SOURCES		= userspace_apb.c $(APB_COMMON_SOURCES)
 userspace_apb_LDADD		= $(AM_LIBADD)
+endif
+
+if BUILD_complex_att_APB
+apb_PROGRAMS                   += complex_att_apb
+complex_att_apb_SOURCES		= complex_att_apb.c $(APB_COMMON_SOURCES)
+complex_att_apb_LDADD		= $(AM_LIBADD)
+endif
+
+if BUILD_passport_ret_APB
+apb_PROGRAMS                   += passport_ret_apb
+passport_ret_apb_SOURCES	= passport_ret_apb.c $(APB_COMMON_SOURCES)
+passport_ret_apb_LDADD		= $(AM_LIBADD)
+endif
+
+if BUILD_passport_appraiser_APB
+AM_CPPFLAGS		       += $(json-c_CFLAGS) $(JSON_CLFAGS) $(LIBMONGOC_CFLAGS) $(LIBBSON_CFLAGS)
+apb_PROGRAMS                   += passport_appraiser_apb
+apbinfo_DATA                   += datafiles/passport-config.txt
+passport_appraiser_apb_SOURCES	= passport_appraiser_apb.c $(APB_COMMON_SOURCES) 
+passport_appraiser_apb_LDADD	= $(json-c_LIBS) $(JSON_LIBS) $(AM_LIBADD) $(LIBMAAT_CLIENT_LIBS) $(LIBMAAT_AM_LIBS) \
+				  $(LIBMONGOC_LIBS) $(LIBSON_LIBS)
+endif
+
+if BUILD_passport_storage_APB
+apb_PROGRAMS                   += passport_storage_apb
+passport_storage_apb_SOURCES	= passport_storage_apb.c $(APB_COMMON_SOURCES)
+passport_storage_apb_LDADD	= $(AM_LIBADD)
+endif
+
+if BUILD_request_passport_APB
+apb_PROGRAMS                   += request_passport_apb
+request_passport_apb_SOURCES	= request_passport_apb.c $(APB_COMMON_SOURCES)
+request_passport_apb_LDADD	= $(AM_LIBADD)
+endif
+
+if BUILD_passport_userspace_appraiser_APB
+apb_PROGRAMS				 += passport_userspace_appraiser_apb
+passport_userspace_appraiser_apb_SOURCES  = passport_userspace_appraiser_apb.c $(APB_COMMON_SOURCES)
+passport_userspace_appraiser_apb_LDADD    = $(AM_LIBADD) $(LIBMAAT_CLIENT_LIBS) $(LIBMAAT_AM_LIBS)
 endif
 
 if BUILD_quiot_tlm_APB
@@ -104,14 +145,38 @@ endif
 
 if BUILD_kim_APB
 apb_PROGRAMS                   += kim_apb
-kim_apb_SOURCES			= kim_apb.c  $(APB_COMMON_SOURCES)
+kim_apb_SOURCES		= kim_apb.c  $(APB_COMMON_SOURCES)
 kim_apb_LDADD			= $(AM_LIBADD)
+endif
+
+if BUILD_iot_uart_APB
+apb_PROGRAMS                   += iot_uart_apb
+iot_uart_apb_SOURCES		= iot_uart_apb.c  $(APB_COMMON_SOURCES)
+iot_uart_apb_LDADD		= $(AM_LIBADD)
+endif
+
+if BUILD_iot_appraiser_APB
+apb_PROGRAMS                   += iot_appraiser_apb
+iot_appraiser_apb_SOURCES	= iot_appraiser_apb.c  $(APB_COMMON_SOURCES)
+iot_appraiser_apb_LDADD	= $(AM_LIBADD)
 endif
 
 if BUILD_userspace_appraiser_APB
 apb_PROGRAMS			+= userspace_appraiser_apb
 userspace_appraiser_apb_SOURCES  = userspace_appraiser_apb.c
-userspace_appraiser_apb_LDADD    = $(AM_LIBADD) $(LIBMAAT_CLIENT_LIBS) $(LIBMAAT_AM_LIBS)
+userspace_appraiser_apb_LDADD    = $(AM_LIBADD)
+endif
+
+if BUILD_forwarding_APB
+apb_PROGRAMS			+= forwarding_apb
+forwarding_apb_SOURCES = forwarding_apb.c
+forwarding_apb_LDADD   = $(AM_LIBADD) $(LIBMAAT_CLIENT_LIBS) $(LIBMAAT_AM_LIBS)
+endif
+
+if BUILD_no_op_APB
+apb_PROGRAMS			+= no_op_apb
+no_op_apb_SOURCES = no_op_apb.c
+no_op_apb_LDADD   = $(AM_LIBADD) $(LIBMAAT_CLIENT_LIBS) $(LIBMAAT_AM_LIBS)
 endif
 
 apbinfo_DATA+=$(patsubst %, %.xml, $(apb_PROGRAMS) $(suid_apb_PROGRAMS))

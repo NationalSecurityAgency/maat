@@ -140,7 +140,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags,
         switch(c) {
         case 'p':
             if(targ_portnum != NULL) {
-                dlog(0, "Error: target port specified multiple times");
+                dlog(3, "Error: target port specified multiple times");
                 print_usage("pam_svp");
                 continue;
             }
@@ -149,7 +149,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 
         case 't':
             if(targ_host_addr != NULL) {
-                dlog(0, "Error: target host specified multiple times");
+                dlog(3, "Error: target host specified multiple times");
                 print_usage("pam_svp");
                 continue;
             }
@@ -158,7 +158,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 
         case 'f':
             if(targ_fingerprint != NULL) {
-                dlog(0, "Error: target fingerprint specified multiple times\n");
+                dlog(3, "Error: target fingerprint specified multiple times\n");
                 print_usage("pam_svp");
                 continue;
             }
@@ -167,20 +167,20 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 
         case 'a':
             if(app_portnum != -1) {
-                dlog(0, "Error: appraiser port specified multiple times");
+                dlog(3, "Error: appraiser port specified multiple times");
                 print_usage("pam_svp");
                 continue;
             }
             app_portnum = strtol(optarg, NULL, 10);
             if(app_portnum > 0xFFFF || app_portnum < 0) {
-                dlog(0, "Error: appraiser port must be between 0 and 65535 (got: %s)\n", optarg);
+                dlog(3, "Error: appraiser port must be between 0 and 65535 (got: %s)\n", optarg);
                 print_usage("pam_svp");
             }
             break;
 
         case 'l':
             if(app_host_addr != NULL) {
-                dlog(0, "Error: appraiser host specified multiple times\n");
+                dlog(3, "Error: appraiser host specified multiple times\n");
                 print_usage("pam_svp");
                 continue;
             }
@@ -189,7 +189,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 
         case 'r':
             if(resource != NULL) {
-                dlog(0, "Error: resource specified multiple times\n");
+                dlog(3, "Error: resource specified multiple times\n");
                 print_usage("pam_svp");
                 continue;
             }
@@ -202,17 +202,17 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags,
     }
 
     if(targ_host_addr == NULL) {
-        dlog(0, "Warning: no target address specified, using default.\n");
+        dlog(4, "Warning: no target address specified, using default.\n");
         targ_host_addr = "127.0.0.1";
     }
     if(app_host_addr == NULL) {
-        dlog(0, "Warning: no appraiser host specified, using default.\n");
+        dlog(4, "Warning: no appraiser host specified, using default.\n");
         app_host_addr = "127.0.0.1";
     }
     if(targ_fingerprint == NULL) {
-        dlog(0, "Warning: no target fingerprint specified, using default\n");
+        dlog(4, "Warning: no target fingerprint specified, using default\n");
         targ_fingerprint =
-            "87:5F:59:E5:1F:2B:84:52:F6:B7:23:2F:36:8F:FC:31:7A:D9:4B:5A";
+            "D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34";
     }
     if(app_portnum < 0) {
         app_portnum = 2342;
@@ -263,6 +263,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags,
                                        (xmlChar*)targ_portnum,
                                        (xmlChar*)resource,
                                        NULL,
+                                       NULL,
                                        (xmlChar*)targ_fingerprint,
                                        NULL,
                                        (xmlChar **)&tmp,
@@ -309,7 +310,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags,
         write(fd, result, resultsz-1);
         close(fd);
     } else {
-        dlog(0, "couldn't create pam file: %d\n", fd);
+        dlog(2, "couldn't create pam file: %d\n", fd);
     }
 #endif
     free(tmp);

@@ -32,14 +32,14 @@
 	  <asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1f4f">rpm_details</asp>
 	  <asp uuid="fb3dffdd-c759-435b-8861-811920245450">listdir</asp>
 	  <asp uuid="a721da4a-0ba4-4d35-87db-b9c92da24d48">mtab</asp>
-	  <asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1739">requestor_asp</asp>
+	  <asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1739">send_execute_asp</asp>
 	  <asp uuid="7c912f0b-a75c-4930-914b-9cf45af05b79">got_measure</asp>
-      <asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1f22">memorymapping</asp>
-      <asp uuid="9D7E5286-BF96-45FA-8461-DD5474FE3214">procfds</asp>
-      <asp uuid="F7BC4570-E35A-4033-9E3C-5EC070B1C934">proc_namespaces</asp>
-      <asp uuid="726B1964-1145-4F73-A6BC-DF17BBDEFF8E">procmem</asp>
-      <asp uuid="cd82c9f7-760d-4535-5197-74daadaa1f44">sign_send</asp>
-      <asp uuid="1762695e-b3b9-466e-88d1-df1571e0a073">md5fileservice</asp>
+	  <asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1f22">memorymapping</asp>
+	  <asp uuid="9D7E5286-BF96-45FA-8461-DD5474FE3214">procfds</asp>
+	  <asp uuid="F7BC4570-E35A-4033-9E3C-5EC070B1C934">proc_namespaces</asp>
+	  <asp uuid="726B1964-1145-4F73-A6BC-DF17BBDEFF8E">procmem</asp>
+	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa1f44">sign_send</asp>
+	  <asp uuid="1762695e-b3b9-466e-88d1-df1571e0a073">md5fileservice</asp>
 	</asps>
     <copland>
       <phrase copland="((USM full) -> SIG)">full userspace measurement</phrase>

@@ -68,7 +68,7 @@ int asp_exit(int status)
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(0, "IN compress ASP MEASURE\n");
+    dlog(6, "IN compress ASP MEASURE\n");
 
     char *buf       = NULL;
     size_t bufsize  = 0;
@@ -106,14 +106,14 @@ int asp_measure(int argc, char *argv[])
         ret_val = -1;
         goto read_failed;
     } else if (ret_val == -EAGAIN) {
-        dlog(0, "Warning: timeout occured before read could complete\n");
+        dlog(4, "Warning: timeout occured before read could complete\n");
     } else if (eof_enc != 0) {
         dlog(0, "Error: EOF encountered before complete buffer read\n");
         ret_val = -1;
         goto eof_enc;
     }
 
-    dlog(0, "buffer size: %zu, bytes read: %zu\n", bufsize, bytes_read);
+    dlog(6, "buffer size: %zu, bytes read: %zu\n", bufsize, bytes_read);
 
     // Compress buffer
     ret_val = compress_buffer(buf, bufsize, &compbuf, &compsize, COMPRESSION_LEVEL);

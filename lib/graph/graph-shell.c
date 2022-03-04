@@ -259,7 +259,7 @@ static int dummy_measurement_data_get_feature(measurement_data *d,
         *out = g_list_append(NULL, buf);
         return 0;
     } else {
-        dlog(1, "Warning: no such feature \"%s\" for measurement_type dummy\n",
+        dlog(4, "Warning: no such feature \"%s\" for measurement_type dummy\n",
              feature);
     }
     return -1;

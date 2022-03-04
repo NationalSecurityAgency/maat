@@ -163,7 +163,7 @@ static void gather_report_data(measurement_graph *g, GList **report_values)
 
         tmp_list = g_list_append(*report_values, kv);
         if(tmp_list == NULL) {
-            dlog(1, "Failed to add report data to output list\n");
+            dlog(0, "Failed to add report data to output list\n");
             goto append_report_failed;
         }
         *report_values = tmp_list;
@@ -259,7 +259,7 @@ static int appraise(struct scenario *scen, GList *values,
     gather_report_data(mg, &report_data_list);
 cleanup:
     destroy_measurement_graph(mg);
-    dlog(1,"Appraiser APB Internal Cleanup Start\n");
+    dlog(6,"Appraiser APB Internal Cleanup Start\n");
     return ret;
 }
 
@@ -286,7 +286,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
 
     /* Receive measurement contract from attester APB. */
     err = receive_measurement_contract(peerchan, scen, -1);
-    dlog(1, "Received Measurement Contract in appraiser APB\n");
+    dlog(6, "Received Measurement Contract in appraiser APB\n");
 
     if(scen->contract == NULL) {
         dlog(0, "No measurement contract received by appraiser APB\n");

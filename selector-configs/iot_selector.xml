@@ -1,0 +1,51 @@
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+    
+<selector_policy>
+    <collection name="known-clients">
+      <entry>127.0.0.1</entry>
+      <entry>localhost</entry>
+    </collection>
+
+    <rule role="appraiser" phase="initial">
+      <match_condition attr="client"  operator="in" value="known-clients"/>
+      <action selector_action="accept">
+	  <condition name="iot_uart_apb"    apb_phrase="(IOT_runtime_meas)"/>
+      </action>
+    </rule>
+
+    <rule role="attester" phase="modify">
+       <action selector_action="accept">
+	  <condition name="iot_uart_apb"    apb_phrase="(IOT_runtime_meas)"/>
+       </action>
+    </rule>
+
+    <rule role="appraiser" phase="execute">
+      <match_condition attr="client"   operator="in" value="known-clients" />
+      <match_condition attr="resource" operator="is" value="iota"/>
+      <action selector_action="accept">
+	  <condition name="iot_uart_apb" apb_phrase="(IOT_runtime_meas)"/>
+      </action>
+    </rule>
+
+    <rule role="appraiser" phase="spawn">
+      <match_condition attr="client"    operator="in" value="known-clients"/>
+      <action selector_action="accept">
+        <condition name="iot_appraiser_apb" apb_phrase="(IOT_runtime_appraiser)"/>
+      </action>
+    </rule>
+</selector_policy>
+

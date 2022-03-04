@@ -112,7 +112,7 @@ static inline int connect_to_attester(struct scenario *scen)
     if(scen->attester_tunnel_path != NULL) { //unix sock connection
         dlog(1,"connecting to: %s\n", scen->attester_tunnel_path);
         if(strcmp(":receive:", scen->attester_tunnel_path) == 0) {
-            dlog(0, "Tunnel path is :receive: attempt to read fd from socket\n");
+            dlog(6, "Tunnel path is :receive: attempt to read fd from socket\n");
             struct msghdr msg = {0};
             char m_buffer[256];
             char c_buffer[256];
@@ -246,11 +246,10 @@ static void handle_appraiser(am_config *config, struct scenario *scen)
             scen->state = AM_ERROR;
             goto out;
         }
-
         dlog(2, "Sending INITIAL contract\n");
-        res = maat_write_sz_buf(scen->peer_chan, scen->response,
-                                scen->respsize, NULL,
-                                config->am_comm_timeout);
+        res = write_initial_contract(scen->peer_chan, scen->response,
+                                     scen->respsize, NULL,
+                                     config->am_comm_timeout);
         if(check_send_result(res, "initial") != 0) {
             scen->state = AM_ERROR;
             dlog(1, "sending INITIAL contract failed: %d\n", res);
@@ -267,17 +266,17 @@ static void handle_appraiser(am_config *config, struct scenario *scen)
             goto out;
         }
         scen->state = MODIFIED_RECEIVED;
+        dlog(5, "PRESENTATION MODE (in): Appraiser received modified contract with subset of measurements\n");
         //TODO pass in the resource and target_id_type also for run_apb_async
         if((handle_modified_contract(am, scen)) != 0) {
             dlog(0, "Failure while handling modified contract\n");
             scen->state = AM_ERROR;
             goto out;
         }
-
         dlog(2, "Sending EXECUTE contract\n");
-        res = maat_write_sz_buf(scen->peer_chan, scen->response,
-                                scen->respsize, NULL,
-                                config->am_comm_timeout);
+        res = write_execute_contract(scen->peer_chan, scen->response,
+                                     scen->respsize, NULL,
+                                     config->am_comm_timeout);
 
         if(check_send_result(res, "execute") != 0) {
             scen->state = AM_ERROR;
@@ -364,10 +363,10 @@ static void handle_attester(struct am_config *config, struct scenario *scen)
             //Attester sends a modified contract back to Appraiser
             //****************************************************
             dlog(1,"Attester: Sending Modified Contract (size = %zu)\n", scen->respsize);
-            res = maat_write_sz_buf(scen->peer_chan, scen->response,
-                                    scen->respsize,
-                                    NULL,
-                                    config->am_comm_timeout);
+            res = write_modified_contract(scen->peer_chan, scen->response,
+                                          scen->respsize,
+                                          NULL,
+                                          config->am_comm_timeout);
             if(check_send_result(res, "modified") != 0) {
                 scen->state = AM_ERROR;
                 goto out;
@@ -409,7 +408,6 @@ static void handle_attester(struct am_config *config, struct scenario *scen)
             scen->state = AM_ERROR;
             goto out;
         }
-
         scen->state = EXECUTE_RECEIVED;
         rc = handle_execute_contract(am, scen);
         if(rc < 0) {
@@ -531,6 +529,7 @@ static int handle_connection(am_config *config, int clientfd, int may_skip_negot
                            &eof_encountered,
                            config->am_comm_timeout, -1);
     if(check_receive_result(NULL, res) < 0 || eof_encountered != 0) {
+        dlog(1, "Failed to receive contract from peer\n");
         rc = -1;
         goto out;
     }
@@ -546,10 +545,12 @@ static int handle_connection(am_config *config, int clientfd, int may_skip_negot
     dlog(3, "Contract type is %s (%d)\n", get_contract_name(ctype), ctype);
 
     if(ctype == AM_CONTRACT_INITIAL) {
+
+        dlog(5, "PRESENTATION MODE (in): Attester receives initial contract\n");
         dlog(3, "Received INITIAL contract...I must be an attester\n");
         init_scenario(scenario, config->cacert_file, config->cert_file,
                       config->privkey_file, config->privkey_pass, config->tpm_pass,
-                      contract, contract_size, ATTESTER);
+                      config->place_file, contract, contract_size, ATTESTER);
         scenario->workdir      	= workdir;
         scenario->peer_chan	= clientchan;
         scenario->state	       	= IDLE;
@@ -562,7 +563,7 @@ static int handle_connection(am_config *config, int clientfd, int may_skip_negot
         dlog(3, "Received REQUEST...I must be an appraiser\n");
         init_scenario(scenario, config->cacert_file, config->cert_file,
                       config->privkey_file, config->privkey_pass, config->tpm_pass,
-                      contract, contract_size, APPRAISER);
+                      config->place_file, contract, contract_size, APPRAISER);
         scenario->workdir          = workdir;
         scenario->requester_chan   = clientchan;
         scenario->state	           = IDLE;
@@ -576,7 +577,7 @@ static int handle_connection(am_config *config, int clientfd, int may_skip_negot
         dlog(3, "Received skip-negotiation EXECUTE contract...off to the races\n");
         init_scenario(scenario, config->cacert_file, config->cert_file,
                       config->privkey_file, config->privkey_pass, config->tpm_pass,
-                      contract, contract_size, ATTESTER);
+                      config->place_file, contract, contract_size, ATTESTER);
         scenario->state	       	= IDLE;
         scenario->workdir      	= workdir;
         scenario->peer_chan	= clientchan;
@@ -609,7 +610,7 @@ out:
 
 out_mk_client_channel:
     if(!config->keep_workdir) {
-        dlog(0, "Clearing out workdir %s\n", workdir);
+        dlog(6, "Clearing out workdir %s\n", workdir);
         rmrf(workdir);
     }
 out_mk_workdir:
@@ -715,7 +716,7 @@ int setup_interfaces(am_config *cfg, am_iface **listeners, size_t *nr_listeners)
             dlog(4, "Listening on INET interface %s:%hu\n", iface_cfg->address, iface_cfg->port);
             ifaces[*nr_listeners].fd = setup_listen_server(iface_cfg->address, iface_cfg->port);
             if(ifaces[*nr_listeners].fd < 0) {
-                dlog(1, "Warning: failed to open inet listen interface %s:%hd\n",
+                dlog(2, "Warning: failed to open inet listen interface %s:%hd\n",
                      iface_cfg->address, iface_cfg->port);
                 continue;
             }
@@ -723,7 +724,7 @@ int setup_interfaces(am_config *cfg, am_iface **listeners, size_t *nr_listeners)
             dlog(4, "Listening on UNIX interface %s\n", iface_cfg->address);
             ifaces[*nr_listeners].fd = setup_local_listen_server(iface_cfg->address);
             if(ifaces[*nr_listeners].fd < 0) {
-                dlog(1, "Warning failed to open UNIX listen interface %s\n",
+                dlog(2, "Warning failed to open UNIX listen interface %s\n",
                      iface_cfg->address);
                 continue;
             }
@@ -735,13 +736,13 @@ int setup_interfaces(am_config *cfg, am_iface **listeners, size_t *nr_listeners)
             */
             if(cfg->uid_set != 0) {
                 if(chown(iface_cfg->address, cfg->uid, (gid_t)-1) != 0) {
-                    dlog(1, "Warning: failed to chown UNIX socket at path %s. File may be leaked at exit.\n",
+                    dlog(2, "Warning: failed to chown UNIX socket at path %s. File may be leaked at exit.\n",
                          iface_cfg->address);
                 }
             }
             if(cfg->gid_set != 0) {
                 if(chown(iface_cfg->address, (gid_t)-1, cfg->gid) != 0) {
-                    dlog(1, "Warning: failed to chown UNIX socket at path %s. File may be leaked at exit.\n",
+                    dlog(2, "Warning: failed to chown UNIX socket at path %s. File may be leaked at exit.\n",
                          iface_cfg->address);
                 }
             }
@@ -805,8 +806,8 @@ int setup_dispatch_loop(int argc, char **argv)
        ports
     */
     if( (sigif.fd = setup_signalfd()) < 0) {
-        dlog(0, "Non-fatal Error: failed to setup signal handling: %s\n", strerror(sigif.fd));
-        dlog(0, "Artifacts could be left on exit\n");
+        dlog(2, "Non-fatal Error: failed to setup signal handling: %s\n", strerror(sigif.fd));
+        dlog(2, "Artifacts could be left on exit\n");
     }
 
     if(setup_interfaces(&cfg, &listeners, &nr_listeners) <= 0) {
@@ -881,7 +882,7 @@ int setup_dispatch_loop(int argc, char **argv)
         dlog(2, "Accepting a connection\n");
         clientfd = accept(conn_if->fd, NULL, NULL);
         if(clientfd < 0) {
-            dlog(0, "Error accept() failed: %s\n", strerror(errno));
+            dlog(2, "Error accept() failed: %s\n", strerror(errno));
             continue;
         }
 

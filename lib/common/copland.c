@@ -26,11 +26,13 @@
 #include <regex.h>
 #include <signal.h>
 #include <limits.h>
+#include <inttypes.h>
 
 #include <glib.h>
 #include <uuid/uuid.h>
 
 #include <util/util.h>
+#include <util/csv.h>
 #include <util/keyvalue.h>
 #include <util/xml_util.h>
 
@@ -172,6 +174,7 @@ int copland_args_to_string(const phrase_arg **args, const int num_args, char **s
 
     for(i = 0; i < num_args; i++) {
         switch(args[i]->type) {
+        case PLACE:
         case STRING:
             arg_val = strdup((char *)args[i]->data);
             if(arg_val == NULL) {
@@ -350,7 +353,8 @@ int eval_bounds_of_args(const copland_phrase *phr, const copland_phrase *bounder
     /* Make sure phr and bounder use the same basic Copland phrase */
     err = strcmp(phr->phrase, bounder->phrase);
     if(err != 0) {
-        dlog(3, "Phrase did not match\n");
+        dlog(3, "Phrase %s did not match bounder: %s\n", phr->phrase,
+             bounder->phrase);
         goto end;
     }
 
@@ -384,6 +388,9 @@ int eval_bounds_of_args(const copland_phrase *phr, const copland_phrase *bounder
         switch(phr_arg->type) {
         case STRING:
             err = eval_str_bounds((const char *)phr_arg->data, (const char *)bou_arg->data);
+            break;
+        case PLACE:
+            err = strcmp(phr_arg->data, bou_arg->data);
             break;
         case INTEGER:
             err = memcmp(phr_arg->data, bou_arg->data, sizeof(int));
@@ -515,6 +522,7 @@ static int copy_copland_arg(const phrase_arg *arg, phrase_arg **copy)
 
     if(arg->data != NULL) {
         switch(tmp->type) {
+        case PLACE:
         case STRING:
             tmp->data = malloc(strlen((char *)arg->data) + 1);
             if(tmp->data == NULL) {
@@ -658,7 +666,7 @@ static int find_copland_template(const char *phrase, const GList *phrase_pairs,
     for(a = (GList *)phrase_pairs; a && a->data; a = a->next) {
         pair = (struct phrase_meas_spec_pair *)a->data;
 
-        dlog(4, "COMPARING %s:%s / %d:%d in find_copland_template\n", phr, pair->copl->phrase, num_args, pair->copl->num_args);
+        dlog(6, "COMPARING %s:%s / %d:%d in find_copland_template\n", phr, pair->copl->phrase, num_args, pair->copl->num_args);
 
         if(strcmp(pair->copl->phrase, phr) == 0 && num_args == pair->copl->num_args) {
             if(template != NULL) {
@@ -669,7 +677,6 @@ static int find_copland_template(const char *phrase, const GList *phrase_pairs,
         }
     }
 
-    dlog(3, "Unable to find a matching template for the phrase %s\n", phrase);
     res = -1;
 
 free_info:
@@ -686,7 +693,8 @@ static int parse_phrase_arg(const phrase_arg *template,
                             const char *name, const void *value,
                             phrase_arg **to_parse)
 {
-    long int *val = NULL;
+    long int store = 0;
+    int *val = NULL;
     char *pt = NULL;
     phrase_arg *tmp = NULL;
 
@@ -711,21 +719,39 @@ static int parse_phrase_arg(const phrase_arg *template,
     /* TODO: Implement ability for template to specify/check bounds here*/
     switch(template->type) {
     case INTEGER:
-        val = malloc(sizeof(long int));
+        errno = 0;
+        store = strtol((const char *)value, &pt, 10);
+        if(errno || *pt != '\0' || store > INT_MAX || store < INT_MIN) {
+            dlog(1, "Warning: Integer argument could not be parsed\n");
+            goto bounds_err;
+        }
+
+        val = malloc(sizeof(int));
         if(val == NULL) {
             dlog(0, "Unable to allocate memory\n");
             goto bounds_err;
         }
 
-        errno = 0;
-        *val = strtol((const char *)value, &pt, 10);
-        if(errno || *pt != '\0') {
-            dlog(1, "Warning: Integer argument could not be parsed\n");
-            goto bounds_err;
-        }
+        *val = store;
 
         tmp->data = (void *)val;
         tmp->type = INTEGER;
+        break;
+    case PLACE:
+        errno = 0;
+        store = strtol((const char *)value, &pt, 10);
+        if(errno || *pt != '\0' || store > INT_MAX || store < 0) {
+            dlog(1, "Warning: Place argument could not be parsed\n");
+            goto bounds_err;
+        }
+
+        tmp->data = strdup((void *)value);
+        if(tmp->data == NULL) {
+            dlog(0, "Unable to allocate memory for copy of domain value\n");
+            goto bounds_err;
+        }
+
+        tmp->type = PLACE;
         break;
     case STRING:
         tmp->data = strdup((char *)value);
@@ -775,7 +801,7 @@ static int parse_phrase_args(const char *args,
     tmp->num_args = 0;
 
     if(args == NULL) {
-        dlog(3, "No arguments to parse for phrase\n");
+        dlog(6, "No arguments to parse for phrase\n");
         goto skip_args;
     }
 
@@ -851,7 +877,9 @@ skip_args:
     }
 
 error:
-    /* TODO: fix args free */
+    for (idx = 0; idx < tmp->num_args; idx++) {
+        free_phrase_arg(phrase_args[idx]);
+    }
     tmp->num_args = -1;
     free(str);
     free(phrase_args);
@@ -971,7 +999,7 @@ int parse_copland_phrase(const char *phrase, const char *args,
     int res = 0;
     copland_phrase *tmp;
 
-    if(phrase == NULL || template == NULL) {
+    if(phrase == NULL || template == NULL || parsed == NULL) {
         dlog(1, "Null argument provided to function\n");
         return -1;
     }
@@ -1006,23 +1034,14 @@ int parse_copland_phrase(const char *phrase, const char *args,
         goto arg_err;
     }
 
-    if(parsed != NULL) {
-        *parsed = tmp;
-    } else {
-        goto null_err;
-    }
+    *parsed = tmp;
 
     return 0;
 
-null_err:
 arg_err:
 phr_all_err:
     free_copland_phrase(tmp);
 err:
-    if(parsed != NULL) {
-        *parsed = NULL;
-    }
-
     return -1;
 }
 
@@ -1044,18 +1063,17 @@ int parse_copland_from_pair_list(const char *phrase_and_args, const GList *phras
 
     err = find_copland_template(phrase_and_args, phrase_pairs, &template);
     if(err < 0) {
-        dlog(1, "Warning: unable to find a matching template for the phrase %s\n", phrase_and_args);
         return -1;
     }
 
     err = split_copland(phrase_and_args, &phr, &args);
     if(err < 0) {
         free_phrase_meas_spec_pair(template);
-        dlog(1, "Warning: Unable to match provided Copland Phrase to format: %s\n", phrase_and_args);
+        dlog(4, "Warning: Unable to match provided Copland Phrase to format: %s\n", phrase_and_args);
         return -1;
     }
 
-    dlog(0, "ARGS ARE: %s\n", args);
+    dlog(6, "ARGS ARE: %s\n", args);
 
     err = parse_copland_phrase(phr, args, template->copl, phrase);
     free(phr);
@@ -1077,7 +1095,7 @@ int parse_copland_from_apb_list(const char *phrase_and_args, const GList *apbs, 
         return -1;
     }
 
-    dlog(4, "Parsing Copland phrase: %s\n", phrase_and_args);
+    dlog(6, "Parsing Copland phrase: %s\n", phrase_and_args);
 
     for(l = (GList *) apbs; l && l->data; l = g_list_next(l)) {
         apb = (struct apb *)l->data;
@@ -1088,7 +1106,7 @@ int parse_copland_from_apb_list(const char *phrase_and_args, const GList *apbs, 
 
     }
 
-    dlog(4, "Unable to parse the Copland phrase \"%s\" from the list of APBs\n", phrase_and_args);
+    dlog(3, "Error: Unable to find the Copland phrase \"%s\" from the APBs provided\n", phrase_and_args);
     return -1;
 }
 
@@ -1155,6 +1173,101 @@ void free_phrase_meas_spec_pair(struct phrase_meas_spec_pair *pair)
 }
 
 /**
+ * Given an entry describing a place and the data needed regarding that place,
+ * parse the information into the place_perms struct. Returns 0 on success and
+ * -1 otherwise.
+ */
+int parse_place_entry(xmlDocPtr doc, xmlNode *place_entry, place_perms **place)
+{
+    int ret;
+    char *name, *info, *unstripped, *stripped;
+    xmlNode *entry;
+    place_perms *tmp;
+
+    if(place_entry == NULL) {
+        dlog(1, "Given null argument\n");
+        return -1;
+    }
+
+    tmp = calloc(1, sizeof(place_perms));
+    if(!tmp) {
+        dlog(0, "Unable to allocate memory for place_perms");
+        goto tmp_alloc_err;
+    }
+
+    unstripped = xmlGetPropASCII(place_entry, "id");
+    if(unstripped == NULL) {
+        dlog(1, "Cannot read name of places argument\n");
+        goto name_err;
+    }
+
+    ret = strip_whitespace(unstripped, &stripped);
+    free(unstripped);
+    if (ret) {
+        dlog(2, "Cannot strip whitespace from argument name\n");
+        goto name_err;
+    }
+
+    tmp->id = stripped;
+    if (!tmp->id) {
+        dlog(0, "No name given to argument\n");
+        goto name_alloc_err;
+    }
+
+    for(entry = place_entry->children; entry; entry = entry->next) {
+        name = validate_cstring_ascii(entry->name, SIZE_MAX);
+
+        if(entry->type != XML_ELEMENT_NODE || name == NULL) {
+            dlog(3, "Unable to parse argument entry\n");
+            continue;
+        }
+
+        if(strcmp(name, "info") == 0) {
+            /* String buffer of characters, so type coercion is justified */
+            unstripped = (char *)xmlNodeListGetString(doc, entry->xmlChildrenNode, 1);
+            if (unstripped == NULL) {
+                dlog(3, "Unable to get info permission from Copland section\n");
+                continue;
+            }
+
+            ret = strip_whitespace(unstripped, &info);
+            free(unstripped);
+            if (ret) {
+                dlog(2, "Unable to strip whitespace from info permission in Copland section\n");
+                continue;
+            }
+
+            /* Determine what info permission we're given over this place */
+            if(strcmp(info, "host") == 0) {
+                tmp->perms |= COPLAND_PLACE_ADDR_PERM;
+            } else if(strcmp(info, "port") == 0) {
+                tmp->perms |= COPLAND_PLACE_PORT_PERM;
+            } else if(strcmp(info, "kernel") == 0) {
+                tmp->perms |= COPLAND_PLACE_KERN_PERM;
+            } else if(strcmp(info, "domain") == 0) {
+                tmp->perms |= COPLAND_PLACE_DOM_PERM;
+            } else {
+                dlog(1, "Warning: encountered unexpected info type %s in info block\n", info);
+            }
+
+            free(info);
+        } else {
+            dlog(1, "Warning: encountered unexpected element %s in info block\n", name);
+            continue;
+        }
+    }
+
+    *place = tmp;
+    return 0;
+
+name_err:
+name_alloc_err:
+    free(tmp);
+tmp_alloc_err:
+    return -1;
+}
+
+/**
  * Given an entry describing an argument of a copland phrase,
  * parse the information into a phrase_arg. Returns 0 on success
  * and -1 otherwise.
@@ -1163,7 +1276,7 @@ void free_phrase_meas_spec_pair(struct phrase_meas_spec_pair *pair)
  * constraints on acceptable argument values, which will need to be
  * parsed into phrase->data.
  */
-static int parse_arg_entry(xmlDocPtr doc, xmlNode *arg_entry, phrase_arg **arg)
+int parse_arg_entry(xmlDocPtr doc, xmlNode *arg_entry, phrase_arg **arg)
 {
     int ret;
     char *name, *type, *unstripped, *stripped;
@@ -1207,7 +1320,7 @@ static int parse_arg_entry(xmlDocPtr doc, xmlNode *arg_entry, phrase_arg **arg)
         name = validate_cstring_ascii(entry->name, SIZE_MAX);
 
         if(entry->type != XML_ELEMENT_NODE || name == NULL) {
-            dlog(0, "Unable to parse argument entry\n");
+            dlog(3, "Unable to parse argument entry\n");
             continue;
         }
 
@@ -1215,7 +1328,7 @@ static int parse_arg_entry(xmlDocPtr doc, xmlNode *arg_entry, phrase_arg **arg)
             /* String buffer of characters, so type coercion is justified */
             unstripped = (char *)xmlNodeListGetString(doc, entry->xmlChildrenNode, 1);
             if (unstripped == NULL) {
-                dlog(0, "Unable to get type information from Copland section\n");
+                dlog(3, "Unable to get type information from Copland section\n");
                 continue;
             }
 
@@ -1223,11 +1336,14 @@ static int parse_arg_entry(xmlDocPtr doc, xmlNode *arg_entry, phrase_arg **arg)
             free(unstripped);
             if (ret) {
                 dlog(2, "Unable to strip whitespace from Copland type\n");
+                continue;
             }
 
             /* Determine what the argument type is */
             if(strcmp(type, "integer") == 0) {
                 tmp->type = INTEGER;
+            } else if(strcmp(type, "place") == 0) {
+                tmp->type = PLACE;
             } else if(strcmp(type, "string") == 0) {
                 tmp->type = STRING;
             } else {
@@ -1263,6 +1379,68 @@ tmp_alloc_err:
     return -1;
 }
 
+/**
+ * Parses the APB XML representing the places relevant to the Copland phrase
+ * and places it into a Glist of place_perms structs
+ * XML argument block is assumed to be formatted as such:
+ *
+ *      <place id=...>
+ *          <info> ... </info>
+ *      </place>
+ *      ...
+ *
+ * (in the full context of the copland XML stanza, this is within the
+ * <places> block)
+ *
+ * All of this information will be written into a file which will be made
+ * available in the APB's work directory.
+ */
+int parse_place_block(xmlDocPtr doc, xmlNode *place_block, GList **info)
+{
+    char *name;
+    xmlNode *place;
+    GList *tmp_list = NULL, *store = NULL;
+    place_perms *tmp_info;
+
+    if(place_block == NULL || info == NULL) {
+        dlog(1, "Given null argument\n");
+        return -1;
+    }
+
+    for(place = place_block->children; place; place = place->next) {
+        name = validate_cstring_ascii(place->name, SIZE_MAX);
+
+        if(place->type != XML_ELEMENT_NODE || name == NULL) {
+            dlog(4, "Warning: unable to process child place block\n");
+            continue;
+        }
+
+        if(strcmp(name, "place")) {
+            dlog(4, "Warning: non place element found in argument list\n");
+            continue;
+        }
+
+        if(parse_place_entry(doc, place, &tmp_info) < 0) {
+            dlog(1, "Unable to process argument entry\n");
+            continue;
+        }
+
+        store = g_list_append(tmp_list, tmp_info);
+        if (store == NULL) {
+            dlog(0, "Unable to add elements to the place info list\n");
+            goto err;
+        }
+
+        tmp_list = store;
+    }
+
+    *info = tmp_list;
+    return 0;
+
+err:
+    return -1;
+}
+
 /*
  * Parses the APB XML representing Copland arguments and places it into a
  * list of phrase_arg structs
@@ -1283,12 +1461,12 @@ int parse_arg_block(xmlDocPtr doc, xmlNode *arg_block, phrase_arg ***args)
         name = validate_cstring_ascii(arg->name, SIZE_MAX);
 
         if(arg->type != XML_ELEMENT_NODE || name == NULL) {
-            dlog(0, "Warning: unable to process child argument block");
+            dlog(4, "Warning: unable to process child argument block");
             continue;
         }
 
         if(strcmp(name, "arg")) {
-            dlog(2, "Warning: non argument element found in argument list");
+            dlog(4, "Warning: non argument element found in argument list");
             continue;
         }
 
@@ -1324,11 +1502,11 @@ void parse_copland(xmlDocPtr doc, struct apb *apb, xmlNode *copl_node, GList *me
 {
     int ret;
     uuid_t uuid;
-    xmlNode *copl_pair_ele;
-    char *name, *tmp, *stripped;
+    xmlNode *copl_pair_ele = NULL;
+    char *name = NULL, *tmp = NULL, *stripped = NULL;
     struct phrase_meas_spec_pair *pair = NULL;
-    mspec_info *ms;
-    phrase_arg **args;
+    mspec_info *ms = NULL;
+    phrase_arg **args = NULL;
 
     apb->valid = true;
 
@@ -1389,7 +1567,7 @@ void parse_copland(xmlDocPtr doc, struct apb *apb, xmlNode *copl_node, GList *me
 
             tmp = xmlGetPropASCII(copl_pair_ele, "uuid");
             if (!tmp) {
-                dlog(0, "Err: Spec entry without UUID, skipping\n");
+                dlog(3, "Err: Spec entry without UUID, skipping\n");
                 continue;
             }
 
@@ -1427,6 +1605,13 @@ void parse_copland(xmlDocPtr doc, struct apb *apb, xmlNode *copl_node, GList *me
             } else {
                 pair->copl->num_args = ret;
                 pair->copl->args = args;
+            }
+        } else if(strcmp(name, "places") == 0) {
+            ret = parse_place_block(doc, copl_pair_ele, &apb->place_permissions);
+            if (ret < 0) {
+                dlog(0, "Unable to parse the places section specified in the APB XML\n");
+                apb->valid = false;
+                goto error;
             }
         } else {
             dlog(1, "Warning: malformed APB Copland entry found for APB %s\n",
@@ -1488,7 +1673,7 @@ struct apb *find_apb_copl(GList *apbs, char *phrase, struct phrase_meas_spec_pai
  * Finds an APB from a list of available APB templates that handles
  * the specified Copland phrase. These templates are parsed from
  * APBs when an AM is being instantiated and do not hold
- * concrete values for eah argument, so this search is
+ * concrete values for each argument, so this search is
  * based upon the phrase and number of arguments.
  *
  * Returns an APB on success or NULL on failure. @apbs is
@@ -1521,6 +1706,563 @@ struct apb *find_apb_copl_phrase_by_template(GList *apbs, copland_phrase *copl, 
     }
 
     return NULL;
+}
+
+#define MAX_STR_LEN_UINT32 10
+
+int place_perm_to_str(place_perm_t perm, char **str)
+{
+    int ret;
+    char *tmp;
+
+    if (str == NULL) {
+        return -1;
+    }
+
+    tmp = calloc(MAX_STR_LEN_UINT32 + 1, 1);
+    if (tmp == NULL) {
+        return -1;
+    }
+
+    ret = snprintf(tmp, MAX_STR_LEN_UINT32 + 1,
+                   "%"PRIu32"", perm);
+    if (ret < 0) {
+        dlog(1,
+             "Unable to convert place perm %"PRIu32" to str\n", perm);
+        return -1;
+    }
+
+    *str = tmp;
+    return ret;
+}
+
+int str_to_place_perm(const char *str, place_perm_t *perm)
+{
+    unsigned long tmp;
+    char *ptr;
+
+    if (str == NULL || perm == NULL) {
+        return -1;
+    }
+
+    errno = 0;
+    tmp = strtoul(str, &ptr, 10);
+    if (errno) {
+        dlog(1, "Unable to convert %s to place perm: error %s\n",
+             str, strerror(errno));
+        return -1;
+    }
+
+    *perm = tmp;
+    return 0;
+}
+
+/**
+ * This function checks to see if the Copland phrase has arguments pertaining to
+ * Copland places. This could be used to check if calls to query_place_information
+ * are required. Returns 1 if place arguments are present and 0 if not.
+ *
+ * As a warning, although this function will operate correctly on a BASE copland_phrase,
+ * a BASE Copland phrase will NOT have the place IDs themselves, so you may want to make
+ * sure that the given copland_phrase is an ACTUAL one.
+ */
+int has_place_args(const copland_phrase *phrase)
+{
+    int i;
+
+    dlog(4, "Checking for place args in phrase %s\n",
+         phrase->phrase);
+    for (i = 0; i < phrase->num_args; i++) {
+        if (phrase->args[i]->type == PLACE) {
+            dlog(4, "Found place arg at index %d\n", i);
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+/**
+ * This function parses the CSV line for a column and then appends that information
+ * into the out buffer. How it is used in query_place_info_csv is to iterative
+ * extend the CSV line which is going to be written out
+ *
+ * Returns the new size of out if a value was added to the out line,
+ * or 0 if an error occured
+ */
+#define NULL_CONT "0"
+static size_t handle_csv_perm_db_line(const char *read_line, size_t len,
+                                      place_perm_t perms, int col_indx,
+                                      char **out)
+{
+    int ret;
+    size_t ele_len;
+    char *tmp;
+    char *ele;
+
+    if (read_line == NULL || out == NULL) {
+        dlog(1, "Given null return parameter\n");
+        return 0;
+    }
+
+    if (col_indx < DB_INDX_TO_COL_ADJ) {
+        dlog(1, "Index %d less than the adjustment val %d\n",
+             col_indx, DB_INDX_TO_COL_ADJ);
+        return 0;
+    }
+
+    if (perms & DB_INDX_TO_COL(col_indx)) {
+        ret = get_col_from_csv_line(read_line,
+                                    col_indx,
+                                    COPLAND_CSV_LINE_MAX_LEN - len,
+                                    &ele);
+        if (ret < 0) {
+            return 0;
+        } else if (ret > 0) {
+            dlog(1, "Unable to find ADDR information in CSV file\n");
+            return 0;
+        }
+    } else {
+        //Place null content to keep columns
+        ele = NULL_CONT;
+    }
+
+    ele_len = strlen(ele);
+    if (len + ele_len + 2 <= len ||
+    len + ele_len + 2 >= COPLAND_CSV_LINE_MAX_LEN) {
+        dlog(1, "CSV line would be too long to write out\n");
+        ret = -1;
+        return 0;
+    }
+    tmp = realloc(*out, len + ele_len + 2);
+    if (tmp == NULL) {
+        dlog(0, "Unable to allocate buffer for CSV line\n");
+        return 0;
+    }
+
+    tmp[len - 1] = ',';
+    strcpy(tmp + len, ele);
+    tmp[len + ele_len] = '\n';
+    tmp[len + ele_len + 1] = '\0';
+
+    len = len + ele_len + 1;
+
+    *out = tmp;
+    return len;
+}
+
+/**
+ * Get place information from the registration CSV file.
+ * Returns 0 on success, 1 if the function succeeds but
+ * no information is retrieved, 2 if the place is not found,
+ * and -1 otherwise.
+ *
+ * Ultimately, we want multiple of these functions which
+ * can be selected during compile time. For now, this is
+ * the only one
+ */
+static int query_place_info_csv(const struct apb *apb,
+                                const char *filename,
+                                place_perm_t perms,
+                                const char *id,
+                                char **out_buf)
+{
+    int ret;
+    short parse_flag = 0;
+    char *tmp = NULL;
+    size_t len;
+    size_t tmp_len;
+    size_t perm_len;
+    char *read_line;
+    char *perm;
+    char *ele;
+    FILE *fp;
+
+    if (apb == NULL || id == NULL || out_buf == NULL) {
+        dlog(1, "Given null argument(s) in one parameter that must be dereferenced\n");
+        return -1;
+    }
+
+    if(len >= COPLAND_CSV_LINE_MAX_LEN) {
+        dlog(1, "Given ID is longer than the maximum allowed line length\n");
+        return -1;
+    }
+
+    if (perms == 0) {
+        dlog(3, "No permissions to access any information on place %s\n", id);
+        return 1;
+    }
+
+    ret = place_perm_to_str(perms, &perm);
+    if (ret < 0) {
+        return -1;
+    }
+
+    len = strlen(id);
+    perm_len = strlen(perm);
+
+    if(len + perm_len >= COPLAND_CSV_LINE_MAX_LEN) {
+        dlog(1,
+             "ID and perms longer than allowed line length\n");
+        return -1;
+    }
+
+    // Initial entry will be <id>,<perms>\n\0
+    tmp = calloc(len + perm_len + 3, 1);
+    if (tmp == NULL) {
+        dlog(0,
+             "Unable to allocate buffer to hold result line\n");
+        return -1;
+    }
+
+    memcpy(tmp, id, len);
+    tmp[len] = ',';
+    memcpy(tmp + len + 1, perm, perm_len);
+    tmp[len + 1 + perm_len] = '\n';
+    /*
+     * len in this function is a bit tricky, but in general it will not count
+     * \n, mostly because len is used for reallocations and the \n is more or
+     * less just moved farther into the string as re-allocations go. Null byte
+     * isn't included, but for string length that's normal
+     */
+    len += (perm_len + 2);
+    free(perm);
+
+    ret = read_line_csv(filename, id,
+                        COPLAND_DB_PLACE_ID_INDX,
+                        COPLAND_CSV_LINE_MAX_LEN, &read_line);
+
+    if (ret == 1) {
+        dlog(1, "Unable to find place in the CSV file\n");
+        return 2;
+    } else if (ret < 0) {
+        return ret;
+    }
+
+    tmp_len = handle_csv_perm_db_line(read_line, len, perms,
+                                      COPLAND_DB_PLACE_ADDR_INDX,
+                                      &tmp);
+    if (tmp_len == 0) {
+        ret = -1;
+        goto err;
+    } else if (tmp_len > len + strlen(NULL_CONT) + 1) {
+        parse_flag = 1;
+    }
+
+    len = tmp_len;
+
+    tmp_len = handle_csv_perm_db_line(read_line, len, perms,
+                                      COPLAND_DB_PLACE_PORT_INDX,
+                                      &tmp);
+    if (tmp_len == 0) {
+        ret = -1;
+        goto err;
+    } else if (tmp_len > len + strlen(NULL_CONT) + 1) {
+        parse_flag = 1;
+    }
+
+    len = tmp_len;
+
+    tmp_len = handle_csv_perm_db_line(read_line, len, perms,
+                                      COPLAND_DB_PLACE_KERN_INDX,
+                                      &tmp);
+    if (tmp_len == 0) {
+        ret = -1;
+        goto err;
+    } else if (tmp_len > len + strlen(NULL_CONT) + 1) {
+        parse_flag = 1;
+    }
+
+    len = tmp_len;
+
+    tmp_len = handle_csv_perm_db_line(read_line, len, perms,
+                                      COPLAND_DB_PLACE_DOM_INDX,
+                                      &tmp);
+    if (tmp_len == 0) {
+        ret = -1;
+        goto err;
+    } else if (tmp_len > len + strlen(NULL_CONT) + 1) {
+        parse_flag = 1;
+    }
+
+    len = tmp_len;
+
+    if (parse_flag == 0) {
+        ret = 1;
+        goto err;
+    } else {
+        *out_buf = tmp;
+        return 0;
+    }
+
+err:
+    free(tmp);
+    return ret;
+}
+
+static int get_place_file_name(const struct scenario *scen, char **file_name)
+{
+    size_t workdir_len;
+    size_t perms_file_len;
+    char *tmp;
+
+    if (scen == NULL || scen->workdir == NULL || file_name == NULL) {
+        dlog(1, "Given null parameters\n");
+        return -1;
+    }
+
+    workdir_len = strlen(scen->workdir);
+    perms_file_len = strlen(COPLAND_PLACE_PERMS_FILE);
+
+    tmp = calloc(workdir_len + perms_file_len + 1, 1);
+    if (tmp == NULL) {
+        dlog(0, "Unable to allocate memory for workdir filename\n");
+        return -1;
+    }
+
+    memcpy(tmp, scen->workdir, workdir_len);
+    memcpy(tmp + workdir_len,
+           COPLAND_PLACE_PERMS_FILE,
+           perms_file_len);
+
+    *file_name = tmp;
+
+    return 0;
+}
+
+/**
+ * When applicable, query for the place information using the compiled in backend.
+ * Only the information which we have been given permission in the configuration file
+ * to acquire. If a domain is not given a Copland place information, no information will
+ * be given pertaining that domain. If place information entry appears with no
+ * corresponding domain argument, it will just be ignored. Returns 0 on success
+ * and -1 otherwise.
+ */
+int query_place_information(const struct apb *apb,
+                            const struct scenario *scen,
+                            const copland_phrase *phrase)
+{
+    int i;
+    int ret = 0;
+    ssize_t written;
+    char *place_label = NULL;
+    char *out_buf = NULL;
+    char *file_name = NULL;
+    phrase_arg *arg = NULL;
+    place_perms *place = NULL;
+    GList *place_perm_list = apb->place_permissions;
+    GList *perm = NULL;
+    struct phrase_meas_spec_pair *pair;
+
+    if (apb == NULL || scen == NULL || phrase == NULL) {
+        dlog(1, "Given NULL pointer parameter\n");
+        return -1;
+    }
+
+    if (place_perm_list == NULL) {
+        dlog(4, "No place information permissions given, bypassing the domain argument search\n");
+        return 0;
+    }
+
+    if (scen->place_file == NULL) {
+        dlog(4, "No place filename has been given, bypassing the place information query\n");
+        return 0;
+    }
+
+    ret = get_place_file_name(scen, &file_name);
+    if (ret < 0) {
+        dlog(0, "Failed to get place file name\n");
+        return ret;
+    }
+
+    for(i = 0; i < phrase->num_args; i++) {
+        arg = phrase->args[i];
+
+        if(arg->type == PLACE) {
+            place_label = arg->name;
+            perm = place_perm_list;
+
+            while (perm != NULL) {
+                place = (place_perms *)perm->data;
+                /**
+                         * Need to match permission constraints to
+                         * the domain we need to query for information
+                         * regarding
+                         */
+                if (strcmp(place->id, place_label) == 0) {
+                    ret = query_place_info_csv(apb,
+                                               scen->place_file,
+                                               place->perms,
+                                               (char *)arg->data,
+                                               &out_buf);
+
+                    if(ret != 0) {
+                        dlog(1, "Unable to get data for place %s\n", (char *)arg->data);
+                        break;
+                    } else {
+                        dlog(4, "Writing out data %s\n", out_buf);
+                        written = append_buffer_to_file(file_name,
+                                                        out_buf,
+                                                        strlen(out_buf));
+                        if (written != strlen(out_buf)) {
+                            free(out_buf);
+                            ret = -1;
+                            dlog(0, "Unable to append place information to CSV file\n");
+                            goto end;
+                        }
+
+                        free(out_buf);
+                    }
+                }
+
+                perm = g_list_next(perm);
+            }
+        }
+    }
+
+end:
+    free(file_name);
+    return ret;
+}
+
+/**
+ * In APBs that use information pertaining to places, this function can
+ * be used to retrieve that information on a per place basis.
+ *
+ * Returns 0 on success and a -1 otherwise.
+ */
+int get_place_information(const struct scenario *scen,
+                          const char *id, place_info **info)
+{
+    int ret;
+    place_perm_t perms;
+    char *file_name;
+    char *str;
+    char *csv_line;
+    place_info *tmp;
+
+    if (scen == NULL || id == NULL || info == NULL ||
+            scen->workdir == NULL) {
+        dlog(1, "Given null argument\n");
+        return -1;
+    }
+
+    ret = get_place_file_name(scen, &file_name);
+    if (ret < 0) {
+        return ret;
+    }
+
+    tmp = calloc(sizeof(place_info), 1);
+    if (tmp == NULL) {
+        dlog(0, "Unable to allocate memory for place info of %s\n", id);
+        free(file_name);
+        return -1;
+    }
+
+    ret = read_line_csv(file_name, id, COPLAND_WORK_PLACE_ID_INDX,
+                        COPLAND_CSV_LINE_MAX_LEN, &csv_line);
+    free(file_name);
+    if (ret != 0) {
+        dlog(1, "Unable to read place line from CSV for place : %s\n", id);
+        free(tmp);
+        return -1;
+    }
+
+    ret = get_col_from_csv_line(csv_line,
+                                COPLAND_WORK_PLACE_PERMS_INDX,
+                                COPLAND_CSV_LINE_MAX_LEN,
+                                &str);
+    if (ret < 0) {
+        dlog(1, "Unable to get place permission from line: %s\n",
+             csv_line);
+        goto err;
+    }
+
+    ret = str_to_place_perm(str, &perms);
+    free(str);
+    if (ret < 0) {
+        dlog(1, "Unable to parse permissions in CSV str %s\n",
+             csv_line);
+        goto err;
+    }
+
+    if (perms & COPLAND_PLACE_ADDR_PERM) {
+        ret = get_col_from_csv_line(csv_line,
+                                    COPLAND_WORK_PLACE_ADDR_INDX,
+                                    COPLAND_CSV_LINE_MAX_LEN,
+                                    &str);
+        if (ret < 0) {
+            dlog(1, "Unable to get address in CSV line: %s\n",
+                 csv_line);
+            goto err;
+        }
+
+        tmp->addr = str;
+    }
+
+    if (perms & COPLAND_PLACE_PORT_PERM) {
+        ret = get_col_from_csv_line(csv_line,
+                                    COPLAND_WORK_PLACE_PORT_INDX,
+                                    COPLAND_CSV_LINE_MAX_LEN,
+                                    &str);
+        if (ret < 0) {
+            dlog(1, "Unable to get port in CSV line: %s\n",
+                 csv_line);
+            goto err;
+        }
+
+        tmp->port = str;
+    }
+
+    if (perms & COPLAND_PLACE_KERN_PERM) {
+        ret = get_col_from_csv_line(csv_line,
+                                    COPLAND_WORK_PLACE_KERN_INDX,
+                                    COPLAND_CSV_LINE_MAX_LEN,
+                                    &str);
+        if (ret < 0) {
+            dlog(1, "Unable to get kernel in CSV line: %s\n",
+                 csv_line);
+            goto err;
+        }
+
+        tmp->kern_vers = str;
+    }
+
+    if (perms & COPLAND_PLACE_DOM_PERM) {
+        ret = get_col_from_csv_line(csv_line,
+                                    COPLAND_WORK_PLACE_DOM_INDX,
+                                    COPLAND_CSV_LINE_MAX_LEN,
+                                    &str);
+        if (ret < 0) {
+            dlog(1, "Unable to get kernel in CSV line: %s\n",
+                 csv_line);
+            goto err;
+        }
+
+        tmp->domain = str;
+    }
+
+    free(csv_line);
+    *info = tmp;
+    return 0;
+
+err:
+    free(csv_line);
+    free(tmp);
+    return -1;
+}
+
+/**
+ * Frees place information structure memory
+ */
+void free_place_information(place_info *info)
+{
+    free(info->addr);
+    free(info->port);
+    free(info->kern_vers);
+    free(info->domain);
+    free(info);
 }
 
 /* Local Variables:  */

@@ -46,7 +46,7 @@ int apb_execute(struct apb *apb UNUSED, struct scenario *scen UNUSED,
 
 START_TEST (test_load_apb_info)
 {
-    dlog(3, "Running %s\n", __func__);
+    dlog(6, "Running %s\n", __func__);
 
     GList *meas_specs = NULL;
     meas_specs = load_all_measurement_specifications_info(SPEC_DIR);
@@ -72,13 +72,13 @@ START_TEST (test_load_apb_info)
     g_list_free_full(meas_specs, (GDestroyNotify)free_measurement_specification_info);
     g_list_free_full(asps, (GDestroyNotify)free_asp);
 
-    dlog(3, "Completed %s\n", __func__);
+    dlog(6, "Completed %s\n", __func__);
 }
 END_TEST
 
 START_TEST (test_load_all_apbs_info)
 {
-    dlog(3, "Running %s\n", __func__);
+    dlog(6, "Running %s\n", __func__);
     GList *apbs = NULL;
     GList *meas_specs = NULL;
     meas_specs = load_all_measurement_specifications_info(SPEC_DIR);
@@ -119,13 +119,13 @@ START_TEST (test_load_all_apbs_info)
     g_list_free_full(asps, (GDestroyNotify)free_asp);
     g_list_free_full(meas_specs,(GDestroyNotify)free_measurement_specification_info);
     g_list_free_full(apbs, (GDestroyNotify)unload_apb);
-    dlog(3, "Completed %s\n", __func__);
+    dlog(6, "Completed %s\n", __func__);
 }
 END_TEST
 
 START_TEST (test_apb_search)
 {
-    dlog(3, "Running %s\n", __func__);
+    dlog(6, "Running %s\n", __func__);
     int x = 0;
     struct apb *tmp = NULL;
     GList *asps = NULL;
@@ -145,13 +145,13 @@ START_TEST (test_apb_search)
     unload_apb(tmp);
     g_list_free_full(asps, (GDestroyNotify)free_asp);
     g_list_free_full(tapbs, (GDestroyNotify)unload_apb);
-    dlog(3, "Completed %s\n", __func__);
+    dlog(6, "Completed %s\n", __func__);
 }
 END_TEST
 
 START_TEST(test_run_asp_return_success)
 {
-    dlog(3, "Running %s\n", __func__);
+    dlog(6, "Running %s\n", __func__);
     /*
      * Test to make sure that the return value
      * of run_asp is zero on ASP success
@@ -166,17 +166,17 @@ START_TEST(test_run_asp_return_success)
     fail_if(dummy_asp == NULL, "couldn't find dummy asp");
 
     //This should succeed
-    ret = run_asp(dummy_asp, STDIN_FILENO, STDOUT_FILENO, false, 0, NULL, -1);
+    ret = run_asp(dummy_asp, -1, -1, false, 0, NULL, -1);
     fail_unless(ret == 0, "run_asp returned %d instead of zero for success %s\n", ret, dummy_asp->name);
 
     unload_all_asps(asps);
-    dlog(3, "Completed %s\n", __func__);
+    dlog(6, "Completed %s\n", __func__);
 }
 END_TEST
 
 START_TEST(test_run_asp_return_failure)
 {
-    dlog(3, "Running %s\n", __func__);
+    dlog(6, "Running %s\n", __func__);
     /*
      * Test to make sure that the return value
      * of run_asp is non-zero on ASP error
@@ -197,13 +197,13 @@ START_TEST(test_run_asp_return_failure)
     fail_unless(ret != 0, "run_asp should fail\n");
 
     unload_all_asps(asps);
-    dlog(3, "Completed %s\n", __func__);
+    dlog(6, "Completed %s\n", __func__);
 }
 END_TEST
 
 START_TEST(test_parse_copland)
 {
-    dlog(3, "Running %s\n", __func__);
+    dlog(6, "Running %s\n", __func__);
     int err;
     const char *correct_args = "a1=2";
     const char *no_num_args = "a1=blah";
@@ -242,7 +242,7 @@ START_TEST(test_parse_copland)
     fail_unless(err != 0, "That phrase should not parse properly");
 
     free_copland_phrase(template);
-    dlog(3, "Completed %s\n", __func__);
+    dlog(6, "Completed %s\n", __func__);
 }
 END_TEST
 

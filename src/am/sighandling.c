@@ -31,7 +31,7 @@ void handle_sigchld(__attribute__((unused))int sig)
     pid_t p;
     int status;
     while((p = waitpid(-1, &status, WNOHANG)) > 0) {
-        dlog(3, "Reaped child %d: %d\n", p, status);
+        dlog(5, "Reaped child %d: %d\n", p, status);
     }
 }
 
@@ -43,7 +43,7 @@ void wait_for_children()
     signal(SIGCHLD, SIG_DFL);
     do {
         while((p = wait(&status)) > 0) {
-            dlog(3, "Reaped child %d: %d\n", p, status);
+            dlog(5, "Reaped child %d: %d\n", p, status);
         }
         if(errno == ECHILD) {
             echild = 1;
@@ -58,7 +58,7 @@ int setup_signalfd(void)
     int resfd;
     int flags;
     sigset_t set;
-    dlog(3, "setting up signalfd signal handling\n");
+    dlog(6, "setting up signalfd signal handling\n");
     sigemptyset(&set);
 
     /* gets the set of currently blocked signals */
@@ -136,7 +136,7 @@ int setup_signalfd(void)
     (void)fcntl(resfd, F_SETFL, flags | O_NONBLOCK);
 
 out:
-    dlog(3, "Successfully set up signalfd signal handling\n");
+    dlog(6, "Successfully set up signalfd signal handling\n");
     return resfd;
 }
 

@@ -141,7 +141,8 @@ level: the measurement specification instructed the userspace APB to,
 3. take detailed measurement of each of the software packages found in step 2
 
 For (much) more verbose output, set the environment variable 
-`LIBMAAT_LOG_SYSLOG` to `0` for the appraiser and the attester. During various 
+`LIBMAAT_LOG_SYSLOG` to `0` for the appraiser and the attester. This will 
+re-direct output to the terminal. During various 
 measurements, you may need to set this variable to see output for the 
 appraiser execution. Example:
 
@@ -149,6 +150,10 @@ appraiser execution. Example:
 
     sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr -i 127.0.0.1:2342 \
          -u /tmp/app.sock -C /opt/maat/etc/maat/minimal-am-config.xml
+
+The verbosity can be further controlled by the environment variable
+'LIBMAAT_DEBUG_LEVEL'. More verbosity is achieved by increasing this
+value. See maat_environment_variables.txt for more information.
 
 Demo 2 - Appraiser vs. Attester
 -------------------------------
@@ -277,4 +282,7 @@ environment, please continue to the
 :ref:`AM Configuration Guide<configuring_attestation_manager>` to explore how to
 configure the Maat AM for your particular use case. 
 
+If you would like to set up a web-based UI for Maat instead of interacting with
+the Maat AM via the command line, please follow the instructions at 
+`:ref:`UI Tutorial<ui_tutorial>`.
 

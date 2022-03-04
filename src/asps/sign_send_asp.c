@@ -476,10 +476,10 @@ static int future_send_asp(int peerchan, char *buf, size_t buf_size)
 {
     gsize bytes_written = 0;
     int status;
-    dlog(0, "ASP writing response buf\n");
-    if(((status = maat_write_sz_buf(peerchan, buf, buf_size,
-                                    &bytes_written,
-                                    WRITE_TO_PEER_TIMEOUT)) != 0) ||
+    dlog(6, "ASP writing response buf\n");
+    if(((status = write_measurement_contract(peerchan, buf, buf_size,
+                  &bytes_written,
+                  WRITE_TO_PEER_TIMEOUT)) != 0) ||
             (bytes_written != buf_size + sizeof(uint32_t))) {
         dlog(0, "Failed to send size of measurement contract: %s\n", strerror(status < 0 ? -status : status));
         return -1;
@@ -489,7 +489,7 @@ static int future_send_asp(int peerchan, char *buf, size_t buf_size)
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(0, "IN sign_send ASP MEASURE\n");
+    dlog(4, "IN sign_send ASP MEASURE\n");
 
     // These all come in command line
     measurement_graph *graph  = NULL;
@@ -585,7 +585,6 @@ int asp_measure(int argc, char *argv[])
                   1, 0,
                   &response, &response_size);
     }
-
 
     if(ret_val < 0) {
         dlog(0, "Error: Failed to create signed measurement contract\n");

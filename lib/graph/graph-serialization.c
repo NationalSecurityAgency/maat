@@ -199,7 +199,7 @@ int serialize_measurement_graph(measurement_graph *g, size_t *sz,
 
     do {
         node_iterator *n_iter;
-        dlog(4, "Serializing nodes\n");
+        dlog(6, "Serializing nodes\n");
         for(n_iter = measurement_graph_iterate_nodes(g); n_iter != NULL; n_iter = node_iterator_next(n_iter)) {
             node_id_t n = node_iterator_get(n_iter);
             if(n != INVALID_NODE_ID) {
@@ -217,7 +217,7 @@ int serialize_measurement_graph(measurement_graph *g, size_t *sz,
 
     do {
         edge_iterator *e_iter;
-        dlog(4, "Serializing edges\n");
+        dlog(6, "Serializing edges\n");
         for(e_iter = measurement_graph_iterate_edges(g); e_iter != NULL;
                 e_iter = edge_iterator_next(e_iter)) {
             edge_id_t e = edge_iterator_get(e_iter);
@@ -511,7 +511,7 @@ measurement_graph *parse_measurement_graph(char *s, size_t size)
     node_id_t node_map_capacity;
     unsigned long mgversion = 0;
 
-    dlog(3, "Parse Measurement Graph\n");
+    dlog(6, "Parse Measurement Graph\n");
 
     if(size > INT_MAX) {
         dlog(1, "Error: buffer of size %zd is too large to parse\n", size);
@@ -531,7 +531,7 @@ measurement_graph *parse_measurement_graph(char *s, size_t size)
     node_map_capacity = 64;
 
     /* FIXME: we should do schema validation here */
-    if((doc = xmlReadMemory(s, (int)size, NULL, NULL, 0)) == NULL) {
+    if((doc = xmlReadMemory(s, (int)size, NULL, NULL, XML_PARSE_HUGE)) == NULL) {
         dlog(1, "Error Parsing MG: doc is null\n");
     }
 
@@ -572,7 +572,7 @@ measurement_graph *parse_measurement_graph(char *s, size_t size)
         char *endptr;
         mgversion = strtoul(mgversionstr, &endptr, 10);
         if(mgversion == ULONG_MAX || *endptr != '\0') {
-            dlog(1, "Warning: invalid version specifier in measurement graph: \"%s\"",
+            dlog(4, "Warning: invalid version specifier in measurement graph: \"%s\"",
                  mgversionstr);
             mgversion = 0;
         }
@@ -636,7 +636,7 @@ measurement_graph *parse_measurement_graph(char *s, size_t size)
                     continue;
                 }
 
-                dlog(4, "Parsing measurement in node\n");
+                dlog(6, "Parsing measurement in node\n");
                 //create new measurement data node
                 marshalled_data *md = parse_measurement(mgversion, meas);
                 if(md != NULL) {
@@ -657,7 +657,7 @@ measurement_graph *parse_measurement_graph(char *s, size_t size)
             goto error;
         }
     }
-    dlog(4, "Done parsing measurement graph\n");
+    dlog(6, "Done parsing measurement graph\n");
     xmlFreeDoc(doc);
     free(node_map);
     return ret_graph;

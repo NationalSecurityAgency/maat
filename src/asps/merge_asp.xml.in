@@ -31,7 +31,7 @@
 	  <group>${MAAT_GROUP}</group>
   	</security_context>
 	<usage>
-          merge_asp fd_left fd_right fd_out prefix seperator suffix
+          merge_asp fd_left fd_out fd_right prefix seperator suffix
 	</usage>
         <inputdescription>
 	  fd_left and fd_right are the file descriptors from which the ASP reads a blob.

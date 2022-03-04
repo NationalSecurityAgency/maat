@@ -1,0 +1,60 @@
+Setup Multirealms Guide
+*********************************
+
+.. Copyright
+
+   Copyright 2020 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+.. currentmodule:: maat
+
+.. _setup_multirealms:
+
+
+Introduction
+============
+
+These instructions give you the steps to set up multiple VMs for
+multi-realm demonstrations of Maat.
+
+Setup
+======
+
+Clone the VM you created in the setup step in order to get the proper number of 
+VMs. When cloning, you must ensure that the MAC address for each VM is distinct so 
+that they may communicate.
+
+Each VM must be placed within an internal network, and their IPs and ports must 
+be correctly set. For this exercise, we will assume that the internal network is
+on the interface enp0s8. This may be different for your configuration.
+
+Set their IPs and open the correct port for each by running the following commands
+on each machine:
+
+.. code-block:: bash
+
+   sudo ifconfig enp0s8 <ip address> netmask 255.255.255.0 \
+         broadcast 192.168.0.255
+   firewall-cmd --zone=public --add-port=<port number>/tcp
+
+
+Make sure the VMs are able to ping each other at the set IPs. IPs and port numbers
+are provided in each tutorial as needed.
+
+Note: if you restart your machines, the ports opened in the commands above will
+need to be reopened (can add `--permanent` flag to avoid this; see 
+`firewall-cmd` man pages).
+
+
+

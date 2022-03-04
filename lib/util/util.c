@@ -185,13 +185,8 @@ ssize_t construct_path(char *path, size_t space, char *base, ...)
     return used;
 }
 
-ssize_t buffer_to_file(const char *filename, const unsigned char *buf, size_t size)
-{
-    return buffer_to_file_perm(filename, buf, size, S_IRUSR|S_IWUSR);
-}
-
-ssize_t buffer_to_file_perm(const char *filename, const unsigned char *buf,
-                            size_t size, int mode)
+static ssize_t buffer_to_file_perm_flags(const char *filename, const unsigned char *buf,
+        size_t size, int mode, int flags)
 {
     int fd;
     ssize_t ret;
@@ -201,7 +196,7 @@ ssize_t buffer_to_file_perm(const char *filename, const unsigned char *buf,
         return -1;
     }
 
-    fd = open(filename, O_CREAT|O_WRONLY|O_CLOEXEC, mode);
+    fd = open(filename, flags, mode);
     if (fd < 0) {
         dperror("Error opening filename");
         return fd;
@@ -209,11 +204,29 @@ ssize_t buffer_to_file_perm(const char *filename, const unsigned char *buf,
 
     ret = write(fd, buf, size);
     if (ret != (ssize_t)size) {
-        dlog(0, "only wrote %zd bytes to %s\n", ret, filename);
+        dlog(6, "only wrote %zd bytes to %s\n", ret, filename);
     }
 
     close(fd);
     return ret;
+}
+
+ssize_t buffer_to_file_perm(const char *filename, const unsigned char *buf,
+                            size_t size, int mode)
+{
+    return buffer_to_file_perm_flags(filename, buf, size, mode,
+                                     O_CREAT|O_WRONLY|O_CLOEXEC);
+}
+
+ssize_t append_buffer_to_file(const char *filename, const unsigned char *buf, size_t size)
+{
+    return buffer_to_file_perm_flags(filename, buf, size, S_IRUSR|S_IWUSR,
+                                     O_CREAT|O_WRONLY|O_CLOEXEC|O_APPEND);
+}
+
+ssize_t buffer_to_file(const char *filename, const unsigned char *buf, size_t size)
+{
+    return buffer_to_file_perm(filename, buf, size, S_IRUSR|S_IWUSR);
 }
 
 ssize_t buffer_to_dir_file(const char *dir, const char *file,
@@ -235,7 +248,7 @@ unsigned char *file_to_buffer(const char *filename, size_t *size)
     unsigned char *buf;
     ret = stat(filename, &stbuf);
     if (ret) {
-        dlog(4, "stat returned %zd\n", ret);
+        dlog(6, "stat returned %zd\n", ret);
         return NULL;
     }
 
@@ -278,7 +291,7 @@ char *file_to_string(const char *filename)
 
     ret = stat(filename, &stbuf);
     if (ret) {
-        dlog(4, "stat returned %zd\n", ret);
+        dlog(6, "stat returned %zd\n", ret);
         return NULL;
     }
 
@@ -560,7 +573,7 @@ int file_exists(const char *filename)
     return 1;
 }
 
-int is_dir(const char *dirname)
+int path_is_dir(const char *dirname)
 {
     int ret;
     struct stat stbuf;
@@ -573,7 +586,7 @@ int is_dir(const char *dirname)
     return 1;
 }
 
-int is_reg(const char *filename)
+int path_is_reg(const char *filename)
 {
     int ret;
     struct stat stbuf;
@@ -586,7 +599,7 @@ int is_reg(const char *filename)
     return 1;
 }
 
-int is_exe(const char *exename)
+int path_is_exe(const char *exename)
 {
     int ret;
     struct stat stbuf;

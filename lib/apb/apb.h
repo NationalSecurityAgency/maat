@@ -84,4 +84,13 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
  */
 int fork_and_buffer(pid_t *pidout, int *pipe_read_out, int infd, ...);
 
+/*
+ * This function asynchronously executes an ASP and executes a fork_and_buffer call where the parent waits
+ * on the ASP and the child to terminate execution while the child returns immediately after the fork_and_buffer call
+ * with the read end of the pipe stored in the address pointed to by outfd. This can enable you to chain the
+ * execution of several ASPs in sequence without personally maintaining the buffering boilerplate. Returns -2
+ * on error before the fork, -1 on error in the parent after the fork, 0 for execution in the child, and >0 in the
+ * parent, assuming no errors.
+ */
+int fork_and_buffer_async_asp(struct asp *asp, const int argc, char *argv[], const int infd, int *outfd);
 #endif

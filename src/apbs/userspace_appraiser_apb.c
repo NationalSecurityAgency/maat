@@ -132,15 +132,15 @@ static void gather_report_data(measurement_graph *g, GList **report_values)
 
         if((measurement_node_get_rawdata(g, node, &report_measurement_type,
                                          &data)) != 0) {
-            dlog(0, "Failed to read report data from node?");
+            dlog(3, "Failed to read report data from node?");
             continue;
         }
         rmd = container_of(data, report_data, d);
 
-        dlog(4,"rmd= %p,\n ",rmd);
-        dlog(4," text = %s\n", rmd->text_data);
-        dlog(4," len = %zd\n", rmd->text_data_len);
-        dlog(4," loglevel = %d\n", rmd->loglevel);
+        dlog(6,"rmd= %p,\n ",rmd);
+        dlog(6," text = %s\n", rmd->text_data);
+        dlog(6," len = %zd\n", rmd->text_data_len);
+        dlog(6," loglevel = %d\n", rmd->loglevel);
 
         if (rmd->loglevel > default_report_level) {
             dlog(4, "..Filtered based on log level..\n");
@@ -282,7 +282,7 @@ static int run_apb_with_blob(struct apb *apb, uuid_t spec_uuid, struct scenario 
         goto error_write;
     }
 
-    dlog(3, "Wrote %zd bytes to subordinate apb\n", bytes_written);
+    dlog(6, "Wrote %zd bytes to subordinate apb\n", bytes_written);
 
     //Read the result
     char *result      = NULL;
@@ -505,13 +505,12 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
         } else {
             struct asp *appraiser_asp = NULL;
             appraiser_asp = select_appraisal_asp(node, data_type);
-
             if(!appraiser_asp) {
                 dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", type_str);
                 ret = 0;
                 //ret = -1; // not a failure at this point - don't have sub ASPs for all yet
             } else {
-                dlog(3, "appraiser_asp == %p (%p %d)\n", appraiser_asp, apb_asps,
+                dlog(4, "appraiser_asp == %p (%p %d)\n", appraiser_asp, apb_asps,
                      g_list_length(apb_asps));
 
                 char *asp_argv[] = {graph_path,
@@ -603,19 +602,19 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     }
 
     /* XXX: More when needed */
-    dlog(3, "asps list length = %d\n", g_list_length(apb_asps));
+    dlog(6, "asps list length = %d\n", g_list_length(apb_asps));
 
     // Load all apbs we need
     char *apbdir = getenv(ENV_MAAT_APB_DIR);
     if(apbdir == NULL) {
-        dlog(1, "Warning: environment variable " ENV_MAAT_APB_DIR
+        dlog(3, "Warning: environment variable " ENV_MAAT_APB_DIR
              " not set. Using default path " DEFAULT_APB_DIR "\n");
         apbdir = DEFAULT_APB_DIR;
     }
 
     char *specdir = getenv(ENV_MAAT_MEAS_SPEC_DIR);
     if(specdir == NULL) {
-        dlog(1, "Warning: environment variable " ENV_MAAT_MEAS_SPEC_DIR
+        dlog(3, "Warning: environment variable " ENV_MAAT_MEAS_SPEC_DIR
              " not set. Using default path " DEFAULT_MEAS_SPEC_DIR "\n");
         specdir = DEFAULT_MEAS_SPEC_DIR;
     }
@@ -624,9 +623,9 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     all_apbs = load_all_apbs_info(apbdir, apb_asps, mspecs);
     dlog(2, "Successfully loaded %d subordinate APBs\n", g_list_length(all_apbs));
 
-    dlog(4, "USAPP APB DEBUG: target= %s\n", target);
-    dlog(4, "USAPP APB DEBUG: target_type= %s\n", target_type);
-    dlog(4, "USAPP APB DEBUG: resource= %s\n", resource);
+    dlog(7, "USAPP APB DEBUG: target= %s\n", target);
+    dlog(7, "USAPP APB DEBUG: target_type= %s\n", target_type);
+    dlog(7, "USAPP APB DEBUG: resource= %s\n", resource);
 
     /* register the types used by this apb */
     if( (ret = register_types()) ) {
@@ -640,7 +639,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
         return ret;
     }
 
-    dlog(3, "Received Measurement Contract in appraiser APB\n");
+    dlog(6, "Received Measurement Contract in appraiser APB\n");
 
     if(scen->contract == NULL) {
         dlog(0, "No measurement contract received by appraiser APB\n");
@@ -671,17 +670,17 @@ int apb_execute(struct apb *apb, struct scenario *scen,
         return ret;
     }
 
-    dlog(4, "Resp contract: %s\n", response_buf);
+    dlog(6, "Resp contract: %s\n", response_buf);
     if(sz == 0) {
         sz = (size_t)xmlStrlen(response_buf);
         dlog(0, "Error: sz is 0, using strlen (Need to fix this! Why is xmlDocDumpMemory not giving back the size!?\n");
     }
 
     size_t bytes_written = 0;
-    dlog(4,"Send response from appraiser APB: %s.\n", response_buf);
+    dlog(6,"Send response from appraiser APB: %s.\n", response_buf);
     sz = sz+1; // include the terminating '\0'
-    ret = maat_write_sz_buf(resultchan, response_buf, sz,
-                            &bytes_written, 5);
+    ret = write_response_contract(resultchan, response_buf, sz,
+                                  &bytes_written, 5);
 
     if(ret != 0) {
         dlog(0, "Failed to send response from appraiser!: %s\n",
@@ -694,7 +693,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
         return -EIO;
     }
 
-    dlog(3, "Appraiser wrote %zd byte(s)\n", bytes_written);
+    dlog(6, "Appraiser wrote %zd byte(s)\n", bytes_written);
 
     return 0;
 }

@@ -77,7 +77,7 @@ void getopt_aspmain(int argc, char * const argv[],
 #endif
 
     while((opt = getopt_long(argc, argv, optstring, longopts, NULL)) > 0) {
-        dlog(4, "Info: processing argument -%c %s\n", opt, optarg);
+        dlog(6, "Info: processing argument -%c %s\n", opt, optarg);
         switch(opt) {
         case 'c':
 #ifdef USE_LIBCAP
@@ -158,22 +158,22 @@ int main(int argc, char *argv[])
     getopt_aspmain(argc, argv, &asp_file,
                    &caps, &caps_set, &asp_argc, &asp_argv);
 
-    dlog(4, "aspmain done getopt\n");
+    dlog(6, "aspmain done getopt\n");
     handle_set_caps(caps_set, caps);
 
     if ((rc = asp_init(asp_argc, asp_argv)) != 0) {
-        dlog(1, "ERROR: init failed for ASP %s (rc = %d)\n", asp_file, rc);
+        dlog(0, "ERROR: init failed for ASP %s (rc = %d)\n", asp_file, rc);
         goto asp_init_failed;
     }
 
     if ((rc = asp_measure(asp_argc, asp_argv)) != 0) {
-        dlog(1, "Warning: measurement failed with ASP %s (rc = %d)\n", asp_file, rc);
+        dlog(4, "Warning: measurement failed with ASP %s (rc = %d)\n", asp_file, rc);
         goto asp_measure_failed;
     }
     free(asp_argv);
 
     if((rc = asp_exit(0)) != 0) {
-        dlog(1, "ERROR: cleanup failed for ASP %s (rc = %d)\n", asp_file, rc);
+        dlog(0, "ERROR: cleanup failed for ASP %s (rc = %d)\n", asp_file, rc);
     }
     return rc;
 

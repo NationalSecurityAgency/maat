@@ -130,6 +130,11 @@ int chase_links(const char *in, char *out, size_t sz);
 ssize_t buffer_to_file(const char *filename, const unsigned char *buf, size_t size);
 
 /**
+ * Appends @size bytes from @buf to the file @filename. Uses default creation mode of S_IRUSR | S_IWUSR
+ */
+ssize_t append_buffer_to_file(const char *filename, const unsigned char *buf, size_t size);
+
+/**
  * Write @size bytes from @buf to the file @filename with the given mode (perm = (mode & ~umask)).
  */
 ssize_t buffer_to_file_perm(const char *filename, const unsigned char *buf, size_t size, int mode);
@@ -173,9 +178,9 @@ int strip(const char *str, int (*fun_ptr)(int), char **out);
 int strip_whitespace(const char *str, char **out);
 
 int rmrf(char *path);
-int is_reg(const char *filename);
-int is_dir(const char *dirname);
-int is_exe(const char *exename);
+int path_is_reg(const char *filename);
+int path_is_dir(const char *dirname);
+int path_is_exe(const char *exename);
 int file_exists(const char *filename);
 char *file_one_line_to_str(const char *filename);
 int runcmd(const char *cmd, char **sout, char **serr);

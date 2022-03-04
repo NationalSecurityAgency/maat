@@ -18,6 +18,9 @@
 /**
  * maat-io.c: Implementation of Maat I/O helpers.
  */
+
+#define _GNU_SOURCE
+#include <stdio.h>
 #include <config.h>
 
 #include <arpa/inet.h>
@@ -31,8 +34,9 @@
 #include <glib.h>
 #include <inttypes.h>
 #include <common/taint.h>
+#include <common/scenario.h>
+#include <common/copland.h>
 #include <fcntl.h>
-
 
 int maat_io_channel_new(int fd)
 {
@@ -68,6 +72,11 @@ int maat_wait_on_channel(int chan, int read, time_t timeout_secs)
     }
 
     rc = pselect(chan+1, rfds, wfds, NULL, &timeout, &sigs);
+
+    if(rc < 0) {
+        rc = -errno;
+    }
+
     return rc;
 }
 
@@ -111,12 +120,15 @@ int maat_read(int chan, char *buf,
     }
 
     if(check_nonblocking(chan) <= 0) {
-        return -1;
+        dlog(2, "Read channel %d is set to blocking instead of non blocking\n", chan);
+        return -EINVAL;
     }
 
     rc = gettimeofday(&pre, NULL);
     if(rc != 0) {
-        return -1;
+        rc = -errno;
+        dlog(0, "Unable to execute gettimeofday, errno=%d\n", -rc);
+        return rc;
     }
 
     while(bufsize != 0) {
@@ -145,21 +157,26 @@ int maat_read(int chan, char *buf,
         }
 
         time_left = timeout_check(timeout_secs, pre);
-	if(time_left < 0) {
-	    return -1;
-	}
+        if(time_left < 0) {
+            dlog(1, "Error in timeout check\n");
+            return -1;
+        }
+
         if(time_left == 0) {
+            dlog(2, "Timeout reached while reading\n");
             return -EAGAIN;
         }
 
         rc = maat_wait_on_channel(chan, 1, time_left);
         if(rc < 0) {
             /* something bad happend */
-            return -1;
+            dlog(0, "Unable to wait on the maat channel, error=%d\n", rc);
+            return rc;
         }
 
         if(rc == 0) {
             /* timeout occurred. */
+            dlog(1, "Timeout reached while waiting on channel\n");
             return -EAGAIN;
         }
     }
@@ -180,7 +197,7 @@ int maat_read_sz_buf(int chan, char **buf,
 
     // 1 MB default
     if(max_size < 0) {
-	max_size = 1000000; 
+        max_size = 1000000;
     }
 
     *eof_encountered = 0;
@@ -191,44 +208,51 @@ int maat_read_sz_buf(int chan, char **buf,
     }
 
     if(check_nonblocking(chan) <= 0) {
-        return -1;
+        dlog(2, "Read channel %d is set to blocking instead of non blocking\n", chan);
+        return -EINVAL;
     }
 
     if(gettimeofday(&pre, NULL) != 0) {
-        dlog(0, "failed to gettimeofday\n");
-        return -1;
+        res = -errno;
+        dlog(0, "Unable to execute gettimeofday, errno=%d\n", -res);
+        return res;
     }
+
     dlog(DEBUG_MAAT_IO_LEVEL, "reading buffer size\n");
     if((res = maat_read(chan, (char*)&sizeval, sizeof(uint32_t), &bread,
                         eof_encountered, timeout_secs)) != 0) {
-        dlog(0, "failed to read size: %s\n", strerror(errno));
+        dlog(0, "Failed to read size: %s\n", strerror(errno));
         return res;
     }
 
     if(*eof_encountered != 0) {
+        dlog(2, "Encountered EOF during read\n");
         return 0;
-    } 
+    }
 
     time_left = timeout_check(timeout_secs, pre);
     if(time_left < 0) {
-	return -1;
+        dlog(1, "Error in timeout check\n");
+        return -1;
     }
+
     if(time_left == 0) {
-        dlog(0, "timed out after checking size\n");
+        dlog(2, "Timeout after checking size\n");
         return -1;
     }
 
     sizeval      = ntohl(sizeval);
 
     /* Check that the size of the message is less than max_size */
-    dlog(3, "size read from stream: %d. Max size is %d\n", sizeval, max_size);
+    dlog(4, "DEBUG: size read from stream: %d. Max size is %d\n", sizeval, max_size);
     if(sizeval > max_size) {
-	dlog(0, "Stream size exceeds maximum size\n");
-	return -EMSGSIZE;
-	// Alternatively could read max_size below instead of quitting out here
+        dlog(1, "Stream size exceeds maximum size\n");
+        return -EMSGSIZE;
+        // Alternatively could read max_size below instead of quitting out here
     }
 
     *buf         = malloc(sizeval);
+
     dlog(DEBUG_MAAT_IO_LEVEL, "allocated buffer of size %"PRIu32"\n", sizeval);
 
     if(*buf == NULL) {
@@ -270,10 +294,12 @@ int maat_write(int chan, const unsigned char *buf,
     int rc;
 
     if(check_nonblocking(chan) <= 0) {
+        dlog(2, "Write channel %d is set to blocking instead of non blocking\n", chan);
         return -EINVAL;
     }
 
     if(bufsize > G_MAXSIZE) {
+        dlog(1, "Requested buffer size %zu is larger than the proper size\n", bufsize);
         return -EINVAL;
     }
 
@@ -283,7 +309,9 @@ int maat_write(int chan, const unsigned char *buf,
 
     rc = gettimeofday(&pre, NULL);
     if(rc != 0) {
-        return -errno;
+        rc = -errno;
+        dlog(0, "Unable to execute gettimeofday, errno=%d\n", -rc);
+        return rc;
     }
 
     while(bufsize != 0) {
@@ -293,11 +321,13 @@ int maat_write(int chan, const unsigned char *buf,
         rc = maat_wait_on_channel(chan, 0, timeout_secs);
         if(rc < 0) {
             /* something bad happend */
+            dlog(0, "Unable to wait on the maat channel, error=%d\n", rc);
             return rc;
         }
 
         if(rc == 0) {
             /* timeout occurred. */
+            dlog(0, "Timeout occured on the maat channel\n");
             return -EAGAIN;
         }
 
@@ -305,7 +335,8 @@ int maat_write(int chan, const unsigned char *buf,
         errno = 0;
         bytes_written_tmp = write(chan, buf, bufsize);
         if(bytes_written_tmp < 0 && errno != EAGAIN) {
-	    return -errno;
+            dlog(0, "Error when writing to maat channel: %d:%s\n", errno, strerror(errno));
+            return -errno;
         }
 
         dlog(DEBUG_MAAT_IO_LEVEL, "Writing %zu of %zu bytes to chan\n", bytes_written_tmp, bufsize);
@@ -323,14 +354,16 @@ int maat_write(int chan, const unsigned char *buf,
 
         rc = gettimeofday(&post, NULL);
         if(rc != 0) {
-            return -errno;
+            rc = errno;
+            dlog(0, "Error when writing to maat channel: %d\n", rc);
+            return -rc;
         }
 
         /* we're just going to ignore the usecs...this is a gross timeout anyway */
-	time_left = timeout_check(timeout_secs, pre);
-	if(time_left == 0) {
-	    return -EAGAIN;
-	}
+        time_left = timeout_check(timeout_secs, pre);
+        if(time_left == 0) {
+            return -EAGAIN;
+        }
     }
     return 0;
 }
@@ -346,6 +379,7 @@ int maat_write_sz_buf(int chan, const unsigned char *buf,
     size_t bwritten;
 
     if(check_nonblocking(chan) <= 0) {
+        dlog(2, "Write channel %d is set to blocking instead of non blocking\n", chan);
         return -EINVAL;
     }
 
@@ -360,12 +394,14 @@ int maat_write_sz_buf(int chan, const unsigned char *buf,
     }
 
     if(gettimeofday(&pre, NULL) != 0) {
-        return -errno;
+        res = -errno;
+        dlog(0, "Unable to execute gettimeofday, errno=%d\n", -res);
+        return res;
     }
 
     if((res = maat_write(chan, (unsigned char*)&sizeval,
                          sizeof(uint32_t), NULL, timeout_secs)) != 0) {
-        dlog(1, "maat_write() of buffer size (%"PRIu32") failed\n", sizeval);
+        dlog(0, "maat_write() of buffer size (%"PRIu32") failed\n", sizeval);
         return res;
     }
 
@@ -376,7 +412,7 @@ int maat_write_sz_buf(int chan, const unsigned char *buf,
     time_left = timeout_check(timeout_secs, pre);
 
     if(time_left == 0) {
-        dlog(1, "timeout after sending buffer size\n");
+        dlog(2, "Timeout after sending buffer size\n");
         return -EAGAIN;
     }
 
@@ -387,8 +423,83 @@ int maat_write_sz_buf(int chan, const unsigned char *buf,
         return res;
     }
 
-    if(bytes_written != NULL)
+    if(bytes_written != NULL) {
         *bytes_written += bwritten;
+    }
 
     return res;
 }
+
+
+
+void print_options_string_from_scenario(GList *current_options)
+{
+    GList *op = NULL;
+    for(op = current_options; op && current_options->data != NULL; op = g_list_next(op)) {
+        dlog(5, "PRESENTATION MODE (self): %s\n", ((copland_phrase *)(op->data))->phrase);
+    }
+}
+
+
+int write_initial_contract(int chan, const unsigned char *buf,
+                           size_t bufsize, size_t *bytes_written,
+                           time_t timeout_secs)
+{
+    dlog(5, "PRESENTATION MODE (out): Sends initial contract with set of measurements\n");
+
+    return maat_write_sz_buf(chan, buf,
+                             bufsize, bytes_written,
+                             timeout_secs);
+}
+
+int write_modified_contract(int chan, const unsigned char *buf,
+                            size_t bufsize, size_t *bytes_written,
+                            time_t timeout_secs)
+{
+    dlog(5, "PRESENTATION MODE (out): Sends modified contract.\n");
+    return maat_write_sz_buf(chan, buf,
+                             bufsize, bytes_written,
+                             timeout_secs);
+}
+int write_measurement_contract(int chan, const unsigned char *buf,
+                               size_t bufsize, size_t *bytes_written,
+                               time_t timeout_secs)
+{
+
+    dlog(5, "PRESENTATION MODE (out): Completed measurement is sent.\n");
+    return maat_write_sz_buf(chan, buf,
+                             bufsize, bytes_written,
+                             timeout_secs);
+}
+
+int write_response_contract(int chan, const unsigned char *buf,
+                            size_t bufsize, size_t *bytes_written,
+                            time_t timeout_secs)
+{
+    dlog(5, "PRESENTATION MODE (out): Response contract is sent to requestor\n");
+    return maat_write_sz_buf(chan, buf,
+                             bufsize, bytes_written,
+                             timeout_secs);
+}
+
+int write_request_contract(int chan, const unsigned char *buf,
+                           size_t bufsize, size_t *bytes_written,
+                           time_t timeout_secs)
+{
+    dlog(5, "PRESENTATION MODE (out): Request contract is sent.\n");
+    return maat_write_sz_buf(chan, buf,
+                             bufsize, bytes_written,
+                             timeout_secs);
+}
+int write_execute_contract(int chan, const unsigned char *buf,
+                           size_t bufsize, size_t *bytes_written,
+                           time_t timeout_secs)
+{
+    dlog(5, "PRESENTATION MODE (out): Sends execute contract with selected option\n");
+    return maat_write_sz_buf(chan, buf,
+                             bufsize, bytes_written,
+                             timeout_secs);
+
+}
+
+

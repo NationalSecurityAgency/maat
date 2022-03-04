@@ -25,7 +25,7 @@
 #define __COPLAND_H__
 
 #include <glib.h>
-
+#include <libxml/xpath.h>
 #include <util/keyvalue.h>
 
 /*******************************************************************************
@@ -36,7 +36,7 @@
  * Enums
  */
 typedef enum Arg_Role {BASE, ACTUAL} Arg_Role;
-typedef enum Arg_Type {INTEGER = 1, STRING} Arg_Type;
+typedef enum Arg_Type {INTEGER = 1, STRING, PLACE} Arg_Type;
 
 /**
  * Holds an argument to a Copland phrase.
@@ -75,6 +75,74 @@ typedef struct copland_phrase {
     Arg_Role role;
     phrase_arg **args;
 } copland_phrase;
+
+/**
+ * Type that holds an APB's permissions with respect to a domain's data
+ */
+typedef uint32_t place_perm_t;
+
+/**
+ * Because the base type of place_perm_t is obscured, we need
+ * to develop helpers to convert to and from the type, just
+ * in case we need to add or remove bits
+ */
+int place_perm_to_str(place_perm_t perm, char **str);
+int str_to_place_perm(const char *str, place_perm_t *perm);
+
+/**
+ * Struct which holds the information that can be provided about a place.
+ * Different APBs will have different knowledge regarding different places,
+ * and this struct is used to specify the permissions that an ABP has with
+ * respect to the domain whose label is specified by the given ID.
+ * The information regarding what place information the APB will require is
+ * specified within the Copland section of the APB's XML specification file.
+ */
+typedef struct place_perms {
+    char *id;
+    place_perm_t perms;
+} place_perms;
+
+/**
+ * Stores information that an APB could retrieve pertaining to an APB
+ */
+typedef struct place_info {
+    char *addr;
+    char *port;
+    char *kern_vers;
+    char *domain;
+} place_info;
+
+
+/*
+ * Keep track of values within the work directory
+ * based CSV file provided to the APB
+ */
+#define COPLAND_WORK_PLACE_ID_INDX 0
+#define COPLAND_WORK_PLACE_PERMS_INDX 1
+#define COPLAND_WORK_PLACE_ADDR_INDX 2
+#define COPLAND_WORK_PLACE_PORT_INDX 3
+#define COPLAND_WORK_PLACE_KERN_INDX 4
+#define COPLAND_WORK_PLACE_DOM_INDX 5
+
+#define WORK_INDX_TO_COL_ADJ 2
+#define WORK_INDX_TO_COL(INDEX) (1 << (INDEX - WORK_INDX_TO_COL_ADJ))
+
+#define COPLAND_DB_PLACE_ID_INDX 0
+#define COPLAND_DB_PLACE_ADDR_INDX 1
+#define COPLAND_DB_PLACE_PORT_INDX 2
+#define COPLAND_DB_PLACE_KERN_INDX 3
+#define COPLAND_DB_PLACE_DOM_INDX 4
+
+#define DB_INDX_TO_COL_ADJ 1
+#define DB_INDX_TO_COL(INDEX) (1 << (INDEX - DB_INDX_TO_COL_ADJ))
+
+#define COPLAND_PLACE_ADDR_PERM WORK_INDX_TO_COL(COPLAND_WORK_PLACE_ADDR_INDX)
+#define COPLAND_PLACE_PORT_PERM WORK_INDX_TO_COL(COPLAND_WORK_PLACE_PORT_INDX)
+#define COPLAND_PLACE_KERN_PERM WORK_INDX_TO_COL(COPLAND_WORK_PLACE_KERN_INDX)
+#define COPLAND_PLACE_DOM_PERM WORK_INDX_TO_COL(COPLAND_WORK_PLACE_DOM_INDX)
+
+#define COPLAND_PLACE_PERMS_FILE "/place_perms.csv"
+#define COPLAND_CSV_LINE_MAX_LEN 1024
 
 /**
  * Used by APBs to specify the UUID of the measurement specification that
@@ -315,6 +383,24 @@ int eval_bounds_of_args(const copland_phrase *phr, const copland_phrase *bounder
  */
 
 /**
+ * Parses the APB XML representing the places relevant to the Copland phrase
+ * and places it into a GList of place_perms structs
+ * XML argument block is assumed to be formatted as such:
+ *
+ *      <place id=...>
+ *          <info> ... </info>
+ *      </place>
+ *      ...
+ *
+ * (in the full context of the copland XML stanza, this is within the
+ * <places> block)
+ *
+ * All of this information will be written into a file which will be made
+ * available in the APB's work directory.
+ */
+int parse_place_block(xmlDocPtr doc, xmlNode *arg_block, GList **info);
+
+/**
  * Parses the APB XML representing Copland arguments and places it into a
  * list of phrase_arg structs
  * XML argument block is assumed to be formatted as such:
@@ -341,9 +427,55 @@ int parse_arg_block(xmlDocPtr doc, xmlNode *arg_block, phrase_arg ***args);
  *     <phrase copland="..."></phrase>
  *     <spec uuid="..."></spec>
  *     <arguments>...</arguments>
+ *     <places>...</places>
  *
  * (in the full context of the apb XML document, this is within the
  * <copland> stanza)
  */
 void parse_copland(xmlDocPtr doc, struct apb *apb, xmlNode *copl_node, GList *meas_specs);
+
+/******************************************************************************
+ * Copland Place Information Retrieval
+ */
+/**
+ * This function checks to see if the Copland phrase has arguments pertaining to
+ * Copland places. This could be used to check if calls to query_place_information
+ * are required. Returns 1 if place arguments are present, and 0 is not.
+ *
+ * As a warning, although this function will operate correctly on a BASE copland_phrase,
+ * a BASE Copland phrase will NOT have the place IDs themselves, so you may want to make
+ * sure that the given copland_phrase is an ACTUAL one.
+ */
+int has_place_args(const copland_phrase *phrase);
+
+/**
+ * When applicable, query for the place information using the compiled in backend.
+ * Only the information which we have been given permission in the configuration file
+ * to acquire will be provided to the APB. If a domain is not given Copland place
+ * information, no information will be given pertaining that domain. If place
+ * information entry appears with no corresponding domain argument being provided,
+ * that entry will just be ignored.
+ *
+ * This information will be written to the file specified by the COPLAND_PLACE_PERMS_FILE
+ * macro which will be located in the work directory of the APB.
+ *
+ * Returns 0 on success and -1 otherwise.
+ */
+int query_place_information(const struct apb *apb, const struct scenario *scen,
+                            const copland_phrase *phrase);
+
+/**
+ * In APBs that use information pertaining to places, this function can
+ * be used to retrieve that information on a per place basis.
+ *
+ * Returns 0 on success and a -1 otherwise.
+ */
+int get_place_information(const struct scenario *scen, const char *id,
+                          place_info **info);
+
+/**
+ * Frees the allocated buffers within the place information pointer
+ *
+ */
+void free_place_information(place_info *info);
 #endif

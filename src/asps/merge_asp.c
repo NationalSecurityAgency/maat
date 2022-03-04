@@ -21,7 +21,7 @@
  * an optional prefix, seperator, and suffix, and writes the
  * result to fd_out
  *
- * Usage: "ASP_NAME" <fd_left> <fd_right> <fd_out> [prefix=<prefix>] [seperator=<seperator>] [suffix==<suffix>]
+ * Usage: "ASP_NAME" <fd_left> <fd_out> <fd_right> [prefix=<prefix>] [seperator=<seperator>] [suffix==<suffix>]
  */
 
 #include <stdio.h>
@@ -47,7 +47,7 @@
 #define PRE_FLAG "prefix="
 #define SUF_FLAG "suffix="
 
-#define TIMEOUT 10
+#define TIMEOUT 1000
 #define ARG_SZ_LIM 256
 #define DEF_STR "(null)"
 
@@ -98,12 +98,12 @@ static int process_args(int argc, char *argv[], struct asp_args *args)
         goto parse_error;
     }
 
-    if((args->fd_right = atoi(argv[2])) < 0) {
+    if((args->fd_out = atoi(argv[2])) < 0) {
         i = 2;
         goto parse_error;
     }
 
-    if((args->fd_out = atoi(argv[3])) < 0) {
+    if((args->fd_right = atoi(argv[3])) < 0) {
         i = 3;
         goto parse_error;
     }
@@ -222,7 +222,7 @@ int asp_measure(int argc, char *argv[])
     struct asp_args arg_set;
 
     if(process_args(argc, argv, &arg_set)) {
-        asp_logerror("Usage: "ASP_NAME" <fd_left> <fd_right> <fd_out> [prefix] [seperator] [suffix]\n");
+        asp_logerror("Usage: "ASP_NAME" <fd_left> <fd_out> <fd_right> [prefix] [seperator] [suffix]\n");
         ret_val = -EINVAL;
         goto parse_args_failed;
     }
@@ -231,7 +231,7 @@ int asp_measure(int argc, char *argv[])
     ret_val = maat_read_sz_buf(arg_set.fd_left, &buf_left, &bufsize_left,
                                &bytes_read_left, &eof_enc, TIMEOUT, -1);
     if (ret_val == -EAGAIN) {
-        dlog(1, "Warning: timeout occured before left channel read could complete\n");
+        dlog(2, "Warning: timeout occured before left channel read could complete\n");
     } else if(ret_val < 0) {
         dlog(0, "Error reading evidence from left channel\n");
         ret_val = -1;
@@ -247,15 +247,15 @@ int asp_measure(int argc, char *argv[])
     ret_val = maat_read_sz_buf(arg_set.fd_right, &buf_right, &bufsize_right,
                                &bytes_read_right, &eof_enc, TIMEOUT, -1);
     if (ret_val == -EAGAIN) {
-        dlog(1, "Warning: timeout occured before right channel read could complete\n");
+        dlog(2, "Warning: timeout occured before right channel read could complete\n");
     } else if(ret_val < 0) {
         dlog(0, "Error reading evidence from right channel\n");
         ret_val = -1;
-        goto read_left_failed;
+        goto read_right_failed;
     } else if (eof_enc != 0) {
         dlog(0, "Error: EOF encountered before complete right channel buffer read\n");
         ret_val = -1;
-        goto eof_enc_left;
+        goto eof_enc_right;
     }
 
     dlog(4, "right buffer size: %zd, right bytes read: %zu buf: %s\n", bufsize_right, bytes_read_right, buf_right);
@@ -264,7 +264,7 @@ int asp_measure(int argc, char *argv[])
     ret_val = combine_channels(buf_left, bytes_read_left, buf_right, bytes_read_right, arg_set.seperator,
                                arg_set.prefix, arg_set.suffix, arg_set.fd_out);
     if(ret_val == -EAGAIN) {
-        dlog(1, "Warning: timeout occurred before full write of combined channels could occur\n");
+        dlog(2, "Warning: timeout occurred before full write of combined channels could occur\n");
     } else if(ret_val < 0) {
         dlog(0, "Error: Failed to merge channels\n");
         ret_val = -1;
@@ -275,8 +275,10 @@ int asp_measure(int argc, char *argv[])
     asp_loginfo("merge ASP returning with success\n");
 
 merge_failed:
+eof_enc_right:
     free(buf_right);
     bufsize_right = 0;
+read_right_failed:
 eof_enc_left:
     free(buf_left);
     bufsize_left = 0;

@@ -90,7 +90,7 @@ START_TEST(test_exampleam)
 
     fail_if(create_integrity_request(TARGET_TYPE_HOST_PORT,
                                      (xmlChar*)"127.0.0.1", (xmlChar*)"2342",
-                                     (xmlChar*)"test", NULL, NULL, NULL,
+                                     (xmlChar*)"test", NULL, NULL, NULL, NULL,
                                      &request_contract, &request_sz) != 0,
             "Failed to create integrity request contract");
 
@@ -98,7 +98,7 @@ START_TEST(test_exampleam)
                   CA_CERT,
                   ATTESTER_CERT,
                   ATTESTER_KEY,
-                  NULL, 0, ATTESTER);
+                  NULL, NULL, 0, ATTESTER);
 
     attester_scen->workdir		= WORKDIR_CLIENT;
     attester_scen->peer_chan            = maat_io_channel_new(the_pipe[1]);
@@ -108,6 +108,7 @@ START_TEST(test_exampleam)
                   CA_CERT,
                   APPRAISER_CERT,
                   APPRAISER_KEY,
+                  NULL,
                   (char*)request_contract,
                   (size_t)request_sz,
                   APPRAISER);

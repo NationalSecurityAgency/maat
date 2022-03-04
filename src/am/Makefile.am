@@ -19,7 +19,8 @@ ACLOCAL_AMFLAGS		= -I m4
 EXTRA_DIST		= org.AttestationManager.service.in \
 				attestmgr-config.xml.in \
 				trusted-sock-am-config.xml.in \
-				minimal-am-config.xml.in
+				minimal-am-config.xml.in \
+				trusted-third-party-config.xml.in
 servicedir		= $(prefix)/share/dbus-1/services
 service_DATA		= org.AttestationManager.service
 
@@ -32,7 +33,7 @@ python_PYTHON += mq_client.py
 endif
 
 amconfdir   = $(sysconfdir)/$(PACKAGE)
-amconf_DATA = attestmgr-config.xml minimal-am-config.xml trusted-sock-am-config.xml
+amconf_DATA = attestmgr-config.xml minimal-am-config.xml trusted-third-party-config.xml trusted-sock-am-config.xml
 
 credsdir     = $(amconfdir)/credentials
 creds_DATA   = $(top_srcdir)/demo/credentials/ca.pem
@@ -100,6 +101,9 @@ attestmgr-config.xml: attestmgr-config.xml.in
 	$(AM_V_GEN)$(SED) $(SED_EXPRS) $< > $@
 
 minimal-am-config.xml: minimal-am-config.xml.in
+	$(AM_V_GEN)$(SED) $(SED_EXPRS) $< > $@
+
+trusted-third-party-config.xml: trusted-third-party-config.xml.in
 	$(AM_V_GEN)$(SED) $(SED_EXPRS) $< > $@
 
 trusted-sock-am-config.xml: trusted-sock-am-config.xml.in

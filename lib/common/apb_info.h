@@ -58,11 +58,14 @@ struct apb {
 			 * list of struct measurement_spec supperted
 			 * by this APB
 			 */
-
     GList *phrase_specs; /**
-             * List of all the copland phrase/measurement
-             * spec pairs supported by this ABP
-             */
+                          * List of all the copland phrase/measurement
+                          * spec pairs supported by this ABP
+                          */
+    GList *place_permissions; /**
+                             * List of information that this APB has with
+                             * respect to each place it interacts with
+			     */
 
     exe_sec_ctxt desired_sec_ctxt;
 };

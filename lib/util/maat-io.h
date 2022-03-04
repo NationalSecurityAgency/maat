@@ -30,12 +30,14 @@
 #define __MAAT_UTIL_IO_H__
 
 #include <glib.h>
-
 /**
  * Maat-IO functions will use dlog() to log output at the level
  * specified by DEBUG_MAAT_IO_LEVEL.
  */
 #define DEBUG_MAAT_IO_LEVEL 7
+
+
+
 
 /**
  * Wrapper around g_io_channel_unix_new for setting up a g_io_channel
@@ -86,10 +88,10 @@ int maat_read(int chan, char *buf,
  *
  * @chan, @buf and @bufsize must not be null, but @bytes_read may.
  *
- * Returns -EMSGSIZE if @bufsize is larger than @max_size, 
+ * Returns -EMSGSIZE if @bufsize is larger than @max_size,
  * returns -EAGAIN (< 0) if timeout is reached, 0 if everything
  * completed happily or EOF encountered, and < 0 if any other error
- * occurred. 
+ * occurred.
  *
  * If EOF is encountered, *@eof_encountered is set to non-zero,
  * otherwise it is set to 0.
@@ -128,5 +130,67 @@ int maat_write(int chan, const unsigned char *buf,
 int maat_write_sz_buf(int chan, const unsigned char *buf,
                       size_t bufsize, size_t *bytes_written,
                       time_t timeout_secs);
+/**
+ * This function is used by the Attestation Manager UI. It iterates
+ * through the options in a scenario object and prints them out to 
+ * the UI.
+ */
+void print_options_string_from_scenario(GList *current_options);
+
+/**
+ * This function acts as a wrapper function of maat_write_sz_buf().
+ * It makes the call more explicit and contains a message for the
+ * AM UI that specifies a Measurement Contract being sent.
+ */
+int write_measurement_contract(int chan, const unsigned char *buf,
+                               size_t bufsize, size_t *bytes_written,
+                               time_t timeout_secs);
+
+/**
+ * This function acts as a wrapper function of maat_write_sz_buf().
+ * It makes the call more explicit and contains a message for the
+ * AM UI that specifies a Response Contract being sent.
+ */
+int write_response_contract(int chan, const unsigned char *buf,
+                            size_t bufsize, size_t *bytes_written,
+                            time_t timeout_secs);
+
+/**
+ * This function acts as a wrapper function of maat_write_sz_buf().
+ * It makes the call more explicit and contains a message for the
+ * AM UI that specifies an Initial Contract being sent.
+ */
+int write_initial_contract(int chan, const unsigned char *buf,
+                           size_t bufsize, size_t *bytes_written,
+                           time_t timeout_secs);
+
+/**
+ * This function acts as a wrapper function of maat_write_sz_buf().
+ * It makes the call more explicit and contains a message for the
+ * AM UI that specifies a Modified Contract being sent.
+ */
+int write_modified_contract(int chan, const unsigned char *buf,
+                            size_t bufsize, size_t *bytes_written,
+                            time_t timeout_secs);
+
+/**
+ * This function acts as a wrapper function of maat_write_sz_buf().
+ * It makes the call more explicit and contains a message for the
+ * AM UI that specifies an Execute Contract being sent.
+ */
+int write_execute_contract(int chan, const unsigned char *buf,
+                           size_t bufsize, size_t *bytes_written,
+                           time_t timeout_secs);
+
+/**
+ * This function acts as a wrapper function of maat_write_sz_buf().
+ * It makes the call more explicit and contains a message for the
+ * AM UI that specifies a Request Contract being sent.
+ */
+int write_request_contract(int chan, const unsigned char *buf,
+                           size_t bufsize, size_t *bytes_written,
+                           time_t timeout_secs);
+
+
 
 #endif

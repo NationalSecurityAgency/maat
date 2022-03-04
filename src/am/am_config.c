@@ -426,6 +426,14 @@ int attestmgr_load_config(const char *cfg_path, am_config *cfg)
                          "<work> node (ignoring).\n");
                 }
             }
+        } else if(strcasecmp(node_name, "place") == 0) {
+            if(cfg->place_file == NULL) {
+                cfg->place_file = xmlGetPropASCII(node, "name");
+                if(cfg->place_file == NULL) {
+                    dlog(2, "Warning: invalid or missing \"name\" attribute of "
+                         "<place> node (ignoring).\n");
+                }
+            }
         } else if(strcasecmp(node_name, "user") == 0) {
             if(cfg->uid_set == 0) {
                 char *username    = xmlNodeGetContentASCII(node);
@@ -520,6 +528,7 @@ void free_am_config_data(am_config *cfg)
 
     xmlFree(cfg->selector_source.loc);
     free(cfg->selector_source.method);
+    free(cfg->place_file);
 
     xmlFree(cfg->cacert_file);
     xmlFree(cfg->cert_file);

@@ -26,8 +26,13 @@
 
 #include <util.h>
 
+/*
+ * Default values for verbosity settings. The environment variables have
+ * the highest priority in determining these values, followed by the 
+ * arguments passed into calls to libmaat_init().
+ */
 int __attribute__((weak)) __libmaat_debug_level = 1;
-int __attribute__((weak)) __libmaat_syslog = 0;
+int __attribute__((weak)) __libmaat_syslog = 1;
 
 /*
  * Generic XML and SSL init and exit routines.
@@ -64,6 +69,12 @@ void libmaat_ssl_exit(void)
     CRYPTO_cleanup_all_ex_data();
 }
 
+/*
+ * LIBMAAT_LOG_SYSLOG is a flag that if set, will convert all dlog calls to syslog calls.
+ * By default, this is not set, in which case dlog calls use fprintf() to print the messages to the terminal. 
+ * LIBMAAT_DEBUG_LEVEL is the environment variable that sets the level of verbosity. The dlog
+ * level must be less than or equal to the LIBMAAT_DEBUG_LEVEL in order to be printed to the terminal.
+ */
 void libmaat_init(int _syslog, int loglevel)
 {
     char *level;

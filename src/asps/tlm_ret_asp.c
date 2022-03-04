@@ -172,7 +172,7 @@ static FILE *exec_tr_client()
         }
 
         // Execute the telemetry retrieval client
-        dlog(0, "Running Telemetry Retrieval Client with generated config file\n");
+        dlog(6, "Running Telemetry Retrieval Client with generated config file\n");
         if(execl("/usr/bin/java", "/usr/bin/java", "-cp", TR_CLIENT_JAR, TR_CLIENT_LIB,
                  TR_SERVER, TR_SERVER_PORT, CONFIG_FILE_PATH, NULL) < 0) {
             dlog(0, "Error: failed to exec retrieval client %s\n", strerror(errno));
@@ -232,8 +232,8 @@ static int create_tr_config_file(int delta, char *path, long int *start, long in
 
     past_tv.tv_sec = present_tv.tv_sec - delta;
 
-    dlog(0, "Found delta of %d seconds\n", delta);
-    dlog(0, "Asking for telemetry in span %ld%06ld - %ld%06ld\n", (long int)past_tv.tv_sec, (long int) past_tv.tv_usec,
+    dlog(6, "Found delta of %d seconds\n", delta);
+    dlog(6, "Asking for telemetry in span %ld%06ld - %ld%06ld\n", (long int)past_tv.tv_sec, (long int) past_tv.tv_usec,
          (long int) present_tv.tv_sec, (long int) present_tv.tv_usec);
 
     // This all just to print human readable for demo
@@ -247,7 +247,7 @@ static int create_tr_config_file(int delta, char *path, long int *start, long in
     tmptime = past_tv.tv_sec;
     tmptm = localtime(&tmptime);
     strftime(past_buf, sizeof past_buf, "%a %b %d %Y %H:%M:%S", tmptm);
-    dlog(0, "( %s.%06ld - %s.%06ld )\n", past_buf, (long int) past_tv.tv_usec, present_buf, (long int) present_tv.tv_usec);
+    dlog(6, "( %s.%06ld - %s.%06ld )\n", past_buf, (long int) past_tv.tv_usec, present_buf, (long int) present_tv.tv_usec);
     //////////////////////////////////////
 
     if(asprintf(&begin_span, "%ld%06ld", (long int)past_tv.tv_sec, (long int)past_tv.tv_usec) < 0) {
@@ -451,7 +451,7 @@ static int appraise_telemetry(FILE *fp, long int start_time, long int end_time)
 
         case VALUE:                                                         // This state's job is to evaluate the value,
             if((checked_value == 0) && (checked_source == 0)) {                   // based on id. Either exit on fail, or pass
-                dlog(5, "Validated value for %d\n", id_number);             // back to POINT_SAMPLES for more eval.
+                dlog(7, "Validated value for %d\n", id_number);             // back to POINT_SAMPLES for more eval.
                 t_state = POINT_SAMPLES;
                 id_number = 0;
                 checked_value = -1;
@@ -583,14 +583,14 @@ static int appraise_telemetry(FILE *fp, long int start_time, long int end_time)
         dlog(0, "ERROR: No telemetry returned for the selected time period\n" );
         appraisal_passed = -1;
     } else {
-        dlog(0, "Received telemetry spanning %ld to %ld\n", min_time, max_time);
-        dlog(5, "TODO: validate that time span is _covered_ using min and max\n");
+        dlog(6, "Received telemetry spanning %ld to %ld\n", min_time, max_time);
+        dlog(7, "TODO: validate that time span is _covered_ using min and max\n");
     }
 
     if(appraisal_passed == 0) {
-        dlog(0, "Appraisal Passed \n");
+        dlog(6, "Appraisal Passed \n");
     } else {
-        dlog(0, "Appraisal Failed (%d)\n", appraisal_passed);
+        dlog(6, "Appraisal Failed (%d)\n", appraisal_passed);
     }
 
     return appraisal_passed;
@@ -625,7 +625,7 @@ static int add_tlm_report_data(measurement_graph *graph, node_id_t node_id, int 
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(0, "In telemetry retrieval ASP\n");
+    dlog(6, "In telemetry retrieval ASP\n");
     measurement_graph *graph;
     node_id_t node_id;
 

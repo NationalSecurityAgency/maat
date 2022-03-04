@@ -16,7 +16,7 @@
 check_PROGRAMS    = test_util test_load_asps test_graph \
 		 	test_measurement_spec test_apb \
 			test_client test_am_apb \
-			test_marshall_data \
+			test_marshall_data test_csv \
 			test_graph_announcements \
 			test_sgraph
 
@@ -74,6 +74,9 @@ test_graph_announcements_SOURCES= test_graph_announcements.c
 test_marshall_data_LDADD        = ${LDADD} ../graph/libmaat_graph-@PACKAGE_VERSION@.la
 test_marshall_data_SOURCES      = dummy_types.c test_marshall_data.c
 
+test_csv_SOURCES                = test_csv.c
+test_csv_LDADD                  = ${LDADD} \
+                                  ../util/libmaat_util-@PACKAGE_VERSION@.la
 
 test_client_SOURCES             = test_client.c
 test_client_LDADD               = ../client/libmaat_client-@PACKAGE_VERSION@.la @CHECK_LIBS@ $(XML_LIBS)

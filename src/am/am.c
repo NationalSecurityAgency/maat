@@ -34,7 +34,7 @@
 #include "selector.h"
 #include <util/xml_util.h>
 #include <util/util.h>
-
+#include <util/maat-io.h>
 #include <client/maat-client.h>
 
 //INFO took place of userspace's at_manager
@@ -61,17 +61,17 @@ struct attestation_manager* new_attestation_manager(char *aspdir, char *specdir,
         return NULL;
 
     am->loaded_asps = load_all_asps_info(aspdir);
-    dlog(3, "Loaded %u ASPs\n", g_list_length(am->loaded_asps));
+    dlog(6, "Loaded %u ASPs\n", g_list_length(am->loaded_asps));
     am->loaded_specs = load_all_measurement_specifications_info(specdir);
-    dlog(3, "Loaded %u measurement specifications\n", g_list_length(am->loaded_specs));
+    dlog(6, "Loaded %u measurement specifications\n", g_list_length(am->loaded_specs));
     am->loaded_apbs = load_all_apbs_info(apbdir, am->loaded_asps,
                                          am->loaded_specs);
-    dlog(3, "Loaded %u APBs\n", g_list_length(am->loaded_apbs));
+    dlog(6, "Loaded %u APBs\n", g_list_length(am->loaded_apbs));
 
     if(selector_type != NULL) {
-        dlog(3, "Loading selector configuration of type %s\n", selector_type);
+        dlog(6, "Loading selector configuration of type %s\n", selector_type);
         if(load_selector(selector_type, selector_options, am->loaded_apbs, &am->selector) == 0) {
-            dlog(3, "Loaded selector configuration of type %s\n", selector_type);
+            dlog(6, "Loaded selector configuration of type %s\n", selector_type);
         } else {
             dlog(0, "Error: failed to load selector configuration of type %s\n", selector_type);
             am->selector = NULL;
@@ -123,13 +123,15 @@ int appraiser_initial_options (struct attestation_manager *self,
     }
 
     scen->current_options = g_list_copy(*out);
-    dlog(3, "Recieved %d initial options\n", res);
+    dlog(5, "PRESENTATION MODE (self): Appraiser selects the following initial options  to fulfill request:\n");
+    print_options_string_from_scenario(scen->current_options);
+    dlog(6, "Recieved %d initial options\n", res);
     return AM_OK;
 
 error_selector:
     if(*out == NULL) {
         scen->error_message = strdup("Negotiation failed: No options for target.");
-        dlog(1, "Warning: Selector returned no valid options!\n");
+        dlog(2, "Warning: Selector returned no valid options!\n");
     }
     return res;
 }
@@ -170,13 +172,15 @@ int attester_select_options(struct attestation_manager *self, struct scenario *s
     }
 
     scen->current_options = g_list_copy(final);
-    dlog(3, "Found %d matching options\n", g_list_length(*selected));
+    dlog(6, "Found %d matching options\n", g_list_length(*selected));
+    dlog(5, "PRESENTATION MODE (self): From set of initial options, attester selects subset for inclusion in modified contract:\n");
+    print_options_string_from_scenario(scen->current_options);
     return AM_OK;
 
 error_selector:
     if(*selected == NULL) {
         scen->error_message = strdup("Negotiation failed: No valid options offered.");
-        dlog(1, "Warning: Selector returned no valid options!\n");
+        dlog(2, "Warning: Selector returned no valid options!\n");
     }
     return rtn;
 }
@@ -207,7 +211,7 @@ int attester_spawn_protocol(struct attestation_manager *self,
     struct phrase_meas_spec_pair *pair = NULL;
     GList *temp = NULL;
 
-    dlog(3, "Attester: in spawn protocol\n");
+    dlog(6, "Attester: in spawn protocol\n");
 
     //Check the phrase is one initially chosen by attester_select_options
     temp = g_list_find_custom(scen->current_options, (gconstpointer)phrase,
@@ -244,6 +248,13 @@ int attester_spawn_protocol(struct attestation_manager *self,
     if (!apb) {
         ret = -1;
         goto out_err;
+    }
+
+    if (has_place_args(phrase) == 1) {
+        ret = query_place_information(apb, scen, phrase);
+        if(ret < 0) {
+            dlog(1, "Error writing place information to the csv file, launching will continue\n");
+        }
     }
 
     ret = copland_args_to_string((const phrase_arg **)phrase->args, phrase->num_args, &args);
@@ -290,7 +301,7 @@ int appraiser_select_option(struct attestation_manager *self, struct scenario *s
                                   g_list_node_compare);
 
         if (temp == NULL) {
-            dlog(0, "Error: option %s not found in initial options. "
+            dlog(3, "Error: option %s not found in initial options. "
                  "Are you trying to trick me?\n", option->phrase);
             continue;
         }
@@ -321,9 +332,9 @@ int appraiser_select_option(struct attestation_manager *self, struct scenario *s
         goto out;
     }
 
+    dlog(5, "PRESENTATION MODE (self): From subset of options in modified contract, appraiser selects option for execution: %s\n", phrase->phrase);
     scen->current_options =  g_list_append(scen->current_options, (gpointer)phrase);
     *selected = phrase;
-
 out:
     return rtn;
 }
@@ -369,6 +380,13 @@ int appraiser_spawn_protocol(struct attestation_manager *self, struct scenario *
             scen->error_message = strdup(msg);
             dlog(0, "%s\n", msg);
             goto out;
+        }
+
+        if (has_place_args(copl) == 1) {
+            ret = query_place_information(apb, scen, copl);
+            if(ret < 0) {
+                dlog(1, "Error writing place information to the csv file, launching will continue\n");
+            }
         }
 
         dlog(2, "Appraiser: calling run_apb_async on APB %s\n", apb->name);

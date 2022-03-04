@@ -48,7 +48,7 @@ struct asp *load_asp_info(const char *xmlfile)
         return NULL;
     }
 
-    dlog(4,"parsing file %s\n", xmlfile);
+    dlog(6, "Parsing file %s\n", xmlfile);
 
     /* FIXME: we should validate the document before untainting it! */
     doc = UNTAINT(xmlReadFile(xmlfile, NULL, 0));

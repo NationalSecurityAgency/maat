@@ -144,7 +144,7 @@ Here's what will happen in the demo:
       |________________|       |____________________|
 
    3. Advised by result of negotiation, AM_2 kicks off the userspace APB, which 
-      uses the requestor ASP to request (KIM runtime_meas) from its own AM. 
+      uses the send-execute ASP to request (KIM runtime_meas) from its own AM. 
 
       AM_0 uses its policy to select and launch the appropriate APB for 
       appraisal of evidence resulting from 
@@ -189,7 +189,7 @@ Here's what will happen in the demo:
      |________________|       |____________________|
 
 
-   5. AM_2 runtime_meas ASP sends measurement to AM_2 requestor ASP
+   5. AM_2 runtime_meas ASP sends measurement to AM_2 send request ASP
       ________________         ______________________
      |                |       |                      |
      |    Appraiser   |       |      Attester        |
@@ -237,11 +237,11 @@ Here's what will happen in the demo:
       |                |       |   [R]---'    [PKG] |
       |________________|       |____________________|
       
-   8.  AM_1 signs and sends the USM measurement to AM_2's requestor ASP
+   8.  AM_1 signs and sends the USM measurement to AM_2's send request ASP
    9.  AM_2's measurement agents bundle the USM measurement with the KIM 
        measurement and send it to AM_0 for appraisal
    10. AM_0 appraises the measurement
-   11. AM_0 gives the result to the requestor
+   11. AM_0 gives the result to the send request ASP
        ________________         ____________________
       |                |       |                    |
       |    Appraiser   |       |      Attester      |
@@ -297,26 +297,15 @@ Test_client and AM_0 will be running on VM_0, while AM_2 and AM_1 are on VM_1:
    |______________________|    |_______________________|
 
 
-Put both VMs on an internal network, set their IPs, open the correct port for 
-each, and add the maat user by running the following commands on each machine:
+Directions to set up the VMs are located in the :ref:`Setup Multirealms Guide <setup_multirealms>`.
 
 On VM_0 (appraising machine)
 
-.. code-block:: bash
-
-    sudo ifconfig enp0s3 192.168.0.10 netmask 255.255.255.0 \
-         broadcast 192.168.0.255
-    firewall-cmd --zone=public --add-port=2342/tcp
+   Set IP to 192.168.0.10 and open port 2342
 
 On VM_1 (attesting machine)
 
-.. code-block:: bash
-
-    sudo ifconfig enp0s3 192.168.0.7 netmask 255.255.255.0 \
-         broadcast 192.168.0.255
-    firewall-cmd --zone=public --add-port=2342/tcp
-
-Make sure the VMs are able to ping each other at these IPs.
+   Set IP to 192.168.0.7 and open port 2342
 
 Start the AMs and finally the test client by running the following commands for
 each :
@@ -358,11 +347,11 @@ You should see movement from each AM corresponding to the expected actions in
 the diagram above. A `<result>PASS</result>` in the test client's terminal
 indicates success.
 
-Note: if you restart your machines, the ports opened in the commands above will
-need to be reopened (can add `--permanent` flag to avoid this; see 
-`firewall-cmd` man pages).
 
-This concludes the Maat tutorials. To explore how to configure the Maat AM for 
-your specific use case, please see the
-:ref:`AM Configuration Guide<configuring_attestation_manager>`.
+For a demonstration for the usage of Maat in a Complex Attestation scenario,
+please continue to the
+:ref:`Complex Attestation Tutorial<complex_attestation_tutorial>`.
+For a demonstration for the passport use case in Maat,
+please continue to the
+:ref:`Passport Creation Tutorial<passport_creation_tutorial>`.
 

@@ -31,6 +31,7 @@ START_TEST(test_create_request)
                                      NULL,
                                      NULL,
                                      NULL,
+                                     NULL,
                                      &buf, &size) != 0,
             "Failed to create integrity check request");
     free(buf);

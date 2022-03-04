@@ -20,6 +20,7 @@
  */
 
 #include <util/xml_util.h>
+#include <util/util.h>
 #include <config.h>
 
 #ifndef __SIGNFILE_H__
@@ -70,7 +71,7 @@ int verify_xml(xmlDoc *doc, xmlNode *root, const char *keyfile,
                const char* nonce, int flags, const char* cacertfile);
 
 /**
- * create a filename for a certificat file which corresponds to the xml root.
+ * Create a filename for a certificate file which corresponds to the xml root.
  * Return filename on success.
  * prefix is a name to prepend to the filename
  * root is the xml node the name will correspond to.

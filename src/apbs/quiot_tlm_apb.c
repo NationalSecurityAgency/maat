@@ -83,7 +83,7 @@ static int create_basic_variable(char *val, address_space *space, target_type *t
         goto err;
     }
 
-    dlog(3, "Created variable (%s *)%s\n", ttype->name, human_readable);
+    dlog(6, "Created variable (%s *)%s\n", ttype->name, human_readable);
     *out = v;
     free(human_readable);
     return 0;
@@ -95,7 +95,7 @@ err:
 static GQueue *enumerate_variables(void *ctxt, target_type *ttype, address_space *space,
                                    char *op, char *val)
 {
-    dlog(0, "Enumerating variables matching %s\n", val);
+    dlog(6, "Enumerating variables matching %s\n", val);
     GQueue *q = g_queue_new();
     if(q!= NULL) {
 
@@ -130,14 +130,14 @@ static int measure_variable(void *ctxt, measurement_variable *var, measurement_t
     int rc;
 
     char *addr_str = address_human_readable(var->address);
-    dlog(0, "Measuring variable (%s *) %s with mtype %s\n",
+    dlog(6, "Measuring variable (%s *) %s with mtype %s\n",
          var->type->name, addr_str ? addr_str : "(null)",
          mtype->name);
     free(addr_str);
 
     rc = measurement_graph_add_node(g, var, NULL, &n);
     if(rc == 0 || rc == 1) {
-        dlog(4, "\tAdded node "ID_FMT"\n", n);
+        dlog(6, "\tAdded node "ID_FMT"\n", n);
     } else {
         dlog(0, "Error adding node\n");
     }
@@ -153,7 +153,7 @@ static int measure_variable(void *ctxt, measurement_variable *var, measurement_t
 
     rc = run_asp(tlm_ret_asp, -1, -1, false, 2, asp_argv, -1);
 
-    dlog(0, "Return value: %d\n", rc);
+    dlog(6, "Return value: %d\n", rc);
 
 error:
     free(graph_path);
@@ -172,7 +172,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
                 int peerchan, int resultchan, char *target UNUSED, char *target_type UNUSED,
                 char *resource UNUSED, struct key_value **arg_list UNUSED, int argc UNUSED)
 {
-    dlog(0, "Hello from the QUIOT_TLM_APB\n");
+    dlog(6, "Hello from the QUIOT_TLM_APB\n");
     int ret_val = 0;
     GList *all_asps = NULL;
     unsigned char *evidence;
@@ -207,7 +207,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
         return -EIO;
     }
 
-    dlog(0, "Evaluating measurement spec\n");
+    dlog(6, "Evaluating measurement spec\n");
     evaluate_measurement_spec(mspec, &callbacks, graph);
 
     free_meas_spec(mspec);
@@ -220,10 +220,10 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
         return ret_val;
     }
 
-    dlog(0, "quiot_tlm_apb sending measurement contract\n");
+    dlog(6, "quiot_tlm_apb sending measurement contract\n");
     ret_val = generate_and_send_back_measurement_contract(peerchan, scen, evidence,
               evidence_size);
-    dlog(0, "quiot_tlm_apb done! ret = %d\n", ret_val);
+    dlog(6, "quiot_tlm_apb done! ret = %d\n", ret_val);
 
     free(evidence);
 

@@ -195,7 +195,7 @@ void create_option_node(char *phrase, xmlNode *subcontract)
     xmlNewProp(phrasenode, (xmlChar*)"name", (xmlChar*)"APB_phrase");
     xmlNodeAddContent(phrasenode, (xmlChar*)phrase);
     xmlAddChild(optnode, phrasenode);
-    dlog(3, "Change Phrase to: %s\n", phrase);
+    dlog(6, "Change Phrase to: %s\n", phrase);
     xmlAddChild(subcontract, optnode);
 }
 
@@ -432,7 +432,7 @@ int save_all_creds(xmlDoc *doc, const char *prefix)
         fprint	= validate_pubkey_fingerprint(xmlGetProp(node, (xmlChar*)"fingerprint"),
                                               SIZE_MAX);
         if (!fprint) {
-            dlog(0, "No fingerprint for this node\n");
+            dlog(3, "No fingerprint for this node\n");
             continue;
         }
 
@@ -519,9 +519,9 @@ char *get_contract_type(void *buffer, int size)
         }
         contype = xmlGetPropASCII(root, "type");
         if (!contype)
-            dlog(0, "No contract type?\n");
+            dlog(2, "No contract type?\n");
     } else
-        dlog(0, "bad xml?\n");
+        dlog(2, "bad xml?\n");
 
     xmlFreeDoc(doc);
 
@@ -645,7 +645,7 @@ int merge_contracts(const char *type, char *master, int mastsize, char *local,
         for (i = 0; i < obj->nodesetval->nodeNr; i++) {
             if (obj->nodesetval->nodeTab[i]->type ==
                     XML_ELEMENT_NODE) {
-                dlog(3, "Adding one subcontract\n");
+                dlog(6, "Adding one subcontract\n");
                 newnode = xmlCopyNode(
                               obj->nodesetval->nodeTab[i], 1);
                 xmlAddChild(root, newnode);
@@ -656,7 +656,7 @@ int merge_contracts(const char *type, char *master, int mastsize, char *local,
 
     /* Add all the local credentials that are not in the master. */
     snprintf(scratch, 200, "/contract/AttestationCredential");
-    dlog(3, "Searching for credential certificates\n");
+    dlog(6, "Searching for credential certificates\n");
     mcreds = xpath(doc, scratch);
     lcreds = xpath(loc, scratch);
     if(lcreds == NULL || mcreds == NULL) {
@@ -669,7 +669,7 @@ int merge_contracts(const char *type, char *master, int mastsize, char *local,
             int test = 0;
             lfprint = xmlGetPropASCII(lcreds->nodesetval->nodeTab[i], "fingerprint");
             if(lfprint == NULL) {
-                dlog(1, "Local credential has no fingerprint\n");
+                dlog(2, "Local credential has no fingerprint\n");
                 continue;
             }
 
@@ -693,7 +693,7 @@ int merge_contracts(const char *type, char *master, int mastsize, char *local,
             }
 
             if (!test) {
-                dlog(3, "Adding a credential.\n");
+                dlog(6, "Adding a credential.\n");
                 newnode = xmlCopyNode(
                               lcreds->nodesetval->nodeTab[i], 1);
                 xmlAddChild(root, newnode);

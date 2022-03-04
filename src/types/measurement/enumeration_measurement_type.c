@@ -236,7 +236,7 @@ static int get_attr(char *feature)
 
 static int enumeration_get_feature(measurement_data *d, char *feature, GList **out)
 {
-    dlog(0, "enumeration measurement type getting feature %s\n", feature);
+    dlog(6, "enumeration measurement type getting feature %s\n", feature);
 
     enumeration_data *data = container_of(d, enumeration_data, meas_data);
     GList *res  = NULL;

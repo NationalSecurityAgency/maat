@@ -47,8 +47,8 @@ int asp_exit(int status UNUSED)
 int asp_measure(int argc, char *argv[])
 {
     asp_loginfo("asp_measure called!\n");
-    if (argc != 3) {
-        asp_loginfo("Usage <%s> infd outfd (got argc = %d)\n", argv[0], argc);
+    if (argc != 1) {
+        asp_loginfo("Usage <%s> (got argc = %d)\n", argv[0], argc);
         return -EINVAL;
     }
     asp_loginfo("argv[0] = %s\n", argv[0]);

@@ -112,7 +112,7 @@ static int get_pkg_details(char *rawline, measurement_data **out)
     pkg_data->install_time_len = check_attr(&pkg_data->install_time);
     pkg_data->source_len       = check_attr(&pkg_data->source);
 
-    dlog(4, "%s\n%s\n%s\n%s\n%s\n",
+    dlog(6, "%s\n%s\n%s\n%s\n%s\n",
          pkg_data->arch		? pkg_data->arch		: "(null)",
          pkg_data->vendor	? pkg_data->vendor		: "(null)",
          pkg_data->url		? pkg_data->url			: "(null)",
@@ -131,7 +131,7 @@ error_alloc:
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(0, "IN rpm_details ASP MEASURE\n");
+    dlog(6, "IN rpm_details ASP MEASURE\n");
     int ret_val = 0;
     measurement_graph *graph = NULL;
     measurement_data *data   = NULL;
@@ -164,7 +164,7 @@ int asp_measure(int argc, char *argv[])
         ret_val = -1;
         goto error_pkg_name;
     }
-    dlog(4, "package name: %s\n", unique_name);
+    dlog(6, "package name: %s\n", unique_name);
 
     //Gather basic details
     gchar *quoted_unique_name = g_shell_quote(unique_name);
@@ -182,7 +182,7 @@ int asp_measure(int argc, char *argv[])
         goto error_exec;
     }
 
-    dlog(4, "Running cmd: %s\n", format);
+    dlog(6, "Running cmd: %s\n", format);
 
     ret_val = runcmd(format, &sout, &serr);
     g_free(format);
@@ -216,7 +216,7 @@ int asp_measure(int argc, char *argv[])
         goto error_add_data;
     }
 
-    dlog(0, "rpm_details ASP returning with success\n");
+    dlog(6, "rpm_details ASP returning with success\n");
     ret_val = ASP_APB_SUCCESS;
 
 error_add_data:

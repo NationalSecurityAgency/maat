@@ -89,6 +89,7 @@ nobase_library_include_HEADERS = maat-basetypes.h \
 	target/system_target_type.h \
 	target/namespace_target_type.h \
         target/anon_target_type.h \
+        target/device_target_type.h \
         target/pipe_target_type.h \
         target/socket_target_type.h \
 	target/target-types.h

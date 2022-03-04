@@ -36,7 +36,8 @@ libtarget_la_SOURCES =  file_contents_type.c \
 			namespace_target_type.c \
                         pipe_target_type.c \
                         socket_target_type.c \
-                        anon_target_type.c
+			device_target_type.c \
+			anon_target_type.c
 
 docs:
 if HAVE_DOXYGEN

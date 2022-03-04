@@ -93,8 +93,8 @@ typedef struct {
     char *buf;
     uint64_t base_address;
     size_t sz;
+    uint64_t exe_load_address;
     uint64_t dynamic_address;
-    size_t dynamic_sz;
     GSList *neededs;
     uint64_t init;
     Elf_Data *symtab;
@@ -1734,10 +1734,10 @@ parse_on_disk_elf_cleanup:
 static elf_context *scan_elf_object(file_mapping_buffer *mb)
 {
     int err;
-#ifdef DEBUG
-    printf("Scanning ELF object at %#lx mapped from %s\n",
-           mb->start, mb->path);
-#endif
+
+    dlog(6, "Scanning ELF object at %#lx mapped from %s\n",
+         mb->start, mb->path);
+
     elf_context *ctx = calloc(1, sizeof(elf_context));
     if (!ctx) {
         dlog(4, "Unable to allocate memory for the elf context");
@@ -1765,6 +1765,9 @@ static elf_context *scan_elf_object(file_mapping_buffer *mb)
         goto fail_get_elf;
     }
 
+    /* elf_memory() function from libelf parses mb->buf
+     * into elf pointer from memory (mb->buf is unreadable)
+     */
     Elf *elfp = elf_memory(mb->buf, mb->sz);
     if (elfp == NULL) {
         dlog(4,"Failed to get ELF handle for %s: %s",
@@ -1780,6 +1783,7 @@ static elf_context *scan_elf_object(file_mapping_buffer *mb)
         goto fail_scan_elf;
     }
 
+    // gelf_getehdr() retrieves the executable header
     if (gelf_getehdr(elfp, &ctx->ehdr) == NULL) {
         dlog(4,"getehdr() failed: %s", elf_errmsg(elf_errno()));
         goto fail_scan_elf;
@@ -1792,24 +1796,30 @@ static elf_context *scan_elf_object(file_mapping_buffer *mb)
         goto fail_scan_elf;
     }
 
+    // Use elf_getphdrnum() to retrieve the number of program headers
     size_t n_phdr = 0;
     if (elf_getphdrnum(elfp, &n_phdr) != 0) {
-        dlog(4,"elf_getphdrnum() failed: %s", elf_errmsg(elf_errno()));
+        dlog(4, "elf_getphdrnum() failed: %s", elf_errmsg(elf_errno()));
         goto fail_scan_elf;
     }
 
     size_t i;
     GElf_Phdr phdr;
+
+    /* For each program header, check if it is dynamic. If it is,
+     * save the address (offset + ctx->base_address) as the
+     * ctx->dynamic_address
+     */
     for (i = 0; i < n_phdr; ++i) {
         if (gelf_getphdr(elfp, (int)i, &phdr) != &phdr) {
-            dlog(4,"elf_getphdr() failed: %s", elf_errmsg(elf_errno()));
+            dlog(0,"elf_getphdr() failed: %s", elf_errmsg(elf_errno()));
             goto fail_scan_elf;
         }
         if (phdr.p_type == PT_DYNAMIC) {
-#ifdef DEBUG
-            printf("DYNAMIC segment: offset: %#lx, vaddr: %#lx, paddr: %#lx, memsz: %#lx\n",
-                   phdr.p_offset, phdr.p_vaddr, phdr.p_paddr, phdr.p_memsz);
-#endif
+
+            dlog(6, "DYNAMIC segment: offset: %#lx, vaddr: %#lx, paddr: %#lx, memsz: %#lx\n",
+                 phdr.p_offset, phdr.p_vaddr, phdr.p_paddr, phdr.p_memsz);
+
             if (ctx->dynamic_address) {
                 dlog(4,"multiple DYNAMIC segments found for %s, ignoring extras",
                      ctx->path);
@@ -1818,14 +1828,17 @@ static elf_context *scan_elf_object(file_mapping_buffer *mb)
                     goto fail_scan_elf;
                 }
             }
+
+            // Find the first LOAD segment that is marked as executable
+        } else if ((phdr.p_type == PT_LOAD) && (phdr.p_flags & PF_X)) {
+            ctx->exe_load_address = phdr.p_offset + ctx->base_address;
+            dlog(0, "Address of loaded executable: %#lx\n", ctx->exe_load_address);
         }
     }
 
     if (ctx->dynamic_address == 0) {
-#ifdef DEBUG
-        printf("No PT_DYNAMIC program header found for %s, statically "
-               "linked?", ctx->path);
-#endif
+        dlog(3, "No PT_DYNAMIC program header found for %s, statically "
+             "linked?", ctx->path);
         goto fail_scan_elf;
     }
 
@@ -2007,6 +2020,7 @@ static uint64_t *get_pointer_to_original_got_value(
  * `man 5 proc`*/
 static uint64_t get_executable_base_load_address(const char *pid)
 {
+    dlog(6, "getting executable base load address for pid %s\n", pid);
     uint64_t addr;
     char path[PATH_MAX] = "/proc/";
 
@@ -2054,6 +2068,7 @@ static uint64_t get_executable_base_load_address(const char *pid)
         }
         ++p;
     }
+
     char *end = strchr(p, ' ');
     *end = '\0';
 
@@ -2317,23 +2332,52 @@ static GList *find_ctx_with_base_addr(GList *p, uint64_t addr)
     for (iter = p; iter; iter = iter->next) {
         if (iter->data != NULL) {
             elf_context *ctx = (elf_context*)iter->data;
+            dlog(6, "checking addr %" PRIu64 " against base %" PRIu64 "\n", ctx->base_address, addr);
             if (ctx->base_address == addr) {
                 return iter;
             }
         } else {
-            dlog(4, "Null data in find_ctx_with_base_addr\n");
+            dlog(0, "Null data in find_ctx_with_base_addr\n");
         }
     }
     return NULL;
 }
 
-/* Finds the elf_context whose base load address matches the provided
+static GList *find_ctx_with_exe_load_addr(GList *p, uint64_t addr)
+{
+    GList *iter;
+    for (iter = p; iter; iter = iter->next) {
+        if (iter->data != NULL) {
+            elf_context *ctx = (elf_context*)iter->data;
+            dlog(0, "checking addr %" PRIu64 " against exe load addr %" PRIu64 "\n", ctx->exe_load_address, addr);
+            if (ctx->exe_load_address == addr) {
+                dlog(0, "found match\n");
+                return iter;
+            }
+        } else {
+            dlog(0, "Null data in find_ctx_with_exe_load_addr\n");
+        }
+    }
+    return NULL;
+}
+
+/* Finds the elf_context whose executable load address matches the provided
  * one and moves it to the front of the elf_context list. */
 static int move_exe_context_to_front(
     GList **list,
     uint64_t exe_base_load_addr)
 {
-    GList *p = find_ctx_with_base_addr(*list, exe_base_load_addr);
+    // TODO:: Need to fix this. CentOS/Fedora seems to load the executable at the
+    // address of the first LOAD segment that is marked executable (result of
+    // find_ctx_with_exe_load_addr(2)). However, Ubuntu seems to load the executable
+    // at the address of the first LOAD segment, regardless of which is executable
+    // (result of find_ctx_with_base_addr(2)). Double-check this, and figure out a
+    // better way to differeniate if correct.
+    GList *p = find_ctx_with_exe_load_addr(*list, exe_base_load_addr);
+    if(p == NULL) {
+        p = find_ctx_with_base_addr(*list, exe_base_load_addr);
+    }
+
     if (p == NULL) {
         report_anomaly("No mapped ELF object started at the executable "
                        "start address %" PRIu64 " - the original executable was unmapped!", exe_base_load_addr);
@@ -3518,10 +3562,6 @@ static void scan_process(pid_t pid)
     }
 
     GSList *elf_mapping_groups = get_elf_mapping_groups(pid_string);
-
-#ifdef DEBUG
-    print_mapping_groups(elf_mapping_groups);
-#endif
     GSList *elf_buffers = get_elf_buffers(elf_mapping_groups);
 
     GSList *p;
@@ -3705,7 +3745,7 @@ int measure_got(const uint32_t pid_u)
         }
     }
 
-    dlog(3, "Scanning PID %ld\n", (long int)pid);
+    dlog(6, "Scanning PID %ld\n", (long int)pid);
 
     if(res >= 0) {
         scan_process(pid);

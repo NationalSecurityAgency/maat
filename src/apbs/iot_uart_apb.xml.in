@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<apb>
+	<name>iot_uart_apb</name>
+	<desc>Connects to an IOT device at the given UART and collects
+                measurements from it</desc>
+	<uuid>18a896a2-e57e-4e67-9634-424c27177772</uuid>
+	<file hash="XXXXX">${APB_INSTALL_DIR}/iot_uart_apb</file>
+	<input_type>????</input_type>
+	<output_type>????</output_type>
+	<asps ordered="False">
+		<asp uuid="e0baac5d-6a7f-41db-99fd-db5d147f8f95">iot_uart_asp</asp>
+	</asps>
+	<copland>
+            <phrase copland="(IOT_runtime_meas)">iot runtime measurement</phrase>
+	</copland>
+        <security_context>
+                <user>${MAAT_USER}</user>
+                <group>${MAAT_GROUP}</group>
+        </security_context>
+</apb>

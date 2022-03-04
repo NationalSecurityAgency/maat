@@ -16,7 +16,7 @@
 -->
 <asp>
 	<name>encrypt_asp</name>
-	<uuid>cd82c9f7-760d-4535-5197-74daadaa2f41</uuid>
+	<uuid>19e44fd6-b752-431a-94d9-6f1a88495a68</uuid>
 	<type>Encrypting</type>
 	<description>Encrypt Blob from fd_in, send to fd_out</description>
 	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/encrypt_asp</aspfile>

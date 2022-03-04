@@ -186,7 +186,7 @@ int asp_measure(int argc, char *argv[])
             }
             announce_edge(new_edge);
 
-            if (is_reg(linkBuffer)) {
+            if (path_is_reg(linkBuffer)) {
                 edge_id_t reg_edge;
                 if(measurement_graph_add_edge(graph, node_id, "path_list.reg_files",
                                               new_node, &reg_edge) < 0) {

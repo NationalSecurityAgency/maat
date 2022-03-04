@@ -197,7 +197,7 @@ int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
         signature = sign_buffer_tpm(buf, &size, bnonce, nsize, tpm_password);
         free(bnonce);
 #else
-        dlog(1, "WARNING: TPM support disabled at compile time, "
+        dlog(4, "WARNING: TPM support disabled at compile time, "
              "using OPENSSL\n");
         signature = sign_buffer_openssl(buf, &size, privkey_file,
                                         privkey_pass);
@@ -327,27 +327,31 @@ int verify_xml(xmlDoc *doc, xmlNode *root, const char *prefix,
     }
     size = size -1; /* we want strlen not buffer size */
 
-    char *contract_nonce = xpath_get_content(doc, "/contract/nonce");
-    if(!contract_nonce) {
-        dlog(0, "Unable to extract nonce in the contract\n");
-        goto out;
+    /* Evaluate nonce if one is provided */
+    char *contract_nonce = NULL;
+    if(nonce) {
+        char *contract_nonce = xpath_get_content(doc, "/contract/nonce");
+        if(!contract_nonce) {
+            dlog(0, "Unable to extract nonce in the contract\n");
+            goto out;
+        }
+
+        size_t nonce_len = strlen(nonce);
+        if(strlen(contract_nonce) != nonce_len) {
+            dlog(1, "Nonce lengths do not match\n");
+            goto non_out;
+        }
+
+        dlog(7, "Retained Nonce: %s Nonce in Contract: %s\n", nonce, contract_nonce);
+
+        if(memcmp((char *)nonce, contract_nonce, nonce_len)) {
+            dlog(0, "Nonce in the contract did not match\n");
+            goto non_out;
+        }
+
+        free(contract_nonce);
+        contract_nonce = NULL;
     }
-
-    size_t nonce_len = strlen(nonce);
-    if(strlen(contract_nonce) != nonce_len) {
-        dlog(1, "Nonce lengths do not match\n");
-        goto non_out;
-    }
-
-    dlog(4, "Retained Nonce: %s Nonce in Contract: %s\n", nonce, contract_nonce);
-
-    if(memcmp((char *)nonce, contract_nonce, nonce_len)) {
-        dlog(0, "Nonce in the contract did not match\n");
-        goto non_out;
-    }
-
-    free(contract_nonce);
-    contract_nonce = NULL;
 
     if (flags & SIGNATURE_OPENSSL) {
         ret = verify_buffer_openssl(buf, (size_t)size, signature, sigsize,
@@ -366,7 +370,7 @@ int verify_xml(xmlDoc *doc, xmlNode *root, const char *prefix,
                                 cacertfile, bin_nonce, nsize);
         free(bin_nonce);
 #else
-        dlog(1,"WARNING: TPM support disabled at compile time"
+        dlog(4,"WARNING: TPM support disabled at compile time"
              "using OPENSSL\n");
         ret = verify_buffer_openssl(buf, (size_t) size, signature, sigsize,
                                     certfile, cacertfile);

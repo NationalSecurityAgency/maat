@@ -32,6 +32,7 @@
 #include <target/socket_target_type.h>
 #include <target/pipe_target_type.h>
 #include <target/anon_target_type.h>
+#include <target/device_target_type.h>
 
 
 static inline int register_target_types(void)
@@ -68,6 +69,9 @@ static inline int register_target_types(void)
         return ret_val;
     }
     if( (ret_val = register_target_type(&anon_target_type)) != 0) {
+        return ret_val;
+    }
+    if( (ret_val = register_target_type(&device_target_type)) != 0) {
         return ret_val;
     }
     if( (ret_val = register_target_type(&pipe_target_type)) != 0) {

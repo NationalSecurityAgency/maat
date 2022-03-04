@@ -46,18 +46,25 @@ there are:
 - ROADMAP.md : Current status of Maat supported features, and items on our 
   	       roadmap.
 
+- am-ui/maat-attestation-manager-ui-TUTORIAL.md: Tutorial for setting up the Attestation Manager User 
+						 Interface to step through a recent measurement.
+
 - documentation/source/
-  - quick_start.txt :	     Contains building, installation, and configuration
-    		    	     instructions for installing Maat from source
+  - quick_start.txt :	     	Contains building, installation, and configuration
+    		    	     	instructions for installing Maat from source
 
-  - basic_tutorial.txt :     Contains a series of tutorials for getting Maat 
-    		       	     running in different basic scenarios to perform 
-			     userspace measurement (to be followed after 
-			     completion of quick_start.txt)
+  - basic_tutorial.txt :     	Contains a series of tutorials for getting Maat 
+    		       	     	running in different basic scenarios to perform 
+			     	userspace measurement (to be followed after 
+			     	completion of quick_start.txt)
 
-  - multirealm_tutorial.txt: A series of tutorials to demonstate execution of 
-    		      	     Maat in a multi-realm attestation scenario. 
-		      	     Introduces Copland and some more complex use cases.
+  - multirealm_tutorial.txt: 	A series of tutorials to demonstate execution of 
+    		      	     	Maat in a multi-realm attestation scenario. 
+		      	     	Introduces Copland and some more complex use cases.
+
+- management-ui/ui-TUTORIAL.md: Basic tutorials for Maat that use a prototype Maat
+  		    	     	web interface in lieu of the command line to 
+			     	request attestations from Maat
 
 BUILDING 
 ============
@@ -68,28 +75,31 @@ of dependencies and build instructions.
 SOURCE LAYOUT
 ==============
 
++ am-ui/		-- Code and tutorials for setting up a Python 
+  			   Flask-based web server to act as a GUI for
+			   stepping through a recent measurement
+
 + CHANGELOG.md		-- Markup file of major changes for each version
 
 + configure.ac          -- Autoconf script used to build everything
 
-+ copland-compiler/	-- Experimental tool to generate APBs from a 
-  			   Copland-like representation.
++ contrib/		-- Experimental tools and contributed items 
 
 + debian/		-- Debian packaging directory
 
 + demo/credentials      -- Sample credentials (CA, Certs, and Keys)
       			   These credentials are used by the test code and
-			   tutorials.
+			   tutorials
 
 + documentation/ 	-- Documentation that, when built, will render an 
   			   html version of the Maat docs
 
 + initscripts/		-- Upstart and SystemD init scripts for starting and
-  			   stopping Maat processes. 
+  			   stopping Maat processes
 
 + lib/			-- Maat library code for ASPs, APBs, graph
   			   implementations, measurement specifications, 
-			   and other utility functions. 
+			   and other utility functions 
 
 + LICENSE		-- License and copyright information
 
@@ -99,9 +109,13 @@ SOURCE LAYOUT
 
 + Makefile.am		-- Maat makefile to build everything
 
++ management-ui/	-- Code and tutorials for setting up a basic 
+  			   lighttpd-based web server to act as a GUI for
+			   Maat requests
+
 + measurement-specs/	-- Measurement specifications that, when paired
   			   with an appropriate APB, are used to complete
-			   measurement requests.
+			   measurement requests
 
 + pam/			-- Code to set up a Maat PAM module
 
@@ -110,8 +124,8 @@ SOURCE LAYOUT
 + selector-configs/	-- Selector configurations used for negotiation
   			   between Maat Attestation Manager (AM) instances
 
-+ selinux/		-- SELinux policy for Maat and its components. 
-  			   Work in progress. 
++ selinux/		-- SELinux policy for Maat and its components; 
+  			   work in progress
 
 + src/am/               -- Code for the Attestation Manager (AM)
   
@@ -124,7 +138,7 @@ SOURCE LAYOUT
 + src/include/          -- Header files shared across components
 
 + src/measurement_spec/ -- Shared functionality for using measurement
-  			   specifications. 
+  			   specifications 
 
 + src/test/             -- The unit and system tests used to validate
       		           the implementation (based on the check
@@ -132,13 +146,8 @@ SOURCE LAYOUT
 
 + src/types/            -- Implementations of address_spaces,
     		           measurement types, and target types used by
-			   the ASPs/APBs. These types are used to
-			   specify the required measurements and
-			   describe the generated results.
+			   the ASPs/APBs
 
-+ ui/			-- Code and tutorials for setting up a basic 
-  			   lighttpd-based web server to act as a GUI for
-			   Maat requests.
 
 RUNNING
 =======

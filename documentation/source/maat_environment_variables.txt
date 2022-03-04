@@ -37,6 +37,10 @@ Verbose Logging
 LIBMAAT_LOG_SYSLOG
 -------------------
 
+If set to 1, this will cause dlog() statements to call syslog(). If
+set to 0, this will cause dlog() statements to call fprintf() and
+print to the terminal.  This will usually be set to 0.
+
 .. Table:: LIBMAAT_LOG_SYSLOG Supported Settings
 
     ======= =========== =============================
@@ -51,6 +55,13 @@ LIBMAAT_LOG_SYSLOG
 
 LIBMAAT_DEBUG_LEVEL
 --------------------
+
+Sets the verbosity of the terminal output. The dlog level must be less
+than or equal to the LIBMAAT_DEBUG_LEVEL in order to be printed to the
+terminal.  For example, for a LIBMAAT_DEBUG_LEVEL of 1, which is the 
+default value at system startup, only dlog statements of level 1 and 0
+will be printed.  For a LIBMAAT_DEBUG_LEVEL of 2, only dlog statements
+of level 2, 1, and 0 will be printed, etc.
 
 .. Table:: LIBMAAT_DEBUG_LEVEL Supported Settings
 

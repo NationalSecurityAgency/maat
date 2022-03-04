@@ -77,7 +77,7 @@ int main(int argc, char **argv)
         switch(c) {
         case 'p':
             if(targ_portnum != NULL) {
-                dlog(0, "Error: target port specified multiple times");
+                dlog(3, "Error: target port specified multiple times");
                 print_usage(argv[0]);
             }
             targ_portnum = optarg;
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 
         case 't':
             if(targ_host_addr != NULL) {
-                dlog(0, "Error: target host specified multiple times");
+                dlog(3, "Error: target host specified multiple times");
                 print_usage(argv[0]);
             }
             targ_host_addr = optarg;
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 
         case 'f':
             if(targ_fingerprint != NULL) {
-                dlog(0, "Error: target fingerprint specified multiple times\n");
+                dlog(3, "Error: target fingerprint specified multiple times\n");
                 print_usage(argv[0]);
             }
             targ_fingerprint = optarg;
@@ -101,19 +101,19 @@ int main(int argc, char **argv)
 
         case 'a':
             if(app_portnum != -1) {
-                dlog(0, "Error: appraiser port specified multiple times");
+                dlog(3, "Error: appraiser port specified multiple times");
                 print_usage(argv[0]);
             }
             app_portnum = strtol(optarg, NULL, 10);
             if(app_portnum > 0xFFFF || app_portnum < 0) {
-                dlog(0, "Error: appraiser port must be between 0 and 65535 (got: %s)\n", optarg);
+                dlog(3, "Error: appraiser port must be between 0 and 65535 (got: %s)\n", optarg);
                 print_usage(argv[0]);
             }
             break;
 
         case 'l':
             if(app_host_addr != NULL) {
-                dlog(0, "Error: appraiser host specified multiple times\n");
+                dlog(3, "Error: appraiser host specified multiple times\n");
                 print_usage(argv[0]);
             }
             app_host_addr = optarg;
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
 
         case 'r':
             if(resource != NULL) {
-                dlog(0, "Error: resource specified multiple times\n");
+                dlog(3, "Error: resource specified multiple times\n");
                 print_usage(argv[0]);
             }
             resource = (xmlChar*)optarg;
@@ -143,7 +143,7 @@ int main(int argc, char **argv)
         return 1;
     }
     if(targ_fingerprint == NULL) {
-        dlog(0, "Warning: no target fingerprint specified.\n");
+        dlog(4, "Warning: no target fingerprint specified.\n");
     }
     if(app_portnum < 0) {
         app_portnum = 2342;
@@ -200,6 +200,7 @@ int main(int argc, char **argv)
                                        (xmlChar*)targ_host_addr,
                                        (xmlChar*)targ_portnum,
                                        (xmlChar*)resource,
+                                       NULL,
                                        NULL,
                                        (xmlChar*)targ_fingerprint,
                                        NULL,

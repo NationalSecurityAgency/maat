@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<flash_board>
+  <pass>
+    <loader>$TOOLKIT_DIR$\config\flashloader\Nuvoton\M2351_APROMNS.flash</loader>
+    <range>CODE 0x10040000 0x1007ffff</range>
+  </pass>
+</flash_board>
+
+

@@ -249,7 +249,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid UN
         }
 
         /* Generate and send integrity check response */
-        dlog(4, "Target type: %s\n", target_type);
+        dlog(6, "Target type: %s\n", target_type);
         ret_val = create_integrity_response(
                       parse_target_id_type((xmlChar*)target_type),
                       (xmlChar*)target,
@@ -263,7 +263,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid UN
             return ret_val;
         }
 
-        dlog(4, "Resp contract: %s\n", response_buf);
+        dlog(6, "Resp contract: %s\n", response_buf);
         if(sz == 0) {
             sz = (size_t)xmlStrlen(response_buf);
             dlog(0, "Error: sz is 0, using strlen (Need to fix this! Why is xmlDocDumpMemory not giving back the size!?\n");

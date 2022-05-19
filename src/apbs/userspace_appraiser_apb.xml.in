@@ -26,6 +26,10 @@
 		<asp uuid="bef082ae-a790-4f5a-a881-72384ab6c9ab">blacklist</asp>
 		<asp uuid="9d2e791d-f0c7-436e-9abf-af33cfac40b3">dpkg_check</asp>
 		<asp uuid="3ecdf802-831a-4c08-a690-ae3a82fe946f">kernel_msmt_asp</asp>
+		<asp uuid="c51385da-0865-461c-b36e-13e8b81bd5b2">receieve_asp</asp>
+		<asp uuid="e55303b6-bcc6-11ec-8422-0242ac120002">decrypt_asp</asp>
+		<asp uuid="70e8cb56-bcd9-11ec-9d64-0242ac120002">decompress_asp</asp>
+		<asp uuid="96158eee-bcf4-11ec-9d64-0242ac120002">verify_measurement_contract_asp</asp>
 	</asps>
     <copland>
         <phrase copland="(USM app)">userspace measurement appraiser</phrase>

@@ -94,6 +94,10 @@
 #@aspdir@/passport_retriever_asp          	-- gen_context(system_u:object_r:passport_retriever_asp_exe_t)
 #@aspdir@/passport_storer_asp          	-- gen_context(system_u:object_r:passport_storer_asp_exe_t)
 @aspdir@/passport_maker_asp          	-- gen_context(system_u:object_r:passport_maker_asp_exe_t)
+@aspdir@/decrypt_asp                    -- gen_context(system_u:object_r:decrypt_asp_exe_t)
+@aspdir@/verify_measurement_contract_asp -- gen_context(system_u:object_r:verify_measurement_contract_asp_exe_t)
+@aspdir@/decompress_asp                  -- gen_context(system_u:object_r:decompress_asp_exe_t)
+@aspdir@/receive_asp                  -- gen_context(system_u:object_r:receive_asp_exe_t)
 #
 # APB implementations
 #

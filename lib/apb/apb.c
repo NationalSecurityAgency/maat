@@ -271,6 +271,140 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
 }
 
 /*
+ * This function invokes run_asp but uses a user supplied buffer input source and output destination
+ * instead of file descriptors. This is more ergonomic in certain use-cases that utilizing file descriptors.
+ * This function returns the following:
+ * -5: Error in creating pipes to communicate with the ASP's process
+ * -4: Error in running the ASP
+ * -3: Error in writing the input buffer to the ASP
+ * -2: Error in reading the output buffer from the ASP
+ * -1: Error in wating on the ASP
+ * 0: Successful execution
+ */
+int run_asp_buffers(struct asp *asp, const unsigned char *buf_in,
+                    size_t buf_in_len, char **out_buf,
+                    size_t *buf_out_len, int asp_argc,
+                    char *asp_argv[], int timeout,
+                    ...)
+{
+    int ret           = -5;
+    int rc            = -1;
+    int eof_enc       = -1;
+    size_t written    = -1;
+    size_t tmp_len    = 0;
+    size_t bytes_read = 0;
+    char *tmp         = NULL;
+    int data_in[2]    = {0};
+    int data_out[2]   = {0};
+
+    rc = pipe(data_in);
+    if (rc < 0) {
+        dlog(0, "Failure to create pipe for providing data to ASP\n");
+        goto in_pipe_err;
+    }
+
+    rc = maat_io_channel_new(data_in[0]);
+    if (rc < 0) {
+        dlog(0, "Failure to initialize pipe read end\n");
+        goto in_read_err;
+    }
+
+    rc = maat_io_channel_new(data_in[1]);
+    if (rc < 0) {
+        dlog(0, "Failure to initialize pipe write end\n");
+        goto in_write_err;
+    }
+
+    rc = pipe(data_out);
+    if (rc < 0) {
+        dlog(0, "Failure to create pipe for providing data to ASP\n");
+        goto out_pipe_err;
+    }
+
+    rc = maat_io_channel_new(data_out[0]);
+    if (rc < 0) {
+        dlog(0, "Failure to initialize pipe read end\n");
+        goto out_read_err;
+    }
+
+    rc = maat_io_channel_new(data_out[1]);
+    if (rc < 0) {
+        dlog(0, "Failure to initialize pipe write end\n");
+        goto out_write_err;
+    }
+
+    ret = -4;
+    if((run_asp(asp, data_in[0], data_out[1], true, asp_argc,
+                asp_argv, data_in[1], data_out[0], -1)) < 0) {
+        dlog(0, "Failed to execute fork and buffer for %s ASP\n",
+             asp->name);
+        goto run_asp_err;
+    }
+
+    close(data_in[0]);
+    close(data_out[1]);
+
+    ret = -3;
+    rc = maat_write_sz_buf(data_in[1], buf_in, buf_in_len,
+                           &written, timeout);
+    if(rc < 0) {
+        dlog(0, "Error writing input to channel\n");
+        stop_asp(asp);
+        goto write_failed;
+    }
+
+    close(data_in[1]);
+
+    ret = -2;
+    rc = maat_read_sz_buf(data_out[0], &tmp, &tmp_len,
+                          &bytes_read, &eof_enc,
+                          timeout, INT_MAX);
+    if(rc < 0 && rc != -EAGAIN) {
+        dlog(0, "Error reading output from channel\n");
+        goto read_failed;
+    } else if (eof_enc != 0) {
+        dlog(0, "Error: EOF encountered before complete buffer read\n");
+        goto eof_enc;
+    }
+
+    close(data_out[0]);
+
+    ret = -1;
+    rc = wait_asp(asp);
+    if (rc < 0) {
+        goto wait_err;
+    } else {
+        ret = 0;
+    }
+
+    *out_buf = tmp;
+    *buf_out_len = tmp_len;
+
+wait_err:
+    return ret;
+
+write_failed:
+    close(data_in[1]);
+read_failed:
+eof_enc:
+    close(data_in[0]);
+    return ret;
+
+run_asp_err:
+out_write_err:
+out_read_err:
+    close(data_out[0]);
+    close(data_out[1]);
+out_pipe_err:
+in_write_err:
+in_read_err:
+    close(data_in[0]);
+    close(data_in[1]);
+in_pipe_err:
+    return ret;
+}
+
+/*
  * Read all of the data on a file descriptor until an EOF is reached or an error occurs
  * The buffer is not pre-allocated by the caller - instead, the buffer starts at
  * INITIAL_BUFFER_SIZE and is expanded in size by BUFFER_INCREMENT as needed, until
@@ -342,7 +476,7 @@ static int maat_write_all(int outfd, char *buf, size_t sz)
  * The purpose of this function is to fork a child process and for the child to read from infd
  * unil it is no longer able to do so, at which point the child forks off a grandchild which returns
  * while the child writes the data recieved from the parent to a pipe shared by the child and grandchild
- * and then waits until the grandchild dies at which point it exists. If infd is blocking, then this can
+ * and then waits until the grandchild dies at which point it exits. If infd is blocking, then this can
  * function as a form of control/data flow - the grandchild will not start execution until the parent is
  * completely finished writing to infd.
  *
@@ -355,7 +489,7 @@ static int maat_write_all(int outfd, char *buf, size_t sz)
  * used to send output from the parent to the grancchild. The remaining arguments are file descriptors that
  * should be closed in the grandchild.
  *
- * The function returns the pid of the child process on success in the parent, 0 in the grand-child, and -1
+ * The function returns the pid of the child process on success in the parent, 0 in the grandchild, and -1
  * otherwise
  */
 int fork_and_buffer(pid_t *pidout, int *pipe_read_out, int infd, ...)
@@ -451,7 +585,7 @@ int fork_and_buffer(pid_t *pidout, int *pipe_read_out, int infd, ...)
     return 0;
 }
 
-/*
+/**
  * This function asynchronously executes an ASP and executes a fork_and_buffer call where the parent waits
  * on the ASP and the child to terminate execution while the child returns immediately after the fork_and_buffer call
  * with the read end of the pipe stored in the address pointed to by outfd. This can enable you to chain the
@@ -483,6 +617,111 @@ int fork_and_buffer_async_asp(struct asp *asp, const int argc, char *argv[], con
         close(data[0]);
         return -2;
     }
+
+    rc = fork_and_buffer(&pid, outfd, data[0], -1);
+    close(data[0]);
+    if(rc < 0) {
+        dlog(0, "Error in fork and buffer\n");
+        stop_asp(asp);
+        return -2;
+    } else if(rc > 0) {
+        rc = wait_asp(asp);
+        if(rc < 0) {
+            dlog(0, "Error in wait ASP\n");
+            return -1;
+        }
+
+        rc = waitpid(pid, &status, 0);
+        if(rc < 0) {
+            /* There's no format specified specifically for PID, so cast to widest
+             * integer type */
+            dlog(0, "Error in waitpid for PID %ld\n", (long)pid);
+            rc = -1;
+        } else if(WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+            dlog(0, "Child process %ld exited with error code %d\n", (long)pid, WEXITSTATUS(status));
+            rc = -1;
+        } else {
+            rc = 1;
+        }
+    }
+
+    return rc;
+}
+
+/**
+ * This function behaves as the fork_and_buffer_async_asp function except, instead of an input
+ * file descriptor, the function takes a buffer and a buffer length as an input. The function
+ * creates a pipe and, when the ASP is run, the parent writes the input to the pipe and the
+ * ASP reads from this pipe. See fork_and_buffer_async_asp for more details.
+ */
+int fork_and_buffer_async_asp_buffer(struct asp *asp, const int argc,
+                                     char *argv[],
+                                     const unsigned char *buf_in,
+                                     size_t buf_in_len, int timeout,
+                                     int *outfd)
+{
+    int rc         = -1;
+    int status     = -1;
+    size_t written = -1;
+    pid_t pid      = -1;
+    int data[2]    = {0};
+    int data_in[2] = {0};
+
+    if(buf_in == NULL || asp == NULL || outfd == NULL || (argv == NULL && argc != 0)) {
+        dlog(0, "Inavild arguments provided to function\n");
+        return -2;
+    }
+
+    rc = pipe(data_in);
+    if(rc < 0) {
+        dlog(0, "Unable to create pipe\n");
+        return -2;
+    }
+
+    rc = maat_io_channel_new(data_in[0]);
+    if (rc < 0) {
+        dlog(0, "Failure to initialize pipe read end\n");
+        close(data_in[0]);
+        close(data_in[1]);
+        return -2;
+    }
+
+    rc = maat_io_channel_new(data_in[1]);
+    if (rc < 0) {
+        dlog(0, "Failure to initialize pipe write end\n");
+        close(data_in[0]);
+        close(data_in[1]);
+        return -2;
+    }
+
+    rc = pipe(data);
+    if(rc < 0) {
+        dlog(0, "Unable to create pipe\n");
+        close(data_in[0]);
+        close(data_in[1]);
+        return -2;
+    }
+
+    /* Cast is justified because arguments are not modified */
+    rc = run_asp(asp, data_in[0], data[1], true, argc, argv, data_in[1], data[0], -1);
+    close(data[1]);
+    close(data_in[0]);
+    if(rc < 0) {
+        dlog(0, "Unable to run ASP %s\n", asp->name);
+        close(data[0]);
+        close(data_in[1]);
+        return -2;
+    }
+
+    /* Write input buffer to the ASP's input */
+    rc = maat_write_sz_buf(data_in[1], buf_in, buf_in_len,
+                           &written, timeout);
+    if(rc < 0) {
+        dlog(0, "Error writing input to channel\n");
+        stop_asp(asp);
+        return -1;
+    }
+    close(data_in[1]);
 
     rc = fork_and_buffer(&pid, outfd, data[0], -1);
     close(data[0]);

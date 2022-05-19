@@ -632,11 +632,23 @@ type compress_asp_exe_t;
 define_asp(compress_asp_t, compress_asp_exe_t);
 allow compress_asp_t lib_t:file entrypoint;
 
+# Decompress ASP
+type decompress_asp_t;
+type decompress_asp_exe_t;
+define_asp(decompress_asp_t, decompress_asp_exe_t);
+allow decompress_asp_t lib_t:file entrypoint;
+
 # Encrypt ASP
 type encrypt_asp_t;
 type encrypt_asp_exe_t;
 define_asp(encrypt_asp_t, encrypt_asp_exe_t);
 allow encrypt_asp_t lib_t:file entrypoint;
+
+# Decrypt ASP
+type decrypt_asp_t;
+type decrypt_asp_exe_t;
+define_asp(decrypt_asp_t, decrypt_asp_exe_t);
+allow decrypt_asp_t lib_t:file entrypoint;
 
 # Merge ASP
 type merge_asp_t;
@@ -657,12 +669,26 @@ maat_credentials_reader(create_contract_asp_t)
 maat_tmp_access(create_contract_asp_t)
 allow create_contract_asp_t lib_t:file { entrypoint };
 
+# Verify Measurement Contract ASP
+type verify_measurement_contract_asp_t;
+type verify_measurement_contract_asp_exe_t;
+define_asp(verify_measurement_contract_asp_t, verify_measurement_contract_asp_exe_t);
+maat_credentials_reader(verify_measurement_contract_asp_t)
+allow verify_measurement_contract_asp_t lib_t:file { entrypoint };
+
 # Send ASP
 type send_asp_t;
 type send_asp_exe_t;
 define_asp(send_asp_t, send_asp_exe_t);
 allow send_asp_t attestmgr_t:tcp_socket { rw_socket_perms };
 allow send_asp_t lib_t:file entrypoint;
+
+# Receive ASP
+type receive_asp_t;
+type receive_asp_exe_t;
+define_asp(receive_asp_t, receive_asp_exe_t);
+allow receive_asp_t attestmgr_t:tcp_socket { rw_socket_perms };
+allow receive_asp_t lib_t:file entrypoint;
 
 # Sign-send ASP
 type sign_send_asp_t;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2022 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@
 #include <dlfcn.h>
 
 #include <util/util.h>
+#include <util/signfile.h>
 
 #include <common/apb_info.h>
 #include <apb/apb.h>
@@ -52,6 +53,8 @@
 #include <util/base64.h>
 #include <graph/graph-core.h>
 #include <common/asp.h>
+
+#include "userspace_appraiser_common_funcs.h"
 
 /**
  * Controls which key/value pairs are added to the final report.
@@ -588,11 +591,15 @@ int apb_execute(struct apb *apb, struct scenario *scen,
                 char *target, char *target_type, char *resource,
                 struct key_value **arg_list UNUSED, int argc UNUSED)
 {
-    int ret;
-    int failed = 0;
-    unsigned char *response_buf;
-    size_t sz = 0;
-    xmlChar *evaluation;
+    int ret                     = -1;
+    int failed                  = 0;
+    size_t sz                   = 0;
+    size_t msmt_sz              = -1;
+    xmlDoc *doc                 = NULL;
+    xmlChar *evaluation         = NULL;
+    char *msmt                  = NULL;
+    unsigned char *response_buf = NULL;
+    char tmpstr[200]            = {0};
 
     // Load all asps we need
     apb_asps = apb->asps;
@@ -633,26 +640,52 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     }
 
     /* Receive measurement contract from attester APB. Setting max size as 10MB. */
-    ret = receive_measurement_contract(peerchan, scen, 10000000);
-    if(ret) {
+    ret = receive_measurement_contract_asp(apb_asps, peerchan, scen);
+    if(ret < 0) {
         dlog(0, "Unable to recieve a measurement contract with error %d\n", ret);
         return ret;
     }
 
+    doc = xmlReadMemory(scen->contract, (int)scen->size, NULL, NULL, 0);
+    if (doc == NULL) {
+        dlog(0, "Failed to parse contract XML.\n");
+        return ret;
+    }
+
+    /* Save off receieved measurement contract */
+    snprintf(tmpstr, 200, "%s/measurement_contract.xml", scen->workdir);
+    save_document(doc, tmpstr);
+    xmlFreeDoc(doc);
+
     dlog(6, "Received Measurement Contract in appraiser APB\n");
 
-    if(scen->contract == NULL) {
-        dlog(0, "No measurement contract received by appraiser APB\n");
+    if(scen->contract == NULL || scen->size > INT_MAX) {
+        dlog(0, "No valid measurement contract received by appraiser APB\n");
         failed = -1;
     } else {
-        failed = 0;
-        handle_measurement_contract(scen, appraise, &failed);
+        failed = process_contract(apb_asps, scen,
+                                  (void **)&msmt, &msmt_sz);
+
+        if (failed == 0) {
+            /* Officially, you would have to harvest the values
+                   from the contract to appraise with, but the
+                   userspace appraiser does not use the values
+                   list, so we will not execute what is effectively
+                   a no-op */
+            failed = appraise(scen, NULL, msmt, msmt_sz);
+            free(msmt);
+        }
     }
 
     if(failed == 0) {
         evaluation = (xmlChar*)"PASS";
     } else {
         evaluation = (xmlChar*)"FAIL";
+    }
+
+    ret = adjust_measurement_contract_to_access_contract(scen);
+    if (ret < 0) {
+        dlog(1, "Unable to properly create and save access measurement, but continuing...\n");
     }
 
     /* Generate and send integrity check response */

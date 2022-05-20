@@ -316,8 +316,8 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
     dlog(3, "Hello from the COMPLEX_ATTESTATION_APB\n");
     int ret_val = 0;
     int i;
-    place_info *place1_info;
-    place_info *place2_info;
+    place_info *place1_info = NULL;
+    place_info *place2_info = NULL;
     struct meas_spec *mspec = NULL;
     measurement_graph *graph = NULL;
 

@@ -314,7 +314,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
                 struct key_value **arg_list, int argc)
 {
     dlog(3, "Hello from the COMPLEX_ATTESTATION_APB\n");
-    int ret_val = 0;
+    int ret_val = -1;
     int i;
     place_info *place1_info = NULL;
     place_info *place2_info = NULL;
@@ -345,9 +345,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
             if (ret_val < 0) {
                 dlog(1, "Unable to get place information for id: %s\n",
                      arg_list[i]->value);
-                free(place2_info);
-                return -1;
-
+                goto place_arg_err;
             }
         } else if (strcmp(arg_list[i]->key, "@_2") == 0) {
             if (place2_info != NULL) {
@@ -360,9 +358,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
             if (ret_val < 0) {
                 dlog(1, "Unable to get place information for id: %s\n",
                      arg_list[i]->value);
-                free(place1_info);
-                return -1;
-
+                goto place_arg_err;
             }
         } else {
             dlog(2, "Received unknown argument with key %s\n",
@@ -372,23 +368,19 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
 
     if (place1_info == NULL || place2_info == NULL) {
         dlog(0, "APB not given complete set of place information\n");
-        return -1;
+        goto place_arg_err;
     }
 
     ret_val = get_target_meas_spec(meas_spec_uuid, &mspec);
     if(ret_val != 0) {
-        free(place1_info);
-        free(place2_info);
-        return ret_val;
+        goto meas_spec_err;
     }
 
     graph = create_measurement_graph(NULL);
     if(!graph) {
         dlog(0, "Failed to create measurement graph\n");
-        free_meas_spec(mspec);
-        free(place1_info);
-        free(place2_info);
-        return -EIO;
+	ret_val = -EIO;
+	goto graph_err;
     }
 
     if(scen->certfile) {
@@ -396,6 +388,11 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
     }
     if(scen->keyfile) {
         keyfile = strdup(scen->keyfile);
+    }
+
+    if (certfile == NULL || keyfile == NULL) {
+        dlog(0, "Unable to allocate keyfile or certfile buffer\n");
+        goto str_alloc_err;
     }
 
     dlog(3, "Entering execute_measurement_and_asp_pipeline\n");
@@ -406,11 +403,16 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
               place2_info->port, place1_info->addr, place1_info->port, scen,
               peerchan);
 
-    free_place_information(place1_info);
-    free_place_information(place2_info);
-    free_meas_spec(mspec);
+ str_alloc_err:
     destroy_measurement_graph(graph);
     graph = NULL;
+
+ graph_err:
+    free_meas_spec(mspec);
+ meas_spec_err:
+ place_arg_err:
+    free_place_information(place1_info);
+    free_place_information(place2_info);
 
     return ret_val;
 }

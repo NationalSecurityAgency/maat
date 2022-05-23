@@ -241,6 +241,12 @@ send_execute_asp_SOURCES = send_execute_asp.c
 send_execute_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS)
 endif
 
+if BUILD_send_execute_tcp_ASP
+asp_PROGRAMS += send_execute_tcp_asp
+send_execute_tcp_asp_SOURCES = send_execute_tcp_asp.c
+send_execute_tcp_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS)
+endif
+
 if BUILD_tlm_ret_ASP
 asp_PROGRAMS += tlm_ret_asp
 tlm_ret_asp_SOURCES = tlm_ret_asp.c

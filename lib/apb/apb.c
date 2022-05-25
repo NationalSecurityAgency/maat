@@ -342,7 +342,7 @@ int run_asp_buffers(struct asp *asp, const unsigned char *buf_in,
       close(data_in[0]);
     } else {
       rc = run_asp(asp, STDIN_FILENO, data_out[1], true, asp_argc,
-		   asp_argv, data_in[1], data_out[0], -1)
+		   asp_argv, data_in[1], data_out[0], -1);
     }
 
     if(rc < 0) {

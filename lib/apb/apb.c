@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2022 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -297,22 +297,24 @@ int run_asp_buffers(struct asp *asp, const unsigned char *buf_in,
     int data_in[2]    = {0};
     int data_out[2]   = {0};
 
-    rc = pipe(data_in);
-    if (rc < 0) {
+    if (buf_in != NULL) {
+      rc = pipe(data_in);
+      if (rc < 0) {
         dlog(0, "Failure to create pipe for providing data to ASP\n");
         goto in_pipe_err;
-    }
+      }
 
-    rc = maat_io_channel_new(data_in[0]);
-    if (rc < 0) {
+      rc = maat_io_channel_new(data_in[0]);
+      if (rc < 0) {
         dlog(0, "Failure to initialize pipe read end\n");
         goto in_read_err;
-    }
+      }
 
-    rc = maat_io_channel_new(data_in[1]);
-    if (rc < 0) {
+      rc = maat_io_channel_new(data_in[1]);
+      if (rc < 0) {
         dlog(0, "Failure to initialize pipe write end\n");
         goto in_write_err;
+      }
     }
 
     rc = pipe(data_out);
@@ -334,26 +336,35 @@ int run_asp_buffers(struct asp *asp, const unsigned char *buf_in,
     }
 
     ret = -4;
-    if((run_asp(asp, data_in[0], data_out[1], true, asp_argc,
-                asp_argv, data_in[1], data_out[0], -1)) < 0) {
+    if (buf_in != NULL) {
+      rc = run_asp(asp, data_in[0], data_out[1], true, asp_argc,
+		   asp_argv, data_in[1], data_out[0], -1);
+      close(data_in[0]);
+    } else {
+      rc = run_asp(asp, STDIN_FILENO, data_out[1], true, asp_argc,
+		   asp_argv, data_in[1], data_out[0], -1)
+    }
+
+    if(rc < 0) {
         dlog(0, "Failed to execute fork and buffer for %s ASP\n",
              asp->name);
         goto run_asp_err;
     }
 
-    close(data_in[0]);
     close(data_out[1]);
 
     ret = -3;
-    rc = maat_write_sz_buf(data_in[1], buf_in, buf_in_len,
+    if (buf_in != NULL) {
+      rc = maat_write_sz_buf(data_in[1], buf_in, buf_in_len,
                            &written, timeout);
-    if(rc < 0) {
+      if(rc < 0) {
         dlog(0, "Error writing input to channel\n");
         stop_asp(asp);
         goto write_failed;
-    }
+      }
 
-    close(data_in[1]);
+      close(data_in[1]);
+    }
 
     ret = -2;
     rc = maat_read_sz_buf(data_out[0], &tmp, &tmp_len,
@@ -384,10 +395,14 @@ wait_err:
     return ret;
 
 write_failed:
-    close(data_in[1]);
+    if (buf_in != NULL) {
+      close(data_in[1]);
+    }
 read_failed:
 eof_enc:
-    close(data_in[0]);
+    if (buf_in != NULL) {
+      close(data_in[0]);
+    }
     return ret;
 
 run_asp_err:
@@ -398,8 +413,10 @@ out_read_err:
 out_pipe_err:
 in_write_err:
 in_read_err:
-    close(data_in[0]);
-    close(data_in[1]);
+    if (buf_in != NULL) {
+      close(data_in[0]);
+      close(data_in[1]);
+    }
 in_pipe_err:
     return ret;
 }

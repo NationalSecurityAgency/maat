@@ -726,7 +726,7 @@ int fork_and_buffer_async_asp_buffer(struct asp *asp, const int argc,
       rc = run_asp(asp, data_in[0], data[1], true, argc, argv, data_in[1], data[0], -1);
       close(data_in[0]);
     } else {
-      rc = run_asp(asp, -1, data[1], true, argc, argv, data_in[1], data[0], -1);
+      rc = run_asp(asp, STDIN_FILENO, data[1], true, argc, argv, data_in[1], data[0], -1);
     }
     
     close(data[1]);

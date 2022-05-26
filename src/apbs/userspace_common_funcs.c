@@ -248,9 +248,9 @@ static struct asp *find_inventory_asp(measurement_graph *g,
 
 }
 
-static struct asp *select_asp(measurement_graph *g, measurement_type *mtype,
-                              measurement_variable *var, GList *apb_asps,
-                              int *mcount_ptr)
+struct asp *select_asp(measurement_graph *g, measurement_type *mtype,
+		       measurement_variable *var, GList *apb_asps,
+		       int *mcount_ptr)
 {
 
     dlog(6, "mtype=%s, var->type=%s, var->address->space=%s\n",
@@ -273,6 +273,8 @@ static struct asp *select_asp(measurement_graph *g, measurement_type *mtype,
             return find_asp(apb_asps, "procmem");
         } else if (var->address->space->magic == PID_MAGIC) {
             return find_asp(apb_asps, "got_measure");
+	} else if (var->address->space->magic == DYNAMIC_MEASUREMENT_REQUEST_MAGIC) {
+	    return find_asp(apb_asps, "send_execute_tcp_asp");
         } else {
             return find_asp(apb_asps, "send_execute_asp");
         }
@@ -307,7 +309,7 @@ static struct asp *select_asp(measurement_graph *g, measurement_type *mtype,
         return find_asp(apb_asps, "procmem");
     } else if (mtype == &fds_measurement_type) {
         return find_asp(apb_asps, "procfds");
-    }
+    } 
 
     return NULL;
 }

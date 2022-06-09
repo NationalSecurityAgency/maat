@@ -19,6 +19,7 @@
 #include <glib/glist.h>
 
 #include <common/scenario.h>
+#include <maat-basetypes.h>
 
 /**
  * This function will ingest a measurement contract and will do the following:
@@ -48,7 +49,53 @@ int adjust_measurement_contract_to_access_contract(struct scenario *scen);
  */
 int receive_measurement_contract_asp(GList *apb_asps, int chan,
                                      struct scenario *scen);
+
+struct asp *select_appraisal_asp(node_id_t node UNUSED,
+                                 magic_t measurement_type,
+                                 GList *apb_asps);
+
+int mk_report_node_identifier(measurement_graph *graph,
+                              node_id_t n, char **out);
+
+void gather_report_data(measurement_graph *g, enum report_levels report_level,
+                        GList **report_values);
+
+#ifdef USERSPACE_APP_DEBUG
+inline void dump_measurement(struct scenario *scen, void *msmt, size_t msmtsize);
 #endif
+
+/**
+ * Executes the passed APB, and sends it the passed blob buffer.
+ * Listens and returns result.
+ *
+ * Returns 0 if successful in _execution_; < 0 if fail. Result of appraisal
+ * returned as @out.
+ */
+int run_apb_with_blob(struct apb *apb, uuid_t spec_uuid, struct scenario *scen, blob_data *blob,
+                      char **out, size_t *sz_out);
+
+/**
+ * Sets @apb_out and @mspec_out to the appropriate subordinate APB for the
+ * blob data on the passed @node
+ *
+ * Looks for measurement_request address and chooses based on resource found
+ * there.
+ *
+ * Returns 0 on success, < 0 on error.
+ */
+int select_subordinate_apb(measurement_graph *mg, node_id_t node, GList *all_apbs,
+                           struct apb **apb_out, uuid_t *mspec_out);
+
+/**
+ * Finds the right entity to send the passed node to for appraisal, sends it
+ * and returns result
+ *
+ * Returns < 0 on error; otherwise appraisal result is returned.
+ */
+int pass_to_subordinate_apb(struct measurement_graph *mg, struct scenario *scen, node_id_t node,
+                            struct apb *apb, uuid_t spec_uuid);
+#endif
+
 /* Local Variables:	*/
 /* c-basic-offset: 4	*/
 /* End:			*/

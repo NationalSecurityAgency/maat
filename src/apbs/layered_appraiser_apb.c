@@ -101,7 +101,7 @@ typedef enum {
 static int g_measured_levels[NUM_PRIV_LEVELS + 1] = {0};
 
 /*
- * Variable that helps keep track of the ordering of measurements in the 
+ * Variable that helps keep track of the ordering of measurements in the
  * measurement graph. Note that at this time we have no way to enforce
  * or verify the order of measurements. This check will anticipate some
  * future mechanism to perform this more rigorously.
@@ -180,390 +180,6 @@ static int map_info_to_priv(char *place, char *resource, Priv *priv)
     return 0;
 }
 
-static struct asp *select_appraisal_asp(node_id_t node UNUSED,
-                                        magic_t measurement_type)
-{
-    if (measurement_type == SYSTEM_TYPE_MAGIC) {
-        return find_asp(apb_asps, "system_appraise");
-    }
-    if (measurement_type == PKG_DETAILS_TYPE_MAGIC ||
-            measurement_type == PROCESSMETADATA_TYPE_MAGIC) {
-        return find_asp(apb_asps, "blacklist");
-    }
-    if (measurement_type == MD5HASH_MAGIC) {
-        return find_asp(apb_asps, "dpkg_check");
-    }
-    return NULL;
-}
-
-static int mk_report_node_identifier(measurement_graph *graph,
-                                     node_id_t n, char **out)
-{
-    address *addr = measurement_node_get_address(graph, n);
-    if (!addr)
-        return -EINVAL;
-    target_type *type = measurement_node_get_target_type(graph, n);
-    if (!type)
-        return -EINVAL;
-    char *addr_hr = address_human_readable(addr);
-    if (!addr_hr)
-        return -EINVAL;
-    *out = g_strdup_printf("(%s *)%s", type->name, addr_hr);
-
-    free_address(addr);
-    free(addr_hr);
-
-    if(*out == NULL) {
-        return -EINVAL;
-    }
-    return 0;
-}
-
-static void gather_report_data(measurement_graph *g, GList **report_values)
-{
-    node_iterator *it;
-    for(it = measurement_graph_iterate_nodes(g); it != NULL;
-            it = node_iterator_next(it)) {
-        node_id_t node = node_iterator_get(it);
-        measurement_data *data;
-        report_data *rmd = NULL;
-        char *data_node_id;
-        GList *tmp_list;
-        struct key_value *kv;
-
-        if(!measurement_node_has_data(g, node, &report_measurement_type)) {
-            continue;
-        }
-
-        if((measurement_node_get_rawdata(g, node, &report_measurement_type,
-                                         &data)) != 0) {
-            dlog(3, "Failed to read report data from node?");
-            continue;
-        }
-        rmd = container_of(data, report_data, d);
-
-        dlog(6,"rmd= %p,\n ",rmd);
-        dlog(6," text = %s\n", rmd->text_data);
-        dlog(6," len = %zd\n", rmd->text_data_len);
-        dlog(6," loglevel = %d\n", rmd->loglevel);
-
-        if (rmd->loglevel > default_report_level) {
-            dlog(4, "..Filtered based on log level..\n");
-            free_measurement_data(&rmd->d);
-            continue;
-        }
-
-        kv = calloc(1, sizeof(struct key_value));
-        if (!kv) {
-            dlog(1, "Warning, failed to malloc the kv pair\n");
-            goto kv_malloc_failed;
-        }
-
-        if(mk_report_node_identifier(g, node, &data_node_id) < 0) {
-            dlog(1, "Warning failed to generate identifier for report data node\n");
-            goto mk_identifier_failed;
-        }
-
-        kv->key = data_node_id;
-        if (!kv->key) {
-            dlog(1, "Warning, failed to allocate key string\n");
-            g_free(data_node_id);
-            goto key_alloc_failed;
-        }
-
-        char *tmpstring = g_strdup_printf("[%d] %s", rmd->loglevel,
-                                          rmd->text_data);
-        if (tmpstring == NULL) {
-            dlog(0, "Error allocating temp string buffer, log message was %s",
-                 rmd->text_data);
-            goto tmpstring_alloc_failed;
-        }
-
-        /* Cast is fine because signedness doesn't really matter for character buffers */
-        kv->value = b64_encode((unsigned char *)tmpstring, strlen(tmpstring));
-        g_free(tmpstring);
-        if (kv->value == NULL) {
-            dlog(1, "Warning, failed to allocate and encode value string\n");
-            goto value_alloc_failed;
-        }
-
-        tmp_list = g_list_append(*report_values, kv);
-        if(tmp_list == NULL) {
-            dlog(1, "Failed to add report data to output list\n");
-            goto append_report_failed;
-        }
-        *report_values = tmp_list;
-
-        free_measurement_data(&rmd->d);
-        continue;
-
-append_report_failed:
-value_alloc_failed:
-key_alloc_failed:
-tmpstring_alloc_failed:
-mk_identifier_failed:
-        free_key_value(kv);
-kv_malloc_failed:
-        free_measurement_data(&rmd->d);
-        continue;
-    }
-
-    destroy_node_iterator(it);
-}
-
-#ifdef USERSPACE_APP_DEBUG
-static inline void dump_measurement(struct scenario *scen, void *msmt, size_t msmtsize)
-{
-    char path[1024];
-    if(snprintf(path, 1024, "%s/measurement.xml", scen->workdir) >= 1024) {
-        /* really, the workdir path is 1007 bytes long?? forget it. */
-        return;
-    }
-    buffer_to_file(path, (unsigned char*)msmt, msmtsize);
-}
-#endif
-
-/**
- * Executes the passed APB, and sends it the passed blob buffer.
- * Listens and returns result.
- *
- * Returns 0 if successful in _execution_; < 0 if fail. Result of appraisal
- * returned as @out.
- */
-static int run_apb_with_blob(struct apb *apb, uuid_t spec_uuid, struct scenario *scen, blob_data *blob, char **out, size_t *sz_out)
-{
-    int pipe_to_sapb[2];
-    int pipe_from_sapb[2];
-    int ret;
-    dlog(0, "userspace appraiser APB calling subordinate APB with nonce: %s\n", scen->nonce);
-
-    //Set up your pipes
-    ret = pipe(pipe_to_sapb);
-    if(ret < 0) {
-        dlog(0, "Error: failed to create subordinate APB input pipe: %s\n", strerror(errno));
-        ret = -1;
-        goto error_pipe_to_sapb;
-    }
-
-    ret = pipe(pipe_from_sapb);
-    if(ret < 0) {
-        dlog(0, "Error:  failed to create subordinate APB output pipe: %s\n", strerror(errno));
-        ret = -1;
-        goto error_pipe_from_sapb;
-    }
-
-    //Lets make naming even more clear
-    int sapb_rec_fd  = pipe_to_sapb[0];
-    int send_fd      = pipe_to_sapb[1];
-    int rec_fd       = pipe_from_sapb[0];
-    int sapb_send_fd = pipe_from_sapb[1];
-
-    dlog(4, "Calling run with the %s APB\n", apb->name);
-    scen->contract = NULL;
-    scen->size = 0;
-    ret = run_apb_async(apb,
-                        /* FIXME: make these dynamic based on a
-                         * command line argument or environment
-                         * variable.
-                         */
-                        EXECCON_RESPECT_DESIRED,
-                        EXECCON_SET_UNIQUE_CATEGORIES,
-                        scen, spec_uuid, sapb_rec_fd, sapb_send_fd,
-                        NULL, NULL, "runtime_meas", NULL);
-    if(ret < 0) {
-        dlog(0, "Failed to launch apb\n");
-        ret = -1;
-        goto error_launch_apb;
-    }
-
-    //send contract to apb
-    int iostatus = -1;
-    size_t bytes_written = 0;
-    iostatus = maat_write_sz_buf(send_fd, blob->buffer, blob->size, &bytes_written, 5);
-    if(iostatus != 0) {
-        dlog(0, "Failed to send measurement to subordinate apb: %s\n",
-             strerror(-iostatus));
-        ret = -1;
-        goto error_write;
-    }
-
-    dlog(6, "Wrote %zd bytes to subordinate apb\n", bytes_written);
-
-    //Read the result
-    char *result      = NULL;
-    size_t resultsz   = 0;
-    size_t bytes_read = 0;
-    int eof_encountered = 0;
-    iostatus = maat_read_sz_buf(rec_fd, &result, &resultsz, &bytes_read, &eof_encountered, 10000, -1);
-    if(iostatus != 0) {
-        dlog(0, "Error reading result status is %d: %s\n", iostatus, strerror(iostatus < 0 ? -iostatus : iostatus));
-        ret = -1;
-        goto error_read;
-    } else if(eof_encountered != 0) {
-        dlog(0, "Error: unexpected EOF encountered reading result from kernel runtime measurement appraiser\n");
-        free(result);
-        ret = -1;
-        goto error_read;
-    }
-
-    dlog(4, "result from subordinate APB (%s): %s\n", apb->name, result);
-    *out = result;
-    *sz_out = resultsz;
-
-    ret = 0;
-
-error_read:
-error_write:
-error_launch_apb:
-    close(pipe_from_sapb[0]);
-    close(pipe_from_sapb[1]);
-error_pipe_from_sapb:
-    close(pipe_to_sapb[0]);
-    close(pipe_to_sapb[1]);
-error_pipe_to_sapb:
-    return ret;
-}
-
-/**
- * Sets @apb_out and @mspec_out to the appropriate subordinate APB for the
- * blob data on the passed @node
- *
- * Looks for measurement_request address and chooses based on resource found
- * there.
- *
- * Returns 0 on success, < 0 on error.
- */
-static int select_subordinate_apb(measurement_graph *mg, node_id_t node, struct apb **apb_out, uuid_t *mspec_out)
-{
-    struct apb *apb = NULL;
-    uuid_t apb_uuid;
-    uuid_t mspec_uuid;
-
-    address *addr            = NULL;
-    measurement_request_address *va = NULL;
-
-    int ret = 0;
-    size_t i;
-
-    // Get information out of the address
-    addr = measurement_node_get_address(mg, node);
-    if(!addr) {
-        dlog(0, "Failed to find address for blob node\n");
-        ret = -1;
-        goto error;
-    }
-    if(addr->space != &measurement_request_address_space) {
-        dlog(0, "Unexpected address space in blob node\n");
-        ret = -1;
-        goto addr_error;
-    }
-    va = container_of(addr, measurement_request_address, a);
-
-    // Pick uuids
-    if(strcmp(va->resource, "runtime_meas") == 0) {
-        // XXX: This should be changed to find the APB based on Copland phrase
-        dlog(2, "Using the runtime_meas Appraiser APB to appraise blob\n");
-        uuid_parse("af5e897a-5a1a-4973-afd4-5cf4eec7539e", apb_uuid);
-        uuid_parse("3db1c1b2-4d44-45ea-83f5-8de858b1a4d0", mspec_uuid);
-    } else if(strcmp(va->resource, "pkginv") == 0) {
-        dlog(2, "Using the Userspace Appraiser APB to appraise blob\n");
-        uuid_parse("7a9384ed-155b-44ec-bc24-7b8f4e91ec3d", apb_uuid);
-        uuid_parse("55042348-e8d5-4443-abf7-3d67317c7dab", mspec_uuid);
-    } else {
-        dlog(0, "Unable to find appropriate subordinate APB to appraise blob\n");
-        ret = -1;
-        goto resource_error;
-    }
-
-    // Find APB with uuid
-    apb = find_apb_uuid(all_apbs, apb_uuid);
-    if(apb == NULL) {
-        dlog(0, "failed to find the subordinate appraiser apb\n");
-        ret = -1;
-        goto find_apb_error;
-    }
-
-    // Send it all back
-    *apb_out  = apb;
-
-    /* uuid_t is an unsigned char[16] */
-    for(i = 0; i < sizeof(uuid_t); i++) {
-        (*mspec_out)[i] = mspec_uuid[i];
-    }
-
-find_apb_error:
-resource_error:
-addr_error:
-    free_address(addr);
-error:
-    return ret;
-}
-
-/**
- * Finds the right entity to send the passed node to for appraisal, sends it
- * and returns result
- *
- * Returns < 0 on error; otherwise appraisal result is returned.
- */
-int pass_to_subordinate_apb(struct measurement_graph *mg, struct scenario *scen, node_id_t node, struct apb *apb, uuid_t spec_uuid)
-{
-    measurement_data *data = NULL;
-    blob_data *bdata       = NULL;
-    char *rcontract        = NULL;
-    size_t rsize;
-
-    target_id_type_t target_typ;
-    xmlChar *target_id;
-    xmlChar *resource;
-    size_t data_count;
-    xmlChar **data_idents = NULL;
-    xmlChar **data_vals = NULL;
-    int result;
-
-    //Extract the data to send
-    if(measurement_node_get_rawdata(mg, node, &blob_measurement_type, &data) != 0) {
-        dlog(0, "Failed to get blob data from node\n");
-        result = -1;
-        goto blob_error;
-    }
-    bdata = container_of(data, blob_data, d);
-
-    //Get result from subordinate APB
-    result = run_apb_with_blob(apb, spec_uuid, scen, bdata, &rcontract, &rsize);
-    if(result != 0) {
-        dlog(0, "Error in executing subordinate APB\n");
-        result = -1;
-        goto pass_error;
-    }
-
-    /* Cast is alright, although this does raise questions about the API */
-    if(parse_integrity_response(rcontract, (int)rsize,
-                                &target_typ, &target_id,
-                                &resource, &result,
-                                &data_count, &data_idents,
-                                &data_vals) < 0) {
-        dlog(0, "Failed to parse response from subordinate APB\n");
-        result = -1;
-        goto parse_error;
-    }
-
-    size_t i;
-    for(i = 0; i<data_count; i++) {
-        xmlFree(data_idents[i]);
-        xmlFree(data_vals[i]);
-    }
-    free(data_idents);
-    free(data_vals);
-
-parse_error:
-    free(rcontract);
-pass_error:
-    free_measurement_data(data);
-blob_error:
-    unload_apb(apb);
-    return result;
-}
-
 /**
  * Appraises all of the data in the passed node
  * Returns 0 if all appraisals pass successfully.
@@ -584,54 +200,53 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
     for (data_it = measurement_node_iterate_data(mg, node);
             data_it != NULL;
             data_it = measurement_iterator_next(data_it)) {
-	
         magic_t data_type = measurement_iterator_get_type(data_it);
-	node_id_t node_id = node_iterator_get(data_it);
-	address_space *addr_space = measurement_node_get_address_space(mg, node_id);
+	    node_id_t node_id = node_iterator_get(data_it);
+	    address_space *addr_space = measurement_node_get_address_space(mg, node_id);
         char type_str[MAGIC_STR_LEN+1];
 
         sprintf(type_str, MAGIC_FMT, data_type);
         int ret = 0;
 
-	// We need to use the dynamic measurement request address space in order to get
-	// the resource that was requested and the place that the measurement was
-	// taken from
-	if (addr_space == &dynamic_measurement_request_address_space) {
-	    dynamic_measurement_request_address *addr = (dynamic_measurement_request_address*) measurement_node_get_address(mg, node_id);
+	    // We need to use the dynamic measurement request address space in order to get
+	    // the resource that was requested and the place that the measurement was
+	    // taken from
+	    if (addr_space == &dynamic_measurement_request_address_space) {
+	        dynamic_measurement_request_address *addr = (dynamic_measurement_request_address*) measurement_node_get_address(mg, node_id);
 
-	    ret = map_info_to_priv(addr->attester, addr->resource, &priv_level);
-	    addr_space->free_address((address *)addr);
-	    if (ret < 0) {
-		appraisal_stat++;
-		continue;
+	        ret = map_info_to_priv(addr->attester, addr->resource, &priv_level);
+	        addr_space->free_address((address *)addr);
+	        if (ret < 0) {
+		        appraisal_stat++;
+		        continue;
+	        }
+	    } else {
+	        // If this isn't a request, then we are handling userspace measurements of the current
+	        // privilege level
+	        priv_level = MD_USER;
 	    }
-	} else {
-	    // If this isn't a request, then we are handling userspace measurements of the current
-	    // privilege level
-	    priv_level = MD_USER;
-	}
 
-	if (priv_level <= g_prev_priv) {
-	    dlog(1, "Encountered out of order measurement\n");
-	    appraisal_stat++;
-	    continue;
-	}
+	    if (priv_level <= g_prev_priv) {
+	        dlog(1, "Encountered out of order measurement\n");
+	        appraisal_stat++;
+	        continue;
+	    }
 
-	if (g_measured_levels[priv_level]) {
-	    dlog(1, "Repeated measurement at the same privilege level %d\n", priv_level);
-	    appraisal_stat++;
-	    continue;
-	}
+	    if (g_measured_levels[priv_level]) {
+	        dlog(1, "Repeated measurement at the same privilege level %d\n", priv_level);
+	        appraisal_stat++;
+	        continue;
+	    }
 
-	g_prev_priv = priv_level;
-	g_measured_levels[priv_level] = 1;
+	    g_prev_priv = priv_level;
+	    g_measured_levels[priv_level] = 1;
 
         // Blob measurement type goes to subordinate APB
         if(data_type == BLOB_MEASUREMENT_TYPE_MAGIC) {
             struct apb *sub_apb = NULL;
             uuid_t mspec;
 
-            ret = select_subordinate_apb(mg, node, &sub_apb, &mspec);
+            ret = select_subordinate_apb(mg, node, all_apbs, &sub_apb, &mspec);
             if(ret != 0) {
                 dlog(2, "Warning: Failed to find subordinate APB for node\n");
                 ret = 0;
@@ -644,7 +259,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
             // Everything else goes to an ASP
         } else {
             struct asp *appraiser_asp = NULL;
-            appraiser_asp = select_appraisal_asp(node, data_type);
+            appraiser_asp = select_appraisal_asp(node, data_type, apb_asps);
             if(!appraiser_asp) {
                 dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", type_str);
                 ret = 0;
@@ -674,13 +289,13 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
     // Skip the first index because it corresponds to the
     // NONE privilege level
     for (i = 1; i < NUM_PRIV_LEVELS + 1; i++) {
-	if (g_measured_levels[priv_level] == 0) {
-	    appraisal_stat++;
-	    dlog(2, "Missing measurement of privilege level %d\n", priv_level);
-	    break;
-	}
+	    if (g_measured_levels[priv_level] == 0) {
+	        appraisal_stat++;
+	        dlog(2, "Missing measurement of privilege level %d\n", priv_level);
+	        break;
+	    }
     }
-    
+
     return appraisal_stat;
 }
 
@@ -722,7 +337,7 @@ static int appraise(struct scenario *scen, GList *values UNUSED,
     }
     free(graph_path);
 
-    gather_report_data(mg, &report_data_list);
+    gather_report_data(mg, default_report_level, &report_data_list);
 
 cleanup:
     destroy_measurement_graph(mg);

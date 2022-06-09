@@ -16,9 +16,9 @@
  */
 
 /*! \file
- * This APB will request a kernel measurement of itself from some designated
- * remote appraiser and will take measurements of userspace and concatenate the two
- * measurements together.
+ * This APB aggregates measurements from different attestation managers
+ * operating within different environments of different privilege levels
+ * within the same platform.
  */
 
 #include <stdio.h>

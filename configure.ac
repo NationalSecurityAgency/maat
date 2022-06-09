@@ -381,6 +381,7 @@ DEFAULT_APB([kim])
 DEFAULT_APB([forwarding])
 DEFAULT_APB([no_op])
 DEFAULT_APB([userspace_appraiser])
+DEFAULT_APB([layered_appraiser])
 EXTRA_APB([quiot_tlm])
 EXTRA_APB([quiot_tlm_appraiser])
 

@@ -165,15 +165,11 @@
           </variable>
 
 	  <variable instruction="request">
-            <address operation="measure">@0 runtime_meas</address>
-          </variable>
-
-	  <variable instruction="request">
             <address operation="measure">@0 userspace</address>
           </variable>
 
 	  <variable instruction="request">
-            <address operation="measure">@0 runtime_meas</address>
+            <address operation="measure">@md runtime_meas</address>
           </variable>
 	  
 	  <!-- Variable to identify the host system -->
@@ -234,6 +230,10 @@
 	    <variable instruction="mtab" >
 	      <address operation="equal">/proc/mounts</address>
 	    </variable>
+
+	    <variable instruction="request">
+              <address operation="measure">@t runtime_meas</address>
+            </variable>
 
 	    <variable instruction="request">
             <address operation="measure">@t userspace-mtab</address>

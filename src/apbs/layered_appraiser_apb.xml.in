@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2022 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<apb>
+	<name>layered_appraiser</name>
+	<desc>Evaluates a layered measurement</desc>
+	<uuid>ff46c801-5bf9-45c2-8472-677c70150295</uuid>
+	<file hash="XXXXX">${APB_INSTALL_DIR}/layered_appraiser_apb</file>
+	<input_type>????</input_type>
+	<output_type>????</output_type>
+	<asps ordered="False">
+		<asp uuid="2cddba1c-182c-4f4d-bd8b-109e8447f64d" initial="True">system_appraise</asp>
+		<asp uuid="bef082ae-a790-4f5a-a881-72384ab6c9ab">blacklist</asp>
+		<asp uuid="9d2e791d-f0c7-436e-9abf-af33cfac40b3">dpkg_check</asp>
+		<asp uuid="3ecdf802-831a-4c08-a690-ae3a82fe946f">kernel_msmt_asp</asp>
+		<asp uuid="c51385da-0865-461c-b36e-13e8b81bd5b2">receieve_asp</asp>
+		<asp uuid="e55303b6-bcc6-11ec-8422-0242ac120002">decrypt_asp</asp>
+		<asp uuid="70e8cb56-bcd9-11ec-9d64-0242ac120002">decompress_asp</asp>
+		<asp uuid="96158eee-bcf4-11ec-9d64-0242ac120002">verify_measurement_contract_asp</asp>
+		<asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1739">send_execute_asp</asp>
+	</asps>
+    <copland>
+        <phrase copland="(Layered app)">layered measurement appraiser</phrase>
+        <spec uuid="43d00605-c585-4507-83f3-37b9261bc157">layered measurement specification</spec>
+    </copland>
+	<security_context>
+	  <selinux><type>layered_appraiser_apb_t</type></selinux>
+	</security_context>
+</apb>

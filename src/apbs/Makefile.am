@@ -173,6 +173,12 @@ userspace_appraiser_apb_SOURCES  = userspace_appraiser_apb.c userspace_appraiser
 userspace_appraiser_apb_LDADD    = $(AM_LIBADD)
 endif
 
+if BUILD_layered_appraiser_APB
+apb_PROGRAMS			+= layered_appraiser_apb
+layered_appraiser_apb_SOURCES  = layered_appraiser_apb.c userspace_appraiser_common_funcs.c userspace_appraiser_common_funcs.h $(APB_COMMON_SOURCES)
+layered_appraiser_apb_LDADD    = $(AM_LIBADD)
+endif
+
 if BUILD_forwarding_APB
 apb_PROGRAMS			+= forwarding_apb
 forwarding_apb_SOURCES = forwarding_apb.c

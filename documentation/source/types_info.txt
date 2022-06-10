@@ -26,9 +26,10 @@ Holds Address Information about the measurement being taken.
 
 .. table:: Address Types
    
-  ==================== ========================
+  ==================== ====================================================
   Name                 Description
-  ==================== ========================
+  ==================== ====================================================
+  Dynamic Meas. Req.   Measurement Request with runtime specified attester
   File                 File Address Info
   File Region          File Region
   Inode                Inode
@@ -42,7 +43,7 @@ Holds Address Information about the measurement being taken.
   Simple File          Simple File
   Time Delta           Time Delta
   Unit Address Space   Generic Address Space
-  ==================== ========================
+  ==================== ====================================================
 
 Measurement Types
 -----------------
@@ -68,7 +69,7 @@ Holds the measurement values from a single ASP run.
   inetlistener         INET Listener
   iptables chain       IPTables rules within a chain
   iptables             Internet Protocol Tables
-  kernel_measurement   Kernel Metadata 
+  kernel_measurement   Kernel Metadata
   kmod                 Kernel Module
   mappings             Process Memory Mappings
   md5                  MD5 Hash of Target File

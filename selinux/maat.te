@@ -1003,7 +1003,7 @@ allow_apb_asp(layered_att_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_
 allow_apb_asp(layered_att_apb_t, encrypt_asp_exe_t, encrypt_asp_t)
 allow_apb_asp(layered_att_apb_t, decrypt_asp_exe_t, send_request_asp_t)
 allow_apb_asp(layered_att_apb_t, decompress_asp_exe_t, compress_asp_t)
-allow_apb_asp(layered_att_apb_t, verify_contract_asp_exe_t, create_contract_asp_t)
+allow_apb_asp(layered_att_apb_t, verify_contract_asp_exe_t, verify_contract_asp_t)
 
 # Userspace Appraiser APB
 require {

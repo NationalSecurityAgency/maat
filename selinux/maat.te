@@ -867,17 +867,6 @@ allow_apb_asp(userspace_apb_t, proc_mem_asp_exe_t, proc_mem_asp_t)
 allow_apb_asp(userspace_apb_t, proc_namespaces_asp_exe_t, proc_namespaces_asp_t)
 allow_apb_asp(userspace_apb_t, receive_asp_exe_t, proc_namespaces_asp_t)
 allow_apb_asp(userspace_apb_t, proc_namespaces_asp_exe_t, proc_namespaces_asp_t)
-allow_apb_asp(complex_att_apb_t, send_request_asp_exe_t, send_request_asp_t)
-allow_apb_asp(complex_att_apb_t, compress_asp_exe_t, compress_asp_t)
-allow_apb_asp(complex_att_apb_t, create_contract_asp_exe_t, create_contract_asp_t)
-allow_apb_asp(complex_att_apb_t, merge_asp_exe_t, merge_asp_t)
-allow_apb_asp(complex_att_apb_t, send_asp_exe_t, send_asp_t)
-allow_apb_asp(complex_att_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_t)
-allow_apb_asp(complex_att_apb_t, encrypt_asp_exe_t, encrypt_asp_t)
-allow_apb_asp(complex_att_apb_t, decrypt_asp_exe_t, send_request_asp_t)
-allow_apb_asp(complex_att_apb_t, decompress_asp_exe_t, compress_asp_t)
-allow_apb_asp(complex_att_apb_t, verify_contract_asp_exe_t, create_contract_asp_t)
-
 
 # Hashdir APB
 type hashdir_apb_t;
@@ -942,9 +931,6 @@ allow_apb_asp(complex_att_apb_t, merge_asp_exe_t, merge_asp_t)
 allow_apb_asp(complex_att_apb_t, send_asp_exe_t, send_asp_t)
 allow_apb_asp(complex_att_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_t)
 allow_apb_asp(complex_att_apb_t, encrypt_asp_exe_t, encrypt_asp_t)
-allow_apb_asp(complex_att_apb_t, decrypt_asp_exe_t, send_request_asp_t)
-allow_apb_asp(complex_att_apb_t, decompress_asp_exe_t, compress_asp_t)
-allow_apb_asp(complex_att_apb_t, verify_contract_asp_exe_t, create_contract_asp_t)
 
 # Request Passport APB
 type request_passport_apb_t;

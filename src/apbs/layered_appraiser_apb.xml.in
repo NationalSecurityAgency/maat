@@ -12,7 +12,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License. 
+# limitations under the License.
 -->
 <apb>
 	<name>layered_appraiser</name>
@@ -35,6 +35,28 @@
     <copland>
         <phrase copland="(Layered app)">layered measurement appraiser</phrase>
         <spec uuid="43d00605-c585-4507-83f3-37b9261bc157">layered measurement specification</spec>
+        <arguments>
+            <arg name="@_0">
+                <type>place</type>
+            </arg>
+            <arg name="@_md">
+                <type>place</type>
+            </arg>
+            <arg name="@_t">
+                <type>place</type>
+            </arg>
+        </arguments>
+        <places>
+            <place id="@_0">
+                <info>kernel</info>
+            </place>
+            <place id="@_md">
+                <info>kernel</info>
+            </place>
+            <place id="@_t">
+                <info>kernel</info>
+            </place>
+        </places>
     </copland>
 	<security_context>
 	  <selinux><type>layered_appraiser_apb_t</type></selinux>

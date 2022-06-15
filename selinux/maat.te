@@ -865,8 +865,6 @@ allow_apb_asp(userspace_apb_t, send_execute_asp_exe_t, send_execute_asp_t)
 allow_apb_asp(userspace_apb_t, proc_fds_asp_exe_t, proc_fds_asp_t)
 allow_apb_asp(userspace_apb_t, proc_mem_asp_exe_t, proc_mem_asp_t)
 allow_apb_asp(userspace_apb_t, proc_namespaces_asp_exe_t, proc_namespaces_asp_t)
-allow_apb_asp(userspace_apb_t, receive_asp_exe_t, proc_namespaces_asp_t)
-allow_apb_asp(userspace_apb_t, proc_namespaces_asp_exe_t, proc_namespaces_asp_t)
 
 # Hashdir APB
 type hashdir_apb_t;
@@ -1004,6 +1002,7 @@ allow_apb_asp(layered_att_apb_t, encrypt_asp_exe_t, encrypt_asp_t)
 allow_apb_asp(layered_att_apb_t, decrypt_asp_exe_t, send_request_asp_t)
 allow_apb_asp(layered_att_apb_t, decompress_asp_exe_t, compress_asp_t)
 allow_apb_asp(layered_att_apb_t, verify_measurement_contract_asp_exe_t, verify_measurement_contract_asp_t)
+allow_apb_asp(layered_att_apb_t, receive_asp_exe_t, receive_asp_t)
 
 # Userspace Appraiser APB
 require {
@@ -1049,6 +1048,10 @@ allow_apb_asp(layered_appraiser_apb_t, blacklist_asp_exe_t, blacklist_asp_t)
 allow_apb_asp(layered_appraiser_apb_t, whitelist_asp_exe_t, whitelist_asp_t)
 allow_apb_asp(layered_appraiser_apb_t, dpkg_check_asp_exe_t, dpkg_check_asp_t)
 allow_apb_asp(layered_appraiser_apb_t, system_appraise_asp_exe_t, system_appraise_asp_t)
+allow_apb_asp(layered_att_apb_t, decrypt_asp_exe_t, send_request_asp_t)
+allow_apb_asp(layered_att_apb_t, decompress_asp_exe_t, compress_asp_t)
+allow_apb_asp(layered_att_apb_t, verify_measurement_contract_asp_exe_t, verify_measurement_contract_asp_t)
+allow_apb_asp(layered_att_apb_t, receive_asp_exe_t, receive_asp_t)
 
 # this is needed because the layered appraiser launches 'subordinate' apbs. 
 # if we want to continue to allow this model of execution, should replace

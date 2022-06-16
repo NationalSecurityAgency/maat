@@ -24,6 +24,9 @@
 		<asp uuid="726B1964-1145-4F73-A6BC-DF17BBDEFF8E">procmem</asp>
 		<asp uuid="1762695e-b3b9-466e-88d1-df1571e0a073">md5fileservice</asp>
 		<asp uuid="cd82c9f7-760d-4535-5197-74daadaa1f41">compress</asp>
+		<asp uuid="70e8cb56-bcd9-11ec-9d64-0242ac120002">decompress</asp>
+		<asp uuid="e55303b6-bcc6-11ec-8422-0242ac120002">decrypt</asp>
+		<asp uuid="96158eee-bcf4-11ec-9d64-0242ac120002">verify_contract</asp>
 		<asp uuid="19e44fd6-b752-431a-94d9-6f1a88495a68">encrypt</asp>
 		<asp uuid="cd82c9f7-760d-4535-5197-74daadaa3f41">create_contract</asp>
 		<asp uuid="fcb118d1-6bc0-4078-998d-673bbe21a5aa">merge</asp>

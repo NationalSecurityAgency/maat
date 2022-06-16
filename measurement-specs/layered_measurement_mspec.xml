@@ -31,7 +31,7 @@
 	  <!-- Request measurements of the higher privilege level  -->
 	  <instruction type="simple" name="request">
             <target_type      name="system_target_type"  magic="0x57513777"/>
-            <address_type     name="dynamic_measurement_request_address_space"  magic="0x7EF11777" />
+            <address_type     name="dynamic_measurement_request_address_space"  magic="0x7EF11778" />
             <measurement_type name="blob" magic="0xB10BB10B"/>
           </instruction>
 
@@ -161,15 +161,15 @@
 	<variables>
 	  <!-- Variables for measurements of the privileged layer -->
 	  <variable instruction="request">
-            <address operation="measure">@0 runtime_meas</address>
+            <address operation="measure">@_0 runtime_meas</address>
           </variable>
 
 	  <variable instruction="request">
-            <address operation="measure">@0 userspace</address>
+            <address operation="measure">@_0 userspace</address>
           </variable>
 
 	  <variable instruction="request">
-            <address operation="measure">@md runtime_meas</address>
+            <address operation="measure">@_md runtime_meas</address>
           </variable>
 	  
 	  <!-- Variable to identify the host system -->
@@ -232,11 +232,11 @@
 	    </variable>
 
 	    <variable instruction="request">
-              <address operation="measure">@t runtime_meas</address>
+              <address operation="measure">@_t runtime_meas</address>
             </variable>
 
 	    <variable instruction="request">
-            <address operation="measure">@t userspace-mtab</address>
+            <address operation="measure">@_t userspace-mtab</address>
           </variable>
 	</variables>
 </measurement_specification>

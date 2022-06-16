@@ -94,7 +94,7 @@ static char *dynamic_measurement_request_serialize_address(const address *a)
     void *tplbuf   = NULL;
     size_t tplsize = 0;
 
-    if(tpl_jot(TPL_MEM, &tplbuf, &tplsize, "usss", &va->a.space->magic, &va->attester, &va->resource) != 0) {
+    if(tpl_jot(TPL_MEM, &tplbuf, &tplsize, "uss", &va->a.space->magic, &va->attester, &va->resource) != 0) {
         dlog(0, "Error: tpl_jot\n");
         return NULL;
     }

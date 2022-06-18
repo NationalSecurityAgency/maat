@@ -65,12 +65,12 @@ GList *apb_asps = NULL;
 int mcount = 0;
 
 /* Need to save these off for the send_execute ASP */
-char *certfile   = NULL;
-char *keyfile    = NULL;
-char *keypass    = NULL;
-char *nonce      = NULL;
-char *tpmpass    = NULL;
-char *verify_tpm = NULL;
+char *g_certfile   = NULL;
+char *g_keyfile    = NULL;
+char *g_keypass    = NULL;
+char *g_nonce      = NULL;
+char *g_tpmpass    = NULL;
+char *g_verify_tpm = NULL;
 
 struct scenario *g_scen = NULL;
 
@@ -81,8 +81,8 @@ place_info *g_dom_t_info = NULL;
 static int get_measurement_request_addr_from_node(measurement_graph *graph, node_id_t nid,
 						  dynamic_measurement_request_address **vout)
 {
-    int ret_val                     = 0;
-    address *address                = NULL;
+    int ret_val                             = 0;
+    address *address                        = NULL;
     dynamic_measurement_request_address *va = NULL;
 
     if( (address = measurement_node_get_address(graph, nid)) == NULL) {
@@ -91,7 +91,7 @@ static int get_measurement_request_addr_from_node(measurement_graph *graph, node
         goto error;
     }
 
-    if(address->space != &measurement_request_address_space) {
+    if(address->space != &dynamic_measurement_request_address_space) {
         dlog(1, "Measurement request has unexpected address type %s\n",
                      address->space->name);
         ret_val = -EINVAL;
@@ -120,9 +120,9 @@ static int get_target_channel(dynamic_measurement_request_address *va)
 
     if(strcmp(va->attester, "@_0") == 0) {
         info = g_dom_z_info;
-    } else if(strcmp(va->attester, "@md") == 0) {
+    } else if(strcmp(va->attester, "@_md") == 0) {
         info = g_dom_md_info;
-    } else if(strcmp(va->attester, "@t") == 0) {
+    } else if(strcmp(va->attester, "@_t") == 0) {
         info = g_dom_t_info;
     } else {
         dlog(1, "Unhandled attester: \"%s\" specified in measurement contract\n",
@@ -190,12 +190,12 @@ static int invoke_send_execute_tcp(struct asp *execute_asp, int targ_chan,
 
     send_execute_args[0] = targ_chan_str;
     send_execute_args[1] = resource;
-    send_execute_args[2] = certfile;
-    send_execute_args[3] = keyfile;
-    send_execute_args[4] = keypass;
-    send_execute_args[5] = nonce;
-    send_execute_args[6] = tpmpass;
-    send_execute_args[7] = verify_tpm;
+    send_execute_args[2] = g_certfile;
+    send_execute_args[3] = g_keyfile;
+    send_execute_args[4] = g_keypass;
+    send_execute_args[5] = g_nonce;
+    send_execute_args[6] = g_tpmpass;
+    send_execute_args[7] = g_verify_tpm;
 
     rc = run_asp_buffers(execute_asp, NULL, 0, &buf, &buf_len,
 			 8, send_execute_args, TIMEOUT, -1);
@@ -251,7 +251,7 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
         if(rc == 0 || rc == 1) {
             dlog(6, "\tAdded node "ID_FMT"\n", n);
         } else {
-            dlog(0, "Error adding node\n");
+            dlog(1, "Error adding node\n");
             goto error;
         }
 
@@ -260,9 +260,10 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
             return 0;
         }
 
-	/* Estblish a channel with the specified host */
+	/* Establish a channel with the specified host */
         rc = get_measurement_request_addr_from_node(g, n, &va);
         if (rc < 0) {
+	    dlog(1, "Unable to get measurement address from the address space\n");
             goto error;
         }
 
@@ -271,6 +272,9 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
 	    dlog(0, "Unable to establish channel with the target\n");
 	    goto error;
 	}
+
+	dlog(4, "Invoking \"%s\" for attester \"%s\"\n",
+		 va->resource, va->attester);
 
 	/* Send execute contract for the specified resource to the host */
 	rc = invoke_send_execute_tcp(asp, targ_chan, va->resource,
@@ -321,8 +325,9 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
 
 	return rc;
     } else {
-        return measure_variable_internal(ctxt, var, mtype, certfile,
-                                         keyfile, NULL, NULL,
+	// Delegate to the standard userspace measure_variable function
+        return measure_variable_internal(ctxt, var, mtype, g_certfile,
+                                         g_keyfile, NULL, NULL,
                                          NULL, NULL, &mcount,
                                          apb_asps);
     }
@@ -369,7 +374,7 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
     struct asp *create_con       = NULL;
     struct asp *send             = NULL;
 
-    if( !scen->workdir || ((workdir = strdup(scen->workdir)) == NULL) ) {
+    if(!scen->workdir || ((workdir = strdup(scen->workdir)) == NULL) ) {
         dlog(0, "Error: failed to copy workdir\n");
         goto workdir_error;
     }
@@ -458,11 +463,11 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
 	    }
 
 	    create_con_args[0] = workdir;
-	    create_con_args[1] = certfile;
-	    create_con_args[2] = keyfile;
+	    create_con_args[1] = g_certfile;
+	    create_con_args[2] = g_keyfile;
 	    /* TODO: Provide TPM functionality once it comes available */
-	    create_con_args[3] = scen->keypass == NULL ? "" : scen->keypass;
-	    create_con_args[4] = scen->tpmpass == NULL ? "" : scen->tpmpass;
+	    create_con_args[3] = g_keypass;
+	    create_con_args[4] = g_tpmpass;
 	    create_con_args[5] = "1";
 	    create_con_args[6] = "1";
 	    //The last argument is already set depending on the use of encryption
@@ -507,19 +512,19 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
                 char *target_type UNUSED, char *resource UNUSED,
                 struct key_value **arg_list, int argc)
 {
-    dlog(3, "Hello from the LAYERED_ATTESTATION_APB\n");
-    int ret_val = -1;
-    int i;
-    struct meas_spec *mspec = NULL;
+    dlog(4, "Hello from the LAYERED_ATTESTATION_APB\n");
+    int ret_val              = -1;
+    int i                    = 0;
+    struct meas_spec *mspec  = NULL;
     measurement_graph *graph = NULL;
-
-    if((ret_val = register_types()) < 0) {
-        return ret_val;
-    }
 
     if(argc != 3) {
         dlog(1, "USAGE: APB_NAME <@_0> <@_MD> <@_T>\n");
         return -1;
+    }
+
+    if((ret_val = register_types()) < 0) {
+        return ret_val;
     }
 
     apb_asps = apb->asps;
@@ -576,6 +581,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
         goto place_arg_err;
     }
 
+    /* Get measurement spec */
     ret_val = get_target_meas_spec(meas_spec_uuid, &mspec);
     if(ret_val != 0) {
         goto meas_spec_err;
@@ -589,29 +595,43 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
     }
 
     if(scen->certfile) {
-        certfile = strdup(scen->certfile);
+        g_certfile = strdup(scen->certfile);
+    } else {
+        g_certfile = strdup("");
     }
 
     if(scen->keyfile) {
-        keyfile = strdup(scen->keyfile);
+        g_keyfile = strdup(scen->keyfile);
+    } else {
+        g_keyfile = strdup("");
     }
 
     if(scen->keypass) {
-        keypass = strdup(scen->keypass);
+        g_keypass = strdup(scen->keypass);
+    } else {
+        g_keypass = strdup("");
     }
 
     if(scen->nonce) {
-        nonce = strdup(scen->nonce);
+        g_nonce = strdup(scen->nonce);
+    } else {
+        g_nonce = strdup("");
+    }
+
+    if(scen->tpmpass) {
+        g_tpmpass = strdup(scen->tpmpass);
+    } else {
+        g_tpmpass = strdup("");
     }
 
     if(scen->verify_tpm) {
-	verify_tpm = strdup("1");
+	g_verify_tpm = strdup("1");
     } else {
-	verify_tpm = strdup("0");
+	g_verify_tpm = strdup("0");
     }
 
-    if (certfile == NULL || keyfile == NULL || keypass == NULL ||
-	nonce == NULL || verify_tpm == NULL) {
+    if (g_certfile == NULL || g_keyfile == NULL || g_keypass == NULL ||
+	g_nonce == NULL || g_verify_tpm == NULL || g_tpmpass == NULL) {
         dlog(0, "Unable to allocate buffer(s) for scenario information\n");
         goto str_alloc_err;
     }
@@ -621,18 +641,18 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
     dlog(4, "Evaluating measurement spec\n");
     evaluate_measurement_spec(mspec, &callbacks, graph);
 
-
     dlog(4, "Entering execute_measurement_and_asp_pipeline\n");
     /* Execute the measurement ASPs and the ASPs to combine, sign, and send the
        measurements to the appraiser */
     ret_val = execute_sign_send_pipeline(graph, scen, peerchan);
 
 str_alloc_err:
-    free(certfile);
-    free(keyfile);
-    free(keypass);
-    free(nonce);
-    free(verify_tpm);
+    free(g_certfile);
+    free(g_keyfile);
+    free(g_keypass);
+    free(g_nonce);
+    free(g_tpmpass);
+    free(g_verify_tpm);
     destroy_measurement_graph(graph);
     graph = NULL;
 

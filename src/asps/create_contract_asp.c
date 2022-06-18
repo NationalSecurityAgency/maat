@@ -46,6 +46,7 @@
 
 #define ASP_NAME "create_contract_asp"
 
+#define READ_MAX INT_MAX
 #define TIMEOUT 1000
 
 /**
@@ -406,15 +407,7 @@ int asp_measure(int argc, char *argv[])
         goto parse_args_failed;
     }
 
-    // read from chan in
-    fd_in = maat_io_channel_new(fd_in);
-    if(fd_in < 0) {
-        dlog(0, "Error: failed to make new io channel for fd_in\n");
-        ret_val = -1;
-        goto io_chan_in_failed;
-    }
-
-    ret_val = maat_read_sz_buf(fd_in, &buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, -1);
+    ret_val = maat_read_sz_buf(fd_in, &buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, READ_MAX);
     if(ret_val < 0 && ret_val != -EAGAIN) {
         dlog(0, "Error reading evidence from channel\n");
         ret_val = -1;
@@ -450,14 +443,6 @@ int asp_measure(int argc, char *argv[])
     if(ret_val < 0) {
         dlog(0, "Failed to create measurement contract\n");
         goto create_msmt_contract_failed;
-    }
-
-    // Output the result to chan out
-    fd_out = maat_io_channel_new(fd_out);
-    if(fd_out < 0) {
-        dlog(0, "Error: failed to make new io channel for fd_out\n");
-        ret_val = -1;
-        goto io_chan_out_failed;
     }
 
     ret_val = maat_write_sz_buf(fd_out, out, outsize, &bytes_written, TIMEOUT);

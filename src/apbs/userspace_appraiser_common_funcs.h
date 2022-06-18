@@ -16,6 +16,7 @@
  */
 #ifndef USERSPACE_APPRAISER_COMMON_FUNCS_H
 #define USERSPACE_APPRAISER_COMMON_FUNCS_H
+
 #include <glib/glist.h>
 
 #include <common/scenario.h>
@@ -94,6 +95,14 @@ int select_subordinate_apb(measurement_graph *mg, node_id_t node, GList *all_apb
  */
 int pass_to_subordinate_apb(struct measurement_graph *mg, struct scenario *scen, node_id_t node,
                             struct apb *apb, uuid_t spec_uuid);
+
+/**
+ * < 0 indicates error, 0 indicates success, > 0 indicates failed appraisal
+ */
+int userspace_appraise(struct scenario *scen, GList *values UNUSED,
+               	       void *msmt, size_t msmtsize, GList *report_data_list,
+		       enum report_levels default_report_level,
+                       GList *apb_asps, GList *all_apbs);
 #endif
 
 /* Local Variables:	*/

@@ -43,7 +43,7 @@
 #define ASP_NAME "encrypt_asp"
 
 #define TIMEOUT 1000
-#define READ_MAX 400000000
+#define READ_MAX INT_MAX
 
 /**
  * Returns 0 on success, < 0 on error

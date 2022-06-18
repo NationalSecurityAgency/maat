@@ -25,7 +25,7 @@
 #include <sys/select.h>
 
 /*! \file
- * This APB is an appraiser for the userspace measurement.
+ * This APB is an appraiser for an example layered measurement.
  * XXX: Appraisal is currently fairly basic, need to implement more
  * appraisal ASPs.
  */
@@ -57,8 +57,10 @@
 #include "userspace_appraiser_common_funcs.h"
 
 #define NUM_PRIV_LEVELS 6
+#define RES_MAX_LEN 256
+#define ATT_MAX_LEN 256
 
-/**
+/*
  * Controls which key/value pairs are added to the final report.
  *
  * XXX: Hardcoded now. Need to read this from the... measurement_spec?
@@ -73,11 +75,11 @@ static GList *all_apbs = NULL;
 static GList *mspecs   = NULL;
 
 static GList *report_data_list = NULL; /* GList of XML key/value pairs for
-			      * inclusion in the report contract.
-			      * ->data fields should point to
-			      * xmlNode objects of the form
-			      * <data identifier="[key]">[value]</data>
-			      */
+			                * inclusion in the report contract.
+			                * ->data fields should point to
+			                * xmlNode objects of the form
+			                * <data identifier="[key]">[value]</data>
+			                */
 
 /*
  * Enum to track the pivilege level of a measurement
@@ -100,14 +102,6 @@ typedef enum {
  */
 static int g_measured_levels[NUM_PRIV_LEVELS + 1] = {0};
 
-/*
- * Variable that helps keep track of the ordering of measurements in the
- * measurement graph. Note that at this time we have no way to enforce
- * or verify the order of measurements. This check will anticipate some
- * future mechanism to perform this more rigorously.
- */
-static Priv g_prev_priv = NONE;
-
 static int map_info_to_priv(char *place, char *resource, Priv *priv)
 {
     int place_z  = 0;
@@ -121,11 +115,11 @@ static int map_info_to_priv(char *place, char *resource, Priv *priv)
 	return -1;
     }
 
-    if (strcmp(place, "@0") == 0) {
+    if (strcmp(place, "@_0") == 0) {
 	place_z = 1;
-    } else if (strcmp(place, "@md") == 0) {
+    } else if (strcmp(place, "@_md") == 0) {
 	place_md = 1;
-    } else if (strcmp(place, "@t") == 0) {
+    } else if (strcmp(place, "@_t") == 0) {
 	place_t = 1;
     } else {
 	dlog(1, "Failed to map the parameter \"%s\" to a known place parameter\n",
@@ -180,85 +174,89 @@ static int map_info_to_priv(char *place, char *resource, Priv *priv)
     return 0;
 }
 
-/**
+/*
  * Appraises all of the data in the passed node
  * Returns 0 if all appraisals pass successfully.
  */
 static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node, struct scenario *scen)
 {
-    int appraisal_stat = 0;
-    int i = 0;
+    int ret                        = 0;
+    int appraisal_stat             = 0;
     node_id_str node_str;
-    measurement_iterator *data_it = NULL;
-    Priv priv_level = NONE;
+    Priv priv_level                = NONE;
+    uuid_t mspec;
+    magic_t data_type;
+    measurement_iterator *data_it  = NULL;
+    measurement_data *data         = NULL;
+    blob_data *blob                = NULL;
+    address_space *addr_space      = NULL;
+    struct apb *sub_apb            = NULL;
+    struct asp *appraiser_asp      = NULL;
+    char attester[ATT_MAX_LEN]     = {0};
+    char resource[RES_MAX_LEN]     = {0};
+    char type_str[MAGIC_STR_LEN+1] = {0};
 
+    addr_space = measurement_node_get_address_space(mg, node);
     str_of_node_id(node, node_str);
 
-    dlog(4, "Appraising node %s\n", node_str);
+    if (addr_space == &dynamic_measurement_request_address_space) {
+        // We need to use the dynamic measurement request address space in order to get
+        // the resource that was requested and the place that the measurement was
+	// taken from
+   	dynamic_measurement_request_address *addr = (dynamic_measurement_request_address*) measurement_node_get_address(mg, node);
+
+	snprintf(attester, ATT_MAX_LEN, "%s", addr->attester);
+	snprintf(resource, RES_MAX_LEN, "%s", addr->resource);
+	addr_space->free_address((address *)addr);
+
+  	ret = map_info_to_priv(attester, resource, &priv_level);
+	if (ret < 0) {
+	    appraisal_stat++;
+	}
+    } else {
+	// If this isn't a request, then we are handling userspace measurements of the measurer
+	// privilege level
+	priv_level = MD_USER;
+    }
+
+    g_measured_levels[priv_level] = 1;
 
     // For every piece of data on the node
     for (data_it = measurement_node_iterate_data(mg, node);
             data_it != NULL;
             data_it = measurement_iterator_next(data_it)) {
-        magic_t data_type = measurement_iterator_get_type(data_it);
-	    node_id_t node_id = node_iterator_get(data_it);
-	    address_space *addr_space = measurement_node_get_address_space(mg, node_id);
-        char type_str[MAGIC_STR_LEN+1];
-
+     	ret = 0;
+        data_type = measurement_iterator_get_type(data_it);
+        
         sprintf(type_str, MAGIC_FMT, data_type);
-        int ret = 0;
 
-	    // We need to use the dynamic measurement request address space in order to get
-	    // the resource that was requested and the place that the measurement was
-	    // taken from
-	    if (addr_space == &dynamic_measurement_request_address_space) {
-	        dynamic_measurement_request_address *addr = (dynamic_measurement_request_address*) measurement_node_get_address(mg, node_id);
-
-	        ret = map_info_to_priv(addr->attester, addr->resource, &priv_level);
-	        addr_space->free_address((address *)addr);
-	        if (ret < 0) {
-		        appraisal_stat++;
-		        continue;
-	        }
-	    } else {
-	        // If this isn't a request, then we are handling userspace measurements of the current
-	        // privilege level
-	        priv_level = MD_USER;
-	    }
-
-	    if (priv_level <= g_prev_priv) {
-	        dlog(1, "Encountered out of order measurement\n");
-	        appraisal_stat++;
-	        continue;
-	    }
-
-	    if (g_measured_levels[priv_level]) {
-	        dlog(1, "Repeated measurement at the same privilege level %d\n", priv_level);
-	        appraisal_stat++;
-	        continue;
-	    }
-
-	    g_prev_priv = priv_level;
-	    g_measured_levels[priv_level] = 1;
-
-        // Blob measurement type goes to subordinate APB
         if(data_type == BLOB_MEASUREMENT_TYPE_MAGIC) {
-            struct apb *sub_apb = NULL;
-            uuid_t mspec;
-
-            ret = select_subordinate_apb(mg, node, all_apbs, &sub_apb, &mspec);
-            if(ret != 0) {
-                dlog(2, "Warning: Failed to find subordinate APB for node\n");
-                ret = 0;
-                //ret = -1; // not a failure at this point - don't have sub APBs for all
-            } else {
-                ret = pass_to_subordinate_apb(mg, scen, node, sub_apb, mspec);
-                dlog(0, "Result from subordinate APB %d\n", ret);
-            }
-
-            // Everything else goes to an ASP
+            // Blob measurement type generally goes to subordinate APB
+            if (resource[0] == '\0') {
+                ret = select_subordinate_apb(mg, node, all_apbs, &sub_apb, &mspec);
+                if(ret != 0) {
+                    dlog(2, "Warning: Failed to find subordinate APB for node\n");
+                    ret = 0;
+                } else {
+                    ret = pass_to_subordinate_apb(mg, scen, node, sub_apb, mspec);
+                    dlog(3, "Result from subordinate APB %d\n", ret);
+                }
+           } else if (strcmp(resource, "runtime-meas") == 0) {
+                dlog(3, "There is not a specific appraiser for runtime measurement, so just claiming this is successful\n");
+		ret = 0;
+           } else {
+                // We receieved a userspace measurement for some other privilege level
+                if(measurement_node_get_rawdata(mg, node, &blob_measurement_type, &data) < 0) {
+			dlog(1, "Unable to get blob data from node\n");
+			ret = -1;
+		} else {
+			blob = container_of(data, blob_data, d);
+			ret = userspace_appraise(scen, NULL, blob->buffer, blob->size, report_data_list,
+					 default_report_level, apb_asps, all_apbs);
+		}
+           }
+        // Everything else goes to an ASP
         } else {
-            struct asp *appraiser_asp = NULL;
             appraiser_asp = select_appraisal_asp(node, data_type, apb_asps);
             if(!appraiser_asp) {
                 dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", type_str);
@@ -281,19 +279,10 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
                 dlog(5, "Result from appraiser ASP %d\n", ret);
             }
         }
+
         if(ret != 0) {
             appraisal_stat++;
-        }
-    }
-
-    // Skip the first index because it corresponds to the
-    // NONE privilege level
-    for (i = 1; i < NUM_PRIV_LEVELS + 1; i++) {
-	    if (g_measured_levels[priv_level] == 0) {
-	        appraisal_stat++;
-	        dlog(2, "Missing measurement of privilege level %d\n", priv_level);
-	        break;
-	    }
+        }	
     }
 
     return appraisal_stat;
@@ -305,43 +294,56 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
 static int appraise(struct scenario *scen, GList *values UNUSED,
                     void *msmt, size_t msmtsize)
 {
-    dlog(5, "IN APPRAISE IN USERSPACE_APPRAISER_APB\n");
-    int ret						= 0;
-    int appraisal_stat                                  = 0;
-    struct measurement_graph *mg			= NULL;
-    node_iterator *it					= NULL;
+    dlog(5, "IN APPRAISE IN LAYERED_APPRAISER_APB\n");
+    int i                        = 0;
+    int ret                      = 0;
+    int appraisal_stat           = 0;
+    struct measurement_graph *mg = NULL;
+    node_iterator *it            = NULL;
+    char *graph_path             = NULL;
 
-#ifdef USERSPACE_APP_DEBUG
+#ifdef LAYERED_APP_DEBUG
     dump_measurement(scen, msmt, msmtsize);
 #endif
 
     /*Unserialize measurement*/
     mg = parse_measurement_graph(msmt, msmtsize);
     if(!mg)  {
-        dlog(0,"Error parsing measurement graph.\n");
+        dlog(0, "Error parsing measurement graph.\n");
         ret = -1;
         goto cleanup;
     }
 
     graph_print_stats(mg, 1);
 
-    char *graph_path = measurement_graph_get_path(mg);
+    graph_path = measurement_graph_get_path(mg);
 
     for(it = measurement_graph_iterate_nodes(mg); it != NULL;
             it = node_iterator_next(it)) {
 
         node_id_t node = node_iterator_get(it);
-
         appraisal_stat += appraise_node(mg, graph_path, node, scen);
-
     }
-    free(graph_path);
+
+    /*
+     * Check the completeness of the measurement
+     * Skip the first index because it corresponds to the
+     * NONE privilege level
+     */
+    for (i = 1; i < NUM_PRIV_LEVELS + 1; i++) {
+	    if (g_measured_levels[i] == 0) {
+	        appraisal_stat++;
+	        dlog(2, "Missing measurement of privilege level %d\n", i);
+	    }
+    }
 
     gather_report_data(mg, default_report_level, &report_data_list);
 
 cleanup:
+    dlog(5, "Layered Appraiser APB Internal Cleanup Start\n");
     destroy_measurement_graph(mg);
-    dlog(5,"Appraiser APB Internal Cleanup Start\n");
+    free(graph_path);
+
     if(ret == 0) {
         return appraisal_stat;
     } else {
@@ -374,7 +376,6 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     /* XXX: More when needed */
     dlog(6, "asps list length = %d\n", g_list_length(apb_asps));
 
-    // Load all apbs we need
     char *apbdir = getenv(ENV_MAAT_APB_DIR);
     if(apbdir == NULL) {
         dlog(3, "Warning: environment variable " ENV_MAAT_APB_DIR
@@ -389,7 +390,9 @@ int apb_execute(struct apb *apb, struct scenario *scen,
         specdir = DEFAULT_MEAS_SPEC_DIR;
     }
 
+    // Load all the measurement specs
     mspecs = load_all_measurement_specifications_info(specdir);
+    // Load the APBs we need
     all_apbs = load_all_apbs_info(apbdir, apb_asps, mspecs);
     dlog(2, "Successfully loaded %d subordinate APBs\n", g_list_length(all_apbs));
 
@@ -405,13 +408,14 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     /* Receive measurement contract from attester APB. Setting max size as 10MB. */
     ret = receive_measurement_contract_asp(apb_asps, peerchan, scen);
     if(ret < 0) {
-        dlog(0, "Unable to recieve a measurement contract with error %d\n", ret);
+        dlog(1, "Unable to recieve a measurement contract with error %d\n", ret);
         return ret;
     }
 
+    /* Read the measurement contract */
     doc = xmlReadMemory(scen->contract, (int)scen->size, NULL, NULL, 0);
     if (doc == NULL) {
-        dlog(0, "Failed to parse contract XML.\n");
+        dlog(1, "Failed to parse contract XML.\n");
         return ret;
     }
 
@@ -420,8 +424,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     save_document(doc, tmpstr);
     xmlFreeDoc(doc);
 
-    dlog(6, "Received Measurement Contract in appraiser APB\n");
-
+    /* Process the measurement contract */
     if(scen->contract == NULL || scen->size > INT_MAX) {
         dlog(0, "No valid measurement contract received by appraiser APB\n");
         failed = -1;
@@ -430,11 +433,13 @@ int apb_execute(struct apb *apb, struct scenario *scen,
                                   (void **)&msmt, &msmt_sz);
 
         if (failed == 0) {
-            /* Officially, you would have to harvest the values
-                   from the contract to appraise with, but the
-                   userspace appraiser does not use the values
-                   list, so we will not execute what is effectively
-                   a no-op */
+            /*
+             * Officially, you would have to harvest the values
+             * from the contract to appraise with, but the
+             * userspace appraiser does not use the values
+             * list, so we will not execute what is effectively
+             * a no-op
+             */
             failed = appraise(scen, NULL, msmt, msmt_sz);
             free(msmt);
         }
@@ -446,6 +451,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
         evaluation = (xmlChar*)"FAIL";
     }
 
+    /* Create access contract by adjusting the measurement contract */
     ret = adjust_measurement_contract_to_access_contract(scen);
     if (ret < 0) {
         dlog(1, "Unable to properly create and save access measurement, but continuing...\n");
@@ -473,7 +479,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     }
 
     size_t bytes_written = 0;
-    dlog(6,"Send response from appraiser APB: %s.\n", response_buf);
+    dlog(6, "Send response from appraiser APB: %s.\n", response_buf);
     sz = sz+1; // include the terminating '\0'
     ret = write_response_contract(resultchan, response_buf, sz,
                                   &bytes_written, 5);
@@ -483,6 +489,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
              strerror(ret<0 ? -ret : ret));
         return -EIO;
     }
+
     if(bytes_written != sz+sizeof(uint32_t)) {
         dlog(0, "Error: appraiser wrote %zu bytes (expected to write %zd)\n",
              bytes_written, sz);

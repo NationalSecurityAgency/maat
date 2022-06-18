@@ -21,6 +21,8 @@
 	<description>Request a measurement from another AM</description>
 	<usage>send_execute_tcp_asp [in_fd] [out_fd] [targ_fd] [resource] [certfile] [keyfile] [keypass] [nonce] [tpmpass] [sign_tpm]</usage>
 	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/send_execute_tcp_asp</aspfile>
+        <measurers>
+        </measurers>
 	<security_context>
 	  <selinux><type>send_execute_tcp_asp_t</type></selinux>
 	  <user>${MAAT_USER}</user>

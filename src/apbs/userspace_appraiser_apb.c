@@ -76,129 +76,6 @@ static GList *report_data_list = NULL; /* GList of XML key/value pairs for
 			      * xmlNode objects of the form
 			      * <data identifier="[key]">[value]</data>
 			      */
-/**
- * Appraises all of the data in the passed node
- * Returns 0 if all appraisals pass successfully.
- */
-static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node, struct scenario *scen)
-{
-    node_id_str node_str;
-    measurement_iterator *data_it;
-
-    int appraisal_stat = 0;
-
-    str_of_node_id(node, node_str);
-
-    dlog(4, "Appraising node %s\n", node_str);
-
-    // For every piece of data on the node
-    for (data_it = measurement_node_iterate_data(mg, node);
-            data_it != NULL;
-            data_it = measurement_iterator_next(data_it)) {
-
-        magic_t data_type = measurement_iterator_get_type(data_it);
-        char type_str[MAGIC_STR_LEN+1];
-
-        sprintf(type_str, MAGIC_FMT, data_type);
-        int ret = 0;
-
-        // Blob measurement type goes to subordinate APB
-        if(data_type == BLOB_MEASUREMENT_TYPE_MAGIC) {
-
-            struct apb *sub_apb = NULL;
-            uuid_t mspec;
-
-            ret = select_subordinate_apb(mg, node, all_apbs, &sub_apb, &mspec);
-            if(ret != 0) {
-                dlog(2, "Warning: Failed to find subordinate APB for node\n");
-                ret = 0;
-                //ret = -1; // not a failure at this point - don't have sub APBs for all
-            } else {
-                ret = pass_to_subordinate_apb(mg, scen, node, sub_apb, mspec);
-                dlog(0, "Result from subordinate APB %d\n", ret);
-            }
-
-            // Everything else goes to an ASP
-        } else {
-            struct asp *appraiser_asp = NULL;
-            appraiser_asp = select_appraisal_asp(node, data_type, apb_asps);
-            if(!appraiser_asp) {
-                dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", type_str);
-                ret = 0;
-                //ret = -1; // not a failure at this point - don't have sub ASPs for all yet
-            } else {
-                dlog(4, "appraiser_asp == %p (%p %d)\n", appraiser_asp, apb_asps,
-                     g_list_length(apb_asps));
-
-                char *asp_argv[] = {graph_path,
-                                    node_str,
-                                    type_str
-                                   };
-                /*
-                  FIXME: This is just using the ASP's exit value to
-                  determine pass/fail status. We'd like to separate
-                  out errors of execution from failures of appraisal.
-                */
-                ret = run_asp(appraiser_asp, -1, -1, false, 3, asp_argv,-1);
-                dlog(5, "Result from appraiser ASP %d\n", ret);
-            }
-        }
-        if(ret != 0) {
-            appraisal_stat++;
-        }
-    }
-    return appraisal_stat;
-}
-
-/**
- * < 0 indicates error, 0 indicates success, > 0 indicates failed appraisal
- */
-static int appraise(struct scenario *scen, GList *values UNUSED,
-                    void *msmt, size_t msmtsize)
-{
-    dlog(5, "IN APPRAISE IN USERSPACE_APPRAISER_APB\n");
-    int ret						= 0;
-    int appraisal_stat                                  = 0;
-    struct measurement_graph *mg			= NULL;
-    node_iterator *it					= NULL;
-
-#ifdef USERSPACE_APP_DEBUG
-    dump_measurement(scen, msmt, msmtsize);
-#endif
-
-    /*Unserialize measurement*/
-    mg = parse_measurement_graph(msmt, msmtsize);
-    if(!mg)  {
-        dlog(0,"Error parsing measurement graph.\n");
-        ret = -1;
-        goto cleanup;
-    }
-
-    graph_print_stats(mg, 1);
-
-    char *graph_path = measurement_graph_get_path(mg);
-
-    for(it = measurement_graph_iterate_nodes(mg); it != NULL;
-            it = node_iterator_next(it)) {
-
-        node_id_t node = node_iterator_get(it);
-
-        appraisal_stat += appraise_node(mg, graph_path, node, scen);
-
-    }
-    free(graph_path);
-
-    gather_report_data(mg, default_report_level, &report_data_list);
-
-cleanup:
-    destroy_measurement_graph(mg);
-    dlog(5,"Appraiser APB Internal Cleanup Start\n");
-    if(ret == 0) {
-        return appraisal_stat;
-    } else {
-        return ret;
-    }
-}
 
 int apb_execute(struct apb *apb, struct scenario *scen,
                 uuid_t meas_spec_uuid UNUSED, int peerchan, int resultchan,
@@ -286,7 +163,8 @@ int apb_execute(struct apb *apb, struct scenario *scen,
                    userspace appraiser does not use the values
                    list, so we will not execute what is effectively
                    a no-op */
-            failed = appraise(scen, NULL, msmt, msmt_sz);
+            failed = userspace_appraise(scen, NULL, msmt, msmt_sz, report_data_list,
+					default_report_level, apb_asps, all_apbs);
             free(msmt);
         }
     }

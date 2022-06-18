@@ -56,7 +56,7 @@ int asp_exit(int status UNUSED)
 /**
  * Finds the appropriate phrase for the resource passed.
  *
- * XXX: Currently only implemented for runtime_meas; add more.
+ * XXX: Currently only implemented for a subset of resources; add more.
  * XXX: Later should probably implement a form of requestor ASP policy.
  *
  * Returns copland phrase for resource if found, NULL otherwise
@@ -67,8 +67,10 @@ static char *find_phrase(char *resource)
 
     if(strcmp(resource, "runtime_meas") == 0) {
         out = strdup("(KIM runtime_meas)");
-    } else if (strcmp(resource, "pkginv") == 0) {
-        out = strdup("((USM pkginv) -> SIG)");
+    } else if (strcmp(resource, "userspace") == 0) {
+        out = strdup("((USM full) -> SIG)");
+    } else if (strcmp(resource, "userspace-mtab") == 0) {
+	out = strdup("((USM mtab) -> SIG)");
     } else {
         dlog(0, "Unable to find copland phrase for resource\n");
         return NULL;
@@ -123,7 +125,7 @@ static int send_to_attester_listen_for_result(int attester_chan, char *resource,
     ret_val = maat_read_sz_buf(attester_chan, &result, &resultsz,
 			       &bytes_read, &eof_enc, RASP_AM_COMM_TIMEOUT, -1);
     if(ret_val != 0) {
-        dlog(1, "Error reading response. returned status is %d: %s\n", ret_val,
+        dlog(0, "Error reading response. returned status is %d: %s\n", ret_val,
              strerror(ret_val < 0 ? -ret_val : ret_val));
         ret_val = -1;
         goto recv_error;
@@ -139,7 +141,6 @@ static int send_to_attester_listen_for_result(int attester_chan, char *resource,
     ret_val = 0;
 
 recv_error:
-    free(result);
 contract_error:
     free(phrase);
  phrase_error:
@@ -167,7 +168,7 @@ int asp_measure(int argc, char *argv[])
 
     // Parse args
     errno = 0;
-    if((argc != 10) ||
+    if((argc != 11) ||
        (((out_fd = strtol(argv[2], NULL, 10)) < 0) || errno != 0) ||
        (((targ_fd = strtol(argv[3], NULL, 10)) < 0) || errno != 0) ||
        (((sign_tpm = strtol(argv[10], NULL, 10)) < 0) || errno != 0)){

@@ -45,7 +45,7 @@
 
 #define TIMEOUT 1000
 #define COMPRESSION_LEVEL 9
-#define READ_SZ 400000000
+#define READ_SZ INT_MAX
 
 int asp_init(int argc UNUSED, char *argv[] UNUSED)
 {

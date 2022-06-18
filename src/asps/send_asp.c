@@ -46,6 +46,7 @@
 #define ASP_NAME "send_asp"
 
 #define TIMEOUT 100
+#define READ_MAX INT_MAX
 
 /**
  * @peerchan is the peer's channel
@@ -110,15 +111,7 @@ int asp_measure(int argc, char *argv[])
         goto parse_args_failed;
     }
 
-    // read from chan in
-    fd_in = maat_io_channel_new(fd_in);
-    if(fd_in < 0) {
-        dlog(0, "Error: failed to make new io channel for fd_in\n");
-        ret_val = -1;
-        goto io_chan_in_failed;
-    }
-
-    ret_val = maat_read_sz_buf(fd_in, &buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, -1);
+    ret_val = maat_read_sz_buf(fd_in, &buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, READ_MAX);
     if(ret_val < 0 && ret_val != -EAGAIN) {
         dlog(0, "Error reading evidence from channel\n");
         ret_val = -1;

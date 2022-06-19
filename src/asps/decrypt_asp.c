@@ -121,7 +121,7 @@ int asp_exit(int status)
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(0, "IN decrypt ASP MEASURE\n");
+    dlog(4, "IN decrypt ASP MEASURE\n");
 
     char *buf       = NULL;
     size_t bufsize  = 0;
@@ -152,22 +152,6 @@ int asp_measure(int argc, char *argv[])
         asp_logerror("Usage: "ASP_NAME" <fd_in> <fd_out> <partner_cert> <key> <keyfile> <keypass>\n");
         ret_val = -EINVAL;
         goto parse_args_failed;
-    }
-
-    // chan in
-    fd_in = maat_io_channel_new(fd_in);
-    if(fd_in < 0) {
-        dlog(0, "Error: failed to make new io channel for fd_in\n");
-        ret_val = -1;
-        goto io_chan_in_failed;
-    }
-
-    // chan out
-    fd_out = maat_io_channel_new(fd_out);
-    if(fd_out < 0) {
-        dlog(0, "Error: failed to make new io channel for fd_out\n");
-        ret_val = -1;
-        goto io_chan_out_failed;
     }
 
     // Read encrypted buffer
@@ -218,9 +202,7 @@ eof_enc:
     bufsize = 0;
 read_failed:
     close(fd_in);
-io_chan_out_failed:
     close(fd_out);
-io_chan_in_failed:
 parse_args_failed:
     return ret_val;
 }

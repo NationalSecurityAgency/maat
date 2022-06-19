@@ -141,7 +141,7 @@ int asp_exit(int status)
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(0, "IN encrypt ASP MEASURE\n");
+    dlog(4, "IN encrypt ASP MEASURE\n");
 
     char *buf       = NULL;
     size_t bufsize  = 0;

@@ -15,44 +15,47 @@
  *
  */
 
-#include <stdint.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <sys/select.h>
-
 /*! \file
  * This APB is an appraiser for an example layered measurement.
  * XXX: Appraisal is currently fairly basic, need to implement more
  * appraisal ASPs.
  */
 
+#include <stdint.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <dlfcn.h>
 
-#include <util/util.h>
-#include <util/signfile.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/select.h>
 
-#include <common/apb_info.h>
-#include <apb/apb.h>
-#include <graph/graph-core.h>
-#include <measurement_spec/find_types.h>
 #include <maat-basetypes.h>
-#include <measurement_spec/measurement_spec.h>
-#include <common/measurement_spec.h>
 #include <maat-envvars.h>
 
-#include <client/maat-client.h>
+#include <apb/apb.h>
 #include <apb/contracts.h>
+
+#include <common/measurement_spec.h>
+#include <common/apb_info.h>
+#include <common/asp.h>
+
+#include <graph/graph-core.h>
+
+#include <client/maat-client.h>
+
+#include <measurement_spec/measurement_spec.h>
+#include <measurement_spec/find_types.h>
+
+#include <util/util.h>
+#include <util/signfile.h>
 #include <util/maat-io.h>
 #include <util/keyvalue.h>
 #include <util/base64.h>
-#include <graph/graph-core.h>
-#include <common/asp.h>
 
 #include "userspace_appraiser_common_funcs.h"
 
@@ -180,30 +183,30 @@ static int map_info_to_priv(char *place, char *resource, Priv *priv)
  */
 static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node, struct scenario *scen)
 {
-    int ret                        = 0;
-    int appraisal_stat             = 0;
+    int ret                                   = 0;
+    int appraisal_stat                        = 0;
     node_id_str node_str;
-    Priv priv_level                = NONE;
+    Priv priv_level                           = NONE;
     uuid_t mspec;
     magic_t data_type;
-    measurement_iterator *data_it  = NULL;
-    measurement_data *data         = NULL;
-    blob_data *blob                = NULL;
-    address_space *addr_space      = NULL;
-    struct apb *sub_apb            = NULL;
-    struct asp *appraiser_asp      = NULL;
-    char attester[ATT_MAX_LEN]     = {0};
-    char resource[RES_MAX_LEN]     = {0};
-    char type_str[MAGIC_STR_LEN+1] = {0};
+    measurement_iterator *data_it             = NULL;
+    measurement_data *data                    = NULL;
+    blob_data *blob                           = NULL;
+    address_space *addr_space                 = NULL;
+    dynamic_measurement_request_address *addr = NULL;
+    struct apb *sub_apb                       = NULL;
+    struct asp *appraiser_asp                 = NULL;
+    char attester[ATT_MAX_LEN]                = {0};
+    char resource[RES_MAX_LEN]                = {0};
+    char type_str[MAGIC_STR_LEN+1]            = {0};
 
     addr_space = measurement_node_get_address_space(mg, node);
-    str_of_node_id(node, node_str);
 
     if (addr_space == &dynamic_measurement_request_address_space) {
         // We need to use the dynamic measurement request address space in order to get
         // the resource that was requested and the place that the measurement was
         // taken from
-        dynamic_measurement_request_address *addr = (dynamic_measurement_request_address*) measurement_node_get_address(mg, node);
+        addr = (dynamic_measurement_request_address*) measurement_node_get_address(mg, node);
 
         snprintf(attester, ATT_MAX_LEN, "%s", addr->attester);
         snprintf(resource, RES_MAX_LEN, "%s", addr->resource);
@@ -228,8 +231,6 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
         ret = 0;
         data_type = measurement_iterator_get_type(data_it);
 
-        sprintf(type_str, MAGIC_FMT, data_type);
-
         if(data_type == BLOB_MEASUREMENT_TYPE_MAGIC) {
             // Blob measurement type generally goes to subordinate APB
             if (resource[0] == '\0') {
@@ -239,7 +240,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
                     ret = 0;
                 } else {
                     ret = pass_to_subordinate_apb(mg, scen, node, sub_apb, mspec);
-                    dlog(3, "Result from subordinate APB %d\n", ret);
+                    dlog(4, "Result from subordinate APB %d\n", ret);
                 }
             } else if (strcmp(resource, "runtime-meas") == 0) {
                 dlog(3, "There is not a specific appraiser for runtime measurement, so just claiming this is successful\n");
@@ -266,6 +267,9 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
                 dlog(4, "appraiser_asp == %p (%p %d)\n", appraiser_asp, apb_asps,
                      g_list_length(apb_asps));
 
+		str_of_node_id(node, node_str);
+	        sprintf(type_str, MAGIC_FMT, data_type);
+
                 char *asp_argv[] = {graph_path,
                                     node_str,
                                     type_str
@@ -276,7 +280,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
                   out errors of execution from failures of appraisal.
                 */
                 ret = run_asp(appraiser_asp, -1, -1, false, 3, asp_argv,-1);
-                dlog(5, "Result from appraiser ASP %d\n", ret);
+                dlog(4, "Result from appraiser ASP %d\n", ret);
             }
         }
 
@@ -294,7 +298,6 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
 static int appraise(struct scenario *scen, GList *values UNUSED,
                     void *msmt, size_t msmtsize)
 {
-    dlog(5, "IN APPRAISE IN LAYERED_APPRAISER_APB\n");
     int i                        = 0;
     int ret                      = 0;
     int appraisal_stat           = 0;
@@ -340,7 +343,6 @@ static int appraise(struct scenario *scen, GList *values UNUSED,
     gather_report_data(mg, default_report_level, &report_data_list);
 
 cleanup:
-    dlog(5, "Layered Appraiser APB Internal Cleanup Start\n");
     destroy_measurement_graph(mg);
     free(graph_path);
 
@@ -357,12 +359,14 @@ int apb_execute(struct apb *apb, struct scenario *scen,
                 struct key_value **arg_list UNUSED, int argc UNUSED)
 {
     int ret                     = -1;
-    int failed                  = 0;
     size_t sz                   = 0;
-    size_t msmt_sz              = -1;
+    size_t msmt_sz              = 0;
+    size_t bytes_written        = 0;
     xmlDoc *doc                 = NULL;
     xmlChar *evaluation         = NULL;
     char *msmt                  = NULL;
+    char *apbdir                = NULL;
+    char *specdir               = NULL;
     unsigned char *response_buf = NULL;
     char tmpstr[200]            = {0};
 
@@ -376,14 +380,14 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     /* XXX: More when needed */
     dlog(6, "asps list length = %d\n", g_list_length(apb_asps));
 
-    char *apbdir = getenv(ENV_MAAT_APB_DIR);
+    apbdir = getenv(ENV_MAAT_APB_DIR);
     if(apbdir == NULL) {
         dlog(3, "Warning: environment variable " ENV_MAAT_APB_DIR
              " not set. Using default path " DEFAULT_APB_DIR "\n");
         apbdir = DEFAULT_APB_DIR;
     }
 
-    char *specdir = getenv(ENV_MAAT_MEAS_SPEC_DIR);
+    specdir = getenv(ENV_MAAT_MEAS_SPEC_DIR);
     if(specdir == NULL) {
         dlog(3, "Warning: environment variable " ENV_MAAT_MEAS_SPEC_DIR
              " not set. Using default path " DEFAULT_MEAS_SPEC_DIR "\n");
@@ -394,7 +398,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     mspecs = load_all_measurement_specifications_info(specdir);
     // Load the APBs we need
     all_apbs = load_all_apbs_info(apbdir, apb_asps, mspecs);
-    dlog(2, "Successfully loaded %d subordinate APBs\n", g_list_length(all_apbs));
+    dlog(4, "Successfully loaded %d subordinate APBs\n", g_list_length(all_apbs));
 
     dlog(7, "USAPP APB DEBUG: target= %s\n", target);
     dlog(7, "USAPP APB DEBUG: target_type= %s\n", target_type);
@@ -427,12 +431,12 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     /* Process the measurement contract */
     if(scen->contract == NULL || scen->size > INT_MAX) {
         dlog(0, "No valid measurement contract received by appraiser APB\n");
-        failed = -1;
+        ret = -1;
     } else {
-        failed = process_contract(apb_asps, scen,
-                                  (void **)&msmt, &msmt_sz);
+        ret = process_contract(apb_asps, scen,
+                               (void **)&msmt, &msmt_sz);
 
-        if (failed == 0) {
+        if (ret == 0) {
             /*
              * Officially, you would have to harvest the values
              * from the contract to appraise with, but the
@@ -440,12 +444,12 @@ int apb_execute(struct apb *apb, struct scenario *scen,
              * list, so we will not execute what is effectively
              * a no-op
              */
-            failed = appraise(scen, NULL, msmt, msmt_sz);
+            ret = appraise(scen, NULL, msmt, msmt_sz);
             free(msmt);
         }
     }
 
-    if(failed == 0) {
+    if(ret == 0) {
         evaluation = (xmlChar*)"PASS";
     } else {
         evaluation = (xmlChar*)"FAIL";
@@ -478,7 +482,6 @@ int apb_execute(struct apb *apb, struct scenario *scen,
         dlog(0, "Error: sz is 0, using strlen (Need to fix this! Why is xmlDocDumpMemory not giving back the size!?\n");
     }
 
-    size_t bytes_written = 0;
     dlog(6, "Send response from appraiser APB: %s.\n", response_buf);
     sz = sz+1; // include the terminating '\0'
     ret = write_response_contract(resultchan, response_buf, sz,

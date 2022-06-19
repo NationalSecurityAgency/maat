@@ -60,6 +60,8 @@ static int receive(int peerchan, char **buf, size_t *buf_size)
     int eof_enc = 0;
     int attempts = 0;
 
+    dlog(6, "ASP writing response buf to peerchan (%d)\n", peerchan);
+
     while (attempts < RECV_ATTEMPTS) {
         status = maat_read_sz_buf(peerchan, buf, buf_size, &bytes_read,
                                   &eof_enc, TIMEOUT, MAX_RECV_BUF_SZ);

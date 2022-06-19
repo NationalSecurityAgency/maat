@@ -1,5 +1,5 @@
 #
-# Copyright 2020 United States Government
+# Copyright 2022 United States Government
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -182,6 +182,12 @@ if BUILD_split_ASP
 check_PROGRAMS += test_split_asp
 test_split_asp_SOURCES = test_split.c
 test_split_asp_LDADD = $(LDADD_APB)
+endif
+
+if BUILD_send_execute_tcp_ASP
+check_PROGRAMS += test_send_execute_tcp
+test_send_execute_tcp_SOURCES = test_send_execute_tcp.c
+test_send_execute_tcp_LDADD = $(LDADD_APB)
 endif
 
 if BUILD_send_request_ASP

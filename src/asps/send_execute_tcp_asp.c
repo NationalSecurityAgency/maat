@@ -27,12 +27,22 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <netdb.h>
+
+#include <sys/socket.h>
+
+#include <netinet/in.h>
+
+#include <arpa/inet.h>
 
 #include <util/util.h>
 #include <util/maat-io.h>
 #include <util/xml_util.h>
 #include <util/signfile.h>
+#include <util/inet-socket.h>
+
 #include <asp/asp-api.h>
+
 #include <common/asp-errno.h>
 
 #include <client/maat-client.h>
@@ -147,12 +157,38 @@ phrase_error:
     return ret_val;
 }
 
+static int create_channel(char *addr, long portnum)
+{
+    int chan                  = -1;
+    char *host_addr           = NULL;
+    struct hostent *targ_host = NULL;
+
+    targ_host = gethostbyname(addr);
+    if(targ_host == NULL || targ_host->h_addr_list[0] == NULL) {
+        dlog(0, "Unable to get address information for appraiser\n");
+        return -1;
+    }
+
+    host_addr = strdup(inet_ntoa(*(struct in_addr *)targ_host->h_addr_list[0]));
+    if(host_addr == NULL) {
+        dlog(0, "Unable to convert host address information\n");
+        return -1;
+    }
+
+    chan = connect_to_server(host_addr, portnum);
+    free(host_addr);
+
+    return chan;
+}
+
 int asp_measure(int argc, char *argv[])
 {
     dlog(4, "In send_execute_tcp ASP\n");
     int out_fd                      = -1;
-    int targ_fd                     = -1;
+    int targ_chan                   = -1;
 
+    char *addr                      = NULL;
+    long port                       = -1;
     char *resource                  = NULL;
     char *certfile                  = NULL;
     char *keyfile                   = NULL;
@@ -168,22 +204,31 @@ int asp_measure(int argc, char *argv[])
 
     // Parse args
     errno = 0;
-    if((argc != 11) ||
+    if((argc != 12) ||
             (((out_fd = strtol(argv[2], NULL, 10)) < 0) || errno != 0) ||
-            (((targ_fd = strtol(argv[3], NULL, 10)) < 0) || errno != 0) ||
-            (((sign_tpm = strtol(argv[10], NULL, 10)) < 0) || errno != 0)) {
-        asp_logerror("Usage: "ASP_NAME" <in_fd [unused]> <out_fd> <targ_fd> <resource> <certfile> <keyfile> <keypass> <nonce> <tpmpass> <sign_tpm>\n");
+            (((port = strtol(argv[4], NULL, 10)) < 0) || errno != 0)   ||
+            (((sign_tpm = strtol(argv[11], NULL, 10)) < 0) || errno != 0)) {
+        asp_logerror("Usage: "ASP_NAME" <in_fd [unused]> <out_fd> <addr> <port> <resource> <certfile> <keyfile> <keypass> <nonce> <tpmpass> <sign_tpm>\n");
         return -EINVAL;
     }
 
-    resource = argv[4];
-    certfile = argv[5];
-    keyfile  = argv[6];
-    keypass  = argv[7];
-    nonce    = argv[8];
-    tpmpass  = argv[9];
+    addr     = argv[3];
+    resource = argv[5];
+    certfile = argv[6];
+    keyfile  = argv[7];
+    keypass  = argv[8];
+    nonce    = argv[9];
+    tpmpass  = argv[10];
 
-    ret_val = send_to_attester_listen_for_result(targ_fd, resource, certfile, keyfile,
+    errno = 0;
+    targ_chan = create_channel(addr, port);
+    if (targ_chan < 0) {
+	dlog(0, "Unable to establish channel with the target: %s\n",
+		strerror(errno));
+	return -1;
+    }
+
+    ret_val = send_to_attester_listen_for_result(targ_chan, resource, certfile, keyfile,
               keypass, nonce, tpmpass, sign_tpm, &result, &rsize);
     if(ret_val < 0) {
         dlog(0, "Unable to send execute contract to attester or get a result\n");
@@ -203,5 +248,6 @@ int asp_measure(int argc, char *argv[])
 
 error:
     free(result);
+    close(targ_chan);
     return ret_val;
 }

@@ -24,16 +24,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
-#include <netdb.h>
-
-#include <sys/socket.h>
-
-#include <netinet/in.h>
-
-#include <arpa/inet.h>
 
 #include <util/util.h>
-#include <util/inet-socket.h>
 
 #include <common/apb_info.h>
 #include <common/measurement_spec.h>
@@ -108,14 +100,9 @@ error:
     return ret_val;
 }
 
-static int get_target_channel(dynamic_measurement_request_address *va)
+static int get_target_channel_info(dynamic_measurement_request_address *va,
+				   char **addr, char **port)
 {
-    long portnum              = -1;
-    int chan                  = -1;
-    char *port                = NULL;
-    char *addr                = NULL;
-    char *host_addr           = NULL;
-    struct hostent *targ_host = NULL;
     place_info *info          = NULL;
 
     if(strcmp(va->attester, "@_0") == 0) {
@@ -130,86 +117,39 @@ static int get_target_channel(dynamic_measurement_request_address *va)
         return -1;
     }
 
-    port = info->port;
-    addr = info->addr;
+    *port = info->port;
+    *addr = info->addr;
 
-    errno = 0;
-    portnum = strtol(port, NULL, 10);
-    if (portnum < 0 || portnum > 0xFFFF || errno != 0) {
-        dlog(0, "Failed to interpret port %s of attester \"%s\" as integer\n",
-             port, va->attester);
-        return -1;
-    }
-
-    targ_host = gethostbyname(addr);
-    if(targ_host == NULL || targ_host->h_addr_list[0] == NULL) {
-        dlog(0, "Unable to get address information for appraiser\n");
-        return -1;
-    }
-
-    host_addr = strdup(inet_ntoa(*(struct in_addr *)targ_host->h_addr_list[0]));
-    if(host_addr == NULL) {
-        dlog(0, "Unable to convert host address information\n");
-        return -1;
-    }
-
-    chan = connect_to_server(host_addr, portnum);
-    free(host_addr);
-
-    return chan;
+    return 0;
 }
 
-static int invoke_send_execute_tcp(struct asp *execute_asp, int targ_chan,
-                                   char *resource, char **msmt_con,
-                                   size_t *con_len)
+static int invoke_send_execute_tcp(struct asp *execute_asp, char *addr,
+                                   char *port, char *resource,
+                                   char **msmt_con, size_t *con_len)
 {
     int rc                 = -1;
-    int targ_chan_str_len  = -1;
     size_t buf_len         = -1;
     char *buf              = NULL;
-    char *targ_chan_str    = NULL;
-    char *send_execute_args[8] = {0};
+    char *send_execute_args[9] = {0};
 
-    targ_chan_str_len = snprintf(NULL, 0, "%d", targ_chan);
-    if (targ_chan_str_len <= 0) {
-        dlog(1, "Invalid target channel\n");
-        goto chan_len_err;
-    }
-
-    targ_chan_str_len += 1;
-    targ_chan_str = malloc(targ_chan_str_len);
-    if (targ_chan_str == NULL) {
-        dlog(0, "Unable to allocate memory for string\n");
-        goto chan_alloc_err;
-    }
-
-    rc = snprintf(targ_chan_str, targ_chan_str_len, "%d", targ_chan);
-    if (rc < 0) {
-        dlog(1, "Unable to write channel value out to the string\n");
-        goto chan_buf_err;
-    }
-
-    send_execute_args[0] = targ_chan_str;
-    send_execute_args[1] = resource;
-    send_execute_args[2] = g_certfile;
-    send_execute_args[3] = g_keyfile;
-    send_execute_args[4] = g_keypass;
-    send_execute_args[5] = g_nonce;
-    send_execute_args[6] = g_tpmpass;
-    send_execute_args[7] = g_verify_tpm;
+    send_execute_args[0] = addr;
+    send_execute_args[1] = port;
+    send_execute_args[2] = resource;
+    send_execute_args[3] = g_certfile;
+    send_execute_args[4] = g_keyfile;
+    send_execute_args[5] = g_keypass;
+    send_execute_args[6] = g_nonce;
+    send_execute_args[7] = g_tpmpass;
+    send_execute_args[8] = g_verify_tpm;
 
     rc = run_asp_buffers(execute_asp, NULL, 0, &buf, &buf_len,
-                         8, send_execute_args, TIMEOUT, -1);
+                         9, send_execute_args, TIMEOUT, -1);
 
     if (rc == 0) {
         *msmt_con = buf;
         *con_len = buf_len;
     }
 
-chan_buf_err:
-    free(targ_chan_str);
-chan_alloc_err:
-chan_len_err:
     return rc;
 }
 
@@ -217,12 +157,13 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
                                  measurement_type *mtype)
 {
     int rc                                  = 0;
-    int targ_chan                           = 0;
     size_t con_len                          = -1;
     size_t tmp_con_len                      = -1;
     char *graph_path                        = NULL;
     char *contract                          = NULL;
     char *tmp_contract                      = NULL;
+    char *addr                              = NULL;
+    char *port                              = NULL;
     node_id_t n                             = INVALID_NODE_ID;
     struct asp *asp                         = NULL;
     marshalled_data *md                     = NULL;
@@ -230,8 +171,6 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
     measurement_graph *g                    = NULL;
     dynamic_measurement_request_address *va = NULL;
     blob_data *blob                         = NULL;
-    char *exe_asp_argv[10]                  = {0};
-    node_id_str nstr                        = {0};
 
     g = (measurement_graph*)ctxt;
 
@@ -268,9 +207,9 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
             goto error;
         }
 
-        targ_chan = get_target_channel(va);
-        if (targ_chan < 0) {
-            dlog(0, "Unable to establish channel with the target\n");
+        rc = get_target_channel_info(va, &addr, &port);
+        if (rc < 0) {
+            dlog(2, "Unable to retrieve place information for the address space\n");
             goto error;
         }
 
@@ -278,7 +217,7 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
              va->resource, va->attester);
 
         /* Send execute contract for the specified resource to the host */
-        rc = invoke_send_execute_tcp(asp, targ_chan, va->resource,
+        rc = invoke_send_execute_tcp(asp, addr, port, va->resource,
                                      &contract, &con_len);
         if (rc < 0) {
             dlog(0, "Failed to invoke \"%s\" for attester \"%s\"\n",

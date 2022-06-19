@@ -31,14 +31,6 @@
     <rule role="appraiser" phase="initial">
       <match_condition attr="client"  operator="in" value="known-clients" />
       <action selector_action="accept">
-	      <condition name="userspace"            apb_phrase="((USM full) -> SIG)"/>
-	      <condition name="userspace-processes"  apb_phrase="((USM processes) -> SIG)"/>
-	      <condition name="userspace-packages"   apb_phrase="((USM pkginv) -> SIG)"/>
-	      <condition name="userspace-hashfiles"  apb_phrase="((USM hashfiles) -> SIG)"/>
-              <condition name="userspace-hashfile"   apb_phrase="((USM hashfile file) -> SIG):file=/bin/ls"/>
-	      <condition name="userspace-mtab"       apb_phrase="((USM mtab) -> SIG)"/>
-	      <condition name="got_measure"          apb_phrase="((USM got) -> SIG)"/>
-	      <condition name="runtime-meas"         apb_phrase="(KIM runtime_meas)"/>
 	      <condition name="layered-attestation"  apb_phrase="@_0(runtime_meas_sign)-&lt;-@_0(USM full)-&lt;-@_md(runtime_meas_sign)-&lt;-@_md(USM full)-&lt;-@_t(runtime_meas_sign)-&lt;-@_t(USM full):@_0=1,@_md=2,@_t=3"/>
 	</action>
     </rule>
@@ -47,14 +39,6 @@
 	Possible down-select on copland phrase(s)-->
     <rule role="attester" phase="modify">
       <action selector_action="accept">
-	      <condition name="userspace"            apb_phrase="((USM full) -> SIG)"/>
-	      <condition name="userspace-processes"  apb_phrase="((USM processes) -> SIG)"/>
-	      <condition name="userspace-packages"   apb_phrase="((USM pkginv) -> SIG)"/>
-	      <condition name="userspace-hashfiles"  apb_phrase="((USM hashfiles) -> SIG)"/>
-              <condition name="userspace-hashfile"   apb_phrase="((USM hashfile file) -> SIG):file=/bin/ls"/>
-	      <condition name="userspace-mtab"       apb_phrase="((USM mtab) -> SIG)"/>
-	      <condition name="got_measure"          apb_phrase="((USM got) -> SIG)"/>
-	      <condition name="runtime-meas"         apb_phrase="(KIM runtime_meas)"/>
 	      <condition name="layered-attestation"  apb_phrase="@_0(runtime_meas_sign)-&lt;-@_0(USM full)-&lt;-@_md(runtime_meas_sign)-&lt;-@_md(USM full)-&lt;-@_t(runtime_meas_sign)-&lt;-@_t(USM full):@_0=1,@_md=2,@_t=3"/>
     	</action>
     </rule>
@@ -66,55 +50,6 @@
 	<match_condition attr="resource" operator="is" value="layered-attestation"/>
         <action selector_action="accept">
 	      <condition name="layered-attestation"                 apb_phrase="@_0(runtime_meas_sign)-&lt;-@_0(USM full)-&lt;-@_md(runtime_meas_sign)-&lt;-@_md(USM full)-&lt;-@_t(runtime_meas_sign)-&lt;-@_t(USM full):@_0=1,@_md=2,@_t=3"/>
-	</action>
-    </rule>
-
-    <rule role="appraiser" phase="execute">
-	<match_condition attr="resource" operator="is" value="runtime-meas"/>
-        <action selector_action="accept">
-	      <condition name="runtime-meas"                 apb_phrase="(KIM runtime_meas)"/>
-	</action>
-    </rule>
-
-    <rule role="appraiser" phase="execute">
-	<match_condition attr="resource" operator="is" value="got_measure"/>
-        <action selector_action="accept">
-	      <condition name="got_measure"                 apb_phrase="((USM got) -> SIG)"/>
-	</action>
-    </rule>
-
-    <rule role="appraiser" phase="execute">
-	<match_condition attr="resource" operator="is" value="userspace-mtab"/>
-        <action selector_action="accept">
-	      <condition name="userspace-mtab"                 apb_phrase="((USM mtab) -> SIG)"/>
-	</action>
-    </rule>
-
-    <rule role="appraiser" phase="execute">
-	<match_condition attr="resource" operator="is" value="userspace-hashfile"/>
-        <action selector_action="accept">
-	      <condition name="userspace-hashfile"                 apb_phrase="((USM hashfile file) -> SIG):file=/bin/ls"/>
-	</action>
-    </rule>
-
-    <rule role="appraiser" phase="execute">
-	<match_condition attr="resource" operator="is" value="userspace-packages"/>
-        <action selector_action="accept">
-	      <condition name="userspace-packages"                 apb_phrase="((USM hashfiles) -> SIG)"/>
-	</action>
-    </rule>
-
-    <rule role="appraiser" phase="execute">
-	<match_condition attr="resource" operator="is" value="userspace-processes"/>
-        <action selector_action="accept">
-	      <condition name="userspace-processes"                 apb_phrase="((USM processes) -> SIG)"/>
-	</action>
-    </rule>
-
-    <rule role="appraiser" phase="execute">
-	<match_condition attr="resource" operator="is" value="userspace"/>
-        <action selector_action="accept">
-	      <condition name="userspace"                 apb_phrase="((USM full) -> SIG)"/>
 	</action>
     </rule>
 

@@ -210,22 +210,6 @@ int asp_measure(int argc, char *argv[])
         goto parse_args_failed;
     }
 
-    // read from chan in
-    fd_in = maat_io_channel_new(fd_in);
-    if(fd_in < 0) {
-        dlog(0, "Error: failed to make new io channel for fd_in\n");
-        ret_val = -1;
-        goto io_chan_in_failed;
-    }
-
-    // write outcome to chan out
-    fd_out = maat_io_channel_new(fd_out);
-    if(fd_out < 0) {
-        dlog(0, "Error: failed to make new io channel for fd_out\n");
-        ret_val = -1;
-        goto io_chan_out_failed;
-    }
-
     // Read the measurement contract
     ret_val = maat_read_sz_buf(fd_in, &buf, &bufsize, &bytes_read, &eof_enc,
                                TIMEOUT, MAX_RECV_BUF_SZ);

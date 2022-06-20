@@ -184,6 +184,14 @@ test_split_asp_SOURCES = test_split.c
 test_split_asp_LDADD = $(LDADD_APB)
 endif
 
+if BUILD_encrypt_ASP
+if BUILD_decrypt_ASP
+check_PROGRAMS += test_encrypt_decrypt
+test_encrypt_decrypt_SOURCES = test_encrypt_decrypt.c
+test_encrypt_decrypt_LDADD = $(LDADD_APB)
+endif
+endif
+
 if BUILD_send_execute_tcp_ASP
 check_PROGRAMS += test_send_execute_tcp
 test_send_execute_tcp_SOURCES = test_send_execute_tcp.c

@@ -43,16 +43,9 @@
 #define ENC_KEY_SIZE 16
 #define ENC_IV_SIZE 16
 
-/**
- * Returns 0 on success, < 0 on error
- * @partner_cert is the partner's certificate;
- * @encbuf is the buffer to decrypt, @encsize is its size
- * @decbuf is set to the result of the decryption, @decsize is set to its size
- * @b64_keybuf is set to the compressed and encrypted key used for @encbuf
- */
-static int decrypt(char *partner_cert, void *encbuf, size_t encsize,
-                   void **decbuf, size_t *decsize, char *eph_key,
-                   char *keyfile, char *keypass)
+static int decrypt(void *encbuf, size_t encsize, char *eph_key,
+                   char *keyfile, char *keypass, void **decbuf,
+                   size_t *decsize)
 {
     unsigned char *unc_eph_key = NULL;
     unsigned char key[ENC_KEY_SIZE];
@@ -132,7 +125,6 @@ int asp_measure(int argc, char *argv[])
     void *decbuf   = NULL;
     size_t decsize = 0;
 
-    char *partner_cert = NULL;
     char *eph_key = NULL;
     char *keyfile = NULL;
     char *keypass = NULL;
@@ -142,14 +134,13 @@ int asp_measure(int argc, char *argv[])
     int fd_in  = -1;
     int fd_out = -1;
 
-    if(argc != 7 ||
+    if(argc != 6 ||
             ((fd_in = atoi(argv[1])) < 0) ||
             ((fd_out = atoi(argv[2])) < 0) ||
-            ((partner_cert = argv[3]) == NULL) ||
-            ((eph_key = argv[4]) == NULL) ||
-            ((keyfile = argv[5]) == NULL) ||
-            ((keypass = argv[6]) == NULL)) {
-        asp_logerror("Usage: "ASP_NAME" <fd_in> <fd_out> <partner_cert> <key> <keyfile> <keypass>\n");
+            ((eph_key = argv[3]) == NULL) ||
+            ((keyfile = argv[4]) == NULL) ||
+            ((keypass = argv[5]) == NULL)) {
+        asp_logerror("Usage: "ASP_NAME" <fd_in> <fd_out> <key> <keyfile> <keypass>\n");
         ret_val = -EINVAL;
         goto parse_args_failed;
     }
@@ -172,7 +163,7 @@ int asp_measure(int argc, char *argv[])
     }
 
     // Decrypt buffer
-    ret_val = decrypt(partner_cert, buf, bufsize, &decbuf, &decsize, eph_key, keyfile, keypass);
+    ret_val = decrypt(buf, bufsize, eph_key, keyfile, keypass, &decbuf, &decsize);
     if(ret_val < 0) {
         dlog(0, "Error: Failed to encrypt blob\n");
         ret_val = -1;

@@ -340,7 +340,7 @@ int process_contract(GList *apb_asps, struct scenario *scen,
     char *tmp                  = NULL;
     struct asp *decompress_asp = NULL;
     struct asp *decrypt_asp    = NULL;
-    char *decrypt_args[4]      = {0};
+    char *decrypt_args[3]      = {0};
 
     /* Basic check for required values */
     if (scen->workdir == NULL || scen->nonce == NULL ||
@@ -393,16 +393,15 @@ int process_contract(GList *apb_asps, struct scenario *scen,
             goto key_err;
         }
 
-        decrypt_args[0] = scen->partner_cert;
-        decrypt_args[1] = key;
-        decrypt_args[2] = scen->keyfile;
-        decrypt_args[3] = scen->keypass == NULL ? "" : scen->keypass;
+        decrypt_args[0] = key;
+        decrypt_args[1] = scen->keyfile;
+        decrypt_args[2] = scen->keypass == NULL ? "" : scen->keypass;
 
         ret = run_asp_buffers(decrypt_asp, unenc_meas,
                               unenc_meas_size,
                               (char **)&untrans_meas,
                               &untrans_meas_size,
-                              4, decrypt_args, TIMEOUT, -1);
+                              3, decrypt_args, TIMEOUT, -1);
         b64_free(unenc_meas);
         free(key);
         if (ret < 0) {

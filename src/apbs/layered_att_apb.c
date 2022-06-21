@@ -104,6 +104,8 @@ static int get_target_channel_info(dynamic_measurement_request_address *va,
 {
     place_info *info          = NULL;
 
+    dlog(0, "Get target channel version: %s\n", va->attester);
+
     if(strcmp(va->attester, "@_0") == 0) {
         info = g_dom_z_info;
     } else if(strcmp(va->attester, "@_t") == 0) {
@@ -150,6 +152,18 @@ static int invoke_send_execute_tcp(struct asp *execute_asp, char *addr,
     return rc;
 }
 
+static struct asp *select_asp_shim(measurement_graph *g, measurement_type *mtype,
+                           measurement_variable *var, GList *apb_asps,
+                           int *mcount_ptr) {
+   if(mtype == &kernel_measurement_type) {
+       /* This is placed into this shim instead of being placed into the generic
+        * select_asp function because this is not a userspace measurement */
+       return find_asp(apb_asps, "kernel_msmt_asp");
+   } else {
+       return select_asp(g, mtype, var, apb_asps, mcount_ptr); 
+   } 
+}
+
 static int measure_variable_shim(void *ctxt, measurement_variable *var,
                                  measurement_type *mtype)
 {
@@ -175,7 +189,7 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
     // ASP, which gives back the measurement contract on its STDOUT.
     // We want to do further processing on the measurement contract
     // to verify the cryptographic signatures, for example.
-    asp = select_asp(g, mtype, var, apb_asps, &mcount);
+    asp = select_asp_shim(g, mtype, var, apb_asps, &mcount);
     if(asp == NULL) {
         dlog(0, "Failed to find satisfactory ASP\n");
         rc = -ENOENT;

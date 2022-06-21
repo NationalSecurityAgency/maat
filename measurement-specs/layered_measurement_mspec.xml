@@ -28,11 +28,18 @@
 	     a 'feature' of a completed measurement, and are subsequently measured using 
 	     the referenced instruction.-->
 	<instructions>
-	  <!-- Request measurements of the higher privilege level  -->
+	  <!-- Request measurements of another privilege level  -->
 	  <instruction type="simple" name="request">
             <target_type      name="system_target_type"  magic="0x57513777"/>
             <address_type     name="dynamic_measurement_request_address_space"  magic="0x7EF11778" />
             <measurement_type name="blob" magic="0xB10BB10B"/>
+          </instruction>
+
+          <!-- Get runtime measurement of the kernel -->
+          <instruction type="simple" name="runtime_meas">
+            <target_type name="file_target_type" magic="1001"/>
+            <address_type name="unit_address_space" magic="0x50EC50EC"/>
+            <measurement_type name="kernel_measurement_type"  magic="0x554e4958"/>
           </instruction>
 
 	  <!-- List and gather metadata on all of the processes running on the system.
@@ -168,8 +175,10 @@
             <address operation="measure">@_0 userspace</address>
           </variable>
 
-	  <variable instruction="request">
-            <address operation="measure">@_md runtime_meas</address>
+          <!-- Measurments of the measurement domain -->
+
+          <variable instruction="runtime_meas">
+            <address operation="enumerate">all</address>
           </variable>
 	  
 	  <!-- Variable to identify the host system -->
@@ -230,6 +239,8 @@
 	    <variable instruction="mtab" >
 	      <address operation="equal">/proc/mounts</address>
 	    </variable>
+
+            <!-- Measurements of the target domain -->
 
 	    <variable instruction="request">
               <address operation="measure">@_t runtime_meas</address>

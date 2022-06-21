@@ -30,7 +30,6 @@
 		<asp uuid="e55303b6-bcc6-11ec-8422-0242ac120002">decrypt_asp</asp>
 		<asp uuid="70e8cb56-bcd9-11ec-9d64-0242ac120002">decompress_asp</asp>
 		<asp uuid="96158eee-bcf4-11ec-9d64-0242ac120002">verify_measurement_contract_asp</asp>
-		<asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1739">send_execute_asp</asp>
 	</asps>
         <copland>
             <phrase copland="(Layered app)">layered measurement appraiser</phrase>

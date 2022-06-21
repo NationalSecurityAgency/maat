@@ -10,7 +10,7 @@
 		<asp uuid="906b78d3-4591-4ebb-85a5-592db041df30" initial="True">lsproc</asp>
 		<asp uuid="1f82c9f7-760d-4535-bcab-74daafaa1ff9">procopenfiles</asp>
 		<asp uuid="dff44141-9d3a-4cfe-8a30-2c072bb77025">filesha1hash</asp>
-		<asp uuid="cd82c9f7-760d-4535-bcab-74daadaa1f44" initial="True">system</asp>
+		<asp uuid="cd82c9f7-760d-4535-bcab-74daadaa1f44">system</asp>
 		<asp uuid="cd82c9f7-760d-4535-bcab-74f4debaca9e">dpkg_inv</asp>
 		<asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1f44">rpm_inv</asp>
 		<asp uuid="cd82c9f7-760d-4535-bcab-74dadebaca9e">dpkg_details</asp>
@@ -33,6 +33,7 @@
 		<asp uuid="cd82c9f7-760d-4535-5197-74daadaa4f41">send</asp>
       		<asp uuid="cd82c9f7-760d-4535-5197-74daadaa1f40">serialize</asp>
 		<asp uuid="5b2ec00a-ca8a-4215-8a5f-4782599c6df0">send_request_asp</asp>
+                <asp uuid="3ecdf802-831a-4c08-a690-ae3a82fe946f">runtime_meas_asp</asp>
 		<asp uuid="014ec57b-567f-470b-81a8-99fc3a28052e">send_execute_tcp_asp</asp>
 	</asps>
 	<copland>

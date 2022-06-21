@@ -134,26 +134,26 @@ GQueue *enumerate_variables(void *ctxt UNUSED, target_type *ttype,
             }
             g_queue_push_tail(q,v);
 
-        } else if ((ttype == &system_target_type) &&
-                   (space == &measurement_request_address_space) &&
-                   (strcmp(op, "measure") == 0)) {
-
+        } else if (((ttype == &system_target_type) &&
+                    (space == &measurement_request_address_space) &&
+                    (strcmp(op, "measure") == 0)) ||
+                   ((ttype == &system_target_type) &&
+                    (space == &dynamic_measurement_request_address_space) &&
+                    (strcmp(op, "measure") == 0))) {
             measurement_variable *v = NULL;
             if(create_basic_variable(val, space, ttype, &v) != 0) {
                 goto err;
             }
 
-            g_queue_push_head(q,v);
-
-        } else if ((ttype == &system_target_type) &&
-                   (space == &dynamic_measurement_request_address_space)) {
-
+            g_queue_push_tail(q,v);
+        } else if((ttype == &file_target_type) &&
+                  (space == &unit_address_space)) {
             measurement_variable *v = NULL;
             if(create_basic_variable(val, space, ttype, &v) != 0) {
                 goto err;
             }
 
-            g_queue_push_head(q,v);
+            g_queue_push_tail(q,v);
         } else {
             dlog(0, "Failed to queue variable for val %s\n", val);
         }

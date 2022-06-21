@@ -218,7 +218,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
         }
     } else {
         // If this isn't a request, then we are handling a measurement domain measurement
-        if (addr_space == &kernel_address_space) {
+        if (addr_space == &unit_address_space) {
             // If the address space is the kernel address space, then this is a
             // kernel measurement of the measurement domain
             priv_level = MD_RUN;
@@ -249,11 +249,11 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
                     ret = pass_to_subordinate_apb(mg, scen, node, sub_apb, mspec);
                     dlog(4, "Result from subordinate APB %d\n", ret);
                 }
-            } else if (strcmp(resource, "runtime-meas") == 0) {
-                dlog(3, "There is not a specific appraiser for runtime measurement, so just claiming this is successful\n");
+            } else if (strcmp(resource, "runtime-meas") == 0 || data_type == KERNEL_MSMT_MAGIC) {
+                dlog(3, "There is not a specific appraiser for runtime measurement, so we just claim this is successful\n");
                 ret = 0;
             } else {
-                // We receieved a userspace measurement for some other privilege level
+                // We receieved a measurement for some other privilege level
                 if(measurement_node_get_rawdata(mg, node, &blob_measurement_type, &data) < 0) {
                     dlog(1, "Unable to get blob data from node\n");
                     ret = -1;

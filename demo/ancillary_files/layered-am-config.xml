@@ -30,5 +30,5 @@
     <metadata type="apbs" dir="/opt/maat/share/maat/apbs" />
     <metadata type="measurement-specifications" dir="/opt/maat/share/maat/measurement-specifications" />
     <work dir="/tmp/attestmgr" />
-    <place name="/opt/maat/etc/maat/layered-places.csv" />
+    <place name="/opt/maat/etc/maat/places.csv" />
 </am-config>

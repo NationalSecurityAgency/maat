@@ -31,7 +31,7 @@
     <rule role="appraiser" phase="initial">
       <match_condition attr="client"  operator="in" value="known-clients" />
       <action selector_action="accept">
-	      <condition name="layered-attestation"  apb_phrase="@_0(runtime_meas_sign)-&lt;-@_0(USM full)-&lt;-@_md(runtime_meas_sign)-&lt;-@_md(USM full)-&lt;-@_t(runtime_meas_sign)-&lt;-@_t(USM full):@_0=1,@_md=2,@_t=3"/>
+	      <condition name="layered-attestation"  apb_phrase="@_0(runtime_meas_sign)-&lt;-@_0(USM full)-&lt;-runtime_meas_sign-&lt;-USM full-&lt;-@_t(runtime_meas_sign)-&lt;-@_t(USM full):@_0=1,@_t=3"/>
 	</action>
     </rule>
 
@@ -39,7 +39,7 @@
 	Possible down-select on copland phrase(s)-->
     <rule role="attester" phase="modify">
       <action selector_action="accept">
-	      <condition name="layered-attestation"  apb_phrase="@_0(runtime_meas_sign)-&lt;-@_0(USM full)-&lt;-@_md(runtime_meas_sign)-&lt;-@_md(USM full)-&lt;-@_t(runtime_meas_sign)-&lt;-@_t(USM full):@_0=1,@_md=2,@_t=3"/>
+	      <condition name="layered-attestation"  apb_phrase="@_0(runtime_meas_sign)-&lt;-@_0(USM full)-&lt;-runtime_meas_sign-&lt;-USM full-&lt;-@_t(runtime_meas_sign)-&lt;-@_t(USM full):@_0=1,@_t=3"/>
     	</action>
     </rule>
 
@@ -49,7 +49,7 @@
     <rule role="appraiser" phase="execute">
 	<match_condition attr="resource" operator="is" value="layered-attestation"/>
         <action selector_action="accept">
-	      <condition name="layered-attestation"                 apb_phrase="@_0(runtime_meas_sign)-&lt;-@_0(USM full)-&lt;-@_md(runtime_meas_sign)-&lt;-@_md(USM full)-&lt;-@_t(runtime_meas_sign)-&lt;-@_t(USM full):@_0=1,@_md=2,@_t=3"/>
+	      <condition name="layered-attestation"                 apb_phrase="@_0(runtime_meas_sign)-&lt;-@_0(USM full)-&lt;-runtime_meas_sign-&lt;-USM full-&lt;-@_t(runtime_meas_sign)-&lt;-@_t(USM full):@_0=1,@_t=3"/>
 	</action>
     </rule>
 
@@ -60,7 +60,7 @@
     <rule role="appraiser" phase="spawn">
       <match_condition attr="resource" operator="is" value="layered-attestation"/>
       <action selector_action="accept">
-	    <condition name="layered-attestation"         apb_phrase="(Layered app):@_0=1,@_md=2,@_t=3"/>
+	    <condition name="layered-attestation"         apb_phrase="(Layered app)"/>
       </action>
     </rule>
 </selector_policy>

@@ -36,16 +36,13 @@
 		<asp uuid="014ec57b-567f-470b-81a8-99fc3a28052e">send_execute_tcp_asp</asp>
 	</asps>
 	<copland>
-	  <phrase copland="@_0(runtime_meas_sign)-&lt;-@_0(USM full)-&lt;-@_md(runtime_meas_sign)-&lt;-@_md(USM full)-&lt;-@_t(runtime_meas_sign)-&lt;-@_t(USM full)"></phrase>
+	  <phrase copland="@_0(runtime_meas_sign)-&lt;-@_0(USM full)-&lt;-runtime_meas_sign-&lt;-USM full-&lt;-@_t(runtime_meas_sign)-&lt;-@_t(USM full)"></phrase>
 	  <spec uuid="43d00605-c585-4507-83f3-37b9261bc157">layered mspec</spec>
  	  <arguments>
 	    <arg name="@_0">
 	      <type>place</type>
 	    </arg>
-	    <arg name="@_md">
-	      <type>place</type>
-	    </arg>
-        <arg name="@_t">
+            <arg name="@_t">
 	      <type>place</type>
 	    </arg>
 	  </arguments>

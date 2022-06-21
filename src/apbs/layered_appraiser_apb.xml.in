@@ -32,32 +32,10 @@
 		<asp uuid="96158eee-bcf4-11ec-9d64-0242ac120002">verify_measurement_contract_asp</asp>
 		<asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1739">send_execute_asp</asp>
 	</asps>
-    <copland>
-        <phrase copland="(Layered app)">layered measurement appraiser</phrase>
-        <spec uuid="43d00605-c585-4507-83f3-37b9261bc157">layered measurement specification</spec>
-        <arguments>
-            <arg name="@_0">
-                <type>place</type>
-            </arg>
-            <arg name="@_md">
-                <type>place</type>
-            </arg>
-            <arg name="@_t">
-                <type>place</type>
-            </arg>
-        </arguments>
-        <places>
-            <place id="@_0">
-                <info>kernel</info>
-            </place>
-            <place id="@_md">
-                <info>kernel</info>
-            </place>
-            <place id="@_t">
-                <info>kernel</info>
-            </place>
-        </places>
-    </copland>
+        <copland>
+            <phrase copland="(Layered app)">layered measurement appraiser</phrase>
+            <spec uuid="43d00605-c585-4507-83f3-37b9261bc157">layered measurement specification</spec>
+        </copland>
 	<security_context>
 	  <selinux><type>layered_appraiser_apb_t</type></selinux>
 	</security_context>

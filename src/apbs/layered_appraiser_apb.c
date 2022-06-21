@@ -217,9 +217,16 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
             appraisal_stat++;
         }
     } else {
-        // If this isn't a request, then we are handling userspace measurements of the measurer
-        // privilege level
-        priv_level = MD_USER;
+        // If this isn't a request, then we are handling a measurement domain measurement
+        if (addr_space == &kernel_address_space) {
+            // If the address space is the kernel address space, then this is a
+            // kernel measurement of the measurement domain
+            priv_level = MD_RUN;
+        } else {
+            // Otherwise, this measurement is a userspace measurement of the measurement
+            // domain
+            priv_level = MD_USER;
+        }
     }
 
     g_measured_levels[priv_level] = 1;

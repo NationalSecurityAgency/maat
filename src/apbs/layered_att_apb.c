@@ -455,8 +455,8 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
     struct meas_spec *mspec  = NULL;
     measurement_graph *graph = NULL;
 
-    if(argc != 3) {
-        dlog(1, "USAGE: APB_NAME <@_0> <@_MD> <@_T>\n");
+    if(argc != 2) {
+        dlog(1, "USAGE: APB_NAME <@_0> <@_T>\n");
         return -1;
     }
 

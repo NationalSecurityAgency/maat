@@ -100,7 +100,7 @@ void setup(void)
     serialize_graph_asp = find_asp(asps, "serialize_graph_asp");
     compress_asp        = find_asp(asps, "compress_asp");
     encrypt_asp         = find_asp(asps, "encrypt_asp");
-    create_contract_asp = find_asp(asps, "create_execute_contract_asp");
+    create_contract_asp = find_asp(asps, "create_measurement_contract_asp");
     send_asp            = find_asp(asps, "send_asp");
 
     // Run the mtab ASP to add some data to the graph

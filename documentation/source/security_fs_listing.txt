@@ -683,7 +683,7 @@ state) should be installed with appropriate ownership, and their SUID or SGID bi
 +------------+------+-------+----------------------------------------------------------+----------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:compress_asp_exe_t:s0                   |compress_asp                            |
 +------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:create_contract_asp_exe_t:s0            |create_contract_asp                     |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:create_measurement_contract_asp_exe_t:s0|create_measurement_contract_asp         |
 +------------+------+-------+----------------------------------------------------------+----------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:decompress_asp_exe_t:s0                 |decompress_asp                          |
 +------------+------+-------+----------------------------------------------------------+----------------------------------------+
@@ -968,7 +968,7 @@ directory and its contents world readable (chmod 0755 for the directory, chmod 0
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |compress_asp.xml                        |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |create_contract_asp.xml                 |
+|-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |create_measurement_contract_asp.xml     |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |decrompress_asp.xml                     |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+

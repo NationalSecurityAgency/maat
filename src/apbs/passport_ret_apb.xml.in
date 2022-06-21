@@ -25,7 +25,7 @@
 	  <asp uuid="62ed15b5-529b-4915-be4c-0dc30da554fc">passport_retriever_asp</asp>
 	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa1f41">compress</asp>
 	  <asp uuid="19e44fd6-b752-431a-94d9-6f1a88495a68">encrypt</asp>
-	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa3f41">create_contract</asp>
+	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa3f41">create_measurement_contract</asp>
 	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa4f41">send</asp>
       	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa1f40">serialize</asp>
 	</asps>

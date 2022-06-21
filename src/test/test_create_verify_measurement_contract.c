@@ -106,7 +106,7 @@ START_TEST (test_measurement_contract_asps)
     fail_unless(g_createasp != NULL, "CREATE CONTRACT ASP NOT FOUND");
     fail_unless(g_verifyasp != NULL, "VERIFY CONTRACT ASP NOT FOUND");
 
-    /* Make the pipe for communication with the create_contract ASP */
+    /* Make the pipe for communication with the create_measurement_contract ASP */
     rc = pipe(create_in_fd);
     fail_if(rc < 0, "Unable to create encryption ASP in pipe");
 
@@ -190,7 +190,7 @@ START_TEST (fail_test_measurement_contract_asps)
     fail_unless(g_createasp != NULL, "CREATE CONTRACT ASP NOT FOUND");
     fail_unless(g_verifyasp != NULL, "VERIFY CONTRACT ASP NOT FOUND");
 
-    /* Make the pipe for communication with the create_contract ASP */
+    /* Make the pipe for communication with the create_measurement_contract ASP */
     rc = pipe(create_in_fd);
     fail_if(rc < 0, "Unable to create encryption ASP in pipe");
 

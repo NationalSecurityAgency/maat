@@ -15,20 +15,20 @@
 # limitations under the License. 
 -->
 <asp>
-	<name>create_contract_asp</name>
+	<name>create_measurement_contract_asp</name>
 	<uuid>cd82c9f7-760d-4535-5197-74daadaa3f41</uuid>
 	<type>Creating contract</type>
 	<description>Create result contract with Blob from fd_in, send contract to fd_out</description>
-	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/create_contract_asp</aspfile>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/create_measurement_contract_asp</aspfile>
 	<measurers>
 	</measurers>
 	<security_context>
-	  <selinux><type>create_contract_asp_t</type></selinux>
+	  <selinux><type>create_measurement_contract_asp_t</type></selinux>
 	  <user>${MAAT_USER}</user>
 	  <group>${MAAT_GROUP}</group>
   	</security_context>
 	<usage>
-          create_contract_asp fd_in fd_out workdir certfile keyfile tpmpass sign_tpm compressed encrypted
+          create_measurement_contract_asp fd_in fd_out workdir certfile keyfile tpmpass sign_tpm compressed encrypted
 	</usage>
         <inputdescription>
 	  fd_in is a file descriptor that this ASP will read a blob from
@@ -44,6 +44,6 @@
 	  encrypted is a flag for whether the measurement is encrypted or not
 	</inputdescription>
         <outputdescription>
-	  This ASP writes a completed result contract to fd_out
+	  This ASP writes a completed measurement contract to fd_out
 	</outputdescription>
 </asp>

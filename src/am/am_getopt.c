@@ -235,7 +235,7 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
                 free(config_file);
                 goto err;
             }
-            if(am_config_add_inet_iface(addr, portnum, cfg) < 0) {
+            if(am_config_add_inet_iface(addr, portnum, 0, cfg) < 0) {
                 free(addr);
                 free(config_file);
                 goto err;

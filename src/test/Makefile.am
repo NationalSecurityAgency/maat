@@ -193,7 +193,7 @@ endif
 endif
 
 if BUILD_verify_measurement_contract_ASP
-if BUILD_create_contract_ASP
+if BUILD_create_measurement_contract_ASP
 check_PROGRAMS += test_create_verify_measurement_contract
 test_create_verify_measurement_contract_SOURCES = test_create_verify_measurement_contract.c
 test_create_verify_measurement_contract_LDADD = $(LDADD_APB)

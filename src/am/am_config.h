@@ -44,9 +44,8 @@ typedef struct am_iface_config {
     uint16_t port;
 
     /**
-     * Should only be used for protected UNIX interfaces!! (and the
-     * loading code will never set this flag for an inet
-     * socket). Allow peers to skip negotiation and just send an
+     * Should only be used for protected UNIX interfaces!!
+     * Allow peers to skip negotiation and just send an
      * execute contract.
      */
     int skip_negotiation;
@@ -108,7 +107,7 @@ typedef struct am_config {
 } am_config;
 
 void free_am_config_data(am_config *cfg);
-int am_config_add_inet_iface(char *addr, uint16_t port, am_config *cfg);
+int am_config_add_inet_iface(char *addr, uint16_t port, int skip_negotiation, am_config *cfg);
 int am_config_add_unix_iface(char *path, int skip_negotiation, am_config *cfg);
 int attestmgr_load_config(const char *cfg_path, am_config *cfg);
 int attestmgr_getopt(int argc, char **argv, am_config *cfg);

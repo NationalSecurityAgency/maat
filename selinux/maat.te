@@ -664,12 +664,12 @@ type split_asp_exe_t;
 define_asp(split_asp_t, split_asp_exe_t);
 
 # Create Contract ASP
-type create_contract_asp_t;
-type create_contract_asp_exe_t;
-define_asp(create_contract_asp_t, create_contract_asp_exe_t);
-maat_credentials_reader(create_contract_asp_t)
-maat_tmp_access(create_contract_asp_t)
-allow create_contract_asp_t lib_t:file { entrypoint };
+type create_measurement_contract_asp_t;
+type create_measurement_contract_asp_exe_t;
+define_asp(create_measurement_contract_asp_t, create_measurement_contract_asp_exe_t);
+maat_credentials_reader(create_measurement_contract_asp_t)
+maat_tmp_access(create_measurement_contract_asp_t)
+allow create_measurement_contract_asp_t lib_t:file { entrypoint };
 
 # Verify Measurement Contract ASP
 type verify_measurement_contract_asp_t;
@@ -935,7 +935,7 @@ allow_apb_asp(complex_att_apb_t, proc_mem_asp_exe_t, proc_mem_asp_t)
 allow_apb_asp(complex_att_apb_t, proc_namespaces_asp_exe_t, proc_namespaces_asp_t)
 allow_apb_asp(complex_att_apb_t, send_request_asp_exe_t, send_request_asp_t)
 allow_apb_asp(complex_att_apb_t, compress_asp_exe_t, compress_asp_t)
-allow_apb_asp(complex_att_apb_t, create_contract_asp_exe_t, create_contract_asp_t)
+allow_apb_asp(complex_att_apb_t, create_measurement_contract_asp_exe_t, create_measurement_contract_asp_t)
 allow_apb_asp(complex_att_apb_t, merge_asp_exe_t, merge_asp_t)
 allow_apb_asp(complex_att_apb_t, send_asp_exe_t, send_asp_t)
 allow_apb_asp(complex_att_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_t)
@@ -948,7 +948,7 @@ define_apb(request_passport_apb_t, request_passport_apb_exe_t)
 allow_apb_asp(request_passport_apb_t, send_request_asp_exe_t, send_request_asp_t)
 allow_apb_asp(request_passport_apb_t, compress_asp_exe_t, compress_asp_t)
 allow_apb_asp(request_passport_apb_t, encrypt_asp_exe_t, encrypt_asp_t)
-allow_apb_asp(request_passport_apb_t, create_contract_asp_exe_t, create_contract_asp_t)
+allow_apb_asp(request_passport_apb_t, create_measurement_contract_asp_exe_t, create_measurement_contract_asp_t)
 allow_apb_asp(request_passport_apb_t, send_asp_exe_t, send_asp_t)
 allow_apb_asp(request_passport_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_t)
 
@@ -1006,7 +1006,7 @@ allow_apb_asp(layered_att_apb_t, proc_mem_asp_exe_t, proc_mem_asp_t)
 allow_apb_asp(layered_att_apb_t, proc_namespaces_asp_exe_t, proc_namespaces_asp_t)
 allow_apb_asp(layered_att_apb_t, send_request_asp_exe_t, send_request_asp_t)
 allow_apb_asp(layered_att_apb_t, compress_asp_exe_t, compress_asp_t)
-allow_apb_asp(layered_att_apb_t, create_contract_asp_exe_t, create_contract_asp_t)
+allow_apb_asp(layered_att_apb_t, create_measurement_contract_asp_exe_t, create_measurement_contract_asp_t)
 allow_apb_asp(layered_att_apb_t, merge_asp_exe_t, merge_asp_t)
 allow_apb_asp(layered_att_apb_t, send_asp_exe_t, send_asp_t)
 allow_apb_asp(layered_att_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_t)

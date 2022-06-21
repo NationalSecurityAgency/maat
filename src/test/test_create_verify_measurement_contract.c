@@ -79,7 +79,7 @@ void setup(void)
         return;
     }
 
-    g_createasp = find_asp(g_asps, "create_contract_asp");
+    g_createasp = find_asp(g_asps, "create_measurement_contract_asp");
     g_verifyasp = find_asp(g_asps, "verify_measurement_contract_asp");
 }
 

@@ -341,10 +341,10 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
         goto find_asp_err;
     }
 
-    create_con = find_asp(apb_asps, "create_contract_asp");
+    create_con = find_asp(apb_asps, "create_measurement_contract_asp");
     if(create_con == NULL) {
         ret_val = -1;
-        dlog(1, "Error: unable to retrieve create contract ASP\n");
+        dlog(1, "Error: unable to retrieve create measurement contract ASP\n");
         goto find_asp_err;
     }
 

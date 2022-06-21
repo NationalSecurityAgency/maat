@@ -151,10 +151,10 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
         goto find_asp_err;
     }
 
-    create_con = find_asp(apb_asps, "create_contract_asp");
+    create_con = find_asp(apb_asps, "create_execute_contract_asp");
     if(create_con == NULL) {
         ret_val = -1;
-        dlog(1, "Error: unable to retrieve create contract ASP\n");
+        dlog(1, "Error: unable to retrieve create execute contract ASP\n");
         goto find_asp_err;
     }
 

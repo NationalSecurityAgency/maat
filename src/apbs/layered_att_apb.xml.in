@@ -28,7 +28,7 @@
 		<asp uuid="e55303b6-bcc6-11ec-8422-0242ac120002">decrypt</asp>
 		<asp uuid="96158eee-bcf4-11ec-9d64-0242ac120002">verify_contract</asp>
 		<asp uuid="19e44fd6-b752-431a-94d9-6f1a88495a68">encrypt</asp>
-		<asp uuid="cd82c9f7-760d-4535-5197-74daadaa3f41">create_contract</asp>
+		<asp uuid="cd82c9f7-760d-4535-5197-74daadaa3f41">create_measurement_contract</asp>
 		<asp uuid="fcb118d1-6bc0-4078-998d-673bbe21a5aa">merge</asp>
 		<asp uuid="cd82c9f7-760d-4535-5197-74daadaa4f41">send</asp>
       		<asp uuid="cd82c9f7-760d-4535-5197-74daadaa1f40">serialize</asp>

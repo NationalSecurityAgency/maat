@@ -124,9 +124,9 @@ asp_PROGRAMS    += decrypt_asp
 decrypt_asp_SOURCES = decrypt_asp.c
 endif
 
-if BUILD_create_contract_ASP
-asp_PROGRAMS    += create_contract_asp
-create_contract_asp_SOURCES = create_contract_asp.c
+if BUILD_create_measurement_contract_ASP
+asp_PROGRAMS    += create_measurement_contract_asp
+create_measurement_contract_asp_SOURCES = create_measurement_contract_asp.c
 endif
 
 if BUILD_verify_measurement_contract_ASP

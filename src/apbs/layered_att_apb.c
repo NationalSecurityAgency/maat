@@ -67,7 +67,6 @@ char *g_verify_tpm = NULL;
 struct scenario *g_scen = NULL;
 
 place_info *g_dom_z_info = NULL;
-place_info *g_dom_md_info = NULL;
 place_info *g_dom_t_info = NULL;
 
 static int get_measurement_request_addr_from_node(measurement_graph *graph, node_id_t nid,
@@ -107,8 +106,6 @@ static int get_target_channel_info(dynamic_measurement_request_address *va,
 
     if(strcmp(va->attester, "@_0") == 0) {
         info = g_dom_z_info;
-    } else if(strcmp(va->attester, "@_md") == 0) {
-        info = g_dom_md_info;
     } else if(strcmp(va->attester, "@_t") == 0) {
         info = g_dom_t_info;
     } else {
@@ -484,19 +481,6 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
                      arg_list[i]->value);
                 goto place_arg_err;
             }
-        } else if(strcmp(arg_list[i]->key, "@_md") == 0) {
-            if (g_dom_md_info != NULL) {
-                dlog(2, "Multiple copies of @_md arg, ignoring second\n");
-                continue;
-            }
-            ret_val = get_place_information(scen,
-                                            arg_list[i]->value,
-                                            &g_dom_md_info);
-            if (ret_val < 0) {
-                dlog(1, "Unable to get place information for id: %s\n",
-                     arg_list[i]->value);
-                goto place_arg_err;
-            }
         } else if(strcmp(arg_list[i]->key, "@_t") == 0) {
             if (g_dom_t_info != NULL) {
                 dlog(2, "Multiple copies of @_t arg, ignoring second\n");
@@ -516,7 +500,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
         }
     }
 
-    if (g_dom_z_info == NULL || g_dom_md_info == NULL || g_dom_t_info == NULL) {
+    if (g_dom_z_info == NULL || g_dom_t_info == NULL) {
         dlog(1, "APB not given complete set of place information\n");
         goto place_arg_err;
     }
@@ -601,7 +585,6 @@ graph_err:
 meas_spec_err:
 place_arg_err:
     free_place_information(g_dom_z_info);
-    free_place_information(g_dom_md_info);
     free_place_information(g_dom_t_info);
     return ret_val;
 }

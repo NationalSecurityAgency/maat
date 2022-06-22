@@ -176,12 +176,14 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
     char *addr                              = NULL;
     char *port                              = NULL;
     node_id_t n                             = INVALID_NODE_ID;
+    node_id_str nstr;
     struct asp *asp                         = NULL;
     marshalled_data *md                     = NULL;
     measurement_data *data                  = NULL;
     measurement_graph *g                    = NULL;
     dynamic_measurement_request_address *va = NULL;
     blob_data *blob                         = NULL;
+    char *asp_argv[2]                       = {0};
 
     g = (measurement_graph*)ctxt;
 
@@ -196,7 +198,32 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
         goto error;
     }
 
-    if (strcmp(asp->name, "send_execute_tcp_asp") == 0) {
+    if (strcmp(asp->name, "kernel_msmt_asp") == 0) {
+        /* Place a reference to this measurement in the graph */
+        rc = measurement_graph_add_node(g, var, NULL, &n);
+        if(rc == 0 || rc == 1) {
+            dlog(6, "\tAdded node "ID_FMT"\n", n);
+        } else {
+            dlog(1, "Error adding node\n");
+            goto error;
+        }
+
+        if(measurement_node_has_data(g, n, mtype)) {
+            /* data already exists, no need to remeasure. */
+            return 0;
+        }
+
+        graph_path = measurement_graph_get_path(g);
+     	str_of_node_id(n, nstr);
+
+        asp_argv[0] = graph_path;
+        asp_argv[1] = nstr;
+
+        rc = run_asp(asp, -1, -1, false, 2, asp_argv, -1);
+
+        free(graph_path);
+        return rc;
+    } else if (strcmp(asp->name, "send_execute_tcp_asp") == 0) {
         /* Place a reference to this measurement in the graph */
         rc = measurement_graph_add_node(g, var, NULL, &n);
         if(rc == 0 || rc == 1) {

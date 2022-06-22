@@ -35,6 +35,7 @@
 		<asp uuid="5b2ec00a-ca8a-4215-8a5f-4782599c6df0">send_request_asp</asp>
                 <asp uuid="3ecdf802-831a-4c08-a690-ae3a82fe946f">runtime_meas_asp</asp>
 		<asp uuid="014ec57b-567f-470b-81a8-99fc3a28052e">send_execute_tcp_asp</asp>
+                <asp uuid="3ecdf802-831a-4c08-a690-ae3a82fe946f">kernel_msmt_asp</asp>
 	</asps>
 	<copland>
 	  <phrase copland="((@_0(runtime_meas_sign)-&lt;-@_0(USM full)-&lt;-KIM runtime_meas_sign-&lt;-USM full-&lt;-@_t(runtime_meas_sign)-&lt;-@_t(USM full)) -> SIG)"></phrase>

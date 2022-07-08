@@ -1048,12 +1048,12 @@ allow_apb_asp(layered_appraiser_apb_t, blacklist_asp_exe_t, blacklist_asp_t)
 allow_apb_asp(layered_appraiser_apb_t, whitelist_asp_exe_t, whitelist_asp_t)
 allow_apb_asp(layered_appraiser_apb_t, dpkg_check_asp_exe_t, dpkg_check_asp_t)
 allow_apb_asp(layered_appraiser_apb_t, system_appraise_asp_exe_t, system_appraise_asp_t)
-allow_apb_asp(layered_att_apb_t, decrypt_asp_exe_t, send_request_asp_t)
-allow_apb_asp(layered_att_apb_t, decompress_asp_exe_t, compress_asp_t)
-allow_apb_asp(layered_att_apb_t, verify_measurement_contract_asp_exe_t, verify_measurement_contract_asp_t)
-allow_apb_asp(layered_att_apb_t, receive_asp_exe_t, receive_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, decrypt_asp_exe_t, send_request_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, decompress_asp_exe_t, compress_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, verify_measurement_contract_asp_exe_t, verify_measurement_contract_asp_t)
+allow_apb_asp(layered_aappraiser_apb_t, receive_asp_exe_t, receive_asp_t)
 
-# this is needed because the layered appraiser launches 'subordinate' apbs. 
+# this is needed because the layered appraiser launches 'subordinate' apbs.
 # if we want to continue to allow this model of execution, should replace
 # with an allow_spawn_apb(usespace_appraiser_apb_t, kim_apb_t), etc.
 allow_spawn_any_apb(layered_appraiser_apb_t)

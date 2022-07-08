@@ -379,8 +379,8 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
     graph = create_measurement_graph(NULL);
     if(!graph) {
         dlog(0, "Failed to create measurement graph\n");
-	ret_val = -EIO;
-	goto graph_err;
+        ret_val = -EIO;
+        goto graph_err;
     }
 
     if(scen->certfile) {
@@ -403,14 +403,14 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
               place2_info->port, place1_info->addr, place1_info->port, scen,
               peerchan);
 
- str_alloc_err:
+str_alloc_err:
     destroy_measurement_graph(graph);
     graph = NULL;
 
- graph_err:
+graph_err:
     free_meas_spec(mspec);
- meas_spec_err:
- place_arg_err:
+meas_spec_err:
+place_arg_err:
     free_place_information(place1_info);
     free_place_information(place2_info);
 

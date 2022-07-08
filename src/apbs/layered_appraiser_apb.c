@@ -111,64 +111,64 @@ static int map_info_to_priv(char *place, char *resource, Priv *priv)
     int res_user = 0;
 
     if (place == NULL || resource == NULL || priv == NULL) {
-	dlog(0, "Given null argument(s)\n");
-	return -1;
+        dlog(0, "Given null argument(s)\n");
+        return -1;
     }
 
     if (strcmp(place, "@_0") == 0) {
-	place_z = 1;
+        place_z = 1;
     } else if (strcmp(place, "@_md") == 0) {
-	place_md = 1;
+        place_md = 1;
     } else if (strcmp(place, "@_t") == 0) {
-	place_t = 1;
+        place_t = 1;
     } else {
-	dlog(1, "Failed to map the parameter \"%s\" to a known place parameter\n",
-	     place);
-	return -1;
+        dlog(1, "Failed to map the parameter \"%s\" to a known place parameter\n",
+             place);
+        return -1;
     }
 
     if (strcmp(resource, "runtime_meas") == 0) {
-	res_run = 1;
+        res_run = 1;
     } else if (strcmp(resource, "userspace") == 0) {
-	res_user = 1;
+        res_user = 1;
     } else if (strcmp(resource, "userspace-mtab") == 0) {
-	res_user = 1;
+        res_user = 1;
     } else {
-	dlog(1, "Failed to map resource \"%s\" to a known resource\n",
-	     resource);
-	return -1;
+        dlog(1, "Failed to map resource \"%s\" to a known resource\n",
+             resource);
+        return -1;
     }
 
     if (place_z) {
-	if (res_run) {
-	    *priv = ZERO_RUN;
-	} else if (res_user) {
-	    *priv = ZERO_USER;
-	} else {
-	    dlog(1, "Invalid privilege level\n");
-	    return -1;
-	}
+        if (res_run) {
+            *priv = ZERO_RUN;
+        } else if (res_user) {
+            *priv = ZERO_USER;
+        } else {
+            dlog(1, "Invalid privilege level\n");
+            return -1;
+        }
     } else if (place_md) {
-	if (res_run) {
-	    *priv = MD_RUN;
-	} else if (res_user) {
-	    *priv = MD_USER;
-	} else {
-	    dlog(1, "Invalid privilege level\n");
-	    return -1;
-	}
+        if (res_run) {
+            *priv = MD_RUN;
+        } else if (res_user) {
+            *priv = MD_USER;
+        } else {
+            dlog(1, "Invalid privilege level\n");
+            return -1;
+        }
     } else if (place_t) {
-	if (res_run) {
-	    *priv = TARG_RUN;
-	} else if (res_user) {
-	    *priv = TARG_USER;
-	} else {
-	    dlog(1, "Invalid privilege level\n");
-	    return -1;
-	}
+        if (res_run) {
+            *priv = TARG_RUN;
+        } else if (res_user) {
+            *priv = TARG_USER;
+        } else {
+            dlog(1, "Invalid privilege level\n");
+            return -1;
+        }
     } else {
-	dlog(1, "Invalid privilege level\n");
-	return -1;
+        dlog(1, "Invalid privilege level\n");
+        return -1;
     }
 
     return 0;
@@ -202,21 +202,21 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
     if (addr_space == &dynamic_measurement_request_address_space) {
         // We need to use the dynamic measurement request address space in order to get
         // the resource that was requested and the place that the measurement was
-	// taken from
-   	dynamic_measurement_request_address *addr = (dynamic_measurement_request_address*) measurement_node_get_address(mg, node);
+        // taken from
+        dynamic_measurement_request_address *addr = (dynamic_measurement_request_address*) measurement_node_get_address(mg, node);
 
-	snprintf(attester, ATT_MAX_LEN, "%s", addr->attester);
-	snprintf(resource, RES_MAX_LEN, "%s", addr->resource);
-	addr_space->free_address((address *)addr);
+        snprintf(attester, ATT_MAX_LEN, "%s", addr->attester);
+        snprintf(resource, RES_MAX_LEN, "%s", addr->resource);
+        addr_space->free_address((address *)addr);
 
-  	ret = map_info_to_priv(attester, resource, &priv_level);
-	if (ret < 0) {
-	    appraisal_stat++;
-	}
+        ret = map_info_to_priv(attester, resource, &priv_level);
+        if (ret < 0) {
+            appraisal_stat++;
+        }
     } else {
-	// If this isn't a request, then we are handling userspace measurements of the measurer
-	// privilege level
-	priv_level = MD_USER;
+        // If this isn't a request, then we are handling userspace measurements of the measurer
+        // privilege level
+        priv_level = MD_USER;
     }
 
     g_measured_levels[priv_level] = 1;
@@ -225,9 +225,9 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
     for (data_it = measurement_node_iterate_data(mg, node);
             data_it != NULL;
             data_it = measurement_iterator_next(data_it)) {
-     	ret = 0;
+        ret = 0;
         data_type = measurement_iterator_get_type(data_it);
-        
+
         sprintf(type_str, MAGIC_FMT, data_type);
 
         if(data_type == BLOB_MEASUREMENT_TYPE_MAGIC) {
@@ -241,21 +241,21 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
                     ret = pass_to_subordinate_apb(mg, scen, node, sub_apb, mspec);
                     dlog(3, "Result from subordinate APB %d\n", ret);
                 }
-           } else if (strcmp(resource, "runtime-meas") == 0) {
+            } else if (strcmp(resource, "runtime-meas") == 0) {
                 dlog(3, "There is not a specific appraiser for runtime measurement, so just claiming this is successful\n");
-		ret = 0;
-           } else {
+                ret = 0;
+            } else {
                 // We receieved a userspace measurement for some other privilege level
                 if(measurement_node_get_rawdata(mg, node, &blob_measurement_type, &data) < 0) {
-			dlog(1, "Unable to get blob data from node\n");
-			ret = -1;
-		} else {
-			blob = container_of(data, blob_data, d);
-			ret = userspace_appraise(scen, NULL, blob->buffer, blob->size, report_data_list,
-					 default_report_level, apb_asps, all_apbs);
-		}
-           }
-        // Everything else goes to an ASP
+                    dlog(1, "Unable to get blob data from node\n");
+                    ret = -1;
+                } else {
+                    blob = container_of(data, blob_data, d);
+                    ret = userspace_appraise(scen, NULL, blob->buffer, blob->size, report_data_list,
+                                             default_report_level, apb_asps, all_apbs);
+                }
+            }
+            // Everything else goes to an ASP
         } else {
             appraiser_asp = select_appraisal_asp(node, data_type, apb_asps);
             if(!appraiser_asp) {
@@ -282,7 +282,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
 
         if(ret != 0) {
             appraisal_stat++;
-        }	
+        }
     }
 
     return appraisal_stat;
@@ -331,10 +331,10 @@ static int appraise(struct scenario *scen, GList *values UNUSED,
      * NONE privilege level
      */
     for (i = 1; i < NUM_PRIV_LEVELS + 1; i++) {
-	    if (g_measured_levels[i] == 0) {
-	        appraisal_stat++;
-	        dlog(2, "Missing measurement of privilege level %d\n", i);
-	    }
+        if (g_measured_levels[i] == 0) {
+            appraisal_stat++;
+            dlog(2, "Missing measurement of privilege level %d\n", i);
+        }
     }
 
     gather_report_data(mg, default_report_level, &report_data_list);

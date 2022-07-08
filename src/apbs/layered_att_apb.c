@@ -79,7 +79,7 @@ place_info *g_dom_md_info = NULL;
 place_info *g_dom_t_info = NULL;
 
 static int get_measurement_request_addr_from_node(measurement_graph *graph, node_id_t nid,
-						  dynamic_measurement_request_address **vout)
+        dynamic_measurement_request_address **vout)
 {
     int ret_val                             = 0;
     address *address                        = NULL;
@@ -93,7 +93,7 @@ static int get_measurement_request_addr_from_node(measurement_graph *graph, node
 
     if(address->space != &dynamic_measurement_request_address_space) {
         dlog(1, "Measurement request has unexpected address type %s\n",
-                     address->space->name);
+             address->space->name);
         ret_val = -EINVAL;
         goto measurement_request_error;
     }
@@ -143,14 +143,14 @@ static int get_target_channel(dynamic_measurement_request_address *va)
 
     targ_host = gethostbyname(addr);
     if(targ_host == NULL || targ_host->h_addr_list[0] == NULL) {
-	dlog(0, "Unable to get address information for appraiser\n");
-	return -1;
+        dlog(0, "Unable to get address information for appraiser\n");
+        return -1;
     }
 
     host_addr = strdup(inet_ntoa(*(struct in_addr *)targ_host->h_addr_list[0]));
     if(host_addr == NULL) {
-	dlog(0, "Unable to convert host address information\n");
-	return -1;
+        dlog(0, "Unable to convert host address information\n");
+        return -1;
     }
 
     chan = connect_to_server(host_addr, portnum);
@@ -160,8 +160,9 @@ static int get_target_channel(dynamic_measurement_request_address *va)
 }
 
 static int invoke_send_execute_tcp(struct asp *execute_asp, int targ_chan,
-				   char *resource, char **msmt_con,
-				   size_t *con_len) {
+                                   char *resource, char **msmt_con,
+                                   size_t *con_len)
+{
     int rc                 = -1;
     int targ_chan_str_len  = -1;
     size_t buf_len         = -1;
@@ -171,21 +172,21 @@ static int invoke_send_execute_tcp(struct asp *execute_asp, int targ_chan,
 
     targ_chan_str_len = snprintf(NULL, 0, "%d", targ_chan);
     if (targ_chan_str_len <= 0) {
-	dlog(1, "Invalid target channel\n");
-	goto chan_len_err;
+        dlog(1, "Invalid target channel\n");
+        goto chan_len_err;
     }
-    
+
     targ_chan_str_len += 1;
     targ_chan_str = malloc(targ_chan_str_len);
     if (targ_chan_str == NULL) {
-	dlog(0, "Unable to allocate memory for string\n");
-	goto chan_alloc_err;
+        dlog(0, "Unable to allocate memory for string\n");
+        goto chan_alloc_err;
     }
 
     rc = snprintf(targ_chan_str, targ_chan_str_len, "%d", targ_chan);
     if (rc < 0) {
-	dlog(1, "Unable to write channel value out to the string\n");
-	goto chan_buf_err;
+        dlog(1, "Unable to write channel value out to the string\n");
+        goto chan_buf_err;
     }
 
     send_execute_args[0] = targ_chan_str;
@@ -198,17 +199,17 @@ static int invoke_send_execute_tcp(struct asp *execute_asp, int targ_chan,
     send_execute_args[7] = g_verify_tpm;
 
     rc = run_asp_buffers(execute_asp, NULL, 0, &buf, &buf_len,
-			 8, send_execute_args, TIMEOUT, -1);
+                         8, send_execute_args, TIMEOUT, -1);
 
     if (rc == 0) {
-	*msmt_con = buf;
-	*con_len = buf_len;
+        *msmt_con = buf;
+        *con_len = buf_len;
     }
 
- chan_buf_err:
+chan_buf_err:
     free(targ_chan_str);
- chan_alloc_err:
- chan_len_err:
+chan_alloc_err:
+chan_len_err:
     return rc;
 }
 
@@ -246,7 +247,7 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
     }
 
     if (strcmp(asp->name, "send_execute_tcp_asp") == 0) {
-	/* Place a reference to this measurement in the graph */
+        /* Place a reference to this measurement in the graph */
         rc = measurement_graph_add_node(g, var, NULL, &n);
         if(rc == 0 || rc == 1) {
             dlog(6, "\tAdded node "ID_FMT"\n", n);
@@ -260,72 +261,72 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
             return 0;
         }
 
-	/* Establish a channel with the specified host */
+        /* Establish a channel with the specified host */
         rc = get_measurement_request_addr_from_node(g, n, &va);
         if (rc < 0) {
-	    dlog(1, "Unable to get measurement address from the address space\n");
+            dlog(1, "Unable to get measurement address from the address space\n");
             goto error;
         }
 
-	targ_chan = get_target_channel(va);
-	if (targ_chan < 0) {
-	    dlog(0, "Unable to establish channel with the target\n");
-	    goto error;
-	}
+        targ_chan = get_target_channel(va);
+        if (targ_chan < 0) {
+            dlog(0, "Unable to establish channel with the target\n");
+            goto error;
+        }
 
-	dlog(4, "Invoking \"%s\" for attester \"%s\"\n",
-		 va->resource, va->attester);
+        dlog(4, "Invoking \"%s\" for attester \"%s\"\n",
+             va->resource, va->attester);
 
-	/* Send execute contract for the specified resource to the host */
-	rc = invoke_send_execute_tcp(asp, targ_chan, va->resource,
-				     &contract, &con_len);
-	if (rc < 0) {
-	    dlog(0, "Failed to invoke \"%s\" for attester \"%s\"\n",
-		 va->resource, va->attester);
-	    free(contract);
-	    goto error;
-	}
+        /* Send execute contract for the specified resource to the host */
+        rc = invoke_send_execute_tcp(asp, targ_chan, va->resource,
+                                     &contract, &con_len);
+        if (rc < 0) {
+            dlog(0, "Failed to invoke \"%s\" for attester \"%s\"\n",
+                 va->resource, va->attester);
+            free(contract);
+            goto error;
+        }
 
-	/* We need scenario values, as well as the receieved contract,
-         * in order for the contract to be verified and the measurement
-         * to be extracted */
-	tmp_contract = g_scen->contract;
-	tmp_con_len = g_scen->size;
+        /* We need scenario values, as well as the receieved contract,
+             * in order for the contract to be verified and the measurement
+             * to be extracted */
+        tmp_contract = g_scen->contract;
+        tmp_con_len = g_scen->size;
 
-	g_scen->contract = contract;
-	g_scen->size = con_len;
+        g_scen->contract = contract;
+        g_scen->size = con_len;
 
-	/* Create blob to place measurement within */
-	data = alloc_measurement_data(&blob_measurement_type);
-	blob = container_of(data, blob_data, d);
+        /* Create blob to place measurement within */
+        data = alloc_measurement_data(&blob_measurement_type);
+        blob = container_of(data, blob_data, d);
 
-	/* Verify measurement and extract it */
-	rc = process_contract(apb_asps, g_scen, (void **)&blob->buffer,
-			      (size_t *)&blob->size);
-	g_scen->contract = tmp_contract;
-	g_scen->size = tmp_con_len;
-	free(contract);
-	if (rc < 0) {
-	    dlog(1, "Error processing contract from attester \"%s\"\n",
-		 va->attester);
-	    free(blob->buffer);
-	    goto error;
-	}
+        /* Verify measurement and extract it */
+        rc = process_contract(apb_asps, g_scen, (void **)&blob->buffer,
+                              (size_t *)&blob->size);
+        g_scen->contract = tmp_contract;
+        g_scen->size = tmp_con_len;
+        free(contract);
+        if (rc < 0) {
+            dlog(1, "Error processing contract from attester \"%s\"\n",
+                 va->attester);
+            free(blob->buffer);
+            goto error;
+        }
 
-	/* Place measurement on the graph */
-	md = marshall_measurement_data(&blob->d);
-	if (md == NULL) {
-	    free_measurement_data(&md->meas_data);
-	    dlog(1, "Failed to serialize blob data\n");
-	    goto error;
-	}
+        /* Place measurement on the graph */
+        md = marshall_measurement_data(&blob->d);
+        if (md == NULL) {
+            free_measurement_data(&md->meas_data);
+            dlog(1, "Failed to serialize blob data\n");
+            goto error;
+        }
 
-	rc = measurement_node_add_data(g, n, md);
-	free_measurement_data(&md->meas_data);
+        rc = measurement_node_add_data(g, n, md);
+        free_measurement_data(&md->meas_data);
 
-	return rc;
+        return rc;
     } else {
-	// Delegate to the standard userspace measure_variable function
+        // Delegate to the standard userspace measure_variable function
         return measure_variable_internal(ctxt, var, mtype, g_certfile,
                                          g_keyfile, NULL, NULL,
                                          NULL, NULL, &mcount,
@@ -358,7 +359,7 @@ static measurement_spec_callbacks callbacks = {
  * Returns 0 on success, < 0 on error
  */
 static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario *scen,
-				      const int peerchan)
+                                      const int peerchan)
 {
     int ret_val                  = -1;
     int fb_fd                    = -1;
@@ -414,86 +415,86 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
         dlog(1, "Error: unable to retrieve send ASP\n");
         goto find_asp_err;
     }
-    
+
     /* Get graph path */
     graph_path = measurement_graph_get_path(graph);
     if(graph_path == NULL) {
-	dlog(0, "Error: unable to retrieve the graph path");
-	goto graph_path_err;
+        dlog(0, "Error: unable to retrieve the graph path");
+        goto graph_path_err;
     }
 
     serialize_args[0] = graph_path;
 
     ret_val = fork_and_buffer_async_asp(serialize, 1, serialize_args, STDIN_FILENO, &fb_fd);
     if(ret_val == -2) {
-	dlog(0, "Failed to execute fork and buffer for %s ASP\n", serialize->name);
+        dlog(0, "Failed to execute fork and buffer for %s ASP\n", serialize->name);
     } else if(ret_val == -1) {
-	dlog(0, "Error in %s ASP or child process\n", serialize->name);
+        dlog(0, "Error in %s ASP or child process\n", serialize->name);
     } else if (ret_val == 0) {
-	ret_val = fork_and_buffer_async_asp(compress, 0, NULL, fb_fd, &fb_fd);
-	if(ret_val == -2) {
-	    dlog(0, "Failed to execute fork and buffer for %s ASP\n", compress->name);
-	    exit(-1);
-	} else if(ret_val == -1) {
-	    dlog(0, "Failed to wait on %s ASP or child process\n", compress->name);
-	    exit(-1);
-	} else if (ret_val > 0) {
-	    /* Parent needs to gracefully exit to allow grandparent to continue */
-	    exit(0);
-	} else {
-	    /* Use the encrypt ASP if we have a certificate available*/
-	    if(scen->partner_cert && ((partner_cert = strdup(scen->partner_cert)) != NULL)) {
-		encrypt_args[0] = partner_cert;
+        ret_val = fork_and_buffer_async_asp(compress, 0, NULL, fb_fd, &fb_fd);
+        if(ret_val == -2) {
+            dlog(0, "Failed to execute fork and buffer for %s ASP\n", compress->name);
+            exit(-1);
+        } else if(ret_val == -1) {
+            dlog(0, "Failed to wait on %s ASP or child process\n", compress->name);
+            exit(-1);
+        } else if (ret_val > 0) {
+            /* Parent needs to gracefully exit to allow grandparent to continue */
+            exit(0);
+        } else {
+            /* Use the encrypt ASP if we have a certificate available*/
+            if(scen->partner_cert && ((partner_cert = strdup(scen->partner_cert)) != NULL)) {
+                encrypt_args[0] = partner_cert;
 
-		create_con_args[7] = "1";
+                create_con_args[7] = "1";
 
-		ret_val = fork_and_buffer_async_asp(encrypt, 1, encrypt_args, fb_fd, &fb_fd);
-		if(ret_val == -2) {
-		    dlog(0, "Failed to execute fork and buffer for %s ASP\n", encrypt->name);
-		    exit(-1);
-		} else if(ret_val == -1) {
-		    dlog(0, "Failed to wait on %s ASP or child process\n", encrypt->name);
-		    exit(-1);
-		} else if (ret_val > 0) {
-		    /* Parent needs to gracefully exit to allow grandparent to continue */
-		    exit(0);
-		}
-	    } else {
-		create_con_args[7] = "0";
-	    }
+                ret_val = fork_and_buffer_async_asp(encrypt, 1, encrypt_args, fb_fd, &fb_fd);
+                if(ret_val == -2) {
+                    dlog(0, "Failed to execute fork and buffer for %s ASP\n", encrypt->name);
+                    exit(-1);
+                } else if(ret_val == -1) {
+                    dlog(0, "Failed to wait on %s ASP or child process\n", encrypt->name);
+                    exit(-1);
+                } else if (ret_val > 0) {
+                    /* Parent needs to gracefully exit to allow grandparent to continue */
+                    exit(0);
+                }
+            } else {
+                create_con_args[7] = "0";
+            }
 
-	    create_con_args[0] = workdir;
-	    create_con_args[1] = g_certfile;
-	    create_con_args[2] = g_keyfile;
-	    /* TODO: Provide TPM functionality once it comes available */
-	    create_con_args[3] = g_keypass;
-	    create_con_args[4] = g_tpmpass;
-	    create_con_args[5] = "1";
-	    create_con_args[6] = "1";
-	    //The last argument is already set depending on the use of encryption
+            create_con_args[0] = workdir;
+            create_con_args[1] = g_certfile;
+            create_con_args[2] = g_keyfile;
+            /* TODO: Provide TPM functionality once it comes available */
+            create_con_args[3] = g_keypass;
+            create_con_args[4] = g_tpmpass;
+            create_con_args[5] = "1";
+            create_con_args[6] = "1";
+            //The last argument is already set depending on the use of encryption
 
-	    ret_val = fork_and_buffer_async_asp(create_con, 8, create_con_args, fb_fd, &fb_fd);
-	    if(ret_val == -2) {
-		dlog(0, "Failed to execute fork and buffer for %s ASP\n", create_con->name);
-		exit(-1);
-	    } else if(ret_val == -1) {
-		dlog(0, "Failed to wait on %s ASP or child process\n", create_con->name);
-		exit(-1);
-	    } else if (ret_val > 0) {
-		/* Parent needs to gracefully exit to allow grandparent to continue */
-		exit(0);
-	    } else {
-		/* Child code executes */
-		ret_val = run_asp(send, fb_fd, peerchan, false, 0, NULL, -1);
-		close(fb_fd);
-		if(ret_val < 0) {
-		    dlog(1, "Error: Failure in the send ASP\n");
-		    exit(-1);
-		}
+            ret_val = fork_and_buffer_async_asp(create_con, 8, create_con_args, fb_fd, &fb_fd);
+            if(ret_val == -2) {
+                dlog(0, "Failed to execute fork and buffer for %s ASP\n", create_con->name);
+                exit(-1);
+            } else if(ret_val == -1) {
+                dlog(0, "Failed to wait on %s ASP or child process\n", create_con->name);
+                exit(-1);
+            } else if (ret_val > 0) {
+                /* Parent needs to gracefully exit to allow grandparent to continue */
+                exit(0);
+            } else {
+                /* Child code executes */
+                ret_val = run_asp(send, fb_fd, peerchan, false, 0, NULL, -1);
+                close(fb_fd);
+                if(ret_val < 0) {
+                    dlog(1, "Error: Failure in the send ASP\n");
+                    exit(-1);
+                }
 
-		exit(ret_val);
-	    }// End of create_con child
-	}// End of compress child
+                exit(ret_val);
+            }// End of create_con child
+        }// End of compress child
     }// End of serialize child
 
     free(graph_path);
@@ -625,13 +626,13 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
     }
 
     if(scen->verify_tpm) {
-	g_verify_tpm = strdup("1");
+        g_verify_tpm = strdup("1");
     } else {
-	g_verify_tpm = strdup("0");
+        g_verify_tpm = strdup("0");
     }
 
     if (g_certfile == NULL || g_keyfile == NULL || g_keypass == NULL ||
-	g_nonce == NULL || g_verify_tpm == NULL || g_tpmpass == NULL) {
+            g_nonce == NULL || g_verify_tpm == NULL || g_tpmpass == NULL) {
         dlog(0, "Unable to allocate buffer(s) for scenario information\n");
         goto str_alloc_err;
     }

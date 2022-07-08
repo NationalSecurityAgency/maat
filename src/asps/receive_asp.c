@@ -65,7 +65,7 @@ static int receive(int peerchan, char **buf, size_t *buf_size)
                                   &eof_enc, TIMEOUT, MAX_RECV_BUF_SZ);
         if(status < 0 && status != -EAGAIN) {
             dlog(0, "Error reading buffer from channel, status %s\n",
-		strerror(status < 0 ? -status : status));
+                 strerror(status < 0 ? -status : status));
             return -1;
         } else if (status == -EAGAIN) {
             dlog(2, "Warning: timeout occured before read could complete\n");
@@ -98,7 +98,7 @@ static int write_buf(int out_fd, char *buf, size_t buf_size)
     gsize bytes_written = 0;
     int status;
     dlog(6, "ASP writing buffer to file descriptor (%d)\n", out_fd);
- 
+
     if(((status = maat_write_sz_buf(out_fd, buf, buf_size,
                                     &bytes_written,
                                     TIMEOUT)) != 0) ||

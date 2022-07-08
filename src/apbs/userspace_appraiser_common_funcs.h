@@ -100,8 +100,8 @@ int pass_to_subordinate_apb(struct measurement_graph *mg, struct scenario *scen,
  * < 0 indicates error, 0 indicates success, > 0 indicates failed appraisal
  */
 int userspace_appraise(struct scenario *scen, GList *values UNUSED,
-               	       void *msmt, size_t msmtsize, GList *report_data_list,
-		       enum report_levels default_report_level,
+                       void *msmt, size_t msmtsize, GList *report_data_list,
+                       enum report_levels default_report_level,
                        GList *apb_asps, GList *all_apbs);
 #endif
 

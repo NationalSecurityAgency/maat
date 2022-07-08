@@ -869,13 +869,13 @@ int select_subordinate_apb(measurement_graph *mg, node_id_t node, GList *all_apb
         goto error;
     }
     if(addr->space == &measurement_request_address_space) {
-	va = container_of(addr, measurement_request_address, a);
+        va = container_of(addr, measurement_request_address, a);
 
-	resource = va->resource;
+        resource = va->resource;
     } else if(addr->space == &dynamic_measurement_request_address_space) {
-	dva = container_of(addr, dynamic_measurement_request_address, a);
+        dva = container_of(addr, dynamic_measurement_request_address, a);
 
-	resource = dva->resource;	
+        resource = dva->resource;
     } else {
         dlog(0, "Unexpected address space in blob node\n");
         ret = -1;
@@ -992,7 +992,7 @@ blob_error:
  * Returns 0 if all appraisals pass successfully.
  */
 static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node, struct scenario *scen,
-			GList *apb_asps, GList *all_apbs)
+                         GList *apb_asps, GList *all_apbs)
 {
     node_id_str node_str;
     measurement_iterator *data_it;
@@ -1064,8 +1064,8 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
  * < 0 indicates error, 0 indicates success, > 0 indicates failed appraisal
  */
 int userspace_appraise(struct scenario *scen, GList *values UNUSED,
-               	       void *msmt, size_t msmtsize, GList *report_data_list,
-		       enum report_levels default_report_level,
+                       void *msmt, size_t msmtsize, GList *report_data_list,
+                       enum report_levels default_report_level,
                        GList *apb_asps, GList *all_apbs)
 {
     dlog(6, "IN USERSPACE_APPRAISE\n");
@@ -1096,7 +1096,7 @@ int userspace_appraise(struct scenario *scen, GList *values UNUSED,
         node_id_t node = node_iterator_get(it);
 
         appraisal_stat += appraise_node(mg, graph_path, node, scen, apb_asps,
-					all_apbs);
+                                        all_apbs);
 
     }
     free(graph_path);

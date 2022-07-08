@@ -70,7 +70,7 @@ static char *find_phrase(char *resource)
     } else if (strcmp(resource, "userspace") == 0) {
         out = strdup("((USM full) -> SIG)");
     } else if (strcmp(resource, "userspace-mtab") == 0) {
-	out = strdup("((USM mtab) -> SIG)");
+        out = strdup("((USM mtab) -> SIG)");
     } else {
         dlog(0, "Unable to find copland phrase for resource\n");
         return NULL;
@@ -80,10 +80,10 @@ static char *find_phrase(char *resource)
 }
 
 static int send_to_attester_listen_for_result(int attester_chan, char *resource,
-					      char *certfile, char *keyfile,
-					      char *keypass, char *nonce,
-					      char *tpmpass, int sign_tpm,
-					      char **out, size_t *out_size)
+        char *certfile, char *keyfile,
+        char *keypass, char *nonce,
+        char *tpmpass, int sign_tpm,
+        char **out, size_t *out_size)
 {
     int ret_val           = 0;
     int eof_enc           = 0;
@@ -123,7 +123,7 @@ static int send_to_attester_listen_for_result(int attester_chan, char *resource,
 
     //Receieve response from the attester
     ret_val = maat_read_sz_buf(attester_chan, &result, &resultsz,
-			       &bytes_read, &eof_enc, RASP_AM_COMM_TIMEOUT, -1);
+                               &bytes_read, &eof_enc, RASP_AM_COMM_TIMEOUT, -1);
     if(ret_val != 0) {
         dlog(0, "Error reading response. returned status is %d: %s\n", ret_val,
              strerror(ret_val < 0 ? -ret_val : ret_val));
@@ -143,7 +143,7 @@ static int send_to_attester_listen_for_result(int attester_chan, char *resource,
 recv_error:
 contract_error:
     free(phrase);
- phrase_error:
+phrase_error:
     return ret_val;
 }
 
@@ -169,9 +169,9 @@ int asp_measure(int argc, char *argv[])
     // Parse args
     errno = 0;
     if((argc != 11) ||
-       (((out_fd = strtol(argv[2], NULL, 10)) < 0) || errno != 0) ||
-       (((targ_fd = strtol(argv[3], NULL, 10)) < 0) || errno != 0) ||
-       (((sign_tpm = strtol(argv[10], NULL, 10)) < 0) || errno != 0)){
+            (((out_fd = strtol(argv[2], NULL, 10)) < 0) || errno != 0) ||
+            (((targ_fd = strtol(argv[3], NULL, 10)) < 0) || errno != 0) ||
+            (((sign_tpm = strtol(argv[10], NULL, 10)) < 0) || errno != 0)) {
         asp_logerror("Usage: "ASP_NAME" <in_fd [unused]> <out_fd> <targ_fd> <resource> <certfile> <keyfile> <keypass> <nonce> <tpmpass> <sign_tpm>\n");
         return -EINVAL;
     }
@@ -186,17 +186,17 @@ int asp_measure(int argc, char *argv[])
     ret_val = send_to_attester_listen_for_result(targ_fd, resource, certfile, keyfile,
               keypass, nonce, tpmpass, sign_tpm, &result, &rsize);
     if(ret_val < 0) {
-      dlog(0, "Unable to send execute contract to attester or get a result\n");
-      goto error;
+        dlog(0, "Unable to send execute contract to attester or get a result\n");
+        goto error;
     }
 
     // Write the result back to the invoking APB
     ret_val = maat_write_sz_buf(out_fd, result, rsize, NULL, 2);
     if(ret_val != 0) {
-      dlog(0, "Error sending request. returned status is %d: %s\n", ret_val,
-	   strerror(-ret_val));
-      ret_val = -1;
-      goto error;
+        dlog(0, "Error sending request. returned status is %d: %s\n", ret_val,
+             strerror(-ret_val));
+        ret_val = -1;
+        goto error;
     }
 
     ret_val = 0;

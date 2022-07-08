@@ -36,7 +36,7 @@ int measure_variable_internal(void *ctxt, measurement_variable *var,
                               measurement_type *mtype, char *certfile,
                               char *keyfile, char *keypass, char *nonce,
                               char *tpmpass, char *sign_tpm_str,
-			      int *mcount_ptr, GList *apb_asps);
+                              int *mcount_ptr, GList *apb_asps);
 
 struct asp *select_asp(measurement_graph *g, measurement_type *mtype,
                        measurement_variable *var, GList *apb_asps,

@@ -164,7 +164,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
                    list, so we will not execute what is effectively
                    a no-op */
             failed = userspace_appraise(scen, NULL, msmt, msmt_sz, report_data_list,
-					default_report_level, apb_asps, all_apbs);
+                                        default_report_level, apb_asps, all_apbs);
             free(msmt);
         }
     }

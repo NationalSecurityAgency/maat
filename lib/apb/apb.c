@@ -298,23 +298,23 @@ int run_asp_buffers(struct asp *asp, const unsigned char *buf_in,
     int data_out[2]   = {0};
 
     if (buf_in != NULL) {
-      rc = pipe(data_in);
-      if (rc < 0) {
-        dlog(0, "Failure to create pipe for providing data to ASP\n");
-        goto in_pipe_err;
-      }
+        rc = pipe(data_in);
+        if (rc < 0) {
+            dlog(0, "Failure to create pipe for providing data to ASP\n");
+            goto in_pipe_err;
+        }
 
-      rc = maat_io_channel_new(data_in[0]);
-      if (rc < 0) {
-        dlog(0, "Failure to initialize pipe read end\n");
-        goto in_read_err;
-      }
+        rc = maat_io_channel_new(data_in[0]);
+        if (rc < 0) {
+            dlog(0, "Failure to initialize pipe read end\n");
+            goto in_read_err;
+        }
 
-      rc = maat_io_channel_new(data_in[1]);
-      if (rc < 0) {
-        dlog(0, "Failure to initialize pipe write end\n");
-        goto in_write_err;
-      }
+        rc = maat_io_channel_new(data_in[1]);
+        if (rc < 0) {
+            dlog(0, "Failure to initialize pipe write end\n");
+            goto in_write_err;
+        }
     }
 
     rc = pipe(data_out);
@@ -337,12 +337,12 @@ int run_asp_buffers(struct asp *asp, const unsigned char *buf_in,
 
     ret = -4;
     if (buf_in != NULL) {
-      rc = run_asp(asp, data_in[0], data_out[1], true, asp_argc,
-		   asp_argv, data_in[1], data_out[0], -1);
-      close(data_in[0]);
+        rc = run_asp(asp, data_in[0], data_out[1], true, asp_argc,
+                     asp_argv, data_in[1], data_out[0], -1);
+        close(data_in[0]);
     } else {
-      rc = run_asp(asp, STDIN_FILENO, data_out[1], true, asp_argc,
-		   asp_argv, data_in[1], data_out[0], -1);
+        rc = run_asp(asp, STDIN_FILENO, data_out[1], true, asp_argc,
+                     asp_argv, data_in[1], data_out[0], -1);
     }
 
     if(rc < 0) {
@@ -355,15 +355,15 @@ int run_asp_buffers(struct asp *asp, const unsigned char *buf_in,
 
     ret = -3;
     if (buf_in != NULL) {
-      rc = maat_write_sz_buf(data_in[1], buf_in, buf_in_len,
-                           &written, timeout);
-      if(rc < 0) {
-        dlog(0, "Error writing input to channel\n");
-        stop_asp(asp);
-        goto write_failed;
-      }
+        rc = maat_write_sz_buf(data_in[1], buf_in, buf_in_len,
+                               &written, timeout);
+        if(rc < 0) {
+            dlog(0, "Error writing input to channel\n");
+            stop_asp(asp);
+            goto write_failed;
+        }
 
-      close(data_in[1]);
+        close(data_in[1]);
     }
 
     ret = -2;
@@ -396,12 +396,12 @@ wait_err:
 
 write_failed:
     if (buf_in != NULL) {
-      close(data_in[1]);
+        close(data_in[1]);
     }
 read_failed:
 eof_enc:
     if (buf_in != NULL) {
-      close(data_in[0]);
+        close(data_in[0]);
     }
     return ret;
 
@@ -414,8 +414,8 @@ out_pipe_err:
 in_write_err:
 in_read_err:
     if (buf_in != NULL) {
-      close(data_in[0]);
-      close(data_in[1]);
+        close(data_in[0]);
+        close(data_in[1]);
     }
 in_pipe_err:
     return ret;
@@ -690,27 +690,27 @@ int fork_and_buffer_async_asp_buffer(struct asp *asp, const int argc,
     }
 
     if (buf_in != NULL) {
-      rc = pipe(data_in);
-      if(rc < 0) {
-        dlog(0, "Unable to create pipe\n");
-        return -2;
-      }
+        rc = pipe(data_in);
+        if(rc < 0) {
+            dlog(0, "Unable to create pipe\n");
+            return -2;
+        }
 
-      rc = maat_io_channel_new(data_in[0]);
-      if (rc < 0) {
-        dlog(0, "Failure to initialize pipe read end\n");
-        close(data_in[0]);
-        close(data_in[1]);
-        return -2;
-      }
-      
-      rc = maat_io_channel_new(data_in[1]);
-      if (rc < 0) {
-	dlog(0, "Failure to initialize pipe write end\n");
-	close(data_in[0]);
-	close(data_in[1]);
-	return -2;
-      }
+        rc = maat_io_channel_new(data_in[0]);
+        if (rc < 0) {
+            dlog(0, "Failure to initialize pipe read end\n");
+            close(data_in[0]);
+            close(data_in[1]);
+            return -2;
+        }
+
+        rc = maat_io_channel_new(data_in[1]);
+        if (rc < 0) {
+            dlog(0, "Failure to initialize pipe write end\n");
+            close(data_in[0]);
+            close(data_in[1]);
+            return -2;
+        }
     }
 
     rc = pipe(data);
@@ -723,29 +723,29 @@ int fork_and_buffer_async_asp_buffer(struct asp *asp, const int argc,
 
     /* Cast is justified because arguments are not modified */
     if (buf_in != NULL) {
-      rc = run_asp(asp, data_in[0], data[1], true, argc, argv, data_in[1], data[0], -1);
-      close(data_in[0]);
+        rc = run_asp(asp, data_in[0], data[1], true, argc, argv, data_in[1], data[0], -1);
+        close(data_in[0]);
     } else {
-      rc = run_asp(asp, STDIN_FILENO, data[1], true, argc, argv, data_in[1], data[0], -1);
+        rc = run_asp(asp, STDIN_FILENO, data[1], true, argc, argv, data_in[1], data[0], -1);
     }
-    
+
     close(data[1]);
     if(rc < 0) {
         dlog(0, "Unable to run ASP %s\n", asp->name);
         close(data[0]);
- 
-	if (buf_in != NULL) {
-	  close(data_in[1]);
-	}
+
+        if (buf_in != NULL) {
+            close(data_in[1]);
+        }
 
         return -2;
     }
 
     /* Write input buffer to the ASP's input */
     if (buf_in != NULL) {
-      rc = maat_write_sz_buf(data_in[1], buf_in, buf_in_len,
-                           &written, timeout);
-      close(data_in[1]);
+        rc = maat_write_sz_buf(data_in[1], buf_in, buf_in_len,
+                               &written, timeout);
+        close(data_in[1]);
     }
 
     if(rc < 0) {

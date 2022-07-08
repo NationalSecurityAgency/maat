@@ -1051,7 +1051,7 @@ allow_apb_asp(layered_appraiser_apb_t, system_appraise_asp_exe_t, system_apprais
 allow_apb_asp(layered_appraiser_apb_t, decrypt_asp_exe_t, send_request_asp_t)
 allow_apb_asp(layered_appraiser_apb_t, decompress_asp_exe_t, compress_asp_t)
 allow_apb_asp(layered_appraiser_apb_t, verify_measurement_contract_asp_exe_t, verify_measurement_contract_asp_t)
-allow_apb_asp(layered_aappraiser_apb_t, receive_asp_exe_t, receive_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, receive_asp_exe_t, receive_asp_t)
 
 # this is needed because the layered appraiser launches 'subordinate' apbs.
 # if we want to continue to allow this model of execution, should replace

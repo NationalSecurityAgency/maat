@@ -101,7 +101,7 @@ error:
 }
 
 static int get_target_channel_info(dynamic_measurement_request_address *va,
-				   char **addr, char **port)
+                                   char **addr, char **port)
 {
     place_info *info          = NULL;
 

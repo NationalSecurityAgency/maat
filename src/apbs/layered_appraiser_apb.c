@@ -267,8 +267,8 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
                 dlog(4, "appraiser_asp == %p (%p %d)\n", appraiser_asp, apb_asps,
                      g_list_length(apb_asps));
 
-		str_of_node_id(node, node_str);
-	        sprintf(type_str, MAGIC_FMT, data_type);
+                str_of_node_id(node, node_str);
+                sprintf(type_str, MAGIC_FMT, data_type);
 
                 char *asp_argv[] = {graph_path,
                                     node_str,

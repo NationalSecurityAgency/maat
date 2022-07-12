@@ -223,9 +223,9 @@ int asp_measure(int argc, char *argv[])
     errno = 0;
     targ_chan = create_channel(addr, port);
     if (targ_chan < 0) {
-	dlog(0, "Unable to establish channel with the target: %s\n",
-		strerror(errno));
-	return -1;
+        dlog(0, "Unable to establish channel with the target: %s\n",
+             strerror(errno));
+        return -1;
     }
 
     ret_val = send_to_attester_listen_for_result(targ_chan, resource, certfile, keyfile,

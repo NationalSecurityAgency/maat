@@ -117,22 +117,6 @@ build-redhat-selinux:
         tags:
                 - redhat
 
-#build-centos-selinux:
-#        stage: build
-#        variables:
-#                GIT_SSL_NO_VERIFY: "1"
-#        script:
-#                - echo " =========== Building Maat ================"
-#                - cat /etc/centos-release
-#                - "autoreconf -i"
-#                - "[ -d build ] || mkdir build"
-#                - "cd build"
-#                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd"
-#                - "make"
-#                - "make install"
-#        tags:
-#                - centos
-
 build-redhat:
         stage: build
         variables:
@@ -212,49 +196,6 @@ test-redhat-basic:
                 expire_in: 2 weeks
                 when: on_failure
 
-#test-ubuntu-coverage:
-#        stage: test
-#        script:
-#                - echo " =========== Building Maat ================"
-#                - lsb_release -a
-#                - "aut2oreconf -i"
-#                - "[ -d build ] || mkdir build"
-#                - "cd build"
-#                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --enable-coverage"
-#                - "make"
-#                - "python ../src/test/gcovr -d -e test -e example . -r . -o /dev/null"
-#                - "make check"
-#                - "python ../src/test/gcovr -e test -e example -x -o coverage.xml -r ."
-#                - "python ../src/test/gcovr -d -e test -e example -r ."
-#        tags:
-#                - ubuntu
-#        artifacts:
-#                paths:
-#                        - build/coverage.xml
-#                expire_in: 2 weeks
-
-#test-redhat-coverage:
-#        stage: test
-#        variables:
-#                GIT_SSL_NO_VERIFY: "1"
-#        script:
-#                - echo " =========== Building Maat ================"
-#                - cat /etc/redhat-release
-#                - "autoreconf -i"
-#                - "[ -d build ] || mkdir build"
-#                - "cd build"
-#                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --enable-tests --enable-coverage --disable-selinux"
-#                - "make"
-#                - "python ../src/test/gcovr -d -e test -e example . -r . -o /dev/null"
-#                - "make check"
-#                - "python ../src/test/gcovr -d -e test -e example -x -o coverage.xml -r ."
-#        tags:
-#                - redhat
-#        artifacts:
-#                paths:
-#                        - build/coverage.xml
-#                expire_in: 2 weeks
-
 test-ubuntu-asan:
         stage: test
         script:
@@ -298,63 +239,6 @@ test-redhat-asan:
                 expire_in: 2 weeks
                 when: on_failure
 
-
-#package-ubuntu-trusty-amd64-deb:
-#        stage: package
-#        variables:
-#                release: trusty
-#                arch: amd64
-#                PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-aptitude
-#        <<: *deb_build
-#        tags:
-#                - ubuntu
-#        artifacts:
-#                paths:
-#                        - staging
-#                expire_in: 2 weeks
-#
-#package-ubuntu-trusty-i386-deb:
-#        stage: package
-#        variables:
-#                release: trusty
-#                arch: i386
-#                PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-aptitude
-#        <<: *deb_build
-#        tags:
-#                - ubuntu
-#        artifacts:
-#                paths:
-#                        - staging
-#                expire_in: 2 weeks
-#
-#package-ubuntu-xenial-amd64-deb:
-#        stage: package
-#        variables:
-#                release: xenial
-#                arch: amd64
-#                PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-aptitude
-#        <<: *deb_build
-#        tags:
-#                - ubuntu
-#        artifacts:
-#                paths:
-#                        - staging
-#                expire_in: 2 weeks
-#
-#package-ubuntu-xenial-i386-deb:
-#        stage: package
-#        variables:
-#                release: xenial
-#                arch: i386
-#                PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-aptitude
-#        <<: *deb_build
-#        tags:
-#                - ubuntu
-#        artifacts:
-#                paths:
-#                        - staging
-#                expire_in: 2 weeks
-
 package-ubuntu-bionic-amd64-deb:
         stage: package
         variables:
@@ -368,77 +252,6 @@ package-ubuntu-bionic-amd64-deb:
                 paths:
                         - staging
                 expire_in: 2 weeks
-
-#package-ubuntu-bionic-armhf-deb:
-#        stage: package
-#        variables:
-#                release: bionic
-#                arch: armhf
-#                PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-apt
-#        <<: *deb_build
-#        tags:
-#                - ubuntu
-#        artifacts:
-#                paths:
-#                        - staging
-#                expire_in: 2 weeks
-#        allow_failure: true
-#
-#package-ubuntu-bionic-arm64-deb:
-#        stage: package
-#        variables:
-#                release: bionic
-#                arch: arm64
-#                PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-apt
-#        <<: *deb_build
-#        tags:
-#                - ubuntu
-#        artifacts:
-#                paths:
-#                        - staging
-#                expire_in: 2 weeks
-#        allow_failure: true
-#
-#package-ubuntu-bionic-ppc64el-deb:
-#        stage: package
-#        variables:
-#                release: bionic
-#                arch: ppc64el
-#                PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-apt
-#        <<: *deb_build
-#        tags:
-#                - ubuntu
-#        artifacts:
-#                paths:
-#                        - staging
-#                expire_in: 2 weeks
-#        allow_failure: true
-#
-#package-epel-6-x86_64-rpm:
-#        stage: package
-#        variables:
-#                release: "6"
-#                arch: x86_64
-#        <<: *rpm_build
-#        tags:
-#                - fedora
-#        artifacts:
-#                paths:
-#                        - staging
-#                expire_in: 2 weeks
-#
-#package-epel-6-i386-rpm:
-#        stage: package
-#        variables:
-#                release: "6"
-#                arch: i386
-#        <<: *rpm_build
-#        tags:
-#                - fedora
-#        artifacts:
-#                paths:
-#                        - staging
-#                expire_in: 2 weeks
 
 package-epel-7-x86_64-rpm:
         stage: package

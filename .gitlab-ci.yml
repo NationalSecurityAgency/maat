@@ -525,6 +525,7 @@ system-test-selinux-rh7:
         before_script:
                 - "sudo killall -15 attestmgr || true"
                 - "sudo killall -9 attestmgr || true"
+                - sudo yum remove maat maat-selinux -y || true
         script:
                 - echo '[maat-redhat]' > maat.repo
                 - echo 'name=Maat RPM Repo' >> maat.repo
@@ -548,8 +549,9 @@ system-test-selinux-rh7:
                 - echo "====== Cleaning up"
                 - "kill %2 || true"
                 - "kill %1 || true"
-                - "killall -15 attestmgr || true"
-                - "killall -9 attestmgr || true"
+                - sudo rm -f /etc/maat/credentials/client.*
+                - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
+                - cat test_client.log
         timeout: 2 hours
         tags:
                 - system-test

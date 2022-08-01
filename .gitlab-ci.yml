@@ -534,6 +534,22 @@ system-test-selinux-rh7:
                 - cat maat.repo
                 - sudo cp maat.repo /etc/yum.repos.d
                 - sudo yum install maat maat-selinux -y
+                - sudo cp demo/credentials/client.pem /etc/maat/credentials
+                - sudo cp demo/credentials/client.key /etc/maat/credentials
+                - echo '========= Test system updated to latest maat source ======'
+                - echo '============ Testing Demo 1 from TUTORIAL.md'
+                - echo '====== starting appraiser'
+                - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
+                - echo '====== starting attester'
+                - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
+                - sleep 10
+                - echo '====== starting test'
+                - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r processes | tee test_client.log || true"
+                - echo "====== Cleaning up"
+                - "kill %2 || true"
+                - "kill %1 || true"
+                - "killall -15 attestmgr || true"
+                - "killall -9 attestmgr || true"
         timeout: 2 hours
         tags:
                 - system-test

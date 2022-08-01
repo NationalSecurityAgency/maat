@@ -519,27 +519,17 @@ create-repos:
         needs:
                 - package-ubuntu-bionic-amd64-deb
 
-# system-test-selinux-rh7:
-#         stage: systemtest
-#         dependencies: []
-#         before_script:
-#                 - "sudo killall -15 attestmgr || true"
-#                 - "sudo killall -9 attestmgr || true"
-#                 - yum clean all
-#         script:
-#                 - sudo yum -y update 
-#                 - sudo yum -y install maat
-#                 - sudo cp demo/credentials/client.pem /etc/maat/credentials
-#                 - sudo cp demo/credentials/client.key /etc/maat/credentials
-#                 - echo '============ Testing measurement node count'
-#                 - pushd system-test
-#                 - sh system_test.sh
-#                 - popd
-#         after_script:
-#                 - sudo yum -y remove maat
-#         timeout: 2 hours
-#         tags:
-#                 - system-test
+system-test-selinux-rh7:
+        stage: systemtest
+        dependencies: []
+        before_script:
+                - "sudo killall -15 attestmgr || true"
+                - "sudo killall -9 attestmgr || true"
+        script:
+                - sudo yum -y update
+        timeout: 2 hours
+        tags:
+                - system-test
 
 system-test-maat:
         stage: systemtest

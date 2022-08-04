@@ -1,0 +1,389 @@
+Layered Appraisal Maat Tutorial
+********************************
+
+.. Copyright
+
+   Copyright 2022 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+.. currentmodule:: maat
+
+.. _layered_tutorial:
+
+
+Introduction
+============
+
+These instructions give you the steps to set up and perform a multi-realm
+layered appraisal demonstration. In this scenario, a test client requests a kernel
+runtime and userspace measurement from different privilege levels of a platform running a full
+hypervisor environment. This measurement would be negotiated by a dedicated measurement
+domain and then the measurement domain would, in turn, request various other components
+within the environment contribute measurements to produce a holistic picture
+of the attesting environment.
+
+In specific, the measurement would be composed of a strictly ordered set of a runtime and
+userspace measurement of the most privileged domain (Dom0), the measurement domain itself
+(DomM), and a designated target domain hosting a userland application of some interest (DomT).
+These measurements will be bundled by the measurement APB operating in the DomM and then sent
+to another platform to be appraised, the result of which will be returned to the test client.
+
+The strict measurement ordering enforced in this APB allows an appraiser to justify trust in
+the validity of measurements of less privileged domains by appraisals of more privileged domains
+that pass. Such appraisals demonstrate that the state of interfaces that higher privilege levels provide
+to introspect thet state of lower privilege domains are in an expected state, which in turn
+provides the basis to infer that measurements taken of lower privilege levels that result in
+a passing appraisal have not been manipulated by an adversary in a higher privilege level.
+In effect, a chain of measurements is created, rooted in a hardware protected measurement,
+that constrains how an adversary is able to manipulate the platform in a way that cannot
+be detected by one or more measurements.
+
+Setup
+======
+
+In order to install Maat, follow the directions that are located in the
+:ref:`Quick Start Guide <quick_start>` and ensure that Maat is working correctly
+with the example scenarios outlined in the
+:ref:`Basic Tutorial <basic_tutorial>`.
+
+Layered Appraisal Demonstration
+================================
+
+This demo involves four AMs on four VMs:
+- AM_1 : Measurement Domain (DomM)
+- AM_2 : Management Domain (Dom0)
+- AM_3 : Target Domain (DomT)
+- AM_4 : Appraisal Domain
+
+In order to properly test this use-case to its fullest, AM_1, AM_2, and AM_3
+would all be operating in various domains on the same hypervisor enabled host, while
+AM_4 should operate on another machine with no specific constraints. If this is impractical,
+however, all 4 AMs could operate on different VMs, or even the same VM. Although these
+measurements would not capture the intended trust relationship in the former case, or even
+redundant in the latter case, this should be sufficient to demonstrate that the plumbing of
+this usecase is operational.
+
+Every measurement request received by the Maat Attestation Manager (AM) triggers a
+negotiation to determine the appropriate Copland phrase to handle the request.
+
+
+Clone the VM you created in the setup step in order to get the proper number of 
+VMs.
+
+Explanation of Demo
+-------------------
+Here's what will happen in the demo:
+
+```
+1. The requester sends a request to AM_1 running in VM_1 to perform a "verified
+   userspace" measurement of itself.
+
+   The Copland phrase that the client will request executed is the following:
+   * @_1(@_1(@_2((KIM runtime_meas)->SIG)-<-(USM mtab)))
+
+         _______________
+        |     VM_1      |
+        |   (1) ______  |
+       R------>|      | |
+        |      | AM_1 | |
+        |      |______| |
+        |_______________|
+
+2. AM_1 triggers a negotiation with itself in order to determine if it is 
+   willing and able to take the measurement represented by the phrase.
+
+   This is where the AM_1_0 and AM_1_1 notation will introduced. AM_1_0 refers 
+   to the thread acting as an initiator for the phrase while AM_1_1 acts as the 
+   responder. AM_1 negotiates with itself over the following phrase:
+
+   	      @_1(@_2((KIM runtime_meas)->SIG)-<-(USM mtab))
+         _____________________
+        |          VM_1       |
+        |  ______     ______  |
+        | |      |(2)|      | |
+        | |AM_1_0|<->|AM_1_1| |
+        | |______|   |______| |
+        |_____________________|
+
+3. After deciding that the phrase is satisfatory, AM_1_0 forks the no-op APB 
+   to forward the completed measurement to the requester, while AM_1_1 launches 
+   the complex attestation APB to take the measurement.
+        _______________________
+        |         VM_1         |
+        |  ______      ______  |
+        | |      |    |      | |
+        | |AM_1_0|    |AM_1_1| |
+        | |______|    |______| |
+        |   |           |      |
+        |   | (3)       |(3)   |
+        | [noop]     [compl]   |
+        |______________________|
+
+4. Since the Copland phrase that AM_1_1 is tasked with executing begins with 
+   AM_2, the complex attestation APB launches the send_request ASP, in order to 
+   request a negotiation between AM_1_1 and AM_2 to take an kernel measurement 
+   of VM_2.
+
+   This negotiation is over the following phrase:
+
+   		    @_2((KIM runtime_meas)->SIG)
+
+         _____________________           ________
+        |        VM_1         |         |  VM_2  |
+        |  ______     ______  |         |  ____  |
+        | |      |   |      | |   (4)   | |    | |
+        | |AM_1_0|   |AM_1_1|<-----'----->|AM_2| |
+        | |______|   |______| |    |    | |____| |
+        |   |           |     |    |    |________|
+        |   |           |     |    |
+        | [noop]     [compl]  |    |
+        |               |(4)  |    |
+        |            {send_r}------'
+        |_____________________|
+
+
+5. AM_2 spawns a KIM APB and ASP to measure the kernel in VM_2 while AM_1_1 
+   spawns the no-op APB to receive and forward the measurement to the send 
+   request ASP.
+
+   It should be noted here, again, that for the purposes of this demo, VM_2 is 
+   representing a secure area of VM_1. The measurement of the kernel should give
+   the requestor a sense of the integrity of the realm in which AM_1 is running.
+   In short, in a real implementation, AM_2 should be measuring the kernel of 
+   AM_1.
+
+         ________________________           ________
+        |         VM_1           |         |  VM_2  |
+        |  ______    __________  |         |  ____  |
+        | |      |  |          | |         | |    | |
+        | |AM_1_0|  |  AM_1_1  | |         | |AM_2| |
+        | |______|  |__________| |         | |____| |
+        |   |         |     |    |         |   |    |
+        |   |         |     |(5) |         |   |    |
+        | [noop]   [compl]  |    |         |   |(5) |
+        |             |   [noop] |         | [kim]  |
+        |          {send_r}      |         |   |    |
+        |                        |         |   |    |
+        |                        |         | {kim}  |
+        |________________________|         |________|
+
+6. The results of the KIM measurement are sent from the KIM APB in VM_2 to the 
+   forwarding APB forked from AM_1_1. 
+
+   At this point, AM_2 plays no further role in the scenario
+
+         ________________________           ________
+        |        VM_1            |         |  VM_2  |
+        |  ______    __________  |         |  ____  |
+        | |      |  |          | |         | |    | |
+        | |AM_1_0|  |  AM_1_1  | |         | |AM_2| |
+        | |______|  |__________| |         | |____| |
+        |   |         |     |    |         |   |    |
+        |   |         |     |    |         |   |    |
+        | [noop]   [compl]  |    |   (6)   |   |    |
+        |             |   [noop]<------------[kim]  |
+        |          {send_r}      |         |   |(6) |
+        |                        |         | {kim}  |
+        |________________________|         |________|
+
+
+7. The no-op APB bundles the measurement into a response contract, and forwards 
+   the contract to the send request ASP.
+
+         ________________________ 
+        |        VM_1            |
+        |  ______    __________  |
+        | |      |  |          | |
+        | |AM_1_0|  |  AM_1_1  | |
+        | |______|  |__________| |
+        |   |         |     |    |
+        |   |         |     |    |
+        | [noop]   [compl]  |    |
+        |          (7)|   [noop].|
+        |          {send_r}<----'|
+        |                    (7) |
+        |________________________|
+
+8. The complex attestation APB on AM_1_1 invokes the required ASPs to take the 
+   userspace measurement specified by the phrase (USM mtab), which, in this 
+   case, is a mtab userspace measurement. 
+         ____________________
+        |        VM_1        |
+        |  ______    ______  |
+        | |      |  |      | |
+        | |AM_1_0|  |AM_1_1| |
+        | |______|  |______| |
+        |   |           |    |
+        |   |           |    |
+        | [noop]     [compl] |
+        |               ^    |
+        |               |(8) |
+        |             {usm}  |
+        |____________________|
+
+   At this point, the complex attestation APB has executed all of the required 
+   measurements.
+
+9. The APB invokes the serialize ASP to serialize the userspace measurement.
+   It then spawns the merge ASP, which concatenates the KIM measurement and the 
+   serialized userspace measurement.
+
+   These two measurements together represent the evidence requested with the 
+   Copland phrase:
+
+   	       @_1(@_2((KIM runtime_meas)->SIG)-<-(USM mtab))
+         _____________________
+        |        VM_1         |
+        |  ______     ______  |
+        | |      |   |      | |
+        | |AM_1_0|   |AM_1_1| |
+        | |______|   |______| |
+        |   |           |     |
+        |   |           |     |
+        | [noop]     [compl]  |
+        |         (9) | | (9) |
+        |         .---' '----.|
+        |         |          ||
+        | {merge}<'-{serial}<'|
+        |_____________________|
+
+10. The complex attestation APB on AM_1_1 then invokes all of the ASPs required 
+    to sign and send the measurement to AM_1_0 (these are not all drawn out for 
+    the sake of brevity). Each ASP takes the results of the previous measurement
+    (starting with the result of the merge ASP in (9)) and forward their result
+    to the next ASP through pipes set up in the APB. The relevant ASPS include 
+    the:
+
+        * Compress ASP - compresses the serialized measurement buffer
+        * Create Contract ASP - creates the measurement contract which holds the
+	  	 	      	measurement
+        * Encrypt ASP - encrypts the measurement and contract
+        * Send ASP - sends the encrypted buffer to the intended recipient
+         ______________________
+        |        VM_1         |
+        |  ______     ______  |
+        | |      |   |      | |
+        | |AM_1_0|   |AM_1_1| |
+        | |______|   |______| |
+        |   |           |     |
+        |   |           |     |
+        | [noop]     [compl]  |
+        |               |     |
+        |               '----.|
+        |          (10)  (10)||
+        |     {asp}<--{asp}<-'|
+        |_____________________|
+
+11. The no-op APB spawned by AM_1_0 receives the mtab measurement from AM_1_1,
+    bundles it in a response contract, and forwards it to the requester.
+
+    At this point, the scenario is complete.
+        __________________________
+        |          VM_1           |
+        |      ______     ______  |
+        |     |      |   |      | |
+        |     |AM_1_0|   |AM_1_1| |
+        |     |______|   |______| |
+        |       |           |     |
+        | (11)  |           |     |
+   R<---------[noop]     [compl]  |
+        |        ^   (11)   |     |
+        |        '-------{send}   |
+        |_________________________|
+```
+
+Process
+-------
+
+This demo uses 3 seperate VMs to simulate the interaction in a more realistic 
+manner. 
+
+The demo setup will look as follows, with the test client being spawned 
+on the distinct VM_0:
+
+Directions to set up the VMs are located in the :ref:`Setup Multirealms Guide <setup_multirealms>`. 
+
+```
+ ____________     ____________     _____________
+|    VM_0    |   |    VM_1    |   |    VM_2    |
+|   _____    |   |   ______   |   |   ______   |
+|  |     |   |   |  |      |  |   |  |      |  |
+|  | T_C |   |   |  | AM_1 |  |   |  | AM_2 |  |
+|  |_____|   |   |  |______|  |   |  |______|  |
+|____________|   |____________|   |____________|
+```
+
+On VM_0:
+
+    Set IP to 192.168.0.5 and open port 2342
+
+On VM_1:
+
+   Set IP to 192.168.0.10 and open port 2343
+
+On VM_2:
+
+   Set IP to 192.168.0.7 and open port 2342
+
+The complex attestation use case will rely upon a backend database on VM_1 with the
+IP address and port information for VM_1 and VM_2. This is intended to simulate
+an environment in which machines are registed with the appraiser in some fashion
+and the appraiser can use this information about other AMs in order to carry out
+functionality within APBs. A simple CSV example file is provided with Maat,
+and can be placed where Maat will use it with the following command:
+
+    sudo cp demo/ancillary_files/places.csv /opt/maat/etc/maat
+
+To start the scenario, you must start AM_0 and AM_1. To do so, run
+
+On VM_1:
+
+    sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr -i 192.168.0.10:2343 \
+      -C /opt/maat/etc/maat/minimal-am-config.xml -m COPLAND \
+      -s /opt/maat/share/maat/selector-configurations/complex-att-selector.xml
+
+On VM_2:
+
+    sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr -i 192.168.0.7:2342 \
+      -C /opt/maat/etc/maat/minimal-am-config.xml -m COPLAND \
+      -s /opt/maat/share/maat/selector-configurations/complex-att-selector.xml
+
+To take the measurement, you must invoke the test client on VM_0 using 
+the following:
+
+    /opt/maat/bin/test_client -l 192.168.0.10 -t 192.168.0.10 -a 2343 \
+      -p 2343 -r complex-attestation
+
+The expected output at the test client is similar to the following (with the 
+measurement, signature, and certificate info omitted for brevity): 
+
+```
+<contract version="2.0" type="response"><target type="host-port">192.168.0.10</target><resource>complex-attestation</resource><result>UNKN</result><data><entry><key>No-op appraisal</key><value>
+(...)
+</value></entry></data><AttestationCredential fingerprint="A5:2C:D0:4E:1A:75:1F:7D:60:9F:2B:A6:D1:7D:EA:53:BD:42:B7:FD">
+(...)
+</AttestationCredential><signature><signedinfo><canonicalizationmethod algorithm="XML C14N 1.0"/><signaturemethod algorithm="RSA"/><digestmethod algorithm="SHA-1"/></signedinfo><signaturevalue>
+(...)
+</signaturevalue><keyinfo>A5:2C:D0:4E:1A:75:1F:7D:60:9F:2B:A6:D1:7D:EA:53:BD:42:B7:FD</keyinfo></signature></contract>
+
+```
+
+The 'UNKN' result indicates that the no-op appraisal was performed in this use
+case (meaning that the measurement was packaged inside the response contract
+without appraisal). The forthcoming 'complex appraisal' use case will cover
+appraisal of this measurement. 
+
+This concludes the Maat tutorials. To explore how to configure the Maat AM for
+your specific use case, please see the
+:ref:`AM Configuration Guide<configuring_attestation_manager>`.

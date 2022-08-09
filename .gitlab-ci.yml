@@ -553,6 +553,7 @@ system-test-selinux-rh7:
                 - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
                 - cat test_client.log
         timeout: 2 hours
+        allow_failure: true
         tags:
                 - system-test
 

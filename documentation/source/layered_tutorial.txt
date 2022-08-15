@@ -25,13 +25,12 @@ Layered Appraisal Maat Tutorial
 Introduction
 ============
 
-These instructions give you the steps to set up and perform a multi-realm
-layered appraisal demonstration. In this scenario, a test client requests a kernel
-runtime and userspace measurement from different privilege levels of a platform running a full
-hypervisor environment. This measurement would be negotiated by a dedicated measurement
-domain and then the measurement domain would, in turn, request various other components
-within the environment contribute measurements to produce a holistic picture
-of the attesting environment.
+These instructions give you instructions to set up and perform a multi-realm
+appraisal demonstration. In this scenario, a relying party wants to determine if an application
+that is operating in an unprivileged domain of a hypervisor platform is in an expected state.
+A dedicated measurement domain on the platform would negotiate what measurement would be taken
+and, in turn, request various other components within the environment contribute measurements to
+produce a holistic picture of the attesting environment.
 
 In specific, the measurement would be composed of a strictly ordered set of a runtime and
 userspace measurement of the most privileged domain (Dom0), the measurement domain itself
@@ -39,101 +38,119 @@ userspace measurement of the most privileged domain (Dom0), the measurement doma
 These measurements will be bundled by the measurement APB operating in the DomM and then sent
 to another platform to be appraised, the result of which will be returned to the test client.
 
-The strict measurement ordering enforced in this APB allows an appraiser to justify trust in
-the validity of measurements of less privileged domains by appraisals of more privileged domains
-that pass. Such appraisals demonstrate that the state of interfaces that higher privilege levels provide
-to introspect thet state of lower privilege domains are in an expected state, which in turn
+One important detail is that the strict measurement ordering enforced in this APB allows an appraiser
+to justify acceptance of the validity of measurements of less privileged domains in successful appraisals
+of more privileged domains. Such appraisals demonstrate that the state of operational interfaces that
+higher privilege levels provide to lower privilege domains are in an expected state, which in turn
 provides the basis to infer that measurements taken of lower privilege levels that result in
 a passing appraisal have not been manipulated by an adversary in a higher privilege level.
-In effect, a chain of measurements is created, rooted in a hardware protected measurement,
-that constrains how an adversary is able to manipulate the platform in a way that cannot
-be detected by one or more measurements.
+In effect, a chain of measurements is created, rooted in a hardware protected measurement of the
+hypervisor itself, that constrains how an adversary is able to manipulate the platform in a way that
+cannot be detected by one or more measurements.
 
-Setup
-======
+Another important detail is that the measurement domain effectively acts as a broker for attestation
+requests with the hypervisor platform. The attestation manager operating in the measurement domain is
+installed with a selection policy that allows it to negotiate over Copland phrases that represent the platform
+hoslistically. Additionally, the attestation managers on the platform, with the exception of the attestation
+manager operating in the measurement domain, are configured to accept requests for measurements from the
+attestation manager in the measurement domain, without any negotiation. In this way, the negotiation policy
+is effectively encoded in the measurement domain and it operates on behalf of the platform to negotiate
+acceptable attestations. There would be substantial overhead in requiring an appraiser to negotiate with every
+single component of the platform, and furthermore it is challenging to characterize how the appraiser and
+relying party should proceed if portions of the attestating platform do not agree to perform attestation but
+others do.
 
-In order to install Maat, follow the directions that are located in the
-:ref:`Quick Start Guide <quick_start>` and ensure that Maat is working correctly
-with the example scenarios outlined in the
-:ref:`Basic Tutorial <basic_tutorial>`.
+This demonstration does not utlize a hardware based measurement to act as the "anchor" as described previously,
+because no such measurement is currently bundled with Maat. This serves as a demonstration of the workflow of taking
+such a measurement, but based on this, cannot be taken to be an operationalized version of this type of measurement
+by itself.
 
 Layered Appraisal Demonstration
 ================================
 
-This demo involves four AMs on four VMs:
+This demo involves four AMs:
 - AM_1 : Measurement Domain (DomM)
 - AM_2 : Management Domain (Dom0)
 - AM_3 : Target Domain (DomT)
-- AM_4 : Appraisal Domain
+- AM_4 : Appraisal Platform
 
-In order to properly test this use-case to its fullest, AM_1, AM_2, and AM_3
+In order to exercise this use-case in its most truest sense, AM_1, AM_2, and AM_3
 would all be operating in various domains on the same hypervisor enabled host, while
-AM_4 should operate on another machine with no specific constraints. If this is impractical,
-however, all 4 AMs could operate on different VMs, or even the same VM. Although these
-measurements would not capture the intended trust relationship in the former case, or even
-redundant in the latter case, this should be sufficient to demonstrate that the plumbing of
-this usecase is operational.
+AM_4 should operate on a seperate platform with no specific constraints. If this is impractical,
+however, all 4 AMs could operate on different Virtual Machines (VM), or even the same VM. Although
+these measurements would not capture the intended trust relationship in the former case, and would
+be redundant in the latter case, either could be sufficient to demonstrate that the plumbing of
+this use case is operational.
 
-Every measurement request received by the Maat Attestation Manager (AM) triggers a
-negotiation to determine the appropriate Copland phrase to handle the request.
-
-
-Clone the VM you created in the setup step in order to get the proper number of 
-VMs.
+In this demo, we will demonstrate this use case on a hypervisor based platform as it is intended to be
+used. More specifically, AM_1, AM_2, and AM_3 are running on domains of the hypervisor platform P_1, while
+AM_4 is running on a seperate platform P_2 that can communicate with P_1.
 
 Explanation of Demo
 -------------------
 Here's what will happen in the demo:
 
 ```
-1. The requester sends a request to AM_1 running in VM_1 to perform a "verified
-   userspace" measurement of itself.
+1. The requester sends a request to AM_4 running on P_1 to appraise an attestation of the resource 'layered-attestation'
 
-   The Copland phrase that the client will request executed is the following:
-   * @_1(@_1(@_2((KIM runtime_meas)->SIG)-<-(USM mtab)))
+   The Copland phrase that the client will request is the following:
+   * @_md(@_0(runtime_meas_sign)-<-@_0(USM full)-<-runtime_meas_sign-<-USM full-<-@_t(runtime_meas_sign)-<-@_t(USM full))
 
          _______________
-        |     VM_1      |
+        |      P_1      |
         |   (1) ______  |
        R------>|      | |
-        |      | AM_1 | |
+        |      | AM_4 | |
         |      |______| |
         |_______________|
 
-2. AM_1 triggers a negotiation with itself in order to determine if it is 
+         ________________________
+        |          P_2           |
+        |         ______         |
+        |        |      |        |
+        |        | AM_2 |        |
+        |        |______|        |
+        |   ______      ______   |
+        |  |      |    |      |  |
+        |  | AM_1 |    | AM_3 |  |
+        |  |______|    |______|  |
+        |________________________|
+
+2. AM_4 triggers a negotiation with AM_1 in order to determine if it is
    willing and able to take the measurement represented by the phrase.
+                                       ________________________
+                                      |          P_2           |
+        _______________               |         ______         |
+       |      P_1      |              |        |      |        |
+       |      ______   |              |        | AM_2 |        |
+       |     |      |  |     (2)      |        |______|        |
+       |     | AM_4 |<--------'       |   ______      ______   |
+       |     |______|  |      |       |  |      |    |      |  |
+       |_______________|      '--------->| AM_1 |    | AM_3 |  |
+                                      |  |______|    |______|  |
+                                      |________________________|
 
-   This is where the AM_1_0 and AM_1_1 notation will introduced. AM_1_0 refers 
-   to the thread acting as an initiator for the phrase while AM_1_1 acts as the 
-   responder. AM_1 negotiates with itself over the following phrase:
+3. After deciding that the phrase is satisfatory, AM_1 forks the Layered
+   Attestation APB to take the measurement while AM_4 forks the APB which
+   will appraise the measurement.
+                                       ________________________
+                                      |          P_2           |
+        _______________               |         ______         |
+       |      P_1      |              |        |      |        |
+       |      ______   |              |        | AM_2 |        |
+       |     |      |  |              |        |______|        |
+       |     | AM_4 |  |              |   ______      ______   |
+       |     |______|  |              |  |      |    |      |  |
+       |        |      |              |  | AM_1 |    | AM_3 |  |
+       |        | (3)  |              |  |______|    |______|  |
+       |      [app]    |              |     |                  |
+       |_______________|              |     | (3)              |
+                                      |  [layer]               |
+                                      |________________________|
 
-   	      @_1(@_2((KIM runtime_meas)->SIG)-<-(USM mtab))
-         _____________________
-        |          VM_1       |
-        |  ______     ______  |
-        | |      |(2)|      | |
-        | |AM_1_0|<->|AM_1_1| |
-        | |______|   |______| |
-        |_____________________|
-
-3. After deciding that the phrase is satisfatory, AM_1_0 forks the no-op APB 
-   to forward the completed measurement to the requester, while AM_1_1 launches 
-   the complex attestation APB to take the measurement.
-        _______________________
-        |         VM_1         |
-        |  ______      ______  |
-        | |      |    |      | |
-        | |AM_1_0|    |AM_1_1| |
-        | |______|    |______| |
-        |   |           |      |
-        |   | (3)       |(3)   |
-        | [noop]     [compl]   |
-        |______________________|
-
-4. Since the Copland phrase that AM_1_1 is tasked with executing begins with 
-   AM_2, the complex attestation APB launches the send_request ASP, in order to 
-   request a negotiation between AM_1_1 and AM_2 to take an kernel measurement 
-   of VM_2.
+4. Given the ordering within the Copland phrase, the Layered Attestation APB
+   spawns the send_execute_tcp ASP in order to send an execute contract to AM_2
+   specifying that it should 
 
    This negotiation is over the following phrase:
 
@@ -305,6 +322,35 @@ Here's what will happen in the demo:
 
 Process
 -------
+
+A prerequisite to running this demo is an operational platform running a hypervisor. This demo is agnostic to the
+choice of hypervisor, but this guide recommends the use of Xen. For information regarding the installation of Xen,
+as well as the creation of networking resources and user domains, please consult the following page:
+`https://wiki.xenproject.org/wiki/Xen_Project_Beginners_Guide`. Your control domain, Dom0, must be installed
+with an operating system that is supported by Maat. Your hypervisor must be configured to, at a minimum, allow network
+communication between the measurement domain and all of the other domains on the platform. Furthermore, you will need
+to create 2 domains, one of which will be the DomM and the other of which will be the DomT, which, like Dom0, must be
+based on an operating system which supports Maat.
+
+In addition, there must be another platform on which the appraiser will operate. This platform, unlike the attesting
+environment, can simply be a virtual machine or bare metal installation running a platform supported by Maat.
+
+On each domain or platform, Maat must be installed. In order to install Maat, follow the directions that are located
+in the :ref:`Quick Start Guide <quick_start>` and ensure that Maat is working correctly with the example scenarios
+outlined in the :ref:`Basic Tutorial <basic_tutorial>`.
+
+To support the demo, you will need to copy `demo/ancillary_files/layered-am-config.xml` to `/opt/maat/etc/maat/`. It is
+worth exploring a specific change in the AM configuration file that we are using which makes it distinct from the AM
+configuration that is traditionally used for Maat. In particular, we set the interface on which the AM is to listen for
+connections to permit other AMs to make measurement requests which can bypass negotiation. This means that if another AM sends an AM configured in
+this manner an execute contract for a specific Copland phrase, the receiving AM will accept this execute contract even though
+no negotiation has occurred, execute the APB corresponding to the Copland phrase, and send back a measurement contract
+back to the requesting AM. This is an insecure setting which should not be used in a production environment, but is suitable in
+order to simplify the configuration aspects of the demo. Although the plumbing exists within Maat to support bypassing negotiation,
+there currently is not a capability to generate and keep track of a list of privileged hosts from which an AM may permit bypassing
+negotiation in a targeted manner. This is future work which is on our roadmap.
+
+---
 
 This demo uses 3 seperate VMs to simulate the interaction in a more realistic 
 manner. 

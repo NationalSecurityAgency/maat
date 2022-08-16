@@ -280,20 +280,6 @@ static measurement_spec_callbacks callbacks = {
     .check_predicate		= check_predicate
 };
 
-/**
- * Handles setup and execution of all of the ASPs used to trigger the KIM measurement and
- * send the combined userspace and KIM measurement to the appraiser as well as delegates
- * the taking of the userspace measurement
- * @graph is the measurement graph to serialize and send
- * @mspec is the measurement spec for this measurement
- * @rhost remote host to perform kernel measurement
- * @rport port the remote host is listening on
- * @lhost local address of the AM to get the result from the rhost
- * @lport local port the local AM is listening on
- * @scen is the current scenario
- * @peerchan is where to send the measurement
- * Returns 0 on success, < 0 on error
- */
 static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario *scen,
                                       const int peerchan)
 {

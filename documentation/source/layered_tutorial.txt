@@ -94,8 +94,7 @@ Here's what will happen in the demo:
 1. The requester sends a request to AM_4 running on P_1 to appraise an attestation of the resource 'layered-attestation'
 
    The Copland phrase that the client will request is the following:
-   * @_md(@_0(runtime_meas_sign)-<-@_0(USM full)-<-runtime_meas_sign-<-USM full-<-@_t(runtime_meas_sign)-<-@_t(USM full))
-
+   * @_md(@_0(runtime_meas_sign)-<-@_0(USM full)-<-KIM runtime_meas_sign-<-USM full-<-@_t(runtime_meas_sign)-<-@_t(USM full))
          _______________
         |      P_1      |
         |   (1) ______  |
@@ -103,18 +102,6 @@ Here's what will happen in the demo:
         |      | AM_4 | |
         |      |______| |
         |_______________|
-
-         ________________________
-        |          P_2           |
-        |         ______         |
-        |        |      |        |
-        |        | AM_2 |        |
-        |        |______|        |
-        |   ______      ______   |
-        |  |      |    |      |  |
-        |  | AM_1 |    | AM_3 |  |
-        |  |______|    |______|  |
-        |________________________|
 
 2. AM_4 triggers a negotiation with AM_1 in order to determine if it is
    willing and able to take the measurement represented by the phrase.
@@ -149,88 +136,111 @@ Here's what will happen in the demo:
                                       |________________________|
 
 4. Given the ordering within the Copland phrase, the Layered Attestation APB
-   spawns the send_execute_tcp ASP in order to send an execute contract to AM_2
-   specifying that it should 
+   spawns the send execute tcp ASP to send an execute contract to AM_2 for
+   the phrase (KIM runtime_meas_sign), which takes a rumtime measurement of
+   the kernel.
+        ________________________
+       |          P_2           |
+       |         ______         |
+       |        |      |        |
+       |        | AM_2 |        |
+       |        |______|        |
+       |   ______  ^   ______   |
+       |  |      | |  |      |  |
+       |  | AM_1 | |  | AM_3 |  |
+       |  |______| |  |______|  |
+       |     |     |            |
+       |     |     | (4)        |
+       |  [layer]--'            |
+       |________________________|
 
-   This negotiation is over the following phrase:
+5. AM_2 spawns a KIM APB, which in turn, spawns the KIM ASP, in order to take
+   a runtime integrity measurement of the kernel in the domain in which AM_2 is
+   operating.
+        ________________________
+       |          P_2           |
+       |         ______         |
+       |        |      |        |
+       |        | AM_2 |        |
+       |        |______|        |
+       |           |            |
+       |         [KIM]          |
+       |           |  (5)       |
+       |         [kim]          |
+       |   ______      ______   |
+       |  |      |    |      |  |
+       |  | AM_1 |    | AM_3 |  |
+       |  |______|    |______|  |
+       |     |                  |
+       |     |                  |
+       |  [layer]               |
+       |________________________|
 
-   		    @_2((KIM runtime_meas)->SIG)
+6. The results of the KIM measurement are sent from the KIM APB in AM_2 to the
+   Layered Attestation APB forked from AM_1. This involves a set of ASPs we will
+   call the sign-send pipeline. The relevant ASPs include the:
+        * Serialize ASP - serialize a measurement graph into a buffer
+        * Compress ASP - compresses the serialized measurement buffer
+        * Create Contract ASP - creates the measurement contract which holds the
+	  	 	      	measurement
+        * Encrypt ASP - encrypts the measurement and contract
+        * Send ASP - sends the encrypted buffer to the intended recipient
+   For the sake of brevity, we will refer to these ASPs in aggregate as the
+   sign-send pipeline in future.
+        ________________________
+       |          P_2           |
+       |         ______         |
+       |        |      |        |
+       |        | AM_2 |        |
+       |        |______|        |
+       |           |            |
+       |         [KIM]          |
+       |          ^ |   (6)     |
+       |          | '------'    |
+       |      {sign-send}<-'    |
+       |   ______  |    ______  |
+       |  |      | |   |      | |
+       |  | AM_1 | |   | AM_3 | |
+       |  |______| |   |______| |
+       |     |     |            |
+       |     |     | (6)        |
+       |  [layer]<-'            |
+       |________________________|
 
-         _____________________           ________
-        |        VM_1         |         |  VM_2  |
-        |  ______     ______  |         |  ____  |
-        | |      |   |      | |   (4)   | |    | |
-        | |AM_1_0|   |AM_1_1|<-----'----->|AM_2| |
-        | |______|   |______| |    |    | |____| |
-        |   |           |     |    |    |________|
-        |   |           |     |    |
-        | [noop]     [compl]  |    |
-        |               |(4)  |    |
-        |            {send_r}------'
-        |_____________________|
+7. The Layered Attestation APB in AM_1 receives the measurement contract from
+   the KIM APB in AM_2, extracts the serialized measurement from the measurement
+   graph, and places it within the measurement graph that it is constructing.
+   This process involves a set of ASPs we will collectively refer to as the
+   receive-verify pipeline. The relevant ASPs include the:
+       * Receieve ASP - receives a buffer from a socket
+       * Verify Contract ASP - verifies that the measurement contract is cryptographically
+                               signed, if that is required, and well formed. Unlike the other
+                               ASPs, this does not process the contract and write out the
+                               transformation of this processing, but rather gives a boolean
+                               value as to whether the contract was successfully verified
+       * Decrypt ASP - Decrypts the contents of the measurement contract
+       * Decompress ASP - Decompresses the serialized measurement buffer
+    For the sake of brevity, we will refer to these ASPs in aggregate as the
+    receive-verify pipeline in future.
+        ________________________
+       |          P_2           |
+       |         ______         |
+       |        |      |        |
+       |        | AM_2 |        |
+       |        |______|        |
+       |           |            |
+       |         [KIM]          |
+       |           |   (6)      |
+       |      {sign-send}       |
+       |   ______  |    ______  |
+       |  |      | |   |      | |
+       |  | AM_1 | |   | AM_3 | |
+       |  |______| |   |______| |
+       |     |     |            |
+       |     |     |            |
+       |  [layer]<-'            |
+       |________________________|
 
-
-5. AM_2 spawns a KIM APB and ASP to measure the kernel in VM_2 while AM_1_1 
-   spawns the no-op APB to receive and forward the measurement to the send 
-   request ASP.
-
-   It should be noted here, again, that for the purposes of this demo, VM_2 is 
-   representing a secure area of VM_1. The measurement of the kernel should give
-   the requestor a sense of the integrity of the realm in which AM_1 is running.
-   In short, in a real implementation, AM_2 should be measuring the kernel of 
-   AM_1.
-
-         ________________________           ________
-        |         VM_1           |         |  VM_2  |
-        |  ______    __________  |         |  ____  |
-        | |      |  |          | |         | |    | |
-        | |AM_1_0|  |  AM_1_1  | |         | |AM_2| |
-        | |______|  |__________| |         | |____| |
-        |   |         |     |    |         |   |    |
-        |   |         |     |(5) |         |   |    |
-        | [noop]   [compl]  |    |         |   |(5) |
-        |             |   [noop] |         | [kim]  |
-        |          {send_r}      |         |   |    |
-        |                        |         |   |    |
-        |                        |         | {kim}  |
-        |________________________|         |________|
-
-6. The results of the KIM measurement are sent from the KIM APB in VM_2 to the 
-   forwarding APB forked from AM_1_1. 
-
-   At this point, AM_2 plays no further role in the scenario
-
-         ________________________           ________
-        |        VM_1            |         |  VM_2  |
-        |  ______    __________  |         |  ____  |
-        | |      |  |          | |         | |    | |
-        | |AM_1_0|  |  AM_1_1  | |         | |AM_2| |
-        | |______|  |__________| |         | |____| |
-        |   |         |     |    |         |   |    |
-        |   |         |     |    |         |   |    |
-        | [noop]   [compl]  |    |   (6)   |   |    |
-        |             |   [noop]<------------[kim]  |
-        |          {send_r}      |         |   |(6) |
-        |                        |         | {kim}  |
-        |________________________|         |________|
-
-
-7. The no-op APB bundles the measurement into a response contract, and forwards 
-   the contract to the send request ASP.
-
-         ________________________ 
-        |        VM_1            |
-        |  ______    __________  |
-        | |      |  |          | |
-        | |AM_1_0|  |  AM_1_1  | |
-        | |______|  |__________| |
-        |   |         |     |    |
-        |   |         |     |    |
-        | [noop]   [compl]  |    |
-        |          (7)|   [noop].|
-        |          {send_r}<----'|
-        |                    (7) |
-        |________________________|
 
 8. The complex attestation APB on AM_1_1 invokes the required ASPs to take the 
    userspace measurement specified by the phrase (USM mtab), which, in this 

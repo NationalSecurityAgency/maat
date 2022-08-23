@@ -146,7 +146,9 @@ if [ ! "$(getenforce)" = "Disabled" ]; then
     fi
 
     # Set the default attestmgr port to the correct type
-    semanage port -a -t attestmgr_port_t -p tcp 2342
+    if [ ! semanage port --list | grep -q "attestmgr_port_t[[:space:]]*tcp[[:space:]]*2342" ]; then
+	semanage port -a -t attestmgr_port_t -p tcp 2342
+    fi
 fi
 
 # pre uninstall

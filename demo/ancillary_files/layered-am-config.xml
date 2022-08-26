@@ -16,7 +16,7 @@
 -->
 <am-config>
     <interfaces>
-        <interface type="inet" address="0.0.0.0" port="2345" skip-negotiation="true"/>
+        <interface type="inet" address="0.0.0.0" port="2342" skip-negotiation="true"/>
     </interfaces>
     <selector source="file">
         <path>/opt/maat/share/maat/selector-configurations/layered-selector.xml</path>
@@ -30,5 +30,5 @@
     <metadata type="apbs" dir="/opt/maat/share/maat/apbs" />
     <metadata type="measurement-specifications" dir="/opt/maat/share/maat/measurement-specifications" />
     <work dir="/tmp/attestmgr" />
-    <place name="/opt/maat/etc/maat/places.csv" />
+    <place name="/opt/maat/etc/maat/layered-places.csv" />
 </am-config>

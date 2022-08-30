@@ -579,12 +579,67 @@ system-test-maat:
                 - "kill %1 || true"
                 - "killall -15 attestmgr || true"
                 - "killall -9 attestmgr || true"
-                - "sudo apt remove --assume-yes maat libmaat1 || true"
+                #- "sudo apt remove --assume-yes maat libmaat1 || true"
                 - "sudo rm -f /etc/maat/credentials/client.*"
                 - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
                 - "cat test_client.log"
 
         #after_script:
+        #        - "sudo killall -15 attestmgr || true"
+        #        - "sudo killall -9 attestmgr || true"
+        #        - "sudo apt remove --assume-yes maat libmaat1 || true"
+        #        - "sudo rm -f /etc/maat/credentials/client.*"
+        tags:
+                - maat-deploy-test-only
+
+system-test-maat-failed-appraisal:
+        stage: systemtest
+        variables:
+                release: bionic
+                arch: amd64
+        dependencies: []
+        before_script:
+                - "sudo killall -15 attestmgr || true"
+                - "sudo killall -9 attestmgr || true"
+
+        script:
+                - "echo \"${CI_COMMIT_REF_SLUG}\" > .maat_branch"
+                - "echo -n 'deb [allow-insecure=yes] http://manda-archive.jhuapl.edu/~builder/maat/maat-' >> maat.list"
+                - "echo -n `cat .maat_branch` >> maat.list"
+                - "echo -n '/ubuntu ' >> maat.list "
+                - "echo -n ${release} >> maat.list"
+                - "echo ' multiverse'  >> maat.list"
+                - cat maat.list
+                - lsb_release -a
+                - sudo cp maat.list /etc/apt/sources.list.d
+                - sudo apt-get --allow-unauthenticated update 
+                - sudo apt-get --allow-unauthenticated -y --reinstall install maat
+                - sudo cp demo/credentials/client.pem /etc/maat/credentials 
+                - sudo cp demo/credentials/client.key /etc/maat/credentials
+                - echo "Adding a package to the blacklist"
+                - echo "ubuntu-session 3.28.1-0ubuntu3 amd64" | sudo tee -a /usr/share/maat/asps/package.blacklist
+                - sudo cat /usr/share/maat/asps/package.blacklist
+                - echo '========= Test system updated to latest maat source ======'
+                - echo '============ Testing Demo 1 from TUTORIAL.md'
+                - echo '====== starting appraiser'
+                - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
+                - echo '====== starting attester'
+                - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
+                - sleep 10
+                - echo '====== starting test'
+                - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r packages | tee test_client.log || true"
+                - echo "====== Cleaning up"
+                - "kill %2 || true"
+                - "kill %1 || true"
+                - "killall -15 attestmgr || true"
+                - "killall -9 attestmgr || true"
+                - "sudo apt remove --assume-yes maat || true"
+                - "sudo rm -f /etc/maat/credentials/client.*"
+                - "if ! grep FAIL test_client.log ; then echo 'Did not find FAIL!' ; exit 1 ; fi"
+                - "cat test_client.log"
+
+        after_script:
+                - sudo truncate -s 0 /usr/share/maat/asps/package.blacklist
         #        - "sudo killall -15 attestmgr || true"
         #        - "sudo killall -9 attestmgr || true"
         #        - "sudo apt remove --assume-yes maat libmaat1 || true"

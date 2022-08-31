@@ -15,6 +15,7 @@ AC_CONFIG_LINKS([documentation/source/basic_tutorial.txt:documentation/source/ba
 AC_CONFIG_LINKS([documentation/source/multirealm_tutorial.txt:documentation/source/multirealm_tutorial.txt])
 AC_CONFIG_LINKS([documentation/source/passport_creation_tutorial.txt:documentation/source/passport_creation_tutorial.txt])
 AC_CONFIG_LINKS([documentation/source/passport_use_tutorial.txt:documentation/source/passport_use_tutorial.txt])
+AC_CONFIG_LINKS([documentation/source/layered_tutorial.txt:documentation/source/layered_tutorial.txt])
 AC_CONFIG_LINKS([documentation/source/setup_multirealms.txt:documentation/source/setup_multirealms.txt])
 AC_CONFIG_LINKS([documentation/source/ui_tutorial.md:documentation/source/ui_tutorial.md])
 AC_CONFIG_LINKS([documentation/source/maat_attestation_manager_ui_tutorial.md:documentation/source/maat_attestation_manager_ui_tutorial.md])

@@ -251,7 +251,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
                     ret = pass_to_subordinate_apb(mg, scen, node, sub_apb, mspec);
                     dlog(4, "Result from subordinate APB %d\n", ret);
                 }
-            } else if (strcmp(resource, "runtime-meas") == 0 || data_type == KERNEL_MSMT_MAGIC) {
+            } else if (strcmp(resource, "runtime-meas") == 0) {
                 dlog(3, "There is not a specific appraiser for runtime measurement, so we just claim this is successful\n");
                 ret = 0;
             } else {

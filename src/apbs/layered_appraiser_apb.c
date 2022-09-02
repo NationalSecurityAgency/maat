@@ -193,6 +193,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
     measurement_data *data                    = NULL;
     blob_data *blob                           = NULL;
     address_space *addr_space                 = NULL;
+    target_type *targ_type                    = NULL;
     dynamic_measurement_request_address *addr = NULL;
     struct apb *sub_apb                       = NULL;
     struct asp *appraiser_asp                 = NULL;
@@ -218,9 +219,10 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
         }
     } else {
         // If this isn't a request, then we are handling a measurement domain measurement
-        if (addr_space == &unit_address_space) {
-            // If the address space is the kernel address space, then this is a
-            // kernel measurement of the measurement domain
+        targ_type = measurement_node_get_target_type(mg, node);
+        if (addr_space == &unit_address_space && targ_type == &file_target_type) {
+            // If the address space is the kernel address space, and the target type is of the
+            // file type, then this is a runtime measurement of the measurement domain's kernel
             priv_level = MD_RUN;
         } else {
             // Otherwise, this measurement is a userspace measurement of the measurement

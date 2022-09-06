@@ -57,17 +57,17 @@ platform in a way that cannot be detected by one or more measurements.
 Another important detail is that the AM in DomM effectively acts as a broker for
 attestation requests with the hypervisor platform. The AM in DomM is installed
 with a selection policy that allows it to negotiate over Copland phrases that
-represent the platform hoistically. Additionally, the AMs on the platform are
+represent the platform holistically. Additionally, the AMs on the platform are
 configured to accept requests for measurements from the AM in the DomM without
 any negotiation. In this way, the negotiation policy is effectively encoded in
 the AM on the DomM and it operates on behalf of the platform to negotiate
 acceptable attestations. There would be substantial overhead in requiring an
 appraiser to negotiate with every single component of the platform, and
 furthermore it is challenging to characterize how the appraiser and relying
-party should proceed if portions of the attestating platform were to agree to
+party should proceed if portions of the attesting platform were to agree to
 perform attestation but others were to decline.
 
-This demonstration does not utlize a hardware based measurement to act as the
+This demonstration does not utilize a hardware based measurement to act as the
 "anchor" as described previously, because no such measurement is currently
 bundled with Maat. This scenario serves as a demonstration of the workflow which
 includes taking such a measurement but, due to this fact, cannot be taken to be
@@ -85,17 +85,17 @@ This demo involves four AMs:
 
 In order to exercise this use-case in its most truest sense, AM_1, AM_2, and
 AM_3 would all be operating in various domains on the same hypervisor enabled
-host, while AM_4 should operate on a seperate platform with no specific
+host, while AM_4 should operate on a separate platform with no specific
 constraints. If this is impractical, however, all 4 AMs could operate on
 different Virtual Machines (VM), or even the same VM. Although neither
-configuration would capture the trust relationship between the measurments that
+configuration would capture the trust relationship between the measurements that
 is desired, either configuration could be sufficient to demonstrate that the
 plumbing of this use case is operational.
 
 In this demo, we will demonstrate this use case on a hypervisor based platform
 as it is intended to be used. More specifically, AM_1, AM_2, and AM_3 are
 running on domains of the hypervisor platform P_1, while AM_4 is running on a
-seperate platform P_2 that can communicate with P_1.
+separate platform P_2 that can communicate with P_1.
 
 Explanation of Demo
 -------------------
@@ -130,7 +130,7 @@ Here's what will happen in the demo:
                                               |  |______|    |______|  |
                                               |________________________|
 
-        3. After deciding that the phrase is satisfatory, AM_1 forks the Layered
+        3. After deciding that the phrase is satisfactory, AM_1 forks the Layered
            Attestation APB to take the measurement while AM_4 forks the APB which
            will appraise the measurement.
                                                ________________________
@@ -150,7 +150,7 @@ Here's what will happen in the demo:
 
         4. Given the ordering within the Copland phrase, the Layered Attestation APB
            spawns the Send Execute TCP ASP to send an execute contract to AM_2 for
-           the phrase (KIM runtime_meas_sign), which takes a rumtime measurement of
+           the phrase (KIM runtime_meas_sign), which takes a runtime measurement of
            the kernel.
                 ________________________
                |          P_2           |
@@ -202,7 +202,7 @@ Here's what will happen in the demo:
            For the sake of brevity, we will refer to these ASPs in aggregate as the
            sign-send pipeline in future.
 
-        7. The Send Execute TCP ASP in AM_1 receieves the measurement contract from AM_2.
+        7. The Send Execute TCP ASP in AM_1 receives the measurement contract from AM_2.
                 ________________________
                |          P_2           |
                |         ______         |
@@ -303,7 +303,7 @@ Here's what will happen in the demo:
             Send Execute TCP ASP forked from the Layered Attestation APB in AM_1. This is
             done using the sign-send pipeline of ASPs.
 
-        13. The Send Execute TCP ASP in AM_1 receieves the measurement contract from AM_2.
+        13. The Send Execute TCP ASP in AM_1 receives the measurement contract from AM_2.
             At this point, AM_2 plays no further role in this scenario.
                 ________________________
                |          P_2           |
@@ -326,8 +326,9 @@ Here's what will happen in the demo:
                |  [s_exe]<-'            |
                |________________________|
 
-        14. The Layered Attestation APB in AM_1 extracts the measurement from the measurement contract
-            received from AM_2 using the execute-receive pipeline and places it into the measurement graph.
+        14. The Layered Attestation APB in AM_1 extracts the measurement from
+            the measurement contract received from AM_2 using the
+            execute-receive pipeline and places it into the measurement graph.
                 ________________________
                |          P_2           |
                |         ______         |
@@ -391,7 +392,7 @@ Here's what will happen in the demo:
 
         17. Given the ordering within the Copland phrase, the Layered Attestation APB
             spawns the Send Execute TCP ASP to send an execute contract to AM_3 for
-            the phrase (KIM runtime_meas_sign), which takes a rumtime measurement of
+            the phrase (KIM runtime_meas_sign), which takes a runtime measurement of
             the kernel.
                 ________________________
                |          P_2           |
@@ -431,7 +432,7 @@ Here's what will happen in the demo:
             Send Execute TCP ASP forked from the Layered Attestation APB in AM_1 using
             the sign-send pipeline.
 
-        20. The Send Execute TCP ASP in AM_1 receieves the measurement contract from AM_3.
+        20. The Send Execute TCP ASP in AM_1 receives the measurement contract from AM_3.
                 ________________________
                |          P_2           |
                |         ______         |
@@ -511,7 +512,7 @@ Here's what will happen in the demo:
             ASP forked from the Layered Attestation APB in AM_1. This is done
             using the sign-send pipeline of ASPs.
 
-        25. The Send Execute TCP ASP in AM_1 receieves the measurement contract
+        25. The Send Execute TCP ASP in AM_1 receives the measurement contract
             from AM_3.  AM_3 does not play a further role in this scenario.
                 ________________________
                |          P_2           |
@@ -557,7 +558,7 @@ Here's what will happen in the demo:
             extension, P_2, no longer plays a role in this scenario.
 
         28. At this point, the Layered Attestation Appraisal APB in AM_4
-            receieves the measurement contract from AM_1 using a set of ASPs
+            receives the measurement contract from AM_1 using a set of ASPs
             that include some of the same ASPs as the execute-receive pipeline,
             but also includes other. The ASPs used are as follows:
                 * Receive ASP - receives a buffer from a socket
@@ -595,7 +596,7 @@ Here's what will happen in the demo:
             determines an overall appraisal result.
 
         30. The Layered Appraisal APB in AM_4 sends a response contract to the
-            requestor which includes the overall appraisal result. At this
+            requester which includes the overall appraisal result. At this
             point, the scenario is complete.
                  _______________
                 |      P_1      |
@@ -712,7 +713,7 @@ permit bypassing negotiation. This is future work which is on our roadmap.
 
 The Layered Appraisal use case will rely upon a backend database with the
 IP address and port information for Dom0 and DomT. This is intended to simulate
-an environment in which all of the domains on the hypervisor platform are registed
+an environment in which all of the domains on the hypervisor platform are registered
 with the measurement domain. This allows DomM to forward requests for measurements to
 the other domains. A simple CSV example file is provided with the Maat repository, and
 can be installed where each AM can use it using the following command:
@@ -751,7 +752,7 @@ On VM_1:
     sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr -i 192.168.0.3:2342 \
      -C /opt/maat/etc/maat/layered-am-config.xml -m COPLAND
 
-To take the measurement, you must invoke the test client in a seperate
+To take the measurement, you must invoke the test client in a separate
 terminal on VM_1 using the following command:
 
 .. code-block:: bash

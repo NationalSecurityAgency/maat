@@ -78,7 +78,7 @@ static measurement_spec_callbacks callbacks = {
  * Returns 0 on success, < 0 on error
  *
  * XXX: The sign_send ASP is deprecated; this should be updated to use the
- * individual serialize, compress, encrypt, create_contract, and send ASPs
+ * individual serialize, compress, encrypt, create_measurement_contract, and send ASPs
  */
 static int execute_sign_send_pipeline(measurement_graph *graph,
                                       struct scenario *scen, int peerchan)

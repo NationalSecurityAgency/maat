@@ -642,12 +642,14 @@ allow decompress_asp_t lib_t:file entrypoint;
 type encrypt_asp_t;
 type encrypt_asp_exe_t;
 define_asp(encrypt_asp_t, encrypt_asp_exe_t);
+maat_credentials_reader(encrypt_asp_t)
 allow encrypt_asp_t lib_t:file entrypoint;
 
 # Decrypt ASP
 type decrypt_asp_t;
 type decrypt_asp_exe_t;
 define_asp(decrypt_asp_t, decrypt_asp_exe_t);
+maat_credentials_reader(decrypt_asp_t)
 allow decrypt_asp_t lib_t:file entrypoint;
 
 # Merge ASP
@@ -662,12 +664,12 @@ type split_asp_exe_t;
 define_asp(split_asp_t, split_asp_exe_t);
 
 # Create Contract ASP
-type create_contract_asp_t;
-type create_contract_asp_exe_t;
-define_asp(create_contract_asp_t, create_contract_asp_exe_t);
-maat_credentials_reader(create_contract_asp_t)
-maat_tmp_access(create_contract_asp_t)
-allow create_contract_asp_t lib_t:file { entrypoint };
+type create_measurement_contract_asp_t;
+type create_measurement_contract_asp_exe_t;
+define_asp(create_measurement_contract_asp_t, create_measurement_contract_asp_exe_t);
+maat_credentials_reader(create_measurement_contract_asp_t)
+maat_tmp_access(create_measurement_contract_asp_t)
+allow create_measurement_contract_asp_t lib_t:file { entrypoint };
 
 # Verify Measurement Contract ASP
 type verify_measurement_contract_asp_t;
@@ -712,6 +714,15 @@ allow send_execute_asp_t attestmgr_t:udp_socket { rw_socket_perms };
 allow send_execute_asp_t attestmgr_t:unix_stream_socket { connectto rw_socket_perms };
 # XXX the attester should be updated to make this a maat-specific type
 allow send_execute_asp_t tmp_t:sock_file { rw_file_perms };
+
+# Send execute ASP focused on TCP connections to AMs with permissions caches
+type send_execute_tcp_asp_t;
+type send_execute_tcp_asp_exe_t;
+define_asp(send_execute_tcp_asp_t, send_execute_tcp_asp_exe_t);
+maat_credentials_reader(send_execute_tcp_asp_t)
+allow send_execute_tcp_asp_t attestmgr_port_t:tcp_socket { rw_socket_perms name_connect };
+allow send_execute_tcp_asp_t self:tcp_socket { create rw_socket_perms name_connect };
+allow send_execute_tcp_asp_t net_conf_t:file { getattr open read };
 
 # Send Request ASP
 type send_request_asp_t;
@@ -924,7 +935,7 @@ allow_apb_asp(complex_att_apb_t, proc_mem_asp_exe_t, proc_mem_asp_t)
 allow_apb_asp(complex_att_apb_t, proc_namespaces_asp_exe_t, proc_namespaces_asp_t)
 allow_apb_asp(complex_att_apb_t, send_request_asp_exe_t, send_request_asp_t)
 allow_apb_asp(complex_att_apb_t, compress_asp_exe_t, compress_asp_t)
-allow_apb_asp(complex_att_apb_t, create_contract_asp_exe_t, create_contract_asp_t)
+allow_apb_asp(complex_att_apb_t, create_measurement_contract_asp_exe_t, create_measurement_contract_asp_t)
 allow_apb_asp(complex_att_apb_t, merge_asp_exe_t, merge_asp_t)
 allow_apb_asp(complex_att_apb_t, send_asp_exe_t, send_asp_t)
 allow_apb_asp(complex_att_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_t)
@@ -937,7 +948,7 @@ define_apb(request_passport_apb_t, request_passport_apb_exe_t)
 allow_apb_asp(request_passport_apb_t, send_request_asp_exe_t, send_request_asp_t)
 allow_apb_asp(request_passport_apb_t, compress_asp_exe_t, compress_asp_t)
 allow_apb_asp(request_passport_apb_t, encrypt_asp_exe_t, encrypt_asp_t)
-allow_apb_asp(request_passport_apb_t, create_contract_asp_exe_t, create_contract_asp_t)
+allow_apb_asp(request_passport_apb_t, create_measurement_contract_asp_exe_t, create_measurement_contract_asp_t)
 allow_apb_asp(request_passport_apb_t, send_asp_exe_t, send_asp_t)
 allow_apb_asp(request_passport_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_t)
 
@@ -967,6 +978,44 @@ allow_apb_asp(request_passport_apb_t, serialize_graph_asp_exe_t, serialize_graph
 
 gen_require(`type user_tmp_t;')
 
+# Layered Attestation APB
+type layered_att_apb_t;
+type layered_att_apb_exe_t;
+define_apb(layered_att_apb_t, layered_att_apb_exe_t)
+
+allow layered_att_apb_t lib_t:file { entrypoint };
+
+allow_apb_asp(layered_att_apb_t, hash_file_service_asp_exe_t, hash_file_service_asp_t)
+allow_apb_asp(layered_att_apb_t, lsproc_asp_exe_t, lsproc_asp_t)
+allow_apb_asp(layered_att_apb_t, proc_open_file_asp_exe_t, proc_open_file_asp_t)
+allow_apb_asp(layered_att_apb_t, system_asp_exe_t, system_asp_t)
+allow_apb_asp(layered_att_apb_t, dpkg_inv_asp_exe_t, dpkg_inv_asp_t)
+allow_apb_asp(layered_att_apb_t, dpkg_details_asp_exe_t, dpkg_details_asp_t)
+allow_apb_asp(layered_att_apb_t, rpm_inv_asp_exe_t, rpm_inv_asp_t)
+allow_apb_asp(layered_att_apb_t, rpm_details_asp_exe_t, rpm_details_asp_t)
+allow_apb_asp(layered_att_apb_t, md5_file_service_asp_exe_t, md5_file_service_asp_t)
+allow_apb_asp(layered_att_apb_t, list_directory_service_asp_exe_t, list_directory_service_asp_t)
+allow_apb_asp(layered_att_apb_t, mtab_asp_exe_t, mtab_asp_t)
+allow_apb_asp(layered_att_apb_t, memory_mapping_asp_exe_t, memory_mapping_asp_t)
+# allow_apb_asp(layered_att_apb_t, sign_send_asp_exe_t, sign_send_asp_t)
+allow_apb_asp(layered_att_apb_t, got_measure_asp_exe_t, got_measure_asp_t)
+allow_apb_asp(layered_att_apb_t, send_execute_asp_exe_t, send_execute_asp_t)
+allow_apb_asp(layered_att_apb_t, send_execute_tcp_asp_exe_t, send_execute_tcp_asp_t)
+allow_apb_asp(layered_att_apb_t, proc_fds_asp_exe_t, proc_fds_asp_t)
+allow_apb_asp(layered_att_apb_t, proc_mem_asp_exe_t, proc_mem_asp_t)
+allow_apb_asp(layered_att_apb_t, proc_namespaces_asp_exe_t, proc_namespaces_asp_t)
+allow_apb_asp(layered_att_apb_t, send_request_asp_exe_t, send_request_asp_t)
+allow_apb_asp(layered_att_apb_t, compress_asp_exe_t, compress_asp_t)
+allow_apb_asp(layered_att_apb_t, create_measurement_contract_asp_exe_t, create_measurement_contract_asp_t)
+allow_apb_asp(layered_att_apb_t, merge_asp_exe_t, merge_asp_t)
+allow_apb_asp(layered_att_apb_t, send_asp_exe_t, send_asp_t)
+allow_apb_asp(layered_att_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_t)
+allow_apb_asp(layered_att_apb_t, encrypt_asp_exe_t, encrypt_asp_t)
+allow_apb_asp(layered_att_apb_t, decrypt_asp_exe_t, decrypt_asp_t)
+allow_apb_asp(layered_att_apb_t, decompress_asp_exe_t, decompress_asp_t)
+allow_apb_asp(layered_att_apb_t, verify_measurement_contract_asp_exe_t, verify_measurement_contract_asp_t)
+allow_apb_asp(layered_att_apb_t, receive_asp_exe_t, receive_asp_t)
+
 # Userspace Appraiser APB
 require {
 	type attestmgr_t;
@@ -991,6 +1040,37 @@ allow_apb_asp(userspace_appraiser_apb_t, system_appraise_asp_exe_t, system_appra
 allow_spawn_any_apb(userspace_appraiser_apb_t)
 allow_apb_asp(userspace_appraiser_apb_t, kim_apb_exe_t, kim_apb_t)
 allow_apb_asp(userspace_appraiser_apb_t, userspace_appraiser_apb_exe_t, userspace_appraiser_apb_t)
+
+gen_require(`type user_tmp_t;')
+
+# Layered Appraiser APB
+require {
+	type attestmgr_t;
+	type init_var_run_t;
+}
+
+type layered_appraiser_apb_t;
+type layered_appraiser_apb_exe_t;
+define_apb(layered_appraiser_apb_t, layered_appraiser_apb_exe_t)
+apb_metadata_reader(layered_appraiser_apb_t)
+allow layered_appraiser_apb_t layered_appraiser_apb_t:fifo_file {rw_file_perms};
+allow layered_appraiser_apb_t init_var_run_t:dir {search};
+
+allow_apb_asp(layered_appraiser_apb_t, blacklist_asp_exe_t, blacklist_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, whitelist_asp_exe_t, whitelist_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, dpkg_check_asp_exe_t, dpkg_check_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, system_appraise_asp_exe_t, system_appraise_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, decrypt_asp_exe_t, decrypt_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, decompress_asp_exe_t, decompress_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, verify_measurement_contract_asp_exe_t, verify_measurement_contract_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, receive_asp_exe_t, receive_asp_t)
+
+# this is needed because the layered appraiser launches 'subordinate' apbs.
+# if we want to continue to allow this model of execution, should replace
+# with an allow_spawn_apb(usespace_appraiser_apb_t, kim_apb_t), etc.
+allow_spawn_any_apb(layered_appraiser_apb_t)
+allow_apb_asp(layered_appraiser_apb_t, kim_apb_exe_t, kim_apb_t)
+allow_apb_asp(layered_appraiser_apb_t, userspace_appraiser_apb_exe_t, userspace_appraiser_apb_t)
 
 gen_require(`type user_tmp_t;')
 

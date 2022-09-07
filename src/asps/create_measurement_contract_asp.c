@@ -44,8 +44,9 @@
 #include <sys/types.h>
 #include <client/maat-client.h>
 
-#define ASP_NAME "create_contract_asp"
+#define ASP_NAME "create_measurement_contract_asp"
 
+#define READ_MAX INT_MAX
 #define TIMEOUT 1000
 
 /**
@@ -252,7 +253,7 @@ static int create_msmt_contract(char *workdir, char *certfile,
     if(doc == NULL) {
         dlog(0, "Error: failed to create basic measurement contract\n");
         ret = -1;
-        goto create_contract_failed;
+        goto create_measurement_contract_failed;
     }
 
     // Encode
@@ -327,7 +328,7 @@ create_msmt_node_failed:
     g_free(b64);
 b64_encode_failed:
     xmlFreeDoc(doc);
-create_contract_failed:
+create_measurement_contract_failed:
     xmlFree(nonce);
 parse_execon_failed:
     return ret;
@@ -336,26 +337,26 @@ parse_execon_failed:
 int asp_init(int argc UNUSED, char *argv[] UNUSED)
 {
     int ret_val = 0;
-    asp_loginfo("Initialized create_contract ASP\n");
+    asp_loginfo("Initialized create_measurement_contract ASP\n");
 
     if((ret_val = register_types()) < 0) {
         return ret_val;
     }
 
-    asp_logdebug("create_contract asp done init (success)\n");
+    asp_logdebug("create_measurement_contract asp done init (success)\n");
 
     return ASP_APB_SUCCESS;
 }
 
 int asp_exit(int status)
 {
-    asp_loginfo("Exiting create_contract ASP\n");
+    asp_loginfo("Exiting create_measurement_contract ASP\n");
     return status;
 }
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(6, "IN create_contract ASP MEASURE\n");
+    dlog(6, "IN create_measurement_contract ASP MEASURE\n");
 
     // Cmd line args
     int fd_in            = -1;
@@ -406,15 +407,7 @@ int asp_measure(int argc, char *argv[])
         goto parse_args_failed;
     }
 
-    // read from chan in
-    fd_in = maat_io_channel_new(fd_in);
-    if(fd_in < 0) {
-        dlog(0, "Error: failed to make new io channel for fd_in\n");
-        ret_val = -1;
-        goto io_chan_in_failed;
-    }
-
-    ret_val = maat_read_sz_buf(fd_in, &buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, -1);
+    ret_val = maat_read_sz_buf(fd_in, &buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, READ_MAX);
     if(ret_val < 0 && ret_val != -EAGAIN) {
         dlog(0, "Error reading evidence from channel\n");
         ret_val = -1;
@@ -452,14 +445,6 @@ int asp_measure(int argc, char *argv[])
         goto create_msmt_contract_failed;
     }
 
-    // Output the result to chan out
-    fd_out = maat_io_channel_new(fd_out);
-    if(fd_out < 0) {
-        dlog(0, "Error: failed to make new io channel for fd_out\n");
-        ret_val = -1;
-        goto io_chan_out_failed;
-    }
-
     ret_val = maat_write_sz_buf(fd_out, out, outsize, &bytes_written, TIMEOUT);
     if(ret_val < 0) {
         dlog(0, "Error writing measurement contract to channel\n");
@@ -472,7 +457,7 @@ int asp_measure(int argc, char *argv[])
     dlog(6, "buffer size: %zu, bytes_written: %zu\n", outsize, bytes_written);
 
     ret_val = ASP_APB_SUCCESS;
-    asp_loginfo("create_contract ASP returning with success\n");
+    asp_loginfo("create_measurement_contract ASP returning with success\n");
 
 write_failed:
 io_chan_out_failed:

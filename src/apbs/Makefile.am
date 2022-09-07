@@ -73,9 +73,15 @@ userspace_apb_SOURCES		= userspace_apb.c userspace_common_funcs.c userspace_comm
 userspace_apb_LDADD		= $(AM_LIBADD)
 endif
 
+if BUILD_layered_att_APB
+apb_PROGRAMS                   += layered_att_apb
+layered_att_apb_SOURCES		= layered_att_apb.c userspace_common_funcs.c userspace_common_funcs.h userspace_appraiser_common_funcs.c userspace_appraiser_common_funcs.h $(APB_COMMON_SOURCES)
+layered_att_apb_LDADD		= $(AM_LIBADD)
+endif
+
 if BUILD_complex_att_APB
 apb_PROGRAMS                   += complex_att_apb
-complex_att_apb_SOURCES		= complex_att_apb.c userspace_common_funcs.c $(APB_COMMON_SOURCES)
+complex_att_apb_SOURCES		= complex_att_apb.c userspace_common_funcs.c userspace_common_funcs.h $(APB_COMMON_SOURCES)
 complex_att_apb_LDADD		= $(AM_LIBADD)
 endif
 
@@ -165,6 +171,12 @@ if BUILD_userspace_appraiser_APB
 apb_PROGRAMS			+= userspace_appraiser_apb
 userspace_appraiser_apb_SOURCES  = userspace_appraiser_apb.c userspace_appraiser_common_funcs.c userspace_appraiser_common_funcs.h $(APB_COMMON_SOURCES)
 userspace_appraiser_apb_LDADD    = $(AM_LIBADD)
+endif
+
+if BUILD_layered_appraiser_APB
+apb_PROGRAMS			+= layered_appraiser_apb
+layered_appraiser_apb_SOURCES  = layered_appraiser_apb.c userspace_appraiser_common_funcs.c userspace_appraiser_common_funcs.h $(APB_COMMON_SOURCES)
+layered_appraiser_apb_LDADD    = $(AM_LIBADD)
 endif
 
 if BUILD_forwarding_APB

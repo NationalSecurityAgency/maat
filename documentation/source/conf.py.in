@@ -277,10 +277,11 @@ latex_use_parts = False
 latex_appendices = [
     'maat_use_cases',
     'basic_tutorial',
+    'setup_multirealms',
     'multirealm_tutorial',
+    'layered_tutorial',
     'passport_creation_tutorial',
     'passport_use_tutorial',
-    'setup_multirealms',
     'ui_tutorial',
     'maat_attestation_manager_ui_tutorial',
     'measurement_specifications',

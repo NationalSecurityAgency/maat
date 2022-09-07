@@ -31,6 +31,7 @@ libaddress_space_la_SOURCES = simple_file.c \
 			iptables_chain_address_space.c \
 			pid_mem_range.c \
 			package.c \
+                        dynamic_measurement_request_address_space.c \
 			measurement_request_address_space.c \
 			kernel_as.c \
 			file_region_address_space.c \

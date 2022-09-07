@@ -108,14 +108,4 @@ int fork_and_buffer(pid_t *pidout, int *pipe_read_out, int infd, ...);
  * parent, assuming no errors.
  */
 int fork_and_buffer_async_asp(struct asp *asp, const int argc, char *argv[], const int infd, int *outfd);
-
-/**
- * This function behaves as the fork_and_buffer_async_asp function except, instead of an input
- * file descriptor, the function takes a buffer and a buffer length as an input. The function
- * creates a pipe and, when the ASP is run, the parent writes the input to the pipe and the
- * ASP reads from this pipe. See fork_and_buffer_async_asp for more details.
- */
-int fork_and_buffer_async_asp_buffer(struct asp *asp, const int argc, char *argv[],
-                                     const unsigned char *buf_in, size_t buf_in_len,
-                                     int timeout, int *outfd);
 #endif

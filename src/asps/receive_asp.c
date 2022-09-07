@@ -41,9 +41,9 @@
 #include <sys/types.h>
 #include <client/maat-client.h>
 
-#define ASP_NAME "receieve_asp"
+#define ASP_NAME "receive_asp"
 
-#define TIMEOUT 1000
+#define TIMEOUT 10000
 #define MAX_RECV_BUF_SZ INT_MAX
 #define RECV_ATTEMPTS 3
 
@@ -66,7 +66,8 @@ static int receive(int peerchan, char **buf, size_t *buf_size)
         status = maat_read_sz_buf(peerchan, buf, buf_size, &bytes_read,
                                   &eof_enc, TIMEOUT, MAX_RECV_BUF_SZ);
         if(status < 0 && status != -EAGAIN) {
-            dlog(0, "Error reading buffer from channel, status %d\n", status);
+            dlog(0, "Error reading buffer from channel, status %s\n",
+                 strerror(status < 0 ? -status : status));
             return -1;
         } else if (status == -EAGAIN) {
             dlog(2, "Warning: timeout occured before read could complete\n");
@@ -99,11 +100,12 @@ static int write_buf(int out_fd, char *buf, size_t buf_size)
     gsize bytes_written = 0;
     int status;
     dlog(6, "ASP writing buffer to file descriptor (%d)\n", out_fd);
+
     if(((status = maat_write_sz_buf(out_fd, buf, buf_size,
                                     &bytes_written,
                                     TIMEOUT)) != 0) ||
             (bytes_written != buf_size + sizeof(uint32_t))) {
-        dlog(0, "Failed to send size of measurement contract: %s\n", strerror(status < 0 ? -status : status));
+        dlog(0, "Failed to write buffer: %s\n", strerror(status < 0 ? -status : status));
         return -1;
     }
 
@@ -150,14 +152,6 @@ int asp_measure(int argc, char *argv[])
         asp_logerror("Usage: "ASP_NAME" <fd_in> <fd_out>");
         ret_val = -EINVAL;
         goto parse_args_failed;
-    }
-
-    // chan out
-    fd_out = maat_io_channel_new(fd_out);
-    if(fd_out < 0) {
-        dlog(0, "Error: failed to make new io channel for fd_out\n");
-        ret_val = -1;
-        goto io_chan_out_failed;
     }
 
     // Receive buffer from in channel

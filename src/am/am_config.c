@@ -25,7 +25,8 @@
 #include <grp.h>
 #include <arpa/inet.h>
 
-int am_config_add_inet_iface(char *addr, uint16_t port, am_config *cfg)
+int am_config_add_inet_iface(char *addr, uint16_t port, int skip_negotiation,
+                             am_config *cfg)
 {
     struct sockaddr_in serv;
     serv.sin_family = AF_INET;
@@ -45,7 +46,7 @@ int am_config_add_inet_iface(char *addr, uint16_t port, am_config *cfg)
     iface->type			= INET;
     iface->port			= (uint16_t)port;
     iface->address		= strdup(addr);
-    iface->skip_negotiation	= 0;
+    iface->skip_negotiation	= skip_negotiation;
 
     if(iface->address == NULL) {
         dlog(0, "Failed to set listener address to %s\n", addr);
@@ -89,6 +90,8 @@ error:
 
 int load_inet_iface_config(unsigned int xml_version UNUSED, xmlNode *iface, am_config *cfg)
 {
+    int skip_neg                = 0;
+    char *skipstr               = NULL;
     char *port_str		= NULL;
     unsigned long port_ul	= ULONG_MAX;
     char *endptr                = NULL;
@@ -118,7 +121,13 @@ int load_inet_iface_config(unsigned int xml_version UNUSED, xmlNode *iface, am_c
         return -1;
     }
 
-    int rc = am_config_add_inet_iface(addr, (uint16_t)port_ul, cfg);
+    skipstr = xmlGetPropASCII(iface, "skip-negotiation");
+    if(skipstr != NULL && (strcasecmp(skipstr, "true") == 0 ||
+                           strcasecmp(skipstr, "1") == 0)) {
+        skip_neg = 1;
+    }
+
+    int rc = am_config_add_inet_iface(addr, (uint16_t)port_ul, skip_neg, cfg);
     xmlFree(addr);
     return rc;
 }

@@ -207,6 +207,8 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/apbs/userspace_apb
 %{_libexecdir}/maat/apbs/userspace_appraiser_apb
 %{_libexecdir}/maat/apbs/complex_att_apb
+%{_libexecdir}/maat/apbs/layered_att_apb
+%{_libexecdir}/maat/apbs/layered_appraiser_apb
 %{_libexecdir}/maat/apbs/forwarding_apb
 %{_libexecdir}/maat/apbs/no_op_apb
 %{_libexecdir}/maat/apbs/request_passport_apb
@@ -254,8 +256,12 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/asps/serialize_graph_asp
 %{_libexecdir}/maat/asps/compress_asp
 %{_libexecdir}/maat/asps/encrypt_asp
-%{_libexecdir}/maat/asps/create_contract_asp
+%{_libexecdir}/maat/asps/create_measurement_contract_asp
 %{_libexecdir}/maat/asps/send_asp
+%{_libexecdir}/maat/asps/decompress_asp
+%{_libexecdir}/maat/asps/decrypt_asp
+%{_libexecdir}/maat/asps/verify_measurement_contract_asp
+%{_libexecdir}/maat/asps/receive_asp
 %{_libexecdir}/maat/asps/passport_maker_asp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/proc_namespaces_asp
 %{_libexecdir}/maat/asps/kernel_msmt_asp

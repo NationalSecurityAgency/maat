@@ -22,7 +22,7 @@
  * Usage: "ASP_NAME" <graph path> <peerchan> <partner_cert> <certfile> <keyfile> <keypass> <tpmpass> <sign_tpm> <workdir>
  *
  * TODO: this should be deprecated in favor of the individual serialize, compress,
- * encrypt, create_contract, and send ASPs. Also, make a note in apb/contracts.c
+ * encrypt, create_measurement_contract, and send ASPs. Also, make a note in apb/contracts.c
  * that these ASPs are preferred over generate_and_send_back_measurement_contract().
  */
 

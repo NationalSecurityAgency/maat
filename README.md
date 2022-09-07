@@ -62,6 +62,9 @@ there are:
     		      	     	Maat in a multi-realm attestation scenario. 
 		      	     	Introduces Copland and some more complex use cases.
 
+  - layered_tutorial.txt:   A tutorial of attetstation of a platform with multiple
+                            privilege levels, such as a hypervisor enabled machine.
+
 - management-ui/ui-TUTORIAL.md: Basic tutorials for Maat that use a prototype Maat
   		    	     	web interface in lieu of the command line to 
 			     	request attestations from Maat

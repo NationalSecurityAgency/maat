@@ -124,9 +124,9 @@ asp_PROGRAMS    += decrypt_asp
 decrypt_asp_SOURCES = decrypt_asp.c
 endif
 
-if BUILD_create_contract_ASP
-asp_PROGRAMS    += create_contract_asp
-create_contract_asp_SOURCES = create_contract_asp.c
+if BUILD_create_measurement_contract_ASP
+asp_PROGRAMS    += create_measurement_contract_asp
+create_measurement_contract_asp_SOURCES = create_measurement_contract_asp.c
 endif
 
 if BUILD_verify_measurement_contract_ASP
@@ -239,6 +239,12 @@ if BUILD_send_execute_ASP
 asp_PROGRAMS += send_execute_asp
 send_execute_asp_SOURCES = send_execute_asp.c
 send_execute_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS)
+endif
+
+if BUILD_send_execute_tcp_ASP
+asp_PROGRAMS += send_execute_tcp_asp
+send_execute_tcp_asp_SOURCES = send_execute_tcp_asp.c
+send_execute_tcp_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS)
 endif
 
 if BUILD_tlm_ret_ASP

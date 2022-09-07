@@ -137,7 +137,7 @@ START_TEST(test_encryptdecrypt)
 
     free(key_buf);
     fail_if(b64 == NULL, "Error encoding the key buffer");
- 
+
     /* Run the decryption ASP */
     decrypt_argv[0] = b64;
     decrypt_argv[1] = CERT_FILE;

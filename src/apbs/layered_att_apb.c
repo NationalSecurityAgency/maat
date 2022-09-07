@@ -153,15 +153,16 @@ static int invoke_send_execute_tcp(struct asp *execute_asp, char *addr,
 }
 
 static struct asp *select_asp_shim(measurement_graph *g, measurement_type *mtype,
-                           measurement_variable *var, GList *apb_asps,
-                           int *mcount_ptr) {
-   if(mtype == &kernel_measurement_type) {
-       /* This is placed into this shim instead of being placed into the generic
-        * select_asp function because this is not a userspace measurement */
-       return find_asp(apb_asps, "kernel_msmt_asp");
-   } else {
-       return select_asp(g, mtype, var, apb_asps, mcount_ptr); 
-   } 
+                                   measurement_variable *var, GList *apb_asps,
+                                   int *mcount_ptr)
+{
+    if(mtype == &kernel_measurement_type) {
+        /* This is placed into this shim instead of being placed into the generic
+         * select_asp function because this is not a userspace measurement */
+        return find_asp(apb_asps, "kernel_msmt_asp");
+    } else {
+        return select_asp(g, mtype, var, apb_asps, mcount_ptr);
+    }
 }
 
 static int measure_variable_shim(void *ctxt, measurement_variable *var,
@@ -214,7 +215,7 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
         }
 
         graph_path = measurement_graph_get_path(g);
-     	str_of_node_id(n, nstr);
+        str_of_node_id(n, nstr);
 
         asp_argv[0] = graph_path;
         asp_argv[1] = nstr;

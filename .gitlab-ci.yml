@@ -458,7 +458,7 @@ create-rh7-repos:
         stage: deploy
         script:
                 - "cd staging"
-                - "scp -r epel builder@manda-archive:/home/builder/public_html/maat/maat-ci/maat-redhat/"
+                - "scp -r epel builder@manda-archive:/home/builder/public_html/maat/maat-ci/maat-redhat/$CI_COMMIT_REF_SLUG/"
         tags:
                 - redhat
         artifacts:
@@ -529,7 +529,7 @@ system-test-selinux-rh7:
         script:
                 - echo '[maat-redhat]' > maat.repo
                 - echo 'name=Maat RPM Repo' >> maat.repo
-                - echo 'baseurl=http://manda-archive.jhuapl.edu/~builder/maat/maat-ci/maat-redhat/epel/7/x86_64' >> maat.repo
+                - echo "baseurl=http://manda-archive.jhuapl.edu/~builder/maat/maat-ci/maat-redhat/$CI_COMMIT_REF_SLUG/epel/7/x86_64" >> maat.repo
                 - echo 'enabled=1' >> maat.repo
                 - echo 'gpgcheck=0' >> maat.repo
                 - cat maat.repo

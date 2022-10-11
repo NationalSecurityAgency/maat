@@ -638,5 +638,5 @@ collect-saracode:
                         - console.txt
                 expire_in: 2 weeks
                 when: always
-        needs:
+        dependencies:
                 - kickoff-saracode

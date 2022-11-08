@@ -25,6 +25,7 @@
 #include <util/util.h>
 #include <util/xml_util.h>
 #include <util/keyvalue.h>
+#include <util/maat-io.h>
 
 #include <am/selector.h>
 #include <am/copland_selector.c>
@@ -32,6 +33,7 @@
 #include <am/contracts.h>
 
 #include <common/asp.h>
+#include <apb/apb.h>
 
 #define WORK_DIR SRCDIR "/workdirs/workdir-test-contract-asps"
 #define CA_CERT SRCDIR "/credentials/ca.pem"

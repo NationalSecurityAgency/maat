@@ -23,6 +23,7 @@
 #include <common/asp.h>
 #include <common/apb_info.h>
 #include <util/util.h>
+#include <util/maat-io.h>
 #include <util/base64.h>
 #include <apb/apb.h>
 

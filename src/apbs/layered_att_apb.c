@@ -104,7 +104,7 @@ static int get_target_channel_info(dynamic_measurement_request_address *va,
 {
     place_info *info          = NULL;
 
-    dlog(0, "Get target channel version: %s\n", va->attester);
+    dlog(4, "Get target channel information for place : %s\n", va->attester);
 
     if(strcmp(va->attester, "@_0") == 0) {
         info = g_dom_z_info;

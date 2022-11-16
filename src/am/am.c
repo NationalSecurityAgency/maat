@@ -149,10 +149,7 @@ int attester_select_options(struct attestation_manager *self, struct scenario *s
     int rtn;
     struct am_impl *atm = container_of(self, struct am_impl, am);
     scen->current_options = NULL;
-    scen->partner_fingerprint = NULL;
     GList *final;
-
-    scen->partner_fingerprint = get_fingerprint(scen->partner_cert, NULL);
 
     rtn = selector_get_first_conditions(atm->selector, ATTESTER, MODIFY, ACCEPT,
                                         scen, options, selected);

@@ -53,8 +53,6 @@
 	      <info>host</info>
 	      <info>port</info>
 	    </place>
-	    <place id="@_md">
-	    </place>
         <place id="@_t">
 	      <info>host</info>
 	      <info>port</info>

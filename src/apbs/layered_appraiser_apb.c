@@ -263,6 +263,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
                     blob = container_of(data, blob_data, d);
                     ret = userspace_appraise(scen, NULL, blob->buffer, blob->size, report_data_list,
                                              default_report_level, apb_asps, all_apbs);
+                    dlog(4, "Result from userspace measurement %d\n", ret);
                 }
             }
             // Everything else goes to an ASP

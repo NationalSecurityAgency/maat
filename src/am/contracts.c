@@ -553,6 +553,8 @@ int handle_initial_contract(struct attestation_manager *manager,
             dlog(1, "No partner cert in cargs\n");
             goto construct_partner_cert_failed;
         }
+
+        scen->partner_fingerprint = get_fingerprint(scen->partner_cert, NULL);
     } while(0);
 
     // Change contract type to modified
@@ -688,6 +690,8 @@ no_options:
 sign_xml_failed:
 xpath_failed:
 no_subcontract:
+    free(scen->partner_fingerprint);
+    scen->partner_fingerprint = NULL;
     free(scen->partner_cert);
     scen->partner_cert = NULL;
 construct_partner_cert_failed:
@@ -884,6 +888,7 @@ int handle_execute_cache_hit_setup(struct attestation_manager *manager,
 {
     int ret, i;
     xmlDoc *doc = NULL;
+    xmlNode *root = NULL;
     xmlXPathObject *obj = NULL;
     copland_phrase *copl;
 
@@ -891,10 +896,18 @@ int handle_execute_cache_hit_setup(struct attestation_manager *manager,
         dlog(0, "Execute contract too large\n");
         return -1;
     }
+
     doc = xmlReadMemory(scen->contract, (int)scen->size, NULL, NULL, 0);
     if (!doc) {
         dlog(0, "bad xml?\n");
         return -1;
+    }
+
+    root = xmlDocGetRootElement(doc);
+    if (root == NULL) {
+        dlog(1, "Failed to get modified contract bad root element\n");
+        ret = -2;
+        goto out;
     }
 
     /* Save off credentials */
@@ -906,6 +919,15 @@ int handle_execute_cache_hit_setup(struct attestation_manager *manager,
         dlog(1, "Error saving creds\n");
         goto out;
     }
+
+    scen->partner_cert = construct_cert_filename(creddir, root);
+    if (!scen->partner_cert) {
+        dlog(1, "No partner cert in cargs\n");
+        ret = -1;
+        goto out;
+    }
+
+    scen->partner_fingerprint = get_fingerprint(scen->partner_cert, NULL);
 
     /*
      * Get the nonce from the contract
@@ -990,6 +1012,7 @@ int handle_execute_contract(struct attestation_manager *manager,
         ret = -1;
         goto out;
     }
+
     if(strcasecmp(typestr, "execute") != 0) {
         dlog(0, "Not an execute contract?\n");
 

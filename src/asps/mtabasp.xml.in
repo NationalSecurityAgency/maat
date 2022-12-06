@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>mtab</name>
+	<uuid>a721da4a-0ba4-4d35-87db-b9c92da24d48</uuid>
+	<type>File</type>
+	<description>Lists currently mounted file systems</description>
+        <usage>
+        mtab [graph path] [node id]</usage>
+	<inputdescription>
+	This ASP expects a measurement graph path and a node identifier as arguments on the command line. The node identified must have target type file_target_type and address space path_address_space to indicate the target directory. The asp will parse the /etc/mtab file using getmntent() function to record the file system description data.
+
+        This ASP does not consume any input from stdin.</inputdescription>
+        <outputdescription>
+	This ASP produces a mtab_measurement_type containing mount information in /etc/mtab. The ASP then marshals this data and attaches it to the node passed as input. 
+
+        This ASP produces no output on stdout.</outputdescription>
+	<seealso>
+        http://manpages.ubuntu.com/manpages/precise/en/man3/getmntent.3.html
+	</seealso>
+	<example>
+        Running mtabasp with graph configured by graph-shell
+
+           Terminal 1 (use graph-shell to create graph and insert node)
+                $ ./graph-shell
+                > types /opt/maat/lib/libmaat_basetypes.so register_types
+                >  new
+                Graph created at /tmp/maatgraphs8OCgV
+		graph(/tmp/maatgraphdX0UH4)> add-node 3e9 5f5f5f5f /etc/mtab
+                0000000000000000
+
+           Terminal 2 (run asp)
+	   	$ ./mtabasp /tmp/maatgraphdX0UH4 0
+
+           Terminal 1 (use graph-shell to display node contents)
+		graph(/tmp/maatgraphdX0UH4)> node-type 0
+		file 000003e9
+		graph(/tmp/maatgraphdX0UH4)> ls-data 0
+		abcdabcd: mtab
+		graph(/tmp/maatgraphdX0UH4)> cat-data 0 abcdabcd
+			Filesystem Name: /dev/sda1
+				Dir: /
+				Type:ext4
+				Opts: rw,errors=remount-ro
+				Freq: 0
+				PassNo: 0
+
+			Filesystem Name: proc
+				Dir: /proc
+				Type:proc
+				Opts: rw,noexec,nosuid,nodev
+				Freq: 0
+				PassNo: 0
+
+			Filesystem Name: sysfs
+				Dir: /sys
+				Type:sysfs
+				Opts: rw,noexec,nosuid,nodev
+				Freq: 0
+				PassNo: 0
+
+			etc...
+        </example>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/mtabasp</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">GRAPH</value>
+                        <capability target_type="file_target_type" target_magic="1001" target_desc = "An instance of target type, which describes atributes of the target file"  
+				address_type="path_address_space" address_magic="0x5f5f5f5f"  address_desc = "An instance of address type that decribes the file address, for this asp it is a path. This includes file information such as address, device major/minor, file size, node, and full name."
+				    measurement_type="mtab_measurement_type" measurement_magic="0xabcdabcd" measurement_desc="An instance of measurement type that describes the Mount Table Data, including mount points, file system types, and mount options" />
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <selinux><type>mtab_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+	</security_context>
+</asp>

@@ -1,0 +1,266 @@
+Passport Use Maat Tutorial
+*********************************
+
+.. Copyright
+
+   Copyright 2020 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+.. currentmodule:: maat
+
+.. _passport_use_tutorial:
+
+
+Introduction
+============
+
+These instructions give you the steps to set up and perform the second part
+of a multi-realm passport use case  demonstration. The test client requests
+access to another machine's resources and provides its passport to show
+integrity. The passport is appraised to determine access. 
+
+Setup
+======
+
+In order to ensure that a passport exists in the system to be used, follow the 
+directions that are located in the first part of tutorial at 
+:ref:`Passport Creation Tutorial <passport_creation_tutorial>`. 
+
+Passport-Use-Case Demonstration Part 2
+=======================================
+
+Explanation of Demo
+-------------------
+
+This demo is a proof-of-concept, as AM_0 and AM_1 are actually running in the
+same 'realm'. In a real implementation, AM_0, AM_1, and the mongo database can
+all exist on different machines that are able to communicate with each other. 
+
+Here's what will happen in the demo:
+
+```
+1.  The requester sends a request to AM_0 on the 'Appraiser' machine to recieve
+    access to a userspace resource via passport.
+
+    The Copland phrase that the client will request to be executed is the
+    following:
+
+    * @_1(@_1(@_2((USM passport) -> SIG)))
+
+2.  AM_0 contacts AM_1 on the 'Attester' machine and negotiates this
+    measurement.
+
+    The negotiation is over the following phrase:
+
+    @_1(@_2((USM passport) -> SIG))
+         ________________         _____________
+        |                |       |             |
+        |   Appraiser    |       |   Attester  |
+        |         ____   |       |     ____    |
+        | R(1)-->|    |<-|--(2)--|--->|    |   |
+        |        |AM_0|  |       |    |AM_1|   |
+        |        |____|  |       |    |____|   |
+        |________________|       |_____________|
+
+
+3.  Advised by result of negotiation, AM_1 spawns the passport_ret APB to get
+    the requestor's passport, while AM_0 launches the passport_appraiser APB to
+    verify it.
+         ___________         __________
+        | Appraiser |       | Attester |
+        |  ______   |       |  ______  |
+        | |      |  |       | |      | |
+        | | AM_0 |  |       | | AM_1 | |
+        | |______|  |       | |______| |
+        |   |       |       |   |      |
+        |   | (3)   |       |   |(3)   |
+        | [pp_app]  |       | [pp_ret] |
+        |___________|       |__________|
+	
+
+4.  The passport_ret APB forks the passport retriever ASP to connect to the
+    mongo database and retrieve the requester's latest passport and add it as a
+    measurement. 
+         ___________         __________
+        | Appraiser |       | Attester |
+        |  ______   |       |  ______  |
+        | |      |  |       | |      | |
+        | | AM_0 |  |       | | AM_1 | |
+        | |______|  |       | |______| |
+        |   |       |       |   |      |
+        |   |       |       |   |      |
+        | [pp_app]  |       | [pp_ret] |
+	|___________|       |   |      |
+			    |   |(4)   |
+			    | {ret}    |
+			    |__________|
+	
+	
+5.  The passport_ret APB on AM_1 then invokes all of the ASPs required 
+    to sign and send the measurement to AM_0 (these are not all drawn out for 
+    the sake of brevity). Each ASP takes the results of the previous measurement
+    and forwards their result to the next ASP through pipes set up in the APB.
+    The relevant ASPS include the:
+	* Serialize ASP - serializes the measurement buffer which contains the
+	  	    	  passport 
+        * Compress ASP - compresses the serialized measurement buffer
+        * Create Contract ASP - creates the measurement contract which holds the
+	  	 	      	measurement
+        * Encrypt ASP - encrypts the measurement and contract
+        * Send ASP - sends the encrypted buffer to the intended recipient
+
+ 	 ___________         _____________________
+        | Appraiser |       |      Attester       |
+        |  ______   |       |      ___________    |
+        | |      |  |       |     |           |   |
+        | | AM_0 |  |       |     |   AM_1    |   |
+        | |______|  |       |     |___________|   |
+        |   |       |       |              |      |
+        |   |       |       |	        [pp_ret]  |
+        | [pp_app]  |       |             | |     |
+	|___________|       |          (5)| |(5)  |      
+	                    |          .--' '---. |
+                            |          |        | |
+                            |  {asp}<--'--{asp}<' |
+                            |_____________________|
+
+
+6.  The measurement contract containing the passport is forwarded to the
+    passport_appraiser APB.
+
+    At this point, AM_1 plays no further role in the scenario
+	 ___________         __________
+        | Appraiser |       | Attester |
+        |  ______   |       |  ______  |
+        | |      |  |       | |      | |
+        | | AM_0 |  |       | | AM_1 | |
+        | |______|  |       | |______| |
+        |   |       |       |   |      |
+        |   |       |       |   |      |
+        | [pp_app]<------   | [pp_ret] |
+	|___________|   |   |   |      |
+	     		|   |   |(6)   |
+	                '-----{send}   |
+			    |__________|
+			    
+
+7.  The passport_appraiser APB spawned by AM_0 receives the measurement contract
+    from AM_1. The APB reads the passport config file  to set its basic
+    appraiser policy with the following values:
+        * resource measurements that can be accepted
+	* time in seconds the passport is valid after its creation
+	* name of the trusted third party's public certificate in the mongo
+	  database
+    These values can be modified by editing the :ref:`passport-config.txt
+    <src/apbs/datafiles/passport-config.txt>`.
+    
+    The APB parses the passport and checks for the following against the given
+    scenario and values provided in the config file:
+    	* passport target type matches the requester target type
+	* passport target ip matches the requester's ip
+	* resource measurement that is validated in the passport is acceptable
+	* the current time does not exceed the passport's expiration
+	* result of third party's appraisal was not a failure
+	* third party appraiser's signature is trusted
+
+    A passport is able to be used in place of a measurement and attestation
+    because both the appraiser and the attester trust the third party that
+    issued the certificate. The third party's public certificate is retrieved
+    from the mongo database for verification. 
+
+8.  The result of the appraisal is bundled in a response contract by the
+    passport_appraiser APB, which forwards it to the requestor.
+
+    At this point, the scenario is complete. 
+         ______________
+        |   Appraiser  |
+        |     ______   |
+        |    |      |  |
+        |    | AM_0 |  |
+        |    |______|  |
+        |       |      |
+	|       |(7)   |
+    R<------[pp_app]   |
+     (8)|              |
+	|              |
+	|              |
+	|______________|
+
+
+```
+
+Demonstration
+-------
+
+Make sure the mongodb service is running. To add trusted third party appraisers'
+public certificates to the database:
+
+.. code-block:: bash
+
+   cd maat/src/am
+   python3 addCertToDatabase.py \
+   /opt/maat/etc/maat/credentials/trustedThirdParty.pem
+   
+
+:ref:`passport config file<src/apbs/datafiles/passport-config.txt>` defines some
+of the appraiser's policy. This file should be edited for your specific use case
+outside of this demo. The values are set by default as:
+   Resources = packages, hashfiles, processes, full
+   Expiration = 300
+   Cert = trustedThirdParty.pem
+   
+
+For ease of demonstration, it is recommended that you open three terminals, and
+designate them "Attester", "Appraiser", and "Test Client".
+
+In the Appraiser Terminal, run
+
+.. code-block:: bash
+
+   sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr -i 127.0.0.1:2342 \
+   -u /tmp/app.sock -C /opt/maat/etc/maat/minimal-am-config.xml -m COPLAND \
+   -s /opt/maat/share/maat/selector-configurations/passport-selector.xml
+
+
+In the Attester Terminal, run
+
+.. code-block:: bash
+
+   sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr -i 127.0.0.1:2343 \
+   -u /tmp/att.sock -C /opt/maat/etc/maat/minimal-am-config.xml -m COPLAND \
+   -s /opt/maat/share/maat/selector-configurations/passport-selector.xml
+
+
+and in the Test Client Terminal, run
+
+.. code-block:: bash
+
+   /opt/maat/bin/test_client -l localhost -a 2342 -t localhost -p 2343 \
+   -r passport
+
+
+```
+
+You should see movement from each AM corresponding to the expected actions in
+the diagram above. A `<result>PASS</result>` in the test client's terminal
+indicates success.
+
+By default, passports expire in 300 seconds (5 minutes). If you see
+`<result>FAIL<result>`, this is the most likely cause. 
+
+This concludes the second part of the Passport Use Case tutorials.
+To explore how to configure the Maat AM for your specific use case,
+please see the
+:ref:`AM Configuration Guide<configuring_attestation_manager>`.
+

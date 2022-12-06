@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<measurement_specification>
+	<name>GOT/PLT measurement specification</name>
+	<uuid>60742348-e8d5-4443-abf7-3d67317c7dab</uuid>
+	<description>
+	  This is a measurement specification for got/plt measurement
+	</description>
+
+	<!-- The variables listed below are measured according to the instructions
+	     given here. Additional measurement variables are identified by retrieving
+	     a 'feature' of a completed measurement, and are subsequently measured using
+	     the referenced instruction.-->
+	<instructions>
+      <!-- List all processes and measure their GOTs/PLTs for inconcistancies
+            and then gathers system information -->
+	  <instruction type="submeasure" name="list_processes">
+	    <target_type name="process_target_type" magic="0x091D091D" />
+	    <address_type name="unit_address_space" magic="0x50EC50EC"/>
+	    <measurement_type name="process_metadata_measurement_type" magic="3200" />
+	    <action feature="pids" instruction="got_measure"/>
+	  </instruction>
+
+	  <instruction type="simple" name="got_measure">
+            <measurement_type name="blob_measurement_type" magic="0xB10BB10B" />
+	    <target_type      name="process_target_type" magic="0x091D091D" />
+	    <address_type     name="pid_address" magic="0x0F1DF1DF" />
+	  </instruction>
+
+	  <!-- Gather system information -->
+	  <instruction type="simple" name="identify">
+	    <target_type      name="system_target_type" magic="0x57513777"/>
+	    <address_type     name="unit_address_space" magic="0x50EC50EC" />
+	    <measurement_type name="system_measurement_type" magic="5757"/>
+	  </instruction>
+	</instructions>
+
+	<variables>
+	  <!-- Variable to identify the host system -->
+	  <variable instruction="identify">
+	    <address operation="identify">self</address>
+	  </variable>
+
+	  <!-- Variable to enumerate all of the processes running -->
+	  <variable instruction="list_processes">
+	    <address operation="enumerate">all</address>
+	  </variable>
+	</variables>
+</measurement_specification>

@@ -1,0 +1,144 @@
+<!--
+# Copyright 2021 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License
+-->
+
+<!--
+    maat-am-ui.html: Webpage for the Maat Attestation Manager UI.    
+-->
+
+
+<html>
+	<head>
+		<title>Maat Attestation Manager UI</title>
+		<link type= "text/css" rel= "stylesheet" href=
+"static/styles/sequence-diagram.css" />
+		<link type= "text/css" rel= "stylesheet" href=
+"static/styles/sequence-diagram-columns.css" />
+		<style>
+			body {
+				font-family: "Trebuchet MS", sans-serif;
+				background-color: #F8F4F0;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Welcome to Attestation Manager UI</h1>
+		<p>Click "Clear previous measurements".  Then, run a measurement.  Click "Load latest measurement".  Then repeatedly click "Next step" to step through the most recent measurement.</p>
+		
+
+		<div class="sequence-diagram-layout">
+			<div class="header">
+				<div class="entity col-1-2">AM 1</div>
+				<div class="entity col-2-2"></div>
+			</div>
+			<div class="body">
+				<div class="line left-1-2"></div>
+				
+				
+				<div class="group" id="arrows"i>
+				</div>
+				<script>
+					var index = 0;
+					var is_nested = false;
+
+					var gray_left_arrow = "../static/images/arrow-left.png";
+					var green_left_arrow = "../static/images/arrow-left-green.png";
+					var gray_right_arrow = "../static/images/arrow-right.png";
+					var green_right_arrow = "../static/images/arrow-right-green.png";
+					var left_arrow = gray_left_arrow;
+					var right_arrow = gray_right_arrow;
+
+					var gray_note = "secondary-note";
+					var green_note = "note";
+					var note_type = gray_note;
+
+					var gray_text = "#666666";
+					var green_text = "#1F7A1F";
+					var text_color = gray_text;
+		
+					var my_steps = getVar({{steps|tojson}});
+
+					function addStep() {
+						if(my_steps[index][1].includes("Receives request contract")){
+							/*
+							Special case: If it's the first message, keep the original color.
+							*/
+							if(index != 0){
+								is_nested = !is_nested;
+								if(!is_nested){
+									console.log("switching to gray");
+									left_arrow = gray_left_arrow;
+									right_arrow = gray_right_arrow;
+									note_type = gray_note;
+									text_color = gray_text;
+								} else {
+									console.log("switching to green");
+									left_arrow = green_left_arrow;
+									right_arrow = green_right_arrow;
+									note_type = green_note;
+									text_color = green_text;
+								}
+							}
+						}
+						if(my_steps[index][0] == "in"){
+
+							document.getElementById("arrows").innerHTML += "<div class=\"action left-1-2 right-2-2\"><img class=\"arrow-left\" src=\""+left_arrow+"\" alt=\"arrow coming in <--\"><span style='color: "+text_color+";'>"+my_steps[index][1]+"</span></div>";
+						} else if(my_steps[index][0] == "out"){
+							document.getElementById("arrows").innerHTML += "<div class=\"action left-1-2 right-2-2\"><img class=\"arrow-right\" src=\""+right_arrow+"\" alt=\"arrow going out -->\"><span style='color: "+text_color+";'>"+my_steps[index][1]+"</span></div>";
+							
+						} else if(my_steps[index][0] == "self"){
+							
+							document.getElementById("arrows").innerHTML += "<div class=\""+note_type+" col-1-2\">"+my_steps[index][1]+"</div>";
+						}
+
+						if(my_steps[index][1].includes("Response contract is sent")){ 
+							is_nested = !is_nested;
+							if(!is_nested){
+								console.log("switching to gray");
+								left_arrow = gray_left_arrow;
+								right_arrow = gray_right_arrow;
+								note_type = gray_note;
+								text_color = gray_text;
+							} else {
+								console.log("switching to green");
+								left_arrow = green_left_arrow;
+								right_arrow = green_right_arrow;
+								note_type = green_note;
+								text_color = green_text;
+							}
+						}
+						index = index + 1;
+					}
+					function refresh() {
+						location.reload();
+					}
+					function clear_meas() {
+						var xhr = new XMLHttpRequest();
+						xhr.open("PUT", "http://127.0.0.1:5000/clear", true);
+						xhr.setRequestHeader('Content-Type', 'application/json');
+						xhr.send();
+					}
+					function getVar(vars){
+						return vars;
+					}
+				</script>
+			</div>
+		</div>
+        
+		<button onclick="clear_meas()"> Clear previous measurements</button>
+		<button onclick="refresh()"> Load latest measurement</button>
+	        <button onclick="addStep()"> Next step</button>
+	</body>
+</html>

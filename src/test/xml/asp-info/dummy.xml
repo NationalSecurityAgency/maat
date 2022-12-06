@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<!--
+#
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+-->
+<asp>
+	<name>dummy</name>
+	<uuid>96c7e765-b4b3-4808-b0d9-bff7b408dc2a</uuid>
+	<description>Dummy test plugin</description>
+	<aspfile hash="XXXXXX">dummy_asp</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">BLOB</value>
+                        <value name="target">Dummy</value>
+		</satisfier>
+		<satisfier id="1">
+			<value name="type">GRAPH</value>
+			<value name="target">Dummy</value>
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <user>nobody</user>
+	  <group>nogroup</group>
+	  <capabilities>all-pi</capabilities>
+	  <selinux>system_u:system_r:dummy_t:s0</selinux>
+	</security_context>
+	<services>
+		<service id="0">
+			<value name="type">echo</value>
+		</service>
+	</services>
+</asp>

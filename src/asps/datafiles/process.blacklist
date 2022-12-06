@@ -1,0 +1,7 @@
+# 
+# Process blacklist file
+#
+# Process names appearing in this file (one per line) will trigger an 
+# attestation failure if found running on the system under test. 
+# 
+

@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>netstatudp6asp</name>
+	<uuid>41727080-90dc-11e2-9e96-0800200c9a66</uuid>
+	<type>Network</type>
+	<description>listing of /proc/net/udp6</description>
+ 	<usage>
+                netstatudp6asp [graph path] [node id]</usage>
+        <inputdescription>
+        This ASP expects a measurement graph path and a node identifier as arguments on the command line.
+        The node identified must have target type file_target_type and address space path_address_space.
+        The target file /proc/net/udp6 is parsed. The file metadata (stat) is saved in the path_address_space.
+
+        This ASP does not consume any input from stdin</inputdescription>
+        <outputdescription>
+        This ASP produces a list of structures describing a line in the /proc/net/udp6 file, which include the
+        UDP6 Inode, UID, Local/Remote addresses and State.  This list is stored in the measurement type
+        netstat_udp6_measurement type.
+
+        The ASP marshals the netstatudp6_measurement_type measurement contents and attaches the data to the node passed as input.
+
+        This ASP produces no output on stdout.</outputdescription>
+	<seealso>
+	http://manpages.ubuntu.com/manpages/precise/man8/netstat.8.html	
+        netstattcp6asp</seealso>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/netstatudp6asp</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">Blob</value>
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <selinux><type>netstat_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+	</security_context>
+</asp>

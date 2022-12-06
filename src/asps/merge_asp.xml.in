@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>merge_asp</name>
+	<uuid>fcb118d1-6bc0-4078-998d-673bbe21a5aa</uuid>
+	<type>Merging</type>
+	<description>
+        Merge blobs from fd_left and fd_right, optionally with a prefix,
+        seperator, and suffix, and send to fd_out
+    </description>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/merge_asp</aspfile>
+	<measurers>
+	</measurers>
+	<security_context>
+	  <selinux><type>merge_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+  	</security_context>
+	<usage>
+          merge_asp fd_left fd_out fd_right prefix seperator suffix
+	</usage>
+        <inputdescription>
+	  fd_left and fd_right are the file descriptors from which the ASP reads a blob.
+      fd_out is a file descriptor where this ASP writes the blob. Optionally, the output
+      blob may be written with a prefix, suffix, or a seperator between the two blobs,
+      optionally specified with prefix, suffix, and seperator, respectively
+	</inputdescription>
+        <outputdescription>
+	  This ASP writes a blob to fd_out
+	</outputdescription>
+</asp>

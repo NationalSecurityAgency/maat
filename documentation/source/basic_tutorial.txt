@@ -1,0 +1,288 @@
+Basic Maat Tutorial
+*******************
+
+.. Copyright
+
+   Copyright 2020 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+.. currentmodule:: maat
+
+.. _basic_tutorial:
+
+Introduction
+============
+
+These instructions will help you to get started taking userspace measurements. 
+
+Setup
+=====
+
+Follow the :ref:`Quick Start Guide <quick_start>` to install the Maat 
+dependencies and to build Maat.
+
+This tutorial will use the demo credentials provided with Maat.
+*DO NOT USE DEMO CREDENTIALS IN A REAL DEPLOYMENT*
+
+Copy the demo credentials to the appropriate install directory with:
+
+.. code-block:: bash
+
+    cd ~/maat/demo/credentials
+    sudo cp client.key client.pem server.key server.pem \
+         /opt/maat/etc/maat/credentials/
+
+If you are running with Maat's SELinux policy loaded, you will have to reset the
+security context of the files you just copied over with: 
+
+.. code-block:: bash
+   
+    sudo restorecon -r /opt/maat/
+
+You may use different credentials in this tutorial by editing your attestation
+manager configuration as described in the :ref:`Quick Start guide<quick_start>`.
+
+The instructions provided in these demonstrations also assume that Maat is 
+installed in `/opt/maat`, as described in the Quick Start guide. If you
+installed in a different directory, please modify commands accordingly.
+
+Demonstrations
+==============
+
+The Maat attestation manager (AM) is capable of acting as both an appraiser and 
+an attester, depending on the current scenario taking place. In these 
+demonstrations, we will have two instances of the AM running simultaneously on 
+the same machine. A Test Client will trigger one AM to take a specific 
+measurement of the second AM.
+
+For these demos, we will be using the minimal attestation manager (`attestmgr`)
+config file (`minimal-am-config.xml`) to set many of these arguments, and will 
+be passing the remainder via the command line. The attestmgr configuration file 
+used in this demo gives the AM the paths to various components needed for 
+execution, and instructs the AM to use the `userspace-selector.xml` selector 
+policy. This selector policy selects Copland phrases based on the resource 
+passed to the appraiser AM by the requestor. 
+
+These demos use attestation managers listening on ports 2342 and 2343. If 
+you're using the Maat SELinux policy, these ports need to be given the 
+`attestmgr_port_t` type in order for the attestation manager to be able to
+bind to them. If you haven't already done so, add these ports to SELinux 
+management with: 
+
+.. code-block:: bash
+
+    sudo semanage port -a -t attestmgr_port_t -p tcp 2342
+    sudo semanage port -a -t attestmgr_port_t -p tcp 2343
+
+
+Demo 1 - Package Inventory Measurement
+---------------------------------------
+
+For ease of demonstration, it is recommended that you open three terminals, and
+designate them "Attester", "Appraiser", and "Test Client".
+
+In the Appraiser Terminal, run
+
+.. code-block:: bash
+
+    sudo /opt/maat/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock \
+         -C /opt/maat/etc/maat/minimal-am-config.xml
+
+in the Attester Terminal, run
+
+.. code-block:: bash
+
+    sudo /opt/maat/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock \
+         -C /opt/maat/etc/maat/minimal-am-config.xml
+
+and in the Test Client Terminal, run
+
+.. code-block:: bash
+
+    /opt/maat/bin/test_client -l localhost -a 2342 -t localhost -p 2343 \
+         -r packages
+
+This measurement may take a few minutes. During this time, you should see 
+activity in the Attester Terminal as various ASPs take measurements. After the 
+measurement is appraised, the Test Client will receive the result of the 
+attestation, which will be printed to STDOUT in the Test Client Terminal.
+Look for `<result>PASS</result>` near the beginning of the test client output, 
+this means the appraisal passed.
+
+**What just happened?**
+The test client requested the appraiser AM to perform an appraisal of the 
+measurement of the attester AM's resource 'packages'. This triggered the 
+appraiser to consult its selector policy and send an initial contract to the 
+attester. The attester returned a modified contract (also after consulting its 
+selector policy), and the appraiser finally chose a Copland phrase based on the 
+the resource requested by the test client. The selected Copland phrase was
+mapped to an appropriate APB and Measurement Specification, which was then 
+executed. (here, the resource 'packages' resulted in the execution of the 
+userspace APB and the userspace-packages measurement specification). 
+
+See the description of userspace_packages_mspec.xml to learn the internals of 
+how this selection dictated what the userspace APB should measure. At a high 
+level: the measurement specification instructed the userspace APB to,
+
+1. take a 'system' measurement to determine what type of operating system the 
+   target machine is running
+2. take an inventory of all of the software packages installed on the system
+3. take detailed measurement of each of the software packages found in step 2
+
+For (much) more verbose output, set the environment variable 
+`LIBMAAT_LOG_SYSLOG` to `0` for the appraiser and the attester. This will 
+re-direct output to the terminal. During various 
+measurements, you may need to set this variable to see output for the 
+appraiser execution. Example:
+
+.. code-block:: bash
+
+    sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr -i 127.0.0.1:2342 \
+         -u /tmp/app.sock -C /opt/maat/etc/maat/minimal-am-config.xml
+
+The verbosity can be further controlled by the environment variable
+'LIBMAAT_DEBUG_LEVEL'. More verbosity is achieved by increasing this
+value. See maat_environment_variables.txt for more information.
+
+Demo 2 - Appraiser vs. Attester
+-------------------------------
+
+Notice that there is nothing that specifies that the Appraiser AM must be the 
+appraiser and that the Attester AM must be the attester. In fact, they are 
+interchangeable and the same AM can act as either, or even both. The AM that 
+recieves a request takes on the role of Appraiser, and the AM that recieves an 
+initial contract takes on the role of Attester. 
+
+To demonstrate this, keep your AM's running (or restart them with the 
+instructions from demo 1) and run the test client with 
+
+.. code-block:: bash
+
+    /opt/maat/bin/test_client -l localhost -a 2343 -t localhost -p 2342 \
+         -r packages
+
+Notice, the port numbers passed to -a and -p are swapped. The same attestation 
+took place, but the appraiser and the atteser AMs exchanged the roles they had 
+in demo 1. This is because the ports passed to the test client were 
+interchanged, and the test client requested an appraisal from the opposite AM.
+
+To further this point, try running test client with both ports set to `2343`:
+
+.. code-block:: bash
+
+    /opt/maat/bin/test_client -l localhost -a 2343 -t localhost -p 2343 \
+         -r packages
+
+This time only one AM was activated, and it played the role of both the attester
+and the appraiser. 
+
+The rest of the demos will treat the two AMs as the Appraiser and the Attester,
+respectively, just as in the first demo. But keep in mind that this setup is for
+clarity of the demo, not out of necessity.
+
+Demo 3 - Processes Measurement
+------------------------------
+
+The Appraiser and Attester should still be running in their respective 
+terminals. If not, restart them with the commands provided in Demo 1. 
+
+In the Test Client Terminal, run
+
+.. code-block:: bash
+
+    /opt/maat/bin/test_client -l localhost -a 2342 -t localhost -p 2343 \
+         -r processes
+
+Again, the output in the Test Client Terminal is the result of the attestation. 
+If the appraisal passed, you should see `<result>PASS</result>`
+near the beginning of the output.
+
+**What just happened?**
+This time the test client requested a measurement of the attester's resource 
+'processes'. This resulted in the selection of a different Copland phrase and
+the execution of the userspace_apb with the userspace-processes measurement 
+specification. See the description of userspace_processes_mspec.xml to learn 
+what this selection measured. This measurement should take more
+time than the 'packages' measurement described above (ancedotally > 10
+minutes) because the measurement specification used this time instructed the
+userspace APB to do much more:
+
+1. take a 'system' measurement to determine what type of operating system the 
+   target machine is running
+2. take an inventory and gather details of all of the processes running on the 
+   system
+3. gather details on the memory mappings of all of the root-owned processes found
+   in step 2
+4. take a hash of all of the files currently open by root-owned processes found
+   in step 2
+5. take detailed measurement of each of the software packages associated with 
+   files examined in step 3 or 4 
+
+Demo 4
+------
+
+In summary, the test client requests a measurement of a specific resource, the 
+selector policy is consulted, and a Copland phrase is selected (then mapped to 
+an APB-measurement specification pair). The selector policy used in these 
+demonstrations is largely guided by the resource requested by the test client.
+
+The selector policy's other possible resources and the resulting Copland terms
+can be explored by searching for `<match_condition attr="resource"` in 
+userspace-selector.xml. They are also listed here for reference:
+
++-------------+--------------------------------------------+---------------+--------------------------------+
+| Resource    | Copland Phrase                             | APB           | Measurement Specification      |
++-------------+--------------------------------------------+---------------+--------------------------------+
+| packages    | ((USM packages) -> SIG)                    | userspace APB | userspace_packages_mspec.xml   |
++-------------+--------------------------------------------+---------------+--------------------------------+
+| processes   | ((USM processes) -> SIG)                   | userspace APB | userspace_processes_mspec.xml  |
++-------------+--------------------------------------------+---------------+--------------------------------+
+| hashfiles   | ((USM hashfiles) -> SIG)                   | userspace APB | userspace_hashfiles_mspec.xml  |
++-------------+--------------------------------------------+---------------+--------------------------------+
+| mtab        | ((USM mtab) -> SIG)                        | userspace APB | userspace_mtab_mspec.xml       |
++-------------+--------------------------------------------+---------------+--------------------------------+
+| got_measure | ((USM got) -> SIG)                         | userspace APB | got_measure_mspec.xml          |
++-------------+--------------------------------------------+---------------+--------------------------------+
+| hashfile    | ((USM hashfile file) -> SIG):file=/bin/ls" | hashfile APB  | n/a                            |
++-------------+--------------------------------------------+---------------+--------------------------------+
+| userspace   | ((USM full) -> SIG)                        | userspace APB | userspace_measurement_mspec.xml|
++-------------+--------------------------------------------+---------------+--------------------------------+
+
+Notice that the userspace APB is capable of utilizing different
+measurement specifications to fulfill multiple Copland phrases. The hashfile
+APB can only fulfill one Copland phrase, and so it doesn't require a 
+measurement specification to guide its measurement.
+
+That last option is interesting: passing the resource `userspace` will result 
+in the selection of the userspace_measurement_mspec.xml, which is a superset of 
+all of the other measurements listed above. Try it out with:
+
+.. code-block:: bash
+
+    /opt/maat/bin/test_client -l localhost -a 2342 -t localhost -p 2343 \
+         -r userspace
+
+Again, the output in the Test Client terminal is the result of the measurement, 
+and you're looking for `<result>PASS</result>`.
+
+For a more complex demonstration of Maat's usage in a simulated multirealm 
+environment, please continue to the 
+:ref:`Multirealm Tutorial<multirealm_tutorial>`. Alternatively, please see the
+:ref:`AM Configuration Guide<configuring_attestation_manager>` to explore how to
+configure the Maat AM for your particular use case. 
+
+If you would like to set up a web-based UI for Maat instead of interacting with
+the Maat AM via the command line, please follow the instructions at 
+`:ref:`UI Tutorial<ui_tutorial>`.
+

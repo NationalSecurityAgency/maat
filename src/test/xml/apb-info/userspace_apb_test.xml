@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<apb>
+	<name>userspace</name>
+	<desc>Userspace measurement APB</desc>
+	<uuid>832431de-6cbb-45ab-8c62-3849449dddee</uuid>
+	<file hash="XXXXX">/opt/maat/lib/maat/apbs/userspace_apb</file>
+	<input_type>????</input_type>
+	<output_type>????</output_type>
+	<asps ordered="False">
+	  <asp uuid="a721da4a-0ba4-4d35-87db-b9c92da24d48">mtab</asp>
+	</asps>
+    <copland>
+      <phrase copland="((USM mtab) -> SIG)">test mtab measurement</phrase>
+      <spec uuid="55042348-e8d5-4443-abf7-3d67317c7ddd">mtab mspec</spec>
+    </copland>
+    <copland>
+        <phrase copland="dummy">test dummy measurement</phrase>
+        <spec uuid="55042348-e8d5-4443-abf7-3d67317c7ddd">mtab mspec</spec>
+    </copland>
+    <copland>
+        <phrase copland="proc_open_files">test process open files measurement</phrase>
+        <spec uuid="55042348-e8d5-4443-abf7-3d67317c7ddd">mtab mspec</spec>
+    </copland>
+    <copland>
+        <phrase copland="((USM full) -> SIG)">test full userspace measurement</phrase>
+        <spec uuid="55042348-e8d5-4443-abf7-3d67317c7ddd">mtab mspec</spec>
+    </copland>
+    <copland>
+        <phrase copland="(USM test)">test measurment</phrase>
+        <spec uuid="55042348-e8d5-4443-abf7-3d67317c7ddd">mtab mspec</spec>
+        <arguments>
+            <arg name="file">
+                 <type>string</type>
+            </arg>
+        </arguments>
+    </copland>
+	<security_context>
+	  <selinux><type>userspace_apb_t</type></selinux>
+	</security_context>
+</apb>

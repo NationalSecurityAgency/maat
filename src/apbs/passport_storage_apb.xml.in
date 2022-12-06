@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<apb>
+	<name>passport_storage</name>
+	<desc>Stores a passport in a database</desc>
+	<uuid>bb0aab4d-0543-42f8-aa8a-74861d3c012e</uuid>
+	<file hash="XXXXX">${APB_INSTALL_DIR}/passport_storage_apb</file>
+	<input_type>????</input_type>
+	<output_type>????</output_type>
+	<asps ordered="True">
+	  <asp uuid="a3f7aeb8-38d7-407e-b328-3e00bd5ccd1e">passport_storer_asp</asp>
+	</asps>
+	<copland>
+          <phrase copland="(USM storepass)">store passport</phrase>
+	</copland>
+	<security_context>
+	  <selinux><type>passport_storage_apb_t</type></selinux>
+	</security_context>
+</apb>

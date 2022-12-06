@@ -1,0 +1,102 @@
+Understanding Maat Architecture
+********************************
+
+.. Copyright
+
+   Copyright 2020 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+
+.. currentmodule:: maat
+
+Purpose and Intended Audience
+==============================
+
+The purpose of this section is to present a top-level view of the architecture of the Maat software,
+showing how the Maat architecture is used to create a trust decision.
+
+The intended user of the section is anyone needing to understand the nuts and bolts of Maat as well as any system administrator that needs to fine tune Maat to function in their system.
+
+.. raw:: latex
+
+    \clearpage
+
+Architecture
+==========================
+
+Maat is comprised of the modules shown in the following figure. The modules are introduced below and defined in detail throughout this section.
+
+.. figure:: images/basic-arch.jpg
+   :align:  center
+
+**Attestation Request** - Message to Maat containing a request for attestation.
+
+**Selection Policy/Config** - XML file that drives the Attestation Manager negotiation process.
+
+**Attestation Manager (AM)** - Top-level module that is responsible for awaiting connections, negotiating the attestation protocol to be used, and specifying the measurement evidence to be collected.
+
+**Attestation Protocol Block (APB)** - Responsible for understanding the requirements of a particular attestation scenario and executing the appropriate ASPs to satisfy the scenario.
+
+**Measurement/Appraisal Specification** - XML file that defines requirements for measurement/appraisal.
+
+**Attestation Service Provider (ASP)** - Basic functional unit that performs a specific, discrete function in evidence collection tasks.
+
+Requester
+==========
+
+The requester represents the software that wants to use Maat to perform an attestation.
+
+The requester will generate a :ref:`request contract <RequestContract>` and send it to the Maat Appraiser.
+
+The requester will then wait for a :ref:`response contract <ResponseContract>` from the Maat Appraiser. The response contract will include the results of the attestation.
+
+For more information see :ref:`Appraisal and Reporting <appraisalandreporting>`
+
+
+.. include:: am_desc.txt
+
+.. raw:: latex
+
+    \clearpage
+
+Attestation Protocol Block (APB)
+================================
+
+.. include:: apb_info.txt
+
+
+.. raw:: latex
+
+   \clearpage
+
+Attestation Service Providers (ASP)
+===================================
+
+.. include:: aspstable.txt
+
+
+.. raw:: latex
+
+   \clearpage
+
+Measurement Types
+=================
+
+An instance of measurement_type describes how to measure something. This is used both as part of a measurement directive indicating “measure variables of target_type T with measurement type M” and to describe how we actually measured something “I measured variable V with measurement type M”
+
+For some target_types we may only have one meaningful measurement_type, but for others (e.g., files) we may have multiple (e.g., hash, fields/lines decomposition).
+
+
+.. include:: types_info.txt
+

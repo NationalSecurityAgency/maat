@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>hashfileservice</name>
+	<uuid>dff44141-9d3a-4cfe-8a30-2c072bb77025</uuid>
+	<type>File</type>
+	<description>SHA1 hash of target file</description>
+	<usage>
+        hashfileservice [graph path] [node id]</usage>
+	<inputdescription>
+        This ASP expects a measurement graph path and a node identifier as arguments on the command line.
+        The node identified must have target type file_target_type and address space path_address_space
+        to represent the location of the target file that needs to be hashed. 
+
+        This ASP does not consume any input from stdin.</inputdescription>
+	<outputdescription>
+        This ASP produces a sha1hash_measurement_type measurement containing the hash of the file,
+        and attaches it to the node passed as input.
+
+        This ASP produces no output on stdout.</outputdescription>
+	<seealso>
+        sha1</seealso>
+	<example>
+	Running hashfileservice with graph configured by graph-shell
+
+           Terminal 1 (use graph-shell to create graph and insert node)
+	   	> ./graph-shell
+		> types /opt/maat/lib/libmaat_basetypes.so register_types
+		>  new
+		Graph created at /tmp/maatgraphO64qo5
+		>  add-node 3e9 5f5f5f5f /bin/ls
+		0000000000000000
+
+	   Terminal 2 (run asp)
+	   	> ./hashfileserviceasp /tmp/maatgraphO64qo5 0 
+
+	   Terminal 1 (use graph-shell to display node contents)
+	   	> node-type 0
+		file 000003e9
+		> ls-data 0
+		00000c1c: sha1hashtype
+		> cat-data 0 c1c
+		C664BF0DF003AF91573A57128CE022EFBAAE6E0D </example>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/hashfileserviceasp</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">HASHFILE</value>
+                        <capability target_type="file_target_type" target_magic="1001" target_desc = "An instace of target type, which describes the attributes of the target file" 
+				address_type="path_address_space" address_magic="0x5F5F5F5F" address_desc = "An instance of address type that describes the fiel adderss, for this asp  it is the path. This includes file information such as address, device major/minor, fiel size, node, and file name."
+				measurement_type="sha1hash_measurement_type" measurement_magic="3100" measurement_desc = "SHA1 hash of file contents"/>
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <selinux><type>hash_file_service_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+	</security_context>
+</asp>

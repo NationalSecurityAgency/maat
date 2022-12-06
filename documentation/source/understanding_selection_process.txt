@@ -1,0 +1,152 @@
+Understanding Selection Process
+********************************
+
+.. Copyright
+
+   Copyright 2020 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+.. currentmodule:: maat
+
+.. _understandSelPrc:
+
+.. |cp| raw:: latex
+
+   \clearpage
+
+Purpose and Intended Audience
+==============================
+
+The purpose of the Selection Process section is to illustrate the roles of attestation, show how the attester and appraiser communicate, define the selector configuration, and detail the selection process.
+
+The intended user of the section is anyone needing to understand the nuts and bolts of Maat as well as any system administrator that will need to fine tune Maat to function in their system.
+
+Two Roles of Attestation
+=========================
+
+The heart of Maat is the attestation manager (AM) dispatching components similar to init.d. The attestation manager provides a front door for the M&A
+architecture.
+
+During execution, the AM can take on the role of either the attester or the appraiser. For the purposes of the current configuration of the selection policy, the AM initiating a negotiation for measurement is
+referred to as the Appraiser, and the AM responding to the Appraiser is known as the Attester. 
+
+In the simplest use case, the Appraiser requests measurements to be made by the Attester. The Appraiser and Attester then negotiate over the specific measurement(s) to be taken. Once an agreement is reached,
+the Attester executes the chosen measurement(s) and returns the result to the Appraiser. The Appraiser then verifies the measurements for accuracy.
+
+With the flexibility provided by Copland, the names 'Attester' and 'Appraiser' become slight misnomers. Using Copland, the 'Attesting' machine could request measurements of the 'Appraising' machine before
+agreeing to provide details of its measurement (see the 'Mutual Attestation' use case). The negotiation process and selection policy is under active re-architecting with the integration of Copland and may be 
+modified to reflect more accurate naming in the near future. 
+
+
+|cp| 
+
+Attester/Appraiser Communications
+=================================
+
+The previous sections discussed the architecture of the platform. The following figure illustrates how the components of Maat talk to components of another instance of Maat.
+
+.. figure:: images/attester_and_appraiser.jpg
+   :scale:  60
+   :align:  center
+
+The Attester and the Appraiser platforms will negotiate measurement through their domain's Attestation Manager (AM). An Attestation Protocol Block (APB) is forked by each AM to handle their part(s) of the 
+Attestation/Appraisal, and evidence is sent from Attesting APBs to Appraising APBs for evaluation. Attestation Service Providers (ASPs) perform the work for the APB, and will only communicate directly to the
+APB that created them or other ASPs running in the same domain.
+
+
+|cp| 
+
+.. _AppraisalandReporting:
+
+Appraisal and Reporting
+------------------------
+
+While all attestation scenarios likely require a final pass/fail decision, some may also require reporting of some post-processed form of (a subset of) the measurement evidence. A few notable use-cases on this spectrum are:
+
+  * A strict access control service that requires only a thumbs up/thumbs down.
+
+  * An access control service with remediation capabilities that requires no additional data if appraisal succeeds, but needs information on what aspects failed to construct a remediation strategy.
+
+  * A monitoring service that stores detailed attestation results in a database for upstream querying/processing.
+
+To satisfy these requirements, the Attestation Response Contract includes a list of key/value pairs that the appraisal APB can use to report arbitrary evidence back to the client that requested the attestation. We use key/value pairs in a graph encoding of the measurement graph to provide a lightweight interface. We expect that the values in this list may be arbitrary json documents or similar.
+
+Example
++++++++
+
+Requester generates a :ref:`request contract <RequestContract>` and sends to Maat for appraisal.
+
+**sample request contract**
+
+.. code-block:: xml
+
+  <?xml version="1.0"?>
+  <contract version="1.0" type="request">
+    <target type="host-port">127.0.0.1<host>127.0.0.1</host><port>2343</port></target>
+    <resource>debug resource</resource>
+  </contract>
+
+Requester will then wait for the :ref:`response contract <ResponseContract>` from Maat reporting the final status of the attestation.
+
+**sample response contract**
+
+.. code-block:: xml 
+
+  <?xml version="1.0"?>
+  <contract version="1.0" type="response">
+    <target type="host-port">127.0.0.1</target>
+    <resource>debug resource</resource>
+    <result>PASS</result>
+    ...
+  </contract>
+
+Selector Configuration
+=======================
+
+The Selector configuration defines the sequence of rules in a given attestation scenario.
+
+Inputs to selection
+        * Role
+        * Identity
+        * Scenario
+
+For a tutorial on modifying the selector configuration, go to
+:ref:`Modifying Selector Config <selCnfTut>`
+
+|cp| 
+
+Maat Selection Process
+=======================
+
+The Maat Selection Process is shown in the figure below.
+
+.. figure:: images/maat_selection_process.jpg
+   :scale:  60
+   :align:  center
+
+   Selection Process
+
+The Maat selection process is a 6 step process between the Appraiser and Attester Platforms.
+
+1. The Appraiser Platform sends specifications of measurements that it would like the Attester to execute.
+2. The Attester Platform receives these specifications and determines which subset of the measurements requested it is willing and able to complete.
+3. The Attester Platform returns its selected subset of measurements to the Appraiser.
+4. Appraiser Platform receives the selection from the Attester and determines which measurements should be taken.
+5. Appraiser Platform sends a measurement request reflecting its determination to the Attester.
+6. Attester Platform performs measurement(s) and returns the measurement results to the Appraiser Platform.
+
+At any point, negotiation can fail if either party does not accept the other's selections for the current scenario.
+Each AM uses its selection policy to determine acceptable measurements for the current
+scenario and stage of negotiation. 
+

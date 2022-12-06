@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>hashservice</name>
+	<uuid>dff44141-9d3a-4cfe-8a30-2c072bb33025</uuid>
+	<type>File</type>
+	<description>SHA1 Hash service</description>
+	<usage>
+        hashservice [graph path] [node id]</usage>
+        <inputdescription>
+        This ASP expects a measurement graph path and a node identifier as arguments on the command line.
+        The node identified must have target type file_target_type and address space path_address_space
+        to hold the hash measurement of the asp. 
+
+        This ASP does not consume any input from stdin.</inputdescription>
+        <outputdescription>
+        This ASP produces a sha1hash_measurement_type measurement containing the hash of the data passed into the asp,
+        and attaches it to the node passed as input.
+
+        This ASP produces no output on stdout.</outputdescription>
+        <seealso>
+        sha1</seealso>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/hashserviceasp</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">HASH</value>
+                        <capability target_type="file_target_type" target_magic="1001" 
+				    address_type="path_address_space" address_magic="0x5F5F5F5F" 
+				    measurement_type="sha1hash_measurement_type" measurement_magic="3100" />
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <selinux><type>hash_service_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+	</security_context>
+</asp>

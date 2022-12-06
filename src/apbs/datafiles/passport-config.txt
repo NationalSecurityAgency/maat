@@ -1,0 +1,18 @@
+#
+# Passport Config file
+#
+# Config details appearing in this file (one per line)
+# can be modified to appraise a passport 
+#
+# Resources can contain any userspace measurement. If nothing is provided, all userspace measurements are accepted
+#   Multiple resources can be given and should be seperated by comma
+# Cert is the name of the trusted third party appraiser's public CA in mongodb
+#   Multiple certificate names can be given and should be seperated by comma
+# Expiration is time in seconds. If nothing is provided, the passport's expiration period is used
+#
+
+Resources = packages, hashfiles, processes, full
+Cert = trustedThirdParty.pem
+Expiration = 300
+
+#

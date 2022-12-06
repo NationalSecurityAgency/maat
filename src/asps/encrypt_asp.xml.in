@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>encrypt_asp</name>
+	<uuid>19e44fd6-b752-431a-94d9-6f1a88495a68</uuid>
+	<type>Encrypting</type>
+	<description>Encrypt Blob from fd_in, send to fd_out</description>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/encrypt_asp</aspfile>
+	<measurers>
+	</measurers>
+	<security_context>
+	  <selinux><type>encrypt_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+  	</security_context>
+	<usage>
+          encrypt_asp fd_in fd_out partner_cert
+	</usage>
+        <inputdescription>
+	  fd_in is a file descriptor from which this ASP will read the blob to
+	  encrypt
+	  fd_out is a file descriptor to which this ASP will write the resulting
+	  encrypted blob
+	  partner_cert is the peer's certificate, with which this ASP will
+	  encrypt the key	  
+	</inputdescription>
+        <outputdescription>
+	  An encrypted blob is written to fd_out, followed by the encrypted key.
+	</outputdescription>
+</asp>

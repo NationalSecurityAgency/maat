@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>send_request_asp</name>
+	<uuid>5b2ec00a-ca8a-4215-8a5f-4782599c6df0</uuid>
+	<type>Request</type>
+	<description>
+          Constructs and sends a measurement request contract for the passed parties
+	  and resource.
+    </description>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/send_request_asp</aspfile>
+	<measurers>
+	</measurers>
+	<security_context>
+	  <selinux><type>send_request_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+  	</security_context>
+	<usage>
+          send_request_asp infd[UNUSED] outfd app_addr app_port att_addr att_port resource nonce
+	</usage>
+        <inputdescription>
+	  infd is not used. outfd is the file descriptor on which the results of the measurement
+      should be written. app_addr and app_port are the address and port of the machine
+      that should be responsible for appraising the measurement. att_addr and att_port are the
+      address and port of the attesting machine. The resource is the measurement to be taken. 
+      The nonce is the string that represents the freshness of the measurement.
+	</inputdescription>
+        <outputdescription>
+	  This ASP writes the result contract received from the appraiser to outfd.
+	</outputdescription>
+</asp>

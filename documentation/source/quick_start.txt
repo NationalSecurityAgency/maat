@@ -1,0 +1,325 @@
+Quick Start: Preparing Environment, Building & Configuration
+************************************************************
+
+.. Copyright
+
+   Copyright 2020 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+.. currentmodule:: maat
+
+.. _quick_start:
+
+.. |sngCol| raw:: html
+
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+.. |cp| raw:: latex
+
+   \clearpage
+
+Purpose and Intended Audience
+==============================
+This Quick Start guide will provide a new user with all the information they
+need to prepare a system for Maat, build the Maat software, and run a
+simplified demo with test client, attester, and appraiser platforms.
+
+The intended audience for this section is a system administrator who wants to
+get Maat up and running to integrate into their network. 
+
+Dependencies
+============
+This document describes how to build and install Maat from source.
+Maat can also produce binary DEB and RPM packages.
+
+For Fedora and CentOS machines, you may need to enable the CentOS Plus and EPEL
+repos.
+
+Maat is a system daemon written in C, with runtime requirements on the GLib 
+library and libxml2. However, some optional parts of Maat require other 
+libraries and other languages.  These are summarized in the table below and can
+be installed with the following commands.
+
+For Ubuntu Machines: 
+
+.. code-block:: bash
+
+   sudo apt install build-essential autoconf automake libtool check    \
+        libglib2.0-dev libxml2-dev libssl-dev uuid-dev libcap-dev make \
+        libelf-dev libjson-c-dev 
+
+For CentOS Machines: 
+
+.. code-block:: bash
+   
+   sudo yum install autoconf automake libtool check-devel glib2-devel   \
+        libxml2-devel openssl-devel libuuid-devel libcap-devel make     \
+        elfutils-devel json-c-devel selinux-policy-devel \
+        libselinux-devel 
+
+
+
++----------------------------+----------------------------+
+|  Ubuntu                    | Fedora/CentOS              |
++============================+============================+
+| autoconf                   | autoconf                   |
++----------------------------+----------------------------+
+| automake                   | automake                   |
++----------------------------+----------------------------+
+| libtool                    | libtool                    |
++----------------------------+----------------------------+
+| check                      | check-devel                |
++----------------------------+----------------------------+
+| libglib2.0-dev             | glib2-devel                |
++----------------------------+----------------------------+
+| libxml2-dev                | libxml2-devel              |
++----------------------------+----------------------------+
+| libssl-dev                 | openssl-devel              |
++----------------------------+----------------------------+
+| uuid-dev                   | libuuid-devel              |
++----------------------------+----------------------------+
+| libcap-dev                 | libcap-devel               |
++----------------------------+----------------------------+
+| make                       | make                       |
++----------------------------+----------------------------+
+| libelf-dev                 | elfutils-devel             |
++----------------------------+----------------------------+
+| libjson-c-dev              | json-c-devel               |
++----------------------------+----------------------------+
+| build-essential            | selinux-policy-devel       |
++----------------------------+----------------------------+
+|                            | libselinux-devel           |
++----------------------------+----------------------------+
+
+
+To support building the docs (the `make docs` target), you should also install
+the dependencies summarized in the commands below.
+Building docs the is not necessary
+to complete the rest of the Quick Start guide or the tutorials.
+
+For Ubuntu Machines: 
+
+.. code-block:: bash
+
+   sudo apt install latexmk python3-cloud-sptheme python3-breathe \
+        python3-sphinx texlive-latex-extra python3-recommonmark
+
+For CentOS Machines: as of this writing the python3 versions of the 
+cloud-sptheme, breathe, and sphinx packages available from the python3 package
+manager, pip3, provide a more stable build of the Maat documentation compared to
+the versions present in the CentOS repositories. Follow the instructions below to
+install the pip3 package manager and remove any versions of these packages that 
+may already be on your system, then install all documentation dependencies.
+
+.. code-block:: bash
+
+   sudo yum install epel-release
+   sudo yum install python3-pip
+   sudo yum remove python3-cloud-sptheme python3-breathe \
+        python36-breathe python3-sphinx python36-sphinx
+   sudo yum install latexmk doxygen \
+        texlive-{courier,texconfig,helvetic,times,ec,cm,fncychap,fancybox} \
+        texlive-{fancyhdr,titlesec,framed,multirow,parskip,pdftex-def}     \
+        texlive-{threeparttable,wrapfig,mdwtools,misc,makeindex,dvips,cmap}
+   pip3 install --user cloud-sptheme==1.8.0 breathe==4.7.3 sphinx==1.6.7 \
+        recommonmark
+     
+|cp|
+
+Building
+========
+
+The Maat framework consists of two components: the core library 'libmaat' and the
+daemon itself with its measurement ASPs and APBs. Both parts are distributed 
+together as a single source repository and are built using a single invocation of
+the standard GNU autotools toolchain.
+
+The default compilation of the Maat framework includes a SELinux policy. If you 
+are using a system without SELinux capability (e.g., Ubuntu, as of this writing),
+you can disable compilation of the SELinux policy by compiling with 
+`--disable-selinux` instead of the flag `--disable-selinux-libdir-mapping` shown 
+in the commands below. 
+
+.. note::
+
+   We recommend using SELinux whenever possible.
+   Please refer to the :ref:`security model description<security_model>`
+   for more information on the added security
+   provided to Maat by SELinux access controls.
+
+The following instructions install the Maat framework into the '/opt/maat' 
+directory. You can choose a different install prefix if you wish via the 
+`--prefix` command.
+
+`--disable-selinux-libdir-mapping` is necessary to tell SELinux to use our 
+user-defined install directory when generating SELinux file contexts of ASPs and 
+APBs (as opposed to the default `/usr/lib/`).
+
+Clone the Maat repo, then run
+
+.. code-block:: bash
+
+    cd maat
+    autoreconf -i
+    ./configure --prefix=/opt/maat --disable-selinux-libdir-mapping
+    make
+    sudo make install
+
+If you have SELinux capability in your environment, install the Maat SELinux 
+policy, reset the security context of Maat's installed files, and add the default
+AM port to SELinux management with:
+
+.. code-block:: bash
+
+    sudo semodule --install selinux/maat.pp
+    sudo restorecon -r /opt/maat/
+    sudo semanage port -a -t attestmgr_port_t -p tcp 2342
+
+The AM can be passed a number of arguments for configuration. To see all options 
+for the AM and test client respectively, run:
+
+.. code-block:: bash
+
+    /opt/maat/bin/attestmgr
+
+and 
+
+.. code-block:: bash
+
+    /opt/maat/bin/test_client	
+
+The next step is to configure your Attestation Manager for your specific use
+case. The Configuration section that follows will get you started with creating
+credentials for your AM. If you would rather skip to a demonstration of taking
+measurements with Maat, please continue to the
+:ref:`Basic Tutorial <basic_tutorial>`.
+
+Maat also has a unit test suite built with the `check` unit test framework, 
+however it is currently incompatible with the SELinux policy in Maat. In order 
+to execute the Maat unit tests on your system, re-configure and execute the 
+unit tests with the commands : 
+
+.. code-block:: bash
+
+   cd maat/
+   ./configure --prefix=/opt/maat --disable-selinux --enable-tests
+   make check
+
+
+Configuration
+=============
+
+Once you have installed the Maat package,
+you must configure the attestation manager.
+The first step is to install or generate the keys your
+attestation manager will use to sign and encrypt contracts. 
+
+
+Using the Demonstration Credentials
+------------------------------------
+
+The ``demo/credentials`` directory of this repository contains demonstration
+credentials that may be used to run through the tutorials provided in 
+the :ref:`Basic Tutorial <basic_tutorial>`,
+:ref:`Multirealm Tutorial <multirealm_tutorial>`,
+:ref:`Passport Creation Tutorial <passport_creation_tutorial>`,
+and :ref:`Passport Use Tutorial <passport_use_tutorial>`.
+**DO NOT USE THESE CREDENTIALS IN A REAL DEPLOYMENT.**
+
+Note: there is no fundamental difference between the client and server keys, 
+both certificates are signed by the same CA and can be used interchangeably. In 
+fact the same key and certificate can be used for both sides of the attestation,
+but it is more realistic to use separate ones.
+
+Creating New Credentials
+========================
+
+This is a quick guide to generating credentials using OpenSSL. Feel free to use 
+TinyCA or any other mechanism you'd like to generate your credential files.
+
+Create a Self-Signed Certificate Authority (CA)
+-----------------------------------------------
+
+.. code-block:: bash
+
+    openssl genrsa -out myCA.key 2048
+
+    openssl req -x509 -new -nodes -key myCA.key \
+            -days 1024 -out myCA.pem
+    
+Create a keypair for the appraiser
+----------------------------------
+
+.. code-block:: bash
+
+    openssl genrsa -out appraiser.key 2048
+
+    openssl req -new -key appraiser.key -out appraiser.csr
+
+    openssl x509 -req -in appraiser.csr -CA myCA.pem -CAkey \
+            ./myCA.key -CAcreateserial -out appraiser.pem \
+            -days 365
+
+(Optional) Set a password for the private key file
+--------------------------------------------------
+
+.. code-block:: bash
+
+    openssl rsa -des3 -in appraiser.key -out appraiser.key
+
+Copy the CA certificate, appraiser key, and appraiser certificate to your
+appraiser (you can delete them from the CA afterwards). Make another pair for
+your trusted third party appraiser. 
+
+Create a keypair for the attester
+---------------------------------
+
+.. code-block:: bash
+
+    openssl genrsa -out attester.key 2048
+
+    openssl req -new -key attester.key -out attester.csr
+
+    openssl x509 -req -in attester.csr -CA myCA.pem -CAkey \
+            ./myCA.key -CAcreateserial -out attester.pem   \
+            -days 365
+
+(Optional) Set a password for the private key file
+--------------------------------------------------
+
+.. code-block:: bash
+
+    openssl rsa -des3 -in attester.key -out attester.key
+
+Using the new credentials
+-------------------------
+
+When launching attestmgr, pass the paths to the CA certificate, private key, and 
+local certificate using the -a, -f, and -k flags respectively.
+If you set a password for the attester or appraiser key,
+then make sure that the password is added to
+the attestation manager configuration file you are using. If you are using the 
+Maat SELinux policy, you will also need to set the types for your certificate(s) 
+and key(s) to the correct SELinux types to allow the AM to use them (the relevant
+types are `maat_certificate_t`, and `maat_private_key_t`).
+
+Once you have your certificates in place, initial configuration of Maat is 
+complete. To run through a tutorial of basic Maat usage, please continue to the
+:ref:`Basic Tutorial <basic_tutorial>`.
+
+References
+==========
+
+| CAcert
+|    http://www.cacert.org/

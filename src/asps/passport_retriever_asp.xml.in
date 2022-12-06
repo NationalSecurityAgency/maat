@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>passport_retriever_asp</name>
+	<uuid>62ed15b5-529b-4915-be4c-0dc30da554fc</uuid>
+	<type>File</type>
+	<usage>passport_retriever_asp [graph path] [node id]</usage>
+	<description>
+	  The ASP retrieves the most recent passport inserted into the mongo database.
+	  It then adds the passport as a measurement to the graph
+	</description>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/passport_retriever_asp</aspfile>
+	<measurers></measurers>
+	<security_context>
+	  <selinux><type>passport_retriever_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+	</security_context>
+</asp>

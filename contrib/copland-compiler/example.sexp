@@ -1,0 +1,32 @@
+(BRNCH SEQ
+       ((split  ((cmd "./split.native") (args ((SArg "--left-none") (SArg "--right-none") ToLeft ToRight))))
+	(left (LIN CONC
+		   ((first (PRIM ((cmd "./asps/runtime_meas.asp") (target "self") (args ()))))
+		    (second (BRNCH CONC
+				   ((split ((cmd "./split.native")
+					    (args ((SArg "--left-all") (SArg "--right-all")
+						   ToLeft ToRight))))
+				    (left  (PRIM ((cmd "./asps/cat.asp") (target "self") (args ()))))
+				    (right (PRIM ((cmd "./asps/hash.asp") (target "self") (args ()))))
+				    (merge ((cmd "./merge.native")
+					    (args ((MArg "--prefix")    (MArg "<<<<< runtime_meas | bowtie(cat,hash)\n")
+						   (MArg "--separator") (MArg "===== runtime_meas | bowtie(cat,hash)\n")
+						   (MArg "--suffix")    (MArg ">>>>> runtime_meas | bowtie(cat,hash)\n")
+						   FromLeft FromRight))))))))))
+	(right (LIN CONC
+		    ((first (PRIM ((cmd "./asps/usm.asp")  (target "self") (args ()))))
+		     (second (BRNCH CONC
+				    ((split ((cmd "./split.native")
+					     (args ((SArg "--left-all") (SArg "--right-all")
+						    ToLeft ToRight))))
+				     (left  (PRIM ((cmd "./asps/cat.asp") (target "self") (args ()))))
+				     (right (PRIM ((cmd "./asps/hash.asp") (target "self") (args ()))))
+				     (merge ((cmd "./merge.native")
+					     (args ((MArg "--prefix")    (MArg "<<<<< usm | bowtie(cat,hash)\n")
+						    (MArg "--separator") (MArg "===== usm | bowtie(cat,hash) ---\n")
+						    (MArg "--suffix")    (MArg ">>>>> usm | bowtie(cat,hash)\n")
+						    FromLeft FromRight))))))))))
+	(merge  ((cmd "./merge.native") (args ((MArg "--prefix")    (MArg ">>>>> semic(runtime_meas ..., usm ...)\n")
+					       (MArg "--separator") (MArg "===== semic(runtime_meas ..., usm ...)\n")
+					       (MArg "--suffix")    (MArg ">>>>> semic(runtime_meas ..., usm ...)\n")
+					       FromLeft FromRight))))))

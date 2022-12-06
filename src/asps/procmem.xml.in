@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>procmem</name>
+	<uuid>726B1964-1145-4F73-A6BC-DF17BBDEFF8E</uuid>
+	<type>Process</type>
+	<description>Reads a range of memory from a running process and produces a sha256 hash of its contents</description>
+	<usage> 
+	procmem_asp [graph path] [node id]</usage>
+	<inputdescription>
+	This ASP expects a measurement graph path and a node identifier as arguments on the command line.
+	The node identified must have target type process_target_type and address space pid_mem_range_space 
+	to represent the process whose memory should be read and the starting virtual address and length to read 
+	and hash.
+
+	This ASP does not consume any input from stdin.</inputdescription>
+	<outputdescription>
+	This ASP produces a sha256_hash_measurement_type measurement containing the hash of the process' memory, 
+	and attaches it to the node passed as input.
+
+	This ASP produces no output on stdout.</outputdescription>
+	<seealso>
+	lsprocasp</seealso>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/procmem</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">GRAPH</value>
+			<description>We may need to add types for the attribute in enumerating asps</description>
+                        <capability target_type="process_target_type"
+				target_magic="0x091D091D"
+				target_desc="An instance of target type, which describes attributes of the target process"
+				    address_type="pid_mem_range_space"
+				    address_magic="0xF1DFFFF"
+				    address_desc="An instance of address type that describes a memory range of a process address space. This contains the process id (PID), offset and length of memory area to hash"
+				    measurement_type="sha256_hash_measurement_type"
+				    measurement_magic="0x0054A256"
+				    measurement_desc = " An instance of measurement type that describes the metadata of a process." />
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <selinux><type>proc_mem_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+	  <capabilities>cap_sys_ptrace+ep</capabilities>
+	</security_context>
+</asp>

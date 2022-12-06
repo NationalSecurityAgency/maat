@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<measurement_specification>
+	<name>quiot mspec ten minutes</name>
+	<uuid>55042348-e8d5-4443-1010-3d673179a107</uuid>
+	<description>
+	  This measurement spec is for the qUIoT demo
+	  It instructs to measure telemetry in the past x seconds time interval
+	</description>
+
+	<instructions>
+	  <instruction type="simple" name="measure_tlm">
+	    <target_type   name="system_target_type" magic="0x57513777"/>
+	    <address_type  name="time_delta"      magic="0x000de17a"/>
+	    <measurement_type name="report_measurement_type" magic="0x10000000"/>
+	  </instruction>
+	</instructions>	 
+
+	<variables>
+	    <variable instruction="measure_tlm" >
+	      <!-- 600 = ten minutes -->
+	      <address operation="equal">600</address> 
+	    </variable>
+	</variables>
+</measurement_specification>

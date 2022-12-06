@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+  <name>iot_uart_asp</name>
+  <uuid>e0baac5d-6a7f-41db-99fd-db5d147f8f95</uuid>
+  <description>ASP for collecting evidence from UART-connected IoT devices</description>
+  <aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/iot_uart_asp</aspfile>
+  <measurers>
+    <satisfier id="0">
+      <capability target_type="device_target_type" target_magic="0x00005001" 
+                  address_type="simple_file_address_space" address_magic="0x5F5F5F5F" 
+                  measurement_type="blob_measurement_type" measurement_magic="0xB10BB10B" />
+    </satisfier>
+  </measurers>
+  <security_context>
+    <user>${MAAT_USER}</user>
+    <group>${MAAT_GROUP}</group>
+  </security_context>
+</asp>

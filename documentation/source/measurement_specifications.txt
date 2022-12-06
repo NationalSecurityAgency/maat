@@ -1,0 +1,204 @@
+.. Copyright
+
+   Copyright 2020 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+.. _measSpec:
+
+Measurement Specifications
+**************************
+
+.. currentmodule:: maat
+
+Measurement Specifications define what evidence must be collected. 
+Attestation Protocol Blocks (APBs) implement a scheme for aggregating 
+and presenting evidence, and Attestation Service Providers (ASPs)
+implement concrete evidence gathering or filtering functionality. 
+
+Measurement specifications must define what evidence of target state
+is necessary for a given attestation. They should avoid dictating how
+this evidence is to be collected, or how the collected evidence should
+be gathered and presented for evaluation. However, complex
+measurements often require processing of intermediary results to
+identify new targets of measurement. For example, an attestation may
+require hash computations of all files currently opened by a given
+process. To support this requirement the attester must first
+identify all files opened by the process and then compute a hash of
+each.
+
+Our measurement specification system defines a declarative, XML-based
+format for specifying a set of data to be measured. Specifications
+make use of a key-value interface for accessing the otherwise opaque
+data model used by the measurement system to represent target state
+and partial measurements. Measurement obligations may be expressed
+explicitly, as in <hash the file /etc/shadow>, as the result of a
+join-like operation, as in the example of hashing all files opened by
+a process, or as a conditional requirement such as <hash all files
+owned by the root user>. By combining these three mechanisms, policy
+authors can describe arbitrarily complex measurement requirements
+without concern over the concrete collection strategy or
+representation.
+
+
+Data Model
+==========
+
+The core roles of a measurement specification are to identify elements
+of target state that must be measured and to define what evidence
+constitutes a sufficient measurement for each state element. To
+support this, we define an element of target state to be uniquely
+identified by a triple referred to as a measurement variable
+comprising a target type, an address space, and an
+address taken from that space. Measurement types
+identify specific forms of measurement, such as a sha1
+hash.
+
+The evaluator of a measurement specification (e.g., an APB)
+must include implementations manipulating any target types, address
+spaces, and measurement types that may occur in a supported
+specification. The primary requirement of an implementation is to
+provide a routine for generating measurement data given a
+measurement variable and type (i.e., of the given measurement
+type and representing the element of target state identified by the
+measurement variable). Other required routines
+support basic operations such as serialization,
+deserialization, copying, equality testing, and the key-value query
+interface for measurement data.
+
+.. raw:: latex
+
+    \clearpage
+
+Specification Elements
+======================
+
+Measurement specifications define measurement obligations by listing a
+set of initial variable specifications and a set of
+measurement instructions. The example below shows a
+simple instruction and a variable referencing that instruction.
+
+.. code-block:: xml
+
+   <measurement_specification>
+     <name>human readable name</name>
+     <uuid>XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX</uuid>
+     <description>
+         Some informative description
+     </description>
+     <instructions>
+         <instruction name="instr-name" type="simple">
+             <target_type      name="type name"
+                               magic="0xABCDABCD" />
+             <address_type     name="address space name" 
+                               magic="0xABCDABCD" />
+             <measurement_type name="measurement name" 
+                               magic="0xABCDABCD" />
+         <instruction>
+         ...
+     </instructions>
+     <variables>
+         <variable instruction="instr-name" scope="all" >
+             <address operation="equal">/bin/bash</address>
+             ...
+         </variable>
+         ...
+     </variables>
+    </measurement_specification>
+
+Variable specifications concretely identify a set of globally
+addressable measurement variables by explicitly indicating their
+target type and address space and a generating pattern for their
+address. Interpreting the pattern is left to the evaluator
+implementation and thus may be specific to the target type, address
+space, and implementation in use. Implementations should at least
+support an identity-based lookup function and common enumeration
+methods such as recursive descent or shell-style glob operators. It is
+possible to support only explicit identity lookup-based addressing for
+measurement variables and use measurement instructions to perform
+enumeration. However allowing pattern matching-based variable
+specification is often much more convenient and natural in many
+circumstances (such as recursive descent directory enumeration). Each
+variable specification refers to a measurement instruction defining
+what measurements of this variable are required by the specification.
+
+Measurement instructions define what to do with measurement
+variables. A pair comprising a measurement variable and a measurement
+instruction defines an action to be performed (e.g., recording a
+measurement of some piece of target state) and is called a
+measurement obligation. Each measurement instruction specifies
+the target type of variables it is compatible with. Three different
+types of instructions provide support for defining measurement data
+that must be collected (basic instructions), defining how to
+generate additional measurement obligations by decoding some attribute
+of a measurement as the addresses of new measurement variables
+(submeasure instructions), and conditionally defining new
+measurement obligations by evaluating a predicate on a measurement
+(filter instructions).
+
+Basic measurement instructions are a straightforward requirement
+defining the measurement type of the measurement data that must be
+collected for a given measurement variable.
+
+Submeasure instructions provide the ability to specify a relationship
+between a measurement of one variable and a set of additional
+measurement obligations. For example, a submeasure instruction may be
+used to specify that a measurement obligation exists for each open
+process of a file. Each submeasure instruction specifies the
+type of the measurement data that must be collected for the input
+measurement variable, the target type, address space, and instruction
+identifier to apply to generated variables, and an attribute of the
+measurement data used to generate addresses for new
+variables.
+
+Filter instructions allow specifications to require measurement of a
+given type only if some predicate on the measurement variable
+holds. A filter instruction might be used to define a new measurement
+obligation only for processes with an effective uid of zero. Filter
+instructions define a predicate by combining standard logical
+connectives (and, or, not) to primitive predicates on attributes of
+the input variable's measurement data.
+
+.. raw:: latex
+
+    \clearpage
+
+Evaluation
+==========
+
+Evaluation of a measurement specification is the process of
+recursively satisfying all measurement obligations produced by pairing
+the specified measurement variables with their corresponding
+measurement instructions. The evaluator begins by enqueuing
+obligations for all of the variables directly specified by the
+measurement specification. The evaluator repeatedly dequeues an
+obligation and performs the required measurements of the target. If
+the measurement obligation references a submeasure or filter
+instruction, the evaluator may enqueue new obligations for later
+measurement. The measurement process terminates when the queue is
+empty.
+
+This core algorithm is largely independent of the concrete measurement
+strategies and representations. The exceptions to this are that the
+evaluator must be able to dispatch measurement tasks, query
+measurement data using a key-value lookup, and evaluate predicates on
+the data. We have implemented a generic evaluator that is
+parameterized by a set of callback functions that provide the needed
+interface to the concrete measurement functionality. This accomplishes
+our goal of interpreting the control logic of measurement
+specifications independently of how measurements are collected,
+stored, or transmitted.
+
+
+.. include:: meas.txt
+

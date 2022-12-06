@@ -1,0 +1,7 @@
+# 
+# Package blacklist file
+#
+# Package names appearing in this file (one per line) will trigger an 
+# attestation failure if found installed on the system under test. 
+# 
+

@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<measurement_specification>
+	<name>netstat measurement specification</name>
+	<uuid>8efb56a7-fcae-40b5-93f4-bf5f8fce759b</uuid>
+	<description>Simple measurement spec for running netstat.</description>
+	<instructions>
+	  <instruction name="process_netstat_unix" type="simple"> 
+	    <target_type      name="file_target_type" magic="1001" />
+	    <address_type name="path_address_space" magic="0x5F5F5F5F" />
+	    <measurement_type name="netstat_unix_measurement_type" magic="5010" />
+	  </instruction>	 
+	  <instruction name="process_netstat_tcp" type="simple"> 
+	    <target_type      name="file_target_type" magic="1001" />
+	    <address_type name="path_address_space" magic="0x5F5F5F5F" />
+	    <measurement_type name="netstat_tcp_measurement_type" magic="5011" />
+	  </instruction>	 
+	  <instruction name="process_netstat_udp" type="simple"> 
+	    <target_type      name="file_target_type" magic="1001" />
+	    <address_type name="path_address_space" magic="0x5F5F5F5F" />
+	    <measurement_type name="netstat_udp_measurement_type" magic="5012" />
+	  </instruction>	 
+	  <instruction name="process_netstat_raw" type="simple"> 
+	    <target_type      name="file_target_type" magic="1001" />
+	    <address_type name="path_address_space" magic="0x5F5F5F5F" />
+	    <measurement_type name="netstat_raw_measurement_type" magic="5015" />
+	  </instruction>	
+	  <instruction name="process_netstat_tcp6" type="simple"> 
+	    <target_type      name="file_target_type" magic="1001" />
+	    <address_type name="path_address_space" magic="0x5F5F5F5F" />
+	    <measurement_type name="netstat_tcp6_measurement_type" magic="5014" />
+	  </instruction>	 
+	  <instruction name="process_netstat_udp6" type="simple"> 
+	    <target_type      name="file_target_type" magic="1001" />
+	    <address_type name="path_address_space" magic="0x5F5F5F5F" />
+	    <measurement_type name="netstat_udp6_measurement_type" magic="5017" />
+	  </instruction>	 
+	  <instruction name="process_netstat_raw6" type="simple"> 
+	    <target_type      name="file_target_type" magic="1001" />
+	    <address_type name="path_address_space" magic="0x5F5F5F5F" />
+	    <measurement_type name="netstat_raw6_measurement_type" magic="5016" />
+	  </instruction>	 
+	</instructions>
+	<variables>
+	  <variable instruction="process_netstat_unix" scope="all" > 
+	    <address operation="equal">/proc/net/unix</address> 
+	  </variable>
+	  <variable instruction="process_netstat_tcp" scope="all" > 
+	    <address operation="equal">/proc/net/tcp</address> 
+	  </variable>
+	  <variable instruction="process_netstat_udp" scope="all" > 
+	    <address operation="equal">/proc/net/udp</address> 
+	  </variable>
+	  <variable instruction="process_netstat_raw" scope="all" > 
+	    <address operation="equal">/proc/net/raw</address> 
+	  </variable>
+	  <variable instruction="process_netstat_tcp6" scope="all" > 
+	    <address operation="equal">/proc/net/tcp6</address> 
+	  </variable>
+	  <variable instruction="process_netstat_udp6" scope="all" > 
+	    <address operation="equal">/proc/net/udp6</address> 
+	  </variable>
+	  <variable instruction="process_netstat_raw6" scope="all" > 
+	    <address operation="equal">/proc/net/raw6</address> 
+	  </variable>
+	</variables>
+</measurement_specification>

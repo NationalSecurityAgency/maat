@@ -1,0 +1,70 @@
+Quick Start: Maat Configuration 
+*************************************
+
+.. Copyright
+
+   Copyright 2020 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+   
+.. currentmodule:: maat
+
+Purpose and Intended Reader
+===========================
+The purpose of this section is to inform users about the configuration options offered by Maat and where to find them.
+
+The intended reader is a system administrator who will be configuring the Maat Selection Configuration in order to have Maat meet their Attestation needs. 
+
+
+Configuration Details
+======================
+
+One of the primary goals of the Maat architecture is to offer policy-driven negotiation and selection of attestation protocols and measurement evidence to satisfy a wide variety of attestation scenarios. As a result, the configuration of the system tends to be somewhat complicated.
+
+The major elements to an Maat configuration are summarized in the table below.
+
+.. tabularcolumns:: |>{\raggedright\arraybackslash}\Y{0.25}|>{\raggedright\arraybackslash}\Y{0.35}|>{\raggedright\arraybackslash}\Y{0.4}|
+
++----------------------------+------------------------------------------+----------------------------------------+
+| Configuration Type         | Default Location                         | Purpose                                |
++============================+==========================================+========================================+
+| Selector Configuration     | /usr/local/etc/userspace/\*.xml          | Defines which Copland phrases to       |
+|                            |                                          | offer/execute and in what scenario     |
++----------------------------+------------------------------------------+----------------------------------------+
+| APB Metadata Files         | /usr/local/share/maat/apb/\*.xml         | Associates an APB's UUID with its      |
+|                            |                                          | implementation, dependencies and       |
+|                            |                                          | supported Copland phrases /            |
+|                            |                                          | measurement specifications             |
++----------------------------+------------------------------------------+----------------------------------------+
+| ASP Metadata Files         | /usr/local/share/maat/asp/\*.xml         | Associates an ASP's UUID with its      |
+|                            |                                          | implementation, the input and output   |
+|                            |                                          | types, and usage information           |
++----------------------------+------------------------------------------+----------------------------------------+
+| Measurement Specifications | /usr/local/share/                        | Associates a UUID with a set of        |
+|                            | measurement_specifications/\*.xml        | measurement directives                 |
++----------------------------+------------------------------------------+----------------------------------------+
+
+
+The selector configuration is the only configuration file that users are expected to edit.
+
+The other configuration files primarily exist to associate UUIDs that are referenced by the selector configuration with an implementation 
+(or in the case of measurement specifications,
+to define the concrete measurements that must be taken to produce certain evidence).
+
+More information on how the AM uses its selection policy for negotiation and selection of Copland phrases to execute in a given 
+situation can be found :ref:`here <understandSelPrc>`.
+
+Information on the specific contents of a selection policy, their meanings, and how to modify policy to suit your needs can be 
+found :ref:`here <selCnfTut>`.
+
+

@@ -1,0 +1,169 @@
+<?xml version="1.0"?>
+<apb>
+	<name>complex_att</name>
+	<desc>Complex Attestation Userspace Measurement APB</desc>
+	<uuid>9b1cb303-114b-43ac-ab3a-60b9196ec489</uuid>
+	<file hash="XXXXX">${APB_INSTALL_DIR}/complex_att_apb</file>
+	<input_type>????</input_type>
+	<output_type>????</output_type>
+	<asps ordered="False">
+		<asp uuid="906b78d3-4591-4ebb-85a5-592db041df30" initial="True">lsproc</asp>
+		<asp uuid="1f82c9f7-760d-4535-bcab-74daafaa1ff9">procopenfiles</asp>
+		<asp uuid="dff44141-9d3a-4cfe-8a30-2c072bb77025">filesha1hash</asp>
+		<asp uuid="cd82c9f7-760d-4535-bcab-74daadaa1f44" initial="True">system</asp>
+		<asp uuid="cd82c9f7-760d-4535-bcab-74f4debaca9e">dpkg_inv</asp>
+		<asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1f44">rpm_inv</asp>
+		<asp uuid="cd82c9f7-760d-4535-bcab-74dadebaca9e">dpkg_details</asp>
+		<asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1f4f">rpm_details</asp>
+		<asp uuid="fb3dffdd-c759-435b-8861-811920245450">listdir</asp>
+		<asp uuid="a721da4a-0ba4-4d35-87db-b9c92da24d48">mtab</asp>
+		<asp uuid="7c912f0b-a75c-4930-914b-9cf45af05b79">got_measure</asp>
+		<asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1f22">memorymapping</asp>
+		<asp uuid="9D7E5286-BF96-45FA-8461-DD5474FE3214">procfds</asp>
+		<asp uuid="F7BC4570-E35A-4033-9E3C-5EC070B1C934">proc_namespaces</asp>
+		<asp uuid="726B1964-1145-4F73-A6BC-DF17BBDEFF8E">procmem</asp>
+		<asp uuid="1762695e-b3b9-466e-88d1-df1571e0a073">md5fileservice</asp>
+		<asp uuid="cd82c9f7-760d-4535-5197-74daadaa1f41">compress</asp>
+		<asp uuid="19e44fd6-b752-431a-94d9-6f1a88495a68">encrypt</asp>
+		<asp uuid="cd82c9f7-760d-4535-5197-74daadaa3f41">create_contract</asp>
+		<asp uuid="fcb118d1-6bc0-4078-998d-673bbe21a5aa">merge</asp>
+		<asp uuid="cd82c9f7-760d-4535-5197-74daadaa4f41">send</asp>
+      		<asp uuid="cd82c9f7-760d-4535-5197-74daadaa1f40">serialize</asp>
+		<asp uuid="5b2ec00a-ca8a-4215-8a5f-4782599c6df0">send_request_asp</asp>
+	</asps>
+	<copland>
+	  <phrase copland="@_1(@_2((KIM runtime_meas)->SIG)-&lt;-(USM full))"></phrase>
+	  <spec uuid="55042348-e8d5-4443-abf7-3d67317c7dab">userspace mspec</spec>
+ 	  <arguments>
+	    <arg name="@_1">
+	      <type>place</type>
+	    </arg>
+	    <arg name="@_2">
+	      <type>place</type>
+	    </arg>
+	  </arguments>
+	  <places>
+	    <place id="@_1">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	    <place id="@_2">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	  </places>
+	</copland>
+	<copland>
+	  <phrase copland="@_1(@_2((KIM runtime_meas)->SIG)-&lt;-(USM proc))"></phrase>
+	  <spec uuid="55042348-e8d5-4443-abf7-3d67317c7dad">ls proc mspec</spec>
+          <arguments>
+	    <arg name="@_1">
+	      <type>place</type>
+	    </arg>
+	    <arg name="@_2">
+	      <type>place</type>
+	    </arg>
+	  </arguments>
+	  <places>
+	    <place id="@_1">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	    <place id="@_2">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	  </places>
+	</copland>
+	<copland>
+	  <phrase copland="@_1(@_2((KIM runtime_meas)->SIG)-&lt;-(USM pkginv))"></phrase>
+	  <spec uuid="3db1c1b2-4d44-45ea-83f5-8de858b1a5a5">pkg inv mspec</spec>
+          <arguments>
+	    <arg name="@_1">
+	      <type>place</type>
+	    </arg>
+	    <arg name="@_2">
+	      <type>place</type>
+	    </arg>
+	  </arguments>
+	  <places>
+	    <place id="@_1">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	    <place id="@_2">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	  </places>
+	</copland>
+	<copland>
+	  <phrase copland="@_1(@_2((KIM runtime_meas)->SIG)-&lt;-(USM hashfile))"></phrase>
+	  <spec uuid="55042348-e8d5-4443-abf7-3d67317c7dae">hashfiles mspec</spec>
+          <arguments>
+	    <arg name="@_1">
+	      <type>place</type>
+	    </arg>
+	    <arg name="@_2">
+	      <type>place</type>
+	    </arg>
+	  </arguments>
+	  <places>
+	    <place id="@_1">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	    <place id="@_2">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	  </places>
+	</copland>
+	<copland>
+	  <phrase copland="@_1(@_2((KIM runtime_meas)-&gt;SIG)-&lt;-(USM mtab))"></phrase>
+	  <spec uuid="55042348-e8d5-4443-abf7-3d67317c7ddd">mtab mspec</spec>
+          <arguments>
+	    <arg name="@_1">
+	      <type>place</type>
+	    </arg>
+	    <arg name="@_2">
+	      <type>place</type>
+	    </arg>
+	  </arguments>
+	  <places>
+	    <place id="@_1">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	    <place id="@_2">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	  </places>
+	</copland>
+	<copland>
+	  <phrase copland="@_1(@_2((KIM runtime_meas)->SIG)-&lt;-(USM got))"></phrase>
+	  <spec uuid="60742348-e8d5-4443-abf7-3d67317c7dab">got measure</spec>
+          <arguments>
+	    <arg name="@_1">
+	      <type>place</type>
+	    </arg>
+	    <arg name="@_2">
+	      <type>place</type>
+	    </arg>
+	  </arguments>
+	  <places>
+	    <place id="@_1">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	    <place id="@_2">
+	      <info>host</info>
+	      <info>port</info>
+	    </place>
+	  </places>
+	</copland>
+	<security_context>
+		<selinux><type>complex_att_apb_t</type></selinux>
+	</security_context>
+</apb>

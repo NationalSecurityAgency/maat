@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<measurement_specification>
+	<name>hashfiles mspec</name>
+	<uuid>55042348-e8d5-4443-abf7-3d67317c7dae</uuid>
+	<description>
+	  This measurement spec is a subset of the userspace_measurement_mspec. 
+	
+	  This measurement spec hashes specific files in the /bin directory, and
+	  performs the 'listdirectory' instruction on unit file locations and a 
+	  directory with systemd executables. 'listdirectory' recursively finds 
+	  files in child directories and hashes them. 
+	
+	  This mspec requires the AM to be running as sudo.
+	</description>
+
+	<instructions>
+	  <instruction type="simple" name="file_md5hash">
+	    <target_type      name="file_target_type" magic="1001" />
+	    <address_type     name="simple_file" magic="0x5F5F5F5F" />
+	    <measurement_type name="md5hash_measurement_type" magic="0x000777D5" />
+	  </instruction>
+
+	  <!--Recursively find all of the files in a directory and hash them-->
+	  <instruction type="submeasure" name="listdirectory">
+	    <target_type      name="file_target_type" magic="1001"/>
+	    <address_type     name="file" magic="2000" />
+	    <measurement_type name="path_list" magic="3201"/>
+	    <action feature="files" instruction="file_md5hash"/>
+	    <action feature="directories" instruction="listdirectory"/>
+	  </instruction>
+	</instructions>	 
+
+	<variables>
+	  <!-- Take a md5hash of all of the files listed here -->
+	  <variable instruction="file_md5hash" scope="one">
+	    <!-- dbus executables -->
+	    <address operation="equal">/bin/dbus-binding-tool</address>
+	    <address operation="equal">/bin/dbus-cleanup-sockets</address>
+	    <address operation="equal">/bin/dbus-daemon</address>
+	    <address operation="equal">/bin/dbus-launch</address>
+	    <address operation="equal">/bin/dbus-monitor</address>
+	    <address operation="equal">/bin/dbus-send</address>
+	    <address operation="equal">/bin/dbus-uuidgen</address>
+	    <!-- sbin files -->
+	    <address operation="equal">/sbin/init</address>
+	    <address operation="equal">/sbin/insmod</address>
+	    <address operation="equal">/sbin/lsmod</address>
+	    <address operation="equal">/sbin/ifconfig</address>
+	    <address operation="equal">/sbin/udevd</address>
+	    <address operation="equal">/sbin/initctl</address>
+	  </variable>
+
+	  <!-- Take md5hash of all of the files listed in the following directories -->
+	  <!-- NOTE: Requires sudo -->
+	  <variable instruction="listdirectory" scope="one">
+	    <!-- unit file locations -->
+	    <address operation="equal">/run/systemd/generator.early/</address>
+	    <address operation="equal">/etc/systemd/system/</address>
+	    <address operation="equal">/run/systemd/systemd/</address>
+	    <address operation="equal">/run/systemd/generator/</address>
+	    <address operation="equal">/usr/local/lib/systemd/system/</address>
+	    <address operation="equal">/usr/lib/systemd/system/</address>
+	    <address operation="equal">/run/systemd/generator.late/</address>
+	    <!-- systemd executables (includes udev) -->
+	    <address operation="equal">/lib/systemd/</address>
+	    <!-- etc -->
+            <!-- XXX: time consuming and disabled for demo -->
+	    <!--<address operation="equal">/etc/</address>-->
+	  </variable>
+	</variables>
+</measurement_specification>

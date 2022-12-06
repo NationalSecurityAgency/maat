@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<apb>
+	<name>process_measurement</name>
+	<desc>Performs various measurements on processes running on the system</desc>
+	<uuid>832431de-6cbb-45ab-8c62-3849449d3d54</uuid>
+	<file hash="XXXXX">${APB_INSTALL_DIR}/process_measurement_apb</file>
+	<input_type>????</input_type>
+	<output_type>????</output_type>
+	<asps ordered="False">
+		<asp uuid="1f82c9f7-760d-4535-bcab-74daafaa1ff9" initial="True">procopenfile</asp>
+		<asp uuid="dff44141-9d3a-4cfe-8a30-2c072bb77025">hashfileservice</asp>
+		<asp uuid="fb3dffdd-c759-435b-8861-811920245450" initial="True">listdirectory</asp>
+		<asp uuid="11dbcdb6-0107-4cfd-bdd9-0451060694a5" initial="True">netstatunixasp</asp>
+		<asp uuid="87982c8d-9569-4b6d-b2d9-93d09bcc7546" initial="True">netstattcpasp</asp>
+		<asp uuid="b5a0f620-90c8-11e2-9e96-0800200c9a66" initial="True">netstatudpasp</asp>
+		<asp uuid="35982c8d-9569-4b6d-b2d9-93d09bcc7546" initial="True">netstatrawasp</asp>
+		<asp uuid="18910150-90db-11e2-9e96-0800200c9a66" initial="True">netstattcp6asp</asp>
+		<asp uuid="41727080-90dc-11e2-9e96-0800200c9a66" initial="True">netstatudp6asp</asp>
+		<asp uuid="25882c8d-9569-4b6d-b2d9-93d09bcc7546" initial="True">netstatraw6asp</asp>
+		<asp uuid="cd82c9f7-760d-4535-bcab-74daafaa1f22" initial="True">memorymapping</asp>
+	</asps>
+	<copland>
+          <phrase copland="((USM procopenfiles) -> SIG)">process openfiles measurement</phrase>
+	  <spec uuid="3db1c1b2-4d44-45ea-83f5-8de858b1a4d0">proc open files  measurement specification</spec>
+	</copland>
+	<copland>
+          <phrase copland="((USM mem) -> SIG)">process memory measurement</phrase>
+	  <spec uuid="3db1c1b2-4d44-45ea-83f5-8de858b1a555">mem mapping measurement spec</spec>
+	</copland>
+	<copland>
+	  <phrase copland="((USM netstat) -> SIG)">process netstat measurement</phrase>
+	  <spec uuid="8efb56a7-fcae-40b5-93f4-bf5f8fce759b">netstat mspec</spec>
+	</copland>
+	<security_context>
+	  <selinux><type>process_measurement_apb_t</type></selinux>
+	</security_context>
+</apb>

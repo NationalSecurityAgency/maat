@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<measurement_specification>
+	<name>Package inventory measurement specification</name>
+	<uuid>3db1c1b2-4d44-45ea-83f5-8de858b1a5a5</uuid>
+	<description>
+	  This measurement spec is a subset of the userspace_measurement_mspec.
+	  
+	  This measurement spec takes inventory of all of the packages on the 
+	  system, then gathers details for each individual package.
+
+	  Before gathering the package inventory, this mspec identifies the 
+	  host system.
+	</description>
+
+	<instructions>
+	  <instruction type="simple" name="identify">
+	    <target_type      name="system_target_type" magic="0x57513777"/>
+	    <address_type     name="unit_address_space" magic="0x50EC50EC" />
+	    <measurement_type name="system_measurement_type" magic="5757"/>
+	  </instruction>
+          <instruction type="submeasure" name="pkg_inv">
+	    <target_type      name="system_target_type" magic="0x57513777" />
+	    <address_type     name="unit_address_space" magic="0x50EC50EC" />
+	    <measurement_type name="pkginv_measurement_type" magic="3244"/>
+	    <action feature="packages" instruction="package_detail" />
+	  </instruction>
+	  <instruction type="simple" name="package_detail">
+	    <target_type      name="package_target_type" magic="0x7F777FC9" />
+	    <address_type     name="release_address_space" magic="0x5F5F5FC9" />
+	    <measurement_type name="pkg_details_measurement_type" magic="3245"/>
+	  </instruction>	 
+	</instructions>	 
+
+	<variables>
+	  <!-- Variable to identify the host system-->
+	  <variable instruction="identify">
+	    <address operation="identify">self</address>
+	  </variable>
+
+	  <!--Variable to take inventory of all of the packages on the system-->
+	  <!-- NOTE: Needs identify variable in order to do anything-->
+	  <variable instruction="pkg_inv">
+	    <address operation="inventory">all</address>
+	  </variable>
+	</variables>
+</measurement_specification>

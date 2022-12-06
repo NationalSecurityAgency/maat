@@ -1,0 +1,117 @@
+.. Copyright
+
+   Copyright 2020 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+.. currentmodule:: maat
+
+.. _selCnfTut:
+
+Configuring Selector Config Policy
+###################################
+
+The selector configuration is defined in an XML file that primarily defines a set of selection rules. Rules specify a set of conditions that must be met for the rule to apply, and a set of options to be offered if the rule triggers. This section documents the complete set of significant elements and attributes values recognized by the selector. Note that the format is intended to be extensible by adding new attributes, so this list may expand as we discover additional inputs to the selection process.
+ 
+Selector_Policy
+---------------
+
+Document root element type for AM selector policy.
+
+        Attributes 
+                None
+
+        Child Elements 
+                | Zero or more collection elements
+                | Zero or more rule elements
+
+Collection
+----------
+
+A collection of values that can be referenced by match_condition nodes.
+        Attributes 
+                Must have a name attribute that uniquely identifies this collection in the selector policy.
+
+        Child Elements 
+                Zero or more entry elements defining the values in the collection
+
+ 
+Entry
+-----
+
+A value in a collection. Contains a text node with the value.
+        Attributes 
+                None
+
+        Child Elements 
+                None
+ 
+Rule
+----
+
+A rule defines what actions to take or conditions to offer for a given attestation scenario. NB: unlike most elements in the selector configuration, the order in which rules appear is considered significant. In response to the selector_get_first_action API function, the selector implementation will return the first triggered rule found in the configuration file.
+
+
+        Attributes 
+                | Must have a role attribute with value of either "appraiser" or "attester". Used to determine when this rule should be considered based on the role the calling AM is playing in the attestation.
+                | Must have a phase attribute with value of "initial", "modify", "execute", or "spawn". These correspond to the phases of the negotiation protocol where initial, modify, and execute indicate the type of contract being generated and spawn corresponds with the action taken after generating the execute contract (if in the appraiser role).
+
+        Child Elements 
+                | Zero or more match_condition elements. Used to specify when this rule should trigger. If an attestation scenario matches the conjunction of all match_conditions elements in the rule, then the rule triggers.
+                | Exactly one action element. If the rule triggers, then the action is returned to the AM with its specified conditions.
+
+
+Match_Condition
+---------------
+
+Match condition nodes describe boolean tests on an attribute of the current attestation scenario. If all match_conditions in a rule element are true for the current scenario, then the rule triggers.
+
+        Attributes 
+                | Must have an attribute with value corresponding to a key defined by the attestation scenario. Available keys vary depending on the phase of the attestation. Currently defined keys are:
+
+                - partner_fingerprint
+                - client
+                - resource
+                - options
+                - option
+
+                | Must have an operator attribute defining how the value of the attribute key in the scenario should be compared with the value of the value attribute. Valid operators are dependent on the type of the attribute. Currently "is", and "include" are supported for scalar keys ("partner_fingerprint", "client", "resource", and "option") and "in" is supported for collection keys ("options").
+                | Must have a value attribute defining the value against which the value of the attribute key in the scenario should be compared. Interpretation of value is dependent on the operator. For "is" and "include" operations, the literal value is used for comparison. For "in" operations the value is treated as the name of a collection.
+
+        Child Elements 
+                None
+
+Action
+------
+
+Actions describe what to do if the enclosing rule is triggered. Accepting and proxying actions contain condition elements that may be offered to the AM. Rejecting actions presumably offer no conditions.
+
+        Attributes 
+                Must have a selector_action attribute. The value should be one of "accept", "reject", or "proxy". This is the action that is returned the AM.
+
+        Child Elements 
+                Zero or more condition nodes specifying the conditions of this action.
+
+ 
+Condition
+---------
+
+Condition elements specify a Copland phrase to be offered in the case of a triggered rule with selector_action="accept". This is a little overly specific to the userspace AM model and may be subject to change.
+        Attributes 
+                | Must have a name attribute to identify the condition
+                | Must have an apb_phrase attribute to denote an acceptable Copland Phrase
+
+        Child Elements 
+                None
+
+

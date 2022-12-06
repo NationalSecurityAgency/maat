@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<apb>
+	<name>quiot_tlm_apb</name>
+	<desc>APB to retrieve and appraise telemetry for qUIoT</desc>
+	<uuid>832431de-6cbb-45ab-8c62-38494499a107</uuid>
+	<file hash="XXXXX">${APB_INSTALL_DIR}/quiot_tlm_apb</file>
+	<input_type>????</input_type>
+	<output_type>????</output_type>
+	<asps ordered="False">
+	  <asp uuid="cd82c9f7-760d-4535-bcab-009a107007e7">tlm_ret_asp</asp>
+	</asps>
+	<!--XXX: One args are implemented, this could be updated to pass an
+	    integer for the desired time span instead of having a separate
+	    mspec for each configuration -->
+	<copland>
+          <phrase copland="((USM quiot_min) -> SIG)">quiot minute measurement</phrase>
+	  <spec uuid="55042348-e8d5-4443-1111-3d673179a107">quiot mspec minute</spec>
+	</copland>
+	<copland>
+	  <phrase copland="((USM quiot_day) -> SIG)">quiot day measurement</phrase>
+	  <spec uuid="55042348-e8d5-4443-dae7-3d673179a107">quiot mspec day</spec>
+	</copland>
+	<copland>
+	  <phrase copland="((USM quiot_hour) -> SIG)">quiot hour measurement</phrase>
+	  <spec uuid="55042348-e8d5-4443-40a2-3d673179a107">quiot mspec hour</spec>
+	</copland>
+	<copland>
+	  <phrase copland="((USM quiot_tmin) -> SIG)">quiot tmin measurement</phrase>
+	  <spec uuid="55042348-e8d5-4443-1010-3d673179a107">quiot mspec tmin</spec>
+	</copland>
+	<security_context>
+	  <selinux><type>quiot_tlm_apb_t</type></selinux>
+	</security_context>
+</apb>

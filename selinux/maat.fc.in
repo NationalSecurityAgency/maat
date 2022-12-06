@@ -1,0 +1,116 @@
+#
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+/tmp/maatgraph.*	-d gen_context(system_u:object_r:maat_graph_t)
+/tmp/maatgraph.*	-- gen_context(system_u:object_r:maat_graph_t)
+#
+# Maat configuration directory.
+#
+@sysconfdir@/maat				-d gen_context(system_u:object_r:attestmgr_conf_dir_t,s0)
+@sysconfdir@/maat/.*\.xml			-- gen_context(system_u:object_r:attestmgr_conf_t,s0)
+#
+# Credentials (keys and certifications)
+#
+@sysconfdir@/maat/credentials/.*\.pem		-- gen_context(system_u:object_r:maat_certificate_t,s0)
+@sysconfdir@/maat/credentials/.*\.key		-- gen_context(system_u:object_r:maat_private_key_t,s0)
+#
+# Places file
+@sysconfigdir@/maat/places.csv                  -- gen_context(system_u:object_r:maat_places_file_t)
+#
+#
+# The Attestation Manager itself.
+#
+@bindir@/attestmgr				-- gen_context(system_u:object_r:attestmgr_exec_t,s0)
+#
+# ASP and APB metadata directories.
+#
+@aspinfodir@					-d gen_context(system_u:object_r:asp_info_dir_t,s0)
+@aspinfodir@/.*\.xml				-- gen_context(system_u:object_r:asp_info_t,s0)
+@apbinfodir@					-d gen_context(system_u:object_r:apb_info_dir_t,s0)
+@apbinfodir@/.*\.xml				-- gen_context(system_u:object_r:apb_info_t,s0)
+#
+# Blacklist and whitelist files get installed into the ASP metadata directory.
+# this is probably not the best place to put them (should probably be in
+# @sysconfdir@/maat) but it's convenient to put them here. Make sure they get
+# labeled appropriately.
+#
+@aspinfodir@/.*\.whitelist			-- gen_context(system_u:object_r:whitelist_t)
+@aspinfodir@/.*\.blacklist			-- gen_context(system_u:object_r:blacklist_t)
+#
+# Measurement specifications are all given the same security context.
+# Any APB can load any measurement specification (even if it can't
+# interpret it).
+#
+@specdir@					-d gen_context(system_u:object_r:measurement_spec_dir_t,s0)
+@specdir@/.*\.xml				-- gen_context(system_u:object_r:measurement_spec_t,s0)
+#
+# ASP implementations
+#
+@aspdir@				-d gen_context(system_u:object_r:asp_dir_t,s0)
+@aspdir@/hashfileserviceasp		-- gen_context(system_u:object_r:hash_file_service_asp_exe_t)
+@aspdir@/md5fileserviceasp            -- gen_context(system_u:object_r:md5_file_service_asp_exe_t)
+@aspdir@/hashserviceasp		-- gen_context(system_u:object_r:hash_service_asp_exe_t)
+@aspdir@/listdirectoryserviceasp	-- gen_context(system_u:object_r:list_directory_service_asp_exe_t)
+@aspdir@/memorymappingasp		-- gen_context(system_u:object_r:memory_mapping_asp_exe_t)
+@aspdir@/netstat.*asp			-- gen_context(system_u:object_r:netstat_asp_exe_t)
+@aspdir@/procenv			-- gen_context(system_u:object_r:proc_env_asp_exe_t)
+@aspdir@/procfds			-- gen_context(system_u:object_r:proc_fds_asp_exe_t)
+@aspdir@/procmem			-- gen_context(system_u:object_r:proc_mem_asp_exe_t)
+@aspdir@/proc_namespaces_asp            -- gen_context(system_u:object_r:proc_namespaces_asp_exe_t)
+@aspdir@/procopenfileasp		-- gen_context(system_u:object_r:proc_open_file_asp_exe_t)
+@aspdir@/elf_reader			-- gen_context(system_u:object_r:readelf_asp_exe_t)
+@aspdir@/dummy_appraisal		-- gen_context(system_u:object_r:dummy_appraisal_exe_t)
+@aspdir@/blacklist			-- gen_context(system_u:object_r:blacklist_asp_exe_t)
+@aspdir@/dpkg_details_asp		-- gen_context(system_u:object_r:dpkg_details_asp_exe_t)
+@aspdir@/dpkg_inv_asp			-- gen_context(system_u:object_r:dpkg_inv_asp_exe_t)
+@aspdir@/ima_asp			-- gen_context(system_u:object_r:ima_asp_exe_t)
+@aspdir@/kernel_msmt_asp			-- gen_context(system_u:object_r:kernel_msmt_asp_exe_t)
+@aspdir@/lsmod			-- gen_context(system_u:object_r:lsmod_asp_exe_t)
+@aspdir@/lsprocasp			-- gen_context(system_u:object_r:lsproc_asp_exe_t)
+@aspdir@/mtabasp			-- gen_context(system_u:object_r:mtab_asp_exe_t)
+@aspdir@/rpm_details_asp		-- gen_context(system_u:object_r:rpm_details_asp_exe_t)
+@aspdir@/rpm_inv_asp			-- gen_context(system_u:object_r:rpm_inv_asp_exe_t)
+@aspdir@/system_asp			-- gen_context(system_u:object_r:system_asp_exe_t)
+@aspdir@/whitelist			-- gen_context(system_u:object_r:whitelist_asp_exe_t)
+@aspdir@/dpkg_check_asp               -- gen_context(system_u:object_r:dpkg_check_asp_exe_t)
+@aspdir@/system_appraise_asp          -- gen_context(system_u:object_r:system_appraise_asp_exe_t)
+@aspdir@/sign_send_asp         	      -- gen_context(system_u:object_r:sign_send_asp_exe_t)
+@aspdir@/got_measure          	      -- gen_context(system_u:object_r:got_measure_asp_exe_t)
+@aspdir@/send_execute_asp          	-- gen_context(system_u:object_r:send_execute_asp_exe_t)
+@aspdir@/send_request_asp          	-- gen_context(system_u:object_r:send_request_asp_exe_t)
+#@aspdir@/passport_retriever_asp          	-- gen_context(system_u:object_r:passport_retriever_asp_exe_t)
+#@aspdir@/passport_storer_asp          	-- gen_context(system_u:object_r:passport_storer_asp_exe_t)
+@aspdir@/passport_maker_asp          	-- gen_context(system_u:object_r:passport_maker_asp_exe_t)
+#
+# APB implementations
+#
+@apbdir@				-d gen_context(system_u:object_r:apb_dir_t,s0)
+@apbdir@/appraiser_apb		-- gen_context(system_u:object_r:appraiser_apb_exe_t)
+@apbdir@/complex_att_apb		-- gen_context(system_u:object_r:complex_att_apb_exe_t)
+@apbdir@/userspace_apb		-- gen_context(system_u:object_r:userspace_apb_exe_t)
+@apbdir@/process_measurement_apb		-- gen_context(system_u:object_r:process_measurement_apb_exe_t)
+@apbdir@/forwarding_apb                  -- gen_context(system_u:object_r:forwarding_apb_exe_t)
+@apbdir@/no_op_apb                  -- gen_context(system_u:object_r:no_op_apb_exe_t)
+@apbdir@/hashdir_apb                  -- gen_context(system_u:object_r:hashdir_apb_exe_t)
+@apbdir@/kim_apb                  -- gen_context(system_u:object_r:kim_apb_exe_t)
+@apbdir@/userspace_appraiser_apb	-- gen_context(system_u:object_r:userspace_appraiser_apb_exe_t)
+@apbdir@/hashfile_apb                  -- gen_context(system_u:object_r:hashfile_apb_exe_t)
+#@apbdir@/passport_ret_apb                  -- gen_context(system_u:object_r:passport_ret_apb_exe_t)
+#@apbdir@/passport_appraiser_apb                  -- gen_context(system_u:object_r:passport_appraiser_apb_exe_t)
+@apbdir@/request_passport_apb                  -- gen_context(system_u:object_r:request_passport_apb_exe_t)
+#@apbdir@/passport_storage_apb                  -- gen_context(system_u:object_r:passport_storage_apb_exe_t)
+@apbdir@/passport_userspace_appraiser_apb                  -- gen_context(system_u:object_r:passport_userspace_appraiser_apb_exe_t)
+

@@ -1,0 +1,137 @@
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<!--Selector Policy to choose different userspace measurements 
+    based on resource. Also includes an kernel runtime measurement option
+    and one for 'verified userspace' (multi-realm demo use case)-->
+
+<!--The kernel runtime measurement used by this selection policy is 
+    primarily a placeholder for a more complete kernel integrity 
+    measurement, which is out of scope for this project --> 
+
+<selector_policy>
+    <collection name="known-clients">
+        <entry>127.0.0.1</entry>
+        <entry>client2</entry>
+	<entry>localhost</entry>
+	<entry>192.168.0.10</entry>
+	<entry>192.168.0.7</entry>
+    </collection>
+
+    <!--Inital Phase and Appraiser Role. 
+	Check Identity of Client, and offer copland phrase(s)-->
+    <rule role="appraiser" phase="initial">
+      <match_condition attr="client"  operator="in" value="known-clients" />
+      <action selector_action="accept">
+	      <condition name="userspace"            apb_phrase="((USM full) -> SIG)"/>
+	      <condition name="userspace-processes"  apb_phrase="((USM processes) -> SIG)"/>
+	      <condition name="userspace-packages"   apb_phrase="((USM pkginv) -> SIG)"/>
+	      <condition name="userspace-hashfiles"  apb_phrase="((USM hashfiles) -> SIG)"/>
+	      <condition name="userspace-mtab"       apb_phrase="((USM mtab) -> SIG)"/>
+	      <condition name="got_measure"          apb_phrase="((USM got) -> SIG)"/>
+	      <condition name="runtime_meas"         apb_phrase="(KIM runtime_meas)"/>
+	      <condition name="verified-pkginv"   apb_phrase="((KIM runtime_meas) -~- @_1((USM pkginv) -> SIG) -> SIG)"/>
+	</action>
+    </rule>
+
+    <!--Modify Phase and Attester Role.
+	Possible down-select on copland phrase(s)-->
+    <rule role="attester" phase="modify">
+      <action selector_action="accept">
+	      <condition name="userspace"            apb_phrase="((USM full) -> SIG)"/>
+	      <condition name="userspace-processes"  apb_phrase="((USM processes) -> SIG)"/>
+	      <condition name="userspace-packages"   apb_phrase="((USM pkginv) -> SIG)"/>
+	      <condition name="userspace-hashfiles"  apb_phrase="((USM hashfiles) -> SIG)"/>
+	      <condition name="userspace-mtab"       apb_phrase="((USM mtab) -> SIG)"/>
+	      <condition name="got_measure"          apb_phrase="((USM got) -> SIG)"/>
+	      <condition name="runtime_meas"         apb_phrase="(KIM runtime_meas)"/>
+	      <condition name="verified-pkginv"   apb_phrase="((KIM runtime_meas) -~- @_1((USM pkginv) -> SIG) -> SIG)"/>
+    	</action>
+    </rule>
+    
+    <!--Execute Phase and Appraiser Role.
+	Choose copland phrase for Attester to execute, depending on 
+	resource requested-->
+
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="userspace"/>
+        <action selector_action="accept">
+	      <condition name="userspace"            apb_phrase="((USM full) -> SIG)"/>
+        </action>
+    </rule>
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="processes"/>
+        <action selector_action="accept">
+	      <condition name="userspace-processes"  apb_phrase="((USM processes) -> SIG)"/>
+        </action>
+    </rule>
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="packages"/>
+        <action selector_action="accept">
+	      <condition name="userspace-packages"   apb_phrase="((USM pkginv) -> SIG)"/>
+	</action>
+    </rule>
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="hashfiles"/>
+        <action selector_action="accept">
+	      <condition name="userspace-hashfiles"  apb_phrase="((USM hashfiles) -> SIG)"/>
+	</action>
+    </rule>
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="mtab"/>
+        <action selector_action="accept">
+	      <condition name="userspace-mtab"       apb_phrase="((USM mtab) -> SIG)"/>
+	</action>
+    </rule>
+    <rule role="appraiser" phase="execute">
+        <match_condition attr="resource" operator="is" value="got_measure"/>
+        <action selector_action="accept">
+	      <condition name="got_measure"          apb_phrase="((USM got) -> SIG)"/>
+	</action>
+    </rule>
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="runtime_meas"/>
+        <action selector_action="accept">
+	      <condition name="runtime_meas"         apb_phrase="(KIM runtime_meas)"/>
+	</action>
+    </rule>
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="verified-pkginv"/>
+        <action selector_action="accept">
+	      <condition name="verified-pkginv"   apb_phrase="((KIM runtime_meas) -~- @_1((USM pkginv) -> SIG) -> SIG)"/>
+	</action>
+    </rule>
+
+    <!--Spawn Phase and Appraiser Role.
+	Select Appraiser copland phrase to appraise attester output-->
+
+    <!--If resource is runtime_meas, use the runtime measurement appraisal APB-->
+    <rule role="appraiser" phase="spawn">
+      <match_condition attr="resource" operator="is" value="runtime_meas"/>
+      <action selector_action="accept">
+	    <condition name="runtime_appraiser"         apb_phrase="(KIM runtime_meas_app)"/>
+      </action>
+    </rule>
+    <!--Else, use userspace appraiser APB-->
+    <!--XXX: Need to work on appraisal more. This will also appraise the verified-pkginv output
+	because the userspace appraiser APB is equipped to do so. But there's no need for a
+	different mspec, copland phrase, etc. to deal with that.
+    -->
+    <rule role="appraiser" phase="spawn">
+        <action selector_action="accept">
+                <condition name="userspace_appraiser" apb_phrase="(USM app)"/>
+        </action>
+    </rule>
+</selector_policy>

@@ -1,0 +1,18 @@
+
+#fictional client-server protocol
+msc {
+ arcgradient = 5;
+
+ a [label="Requester"],b [label="Appraiser"],c [label="Attester"];
+ a=>b [label="Request Contract"];
+ b box b [label="Verify validy of request and generates initial contract to send to Attester"];
+ b=>c [label="Initial Contract"];
+ c box c [label="Reviews contract and generates modified contract with measurements that can be taken"];
+ b<=c [label="Modified Contact"];
+ b box b [label="Reviews modified contract and if acceptable, generates execute contract"];
+ b=>c [label="Execute Contract"];
+ c box c [label="Actual Attestation occurs. Attester may send measurement contract to the appraiser, or may use a custom transmission to convey measurements"];
+ b<=c [label="Measurement Contract"];
+ b box b [label="Appraiser will review any measurement contracts it receives(if any) and then generate a response contract that the Appraiser will send to the Requester"];
+ a<=b [label="Response Contract"]; 
+}

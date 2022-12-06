@@ -1,0 +1,184 @@
+#
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+## <summary></summary>
+interface(`apb_metadata_reader', `
+	gen_require(`
+		type apb_info_dir_t;
+		type apb_info_t;
+	')
+	read_files_pattern($1, apb_info_dir_t, apb_info_t)
+	allow $1 apb_info_dir_t:dir{read};
+')
+
+interface(`allow_spawn_any_apb', `
+	gen_require(`
+		attribute apb_type;
+		type apb_dir_t;
+	')
+	allow $1 apb_dir_t:dir {search};
+	allow $1 apb_type:process {transition};
+	allow apb_type $1:process {sigchld};
+	allow $1 apb_type:process {rlimitinh siginh noatsecure};
+')
+	
+interface(`define_apb',`
+	gen_require(`
+		attribute apb_type;		
+		attribute apb_exe_type;
+		attribute apb_spawner;
+		type apb_dir_t;
+		type init_t;
+	')
+	typeattribute $1 apb_type;
+	domain_type($1)
+	typeattribute $2 apb_exe_type;
+	maat_file($2)
+	
+	# mmap_exec_files_pattern is not available in Centos 6, while
+	# mmap_files_pattern is deprecated in Centos 7
+	ifdef(`mmap_exec_files_pattern',`
+		mmap_exec_files_pattern($1, apb_dir_t, $2)
+	',`
+		mmap_files_pattern($1, apb_dir_t, $2)
+	')
+	allow_spawn_asps($1)	
+	domain_entry_file($1, $2)
+	type_transition apb_spawner $2 : process $1;
+	logging_send_syslog_msg($1)
+	ifdef(`unconfined_server_stream_connect', `
+		gen_require(`type unconfined_service_t;')
+		allow $1 unconfined_service_t:unix_stream_socket rw_socket_perms;
+	',`
+		init_rw_script_stream_sockets($1)
+	')
+	apb_metadata_reader($1)
+	miscfiles_read_localization($1)
+')
+
+interface(`allow_spawn_apbs',`
+	gen_require(`
+		attribute apb_spawner;
+	')
+	typeattribute $1 apb_spawner;
+')
+
+interface(`asp_metadata_reader',`
+	gen_require(`
+	  type asp_info_dir_t;
+	  type asp_info_t;
+	')
+	read_files_pattern($1, asp_info_dir_t, asp_info_t)
+	allow $1 asp_info_dir_t:dir{read};
+')
+
+# Macro: define_asp(domain, sofile)
+# Define a domain to be an ASP type.
+# Arguments:
+#     + domain: the domain that is an ASP type
+#     + sofile: the type of the shared object 
+#     		file that can be mapped into that type
+interface(`define_asp', `
+	gen_require(`
+	  type asp_dir_t;
+	  attribute asp_type;
+	  attribute asp_exe_type;
+	  type init_t;
+	')
+
+	typeattribute $1 asp_type;
+	domain_type($1)
+	typeattribute $2 asp_exe_type;
+	maat_file($2)
+	
+	# mmap_exec_files_pattern is not available in Centos 6, while
+	# mmap_files_pattern is deprecated in Centos 7
+	ifdef(`mmap_exec_files_pattern',`
+		mmap_exec_files_pattern($1, apb_dir_t, $2)
+	',`
+		mmap_files_pattern($1, apb_dir_t, $2)
+	')
+	domain_entry_file($1, $2)
+	logging_send_syslog_msg($1)
+	allow $1 init_t:unix_stream_socket {rw_socket_perms};
+')
+
+# Macro allow_apb_asp(apb_t, asp_exe_t, asp)
+# Allow an APB type to spawn a particular ASP type.
+# Arguments:
+#     + apb_t: domain of the APB
+#     + asp_t: domain of the ASP
+interface(`allow_apb_asp',`
+	allow $1 $2:file {execute read open getattr};
+	allow $3 $1:fifo_file { read write };
+	allow $1 $3:process {transition rlimitinh siginh noatsecure};
+	type_transition $1 $2:process $3;
+	allow $3 $1:process {sigchld};
+')
+
+interface(`allow_spawn_asps',`
+	gen_require(`
+		attribute asp_spawner;
+	')
+	typeattribute $1 asp_spawner;
+')
+
+interface(`allow_hash_files', `
+	gen_require(`
+		type $2;
+	')
+	allow $1 $2:dir {search};
+	allow $1 $2:process {getattr};
+	allow $1 $2:file {open read getattr};	
+')
+
+interface(`maat_file', `
+	   gen_require(`
+		attribute maat_file_type;
+	   ')
+	   typeattribute $1 maat_file_type;
+	   files_type($1)
+')
+
+interface(`measurement_spec_reader',`
+	gen_require(`
+		type measurement_spec_dir_t;
+		type measurement_spec_t;
+	')
+	read_files_pattern($1, measurement_spec_dir_t, measurement_spec_t)
+	allow $1 measurement_spec_dir_t:dir{read};
+')
+
+interface(`maat_credentials_reader',`
+	gen_require(`
+		type maat_certificate_t;
+		type maat_private_key_t;
+		type attestmgr_conf_dir_t;
+	')
+	allow $1 attestmgr_conf_dir_t:dir {read};
+	read_files_pattern($1, attestmgr_conf_dir_t, maat_certificate_t)
+	read_files_pattern($1, attestmgr_conf_dir_t, maat_private_key_t)
+')
+
+interface(`maat_tmp_access',`
+	gen_require(`
+		type maat_tmp_t;
+		type tmp_t;
+	')
+	allow $1 tmp_t:dir {create rmdir};
+	allow $1 maat_tmp_t:file{unlink create_file_perms rw_file_perms};
+	files_tmp_filetrans($1, maat_tmp_t, file)
+')

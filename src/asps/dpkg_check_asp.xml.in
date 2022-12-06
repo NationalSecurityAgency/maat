@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2020 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>dpkg_check</name>
+	<uuid>9d2e791d-f0c7-436e-9abf-af33cfac40b3</uuid>
+	<type>File</type>
+	<description>Compare file hash to that in package manager</description>
+	<usage>
+                dpkg_check [graph path] [node id] [data type magic]</usage>
+        <inputdescription>
+        This ASP expects a measurement graph path, a node identifier, and a data type as arguments on the command line.        
+        The node identified must have target type file_target_type and address space simple_file and measurement type
+        md5hash_measurement_type to represent the hash of package manager. 
+
+        This ASP does not consume any input from stdin.</inputdescription>
+        <outputdescription>
+        This ASP adds raw data to the node id passed into the ASP. The raw data will include report information
+	specifying if the DPKG MD5 Check Passed or Failed. 
+
+        This ASP produces no output on stdout.</outputdescription>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/dpkg_check_asp</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">DPKGCHECK</value>
+                        <capability target_type="file_target_type" target_magic="1001" 
+				    address_type="simple_file" address_magic="0x5F5F5F5F" 
+				    measurement_type="md5hash_measurement_type" measurement_magic="0x000777D5" />
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <selinux><type>dpkg_check_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+	</security_context>
+</asp>

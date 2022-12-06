@@ -1,0 +1,134 @@
+Maat Use Cases
+******************
+
+.. Copyright
+
+   Copyright 2020 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+.. currentmodule:: maat
+
+.. |cp| raw:: latex
+
+   \clearpage
+
+
+Purpose and Intended Audience
+=============================
+
+The use case section will detail how Maat can be configured to fit many different system integrity needs,
+including client monitoring, local access, and network access.
+
+The intended audience for this section is a system administrator configuring Maat to meet their system integrity needs.
+
+|cp|
+
+.. _clientMonitoringUseCase:
+
+Client Monitoring
+=================
+
+Problem
+-------
+
+Data from multiple sensors executing on various client platforms is required to provide system monitoring capabilities and enable trend analysis. All client systems on a network must be evaluated by all of the required sensors, generating extensive data which is aggregated and stored by a central server.
+
+.. figure:: images/client_monitoring.jpg
+   :align:  center
+
+   Client Monitoring
+
+Application of Maat
+-------------------
+
+A central server may invoke the Maat appraiser to request a variety of sensor data to be gathered from a specific client or all clients on a network. The Maat appraiser will initiate negotiation and attestation with each client’s local attester. The Maat appraiser and attester negotiate to determine an acceptable set of sensors for measurement, and the appraiser stores the aggregate measurement data in a database where it can be combined with other sensor data for trend analysis and system monitoring.
+
+Variations
+----------
+
+In addition to storing the raw measurement data, the Maat appraiser can evaluate the data to determine an overall health status for a given client system or the network as a whole. This data can be used for a general view of health trends and analysis. 
+
+Applicability
+-------------
+
+The need for system monitoring is common across many enterprise systems. In order to analyze the evolving health of client systems and identify trends in sensor results, a central server must be able to aggregate and store the data from multiple sensors. 
+
+|cp|
+
+.. _localAccessUseCase:
+
+Local Access
+============
+
+Problem
+-------
+
+Local integrity evaluation is required in self attestation. The user must have trust in the local system before entering sensitive information or attempting to connect to other devices from this local platform.
+
+.. figure:: images/local_access_control.jpg
+   :align:  center
+
+   Local Attestation
+
+Application of Maat
+-------------------
+
+User level software will start a trust decision service, which will invoke the Maat attestation manager with a list of measurement requests. In this single instance of Maat, there will be an attester and appraiser. The appraiser will negotiate with the attester to perform the measurement requests. The attester will then provide evidence to the appraiser. The appraiser will evaluate this evidence and send the results to the trust decision service.  The trust decision service will either request more measurements by re-invoking the Maat attestation manager with new measurement requests or send a final report with pass/fail information to the user level software to give a measurement of trust in this system.
+
+Variations
+----------
+
+Instead of being initiated, self-attestation could occur each time a user attempts to login to a system. Before the user enters their credentials, the system will run Maat and then display system trust levels. Also if access to other systems is denied, the trust decision service may automatically run Maat to display local system trust levels. 
+
+Applicability
+--------------
+
+The need to verify local system integrity is common across all components of a trusted network, including end user clients, mobile devices, embedded devices, servers. Any of these devices must be trusted before user sensitive data is read or stored.
+
+|cp|
+
+.. _networkAccessUseCase:
+
+Network Access
+==============
+
+Problem
+-------
+
+Integrity evaluation is required as part of an access control decision when granting access to a shared resource such as a network, a shared filesystem, or a web application. The integrity evaluation may be combined with other information, such as authentication data, or may be the only input to the access control decision.
+
+.. figure:: images/network_access_control.jpg
+   :align:  center
+
+   Network Access
+
+
+Application of Maat
+-------------------
+
+A central trust decision service or policy decision point may invoke the Maat appraiser to request a pass/fail evaluation of the client. The Maat appraiser will initiate negotiation and attestation with the attester. On completion, the appraiser will provide a pass/fail result to the trust decision service. The trust decision service may combine this result with other inputs (such as authentication data) to instruct a policy enforcement point on the appropriate course of action (e.g., allow/disallow access to the resource).
+
+Variations
+----------
+
+Instead of a pass/fail result, the Maat service may produce a numeric score. This could allow the trust decision service may recommend partial access or a remediation procedure rather than a refusal.
+
+Applicability
+-------------
+
+The need for integrity evaluations in access control decisions is common across many architectures and platforms including client PCs,
+servers and other infrastructure devices, mobile systems, and embedded “internet-of-things” type devices.
+The use case of Network Access involves the Appraiser running on a machine with information/control that the client platform wants to access. Before granting access, the Appraiser will request measurements and verify that the client platform can be trusted.
+
+|cp|

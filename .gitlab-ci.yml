@@ -355,7 +355,8 @@ system-test-selinux-rh7:
         timeout: 2 hours
         allow_failure: true
         tags:
-                - system-test
+                - rhel7
+                - selinux
 
 system-test-maat:
         stage: systemtest

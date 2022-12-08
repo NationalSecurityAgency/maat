@@ -82,7 +82,8 @@ stages:
                 - cp -v  /var/lib/mock/epel-${release}-${arch}/result/maat-*.rpm staging/epel/${release}/${arch}/
                 - cd staging/epel/${release}/${arch}
                 - createrepo -p -d -v -s sha .
-                - cd ../../../../
+                - cd ../../../
+                - scp -r epel builder@manda-archive:/home/builder/public_html/maat/maat-ci/maat-redhat/$CI_COMMIT_SHORT_SHA/
 
 #
 # Build targets
@@ -453,20 +454,6 @@ package-epel-7-x86_64-rpm:
                 paths:
                         - staging
                 expire_in: 2 weeks
-
-create-rh7-repos:
-        stage: deploy
-        script:
-                - "cd staging"
-                - "scp -r epel builder@manda-archive:/home/builder/public_html/maat/maat-ci/maat-redhat/$CI_COMMIT_SHORT_SHA/"
-        tags:
-                - redhat
-        artifacts:
-                paths:
-                        - maat-$CI_COMMIT_SHORT_SHA/
-                expire_in: 2 weeks
-        needs:
-                - package-epel-7-x86_64-rpm
 
 #
 # Note, GitlabCI can't do multi-line or HERE comments, hence the "build file 

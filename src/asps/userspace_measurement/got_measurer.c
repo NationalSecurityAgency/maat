@@ -3549,6 +3549,7 @@ static void scan_process(pid_t pid)
     char *cmdline = get_cmdline(pid_string);
     if (!cmdline) {
         report_anomaly("Unable to access command line information of process");
+        free(pid_string);
         return;
     }
 
@@ -3559,11 +3560,13 @@ static void scan_process(pid_t pid)
     if (elf_version(EV_CURRENT) == EV_NONE) {
         report_anomaly(" ELF library initialization "
                        " failed : %s ", elf_errmsg(elf_errno()));
+        free(pid_string);
         return;
     }
 
     if(open_mem_fd(pid_string) < 0) {
         report_anomaly("Unable to open memory of process for reading\n");
+        free(pid_string);
         return;
     }
 
@@ -3583,6 +3586,7 @@ static void scan_process(pid_t pid)
         get_executable_base_load_address(pid_string);
     if (!exe_base_load_addr || move_exe_context_to_front(&elf_contexts, exe_base_load_addr) < 0) {
         report_anomaly("Could not find the ELF context for the executable");
+        free(pid_string);
         return;
     }
 
@@ -3601,6 +3605,7 @@ static void scan_process(pid_t pid)
 
         if (linkmap_list == NULL) {
             report_anomaly("Unable to retrieve link map based on address\n");
+            free(pid_string);
             return;
         }
 

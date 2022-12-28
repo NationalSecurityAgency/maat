@@ -2118,7 +2118,7 @@ static char *get_executable_path(const char *pid)
                        "process was deleted: '%s'", buff);
         /* Returns NULL on failure */
         return strdup(buff);
-    } else if (!exe_path || errno) {
+    } else if (!exe_path) {
         int backup = errno;
         dlog(4, "Error resolving executable path %s: %s\n",
              path, strerror(errno));

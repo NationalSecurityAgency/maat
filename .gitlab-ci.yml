@@ -76,10 +76,10 @@ stages:
                 - cp /etc/mock/epel-${release}-${arch}.cfg .
                 - mock -r epel-${release}-${arch}.cfg --buildsrpm --spec rpm/maat.spec --sources SOURCES
                 - rm -rf staging/epel/${release}/${arch}/maat-*.src.rpm
-                - cp /var/lib/mock/epel-${release}-${arch}/result/maat-*.src.rpm staging/epel/${release}/${arch}
+                - cp /var/lib/mock/centos+epel-${release}-${arch}/result/maat-*.src.rpm staging/epel/${release}/${arch}
                 - mock -v --no-clean -r epel-${release}-${arch}.cfg --rebuild staging/epel/${release}/${arch}/maat-*.src.rpm
                 - rm -f staging/epel/${release}/${arch}/maat-*.rpm
-                - cp -v  /var/lib/mock/epel-${release}-${arch}/result/maat-*.rpm staging/epel/${release}/${arch}/
+                - cp -v  /var/lib/mock/centos+epel-${release}-${arch}/result/maat-*.rpm staging/epel/${release}/${arch}/
                 - cd staging/epel/${release}/${arch}
                 - createrepo -p -d -v -s sha .
                 - cd ../../../
@@ -325,6 +325,7 @@ system-test-selinux-rh7:
         before_script:
                 - "sudo killall -15 attestmgr || true"
                 - "sudo killall -9 attestmgr || true"
+                - sudo semanage port -d -t attestmgr_port_t -p tcp 2343 || true
                 - sudo yum remove maat maat-selinux -y || true
         script:
                 - echo '[maat-redhat]' > maat.repo
@@ -334,7 +335,9 @@ system-test-selinux-rh7:
                 - echo 'gpgcheck=0' >> maat.repo
                 - cat maat.repo
                 - sudo cp maat.repo /etc/yum.repos.d
+                - sudo yum clean all
                 - sudo yum install maat maat-selinux -y
+                - sudo semanage port -a -t attestmgr_port_t -p tcp 2343
                 - sudo cp demo/credentials/client.pem /etc/maat/credentials
                 - sudo cp demo/credentials/client.key /etc/maat/credentials
                 - echo '========= Test system updated to latest maat source ======'
@@ -353,9 +356,9 @@ system-test-selinux-rh7:
                 - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
                 - cat test_client.log
         timeout: 2 hours
-        allow_failure: true
         tags:
-                - system-test
+                - rhel7
+                - selinux
 
 system-test-maat:
         stage: systemtest

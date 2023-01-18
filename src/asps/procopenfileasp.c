@@ -25,6 +25,7 @@
 
 #include "procopenfileasp.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,8 +41,6 @@
 #include <common/asp-errno.h>
 
 #include <types/maat-basetypes.h>
-
-typedef enum { false, true } bool;
 
 int isnumeric(char *str)
 {

@@ -1,6 +1,6 @@
 .. Copyright
 
-   Copyright 2020 United States Government
+   Copyright 2022 United States Government
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ Measurement Specifications define exactly what evidence the requester requires f
 Measurement Specifications contain as much information as necessary to define the type of evidence required. Implementations may define a specification language that provides rich syntax for defining complex evidence relationships. Any such language will need to be understood by the APBs which must parse the specification into a series of actionable instructions. Maat includes an implementation of one such language as part of the optional APB library. Specifications in this language define a set of measurement variables that identify particular data requiring measurement, and measurement instructions that define what measurements are required for variables of a given type. During evaluation, measurement instructions may introduce new variables that must be measured. The complete measurement requires recursively evaluating these measurement obligations until no new variables are introduced.
 
 
-For more information about modifying measurement specifications, go to  
+For more information about modifying measurement specifications, go to
 :ref:`Modifying Measurement Specification <measSpec>`
 
 APBs Currently Available
@@ -38,15 +38,18 @@ APBs Currently Available
 
 .. table:: Sample APB Table
    
-  ==================== ===============================================
+  ==================== =======================================================
   Name                 Description
-  ==================== ===============================================
+  ==================== =======================================================
   appraiser            Initial implementation of an appraiser APB
+  complex_attestation  Combined measurements of two different platforms
   hashdir              Returns a sha1 hash of all files in a directory
   hashfile             Returns a sha1 hash of a file
   process_measurement  SHA1 hash open files of process
   userspace            Userspace measurement
+  layered_att          Layered measurement of a multi privilege-level platform
+  layered_appraiser    Appraisal of layered measurement
   userspace_appraiser  Basic appraisal of userspace measurement
   kim                  Placeholder for kernel integrity measurement
-  ==================== ===============================================
+  ==================== =======================================================
 

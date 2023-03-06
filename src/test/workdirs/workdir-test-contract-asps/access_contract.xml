@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<contract version="2.0" type="access">
+  <subcontract>
+    <option>
+      <value name="APB_phrase">((USM hashfile file) -&gt; SIG):file=/bin/ls</value>
+      <result>PASS</result>
+    </option>
+  </subcontract>
+  <nonce>dd586e37ecc7a9fecd5cc00152031d7c18866aea</nonce>
+  <nonce>dd586e37ecc7a9fecd5cc00152031d7c18866aea</nonce>
+  <nonce>dd586e37ecc7a9fecd5cc00152031d7c18866aea</nonce>
+  <signature>
+    <signedinfo>
+      <canonicalizationmethod algorithm="XML C14N 1.0"/>
+      <signaturemethod algorithm="RSA"/>
+      <digestmethod algorithm="SHA-1"/>
+    </signedinfo>
+    <signaturevalue>BzSy6ZQeWEro6WMxQbn7rH6m6RYm6nHCULodGK+KL/uc4VDsT5Hv2y2IuL2eacjRxn1e/aWIx/pgpHsZXmdBF+kOlEkei5+VfOvMuMGGnVCcbTIGKPf9Z8I/P5qIVUb7fUvXqwlz3fLTRc1RwtgU4erFwH/tduG1m6PQ/6gvXIVU4NAAx/LeyCfWn0TiyJ3hBYLyd/vciTiV6x3YQE6gU5/RBcqaU8Lq1CMxNF4dzPtQXRFcgPDOmgUlIWixisz6nFasJkKxe0wxpS/azQ/JWnjBG3BT/ig82eUHASLDRZsoSiL1vc4G49zbjKiIhyqb9JZldktyIxbVzOksWKfXlLmRskBc0969nlp8HWWvYkV6WYYd0GvvRDl7BJBfB5kCNcaH5g11tcTn+ewblXzQ0pOGw8WyJsfoFk45jcNZzFss7A75k330hf/31sSnch3AagGI5xRUmchQWa+zDB5lKSLhFvcsBxpWWjSObyTDvuDRplKSdS5Zzmvh4rMUaqCL</signaturevalue>
+    <keyinfo>A5:2C:D0:4E:1A:75:1F:7D:60:9F:2B:A6:D1:7D:EA:53:BD:42:B7:FD</keyinfo>
+  </signature>
+</contract>

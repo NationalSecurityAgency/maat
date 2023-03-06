@@ -146,14 +146,17 @@ if [ ! "$(getenforce)" = "Disabled" ]; then
     fi
 
     # Set the default attestmgr port to the correct type
-    semanage port -a -t attestmgr_port_t -p tcp 2342
+    semanage port --list | grep -q -e "attestmgr_port_t[[:space:]]*tcp.*2342"
+    if [ $? -ne 0 ]; then
+	semanage port -a -t attestmgr_port_t -p tcp 2342
+    fi
 fi
 
 # pre uninstall
 
 %preun selinux
 if [ ! "$(getenforce)" = "Disabled" ]; then
-    if semanage port --list | grep -q "attestmgr_port_t[[:space:]]*tcp[[:space:]]*2342"; then
+    if semanage port --list | grep -q "attestmgr_port_t[[:space:]]*tcp.*2342"; then
 	semanage port -d -t attestmgr_port_t -p tcp 2342
 
     fi
@@ -207,6 +210,8 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/apbs/userspace_apb
 %{_libexecdir}/maat/apbs/userspace_appraiser_apb
 %{_libexecdir}/maat/apbs/complex_att_apb
+%{_libexecdir}/maat/apbs/layered_att_apb
+%{_libexecdir}/maat/apbs/layered_appraiser_apb
 %{_libexecdir}/maat/apbs/forwarding_apb
 %{_libexecdir}/maat/apbs/no_op_apb
 %{_libexecdir}/maat/apbs/request_passport_apb
@@ -219,6 +224,7 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/asps/dpkg_inv_asp
 %{_libexecdir}/maat/asps/dummy_appraisal
 %{_libexecdir}/maat/asps/elf_reader
+%{_libexecdir}/maat/asps/send_execute_tcp_asp
 %{_libexecdir}/maat/asps/send_request_asp
 %{_libexecdir}/maat/asps/hashfileserviceasp
 %{_libexecdir}/maat/asps/hashserviceasp
@@ -254,8 +260,12 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/asps/serialize_graph_asp
 %{_libexecdir}/maat/asps/compress_asp
 %{_libexecdir}/maat/asps/encrypt_asp
-%{_libexecdir}/maat/asps/create_contract_asp
+%{_libexecdir}/maat/asps/create_measurement_contract_asp
 %{_libexecdir}/maat/asps/send_asp
+%{_libexecdir}/maat/asps/decompress_asp
+%{_libexecdir}/maat/asps/decrypt_asp
+%{_libexecdir}/maat/asps/verify_measurement_contract_asp
+%{_libexecdir}/maat/asps/receive_asp
 %{_libexecdir}/maat/asps/passport_maker_asp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/proc_namespaces_asp
 %{_libexecdir}/maat/asps/kernel_msmt_asp

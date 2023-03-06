@@ -60,13 +60,28 @@ int wait_asp(struct asp *asp);
  * asynchronous. If run_asp executed with async set to true, invoke wait_asp or stop_asp on asp before
  * using run_asp again, otherwise, the PID of the first invocation of run_asp will be lost.
  */
-int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char* asp_argv[],...);
+int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char* asp_argv[], ...);
+
+/*
+ * This function invokes run_asp but uses a user supplied buffer input source and output destination
+ * instead of file descriptors. This is more ergonomic in certain use-cases that utilizing file descriptors.
+ * This function returns the following:
+ * -5: Error in creating pipes to communicate with the ASP's process
+ * -4: Error in running the ASP
+ * -3: Error in writing the input buffer to the ASP
+ * -2: Error in reading the output buffer from the ASP
+ * -1: Error in wating on the ASP
+ * 0: Successful execution
+ */
+int run_asp_buffers(struct asp *asp, const unsigned char *buf_in,
+                    size_t buf_in_len, char **out_buf, size_t *buf_out_len,
+                    int asp_argc, char *asp_argv[], int timeout, ...);
 
 /**
  * The purpose of this function is to fork a child process and for the child to read from infd
  * unil it is no longer able to do so, at which point the child forks off a grandchild which returns
  * while the child writes the data recieved from the parent to a pipe shared by the child and grandchild
- * and then waits until the grandchild dies at which point it exists. If infd is blocking, then this can
+ * and then waits until the grandchild dies at which point it exits. If infd is blocking, then this can
  * function as a form of control/data flow - the grandchild will not start execution until the parent is
  * completely finished writing to infd.
  *
@@ -79,7 +94,7 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
  * used to send output from the parent to the grancchild. The remaining arguments are file descriptors that
  * should be closed in the grandchild.
  *
- * The function returns the pid of the child process on success in the parent, 0 in the grand-child, and -1
+ * The function returns the pid of the child process on success in the parent, 0 in the grandchild, and -1
  * otherwise
  */
 int fork_and_buffer(pid_t *pidout, int *pipe_read_out, int infd, ...);

@@ -13,7 +13,7 @@ Maat User Guide / Documentation
    and explain how to configure the Maat platform.
 
 .. toctree::
-   :maxdepth: 2 
+   :maxdepth: 2
    :numbered:
 
    maat_introduction
@@ -35,13 +35,14 @@ Maat User Guide / Documentation
 
    .. toctree::
       :maxdepth: 2
-    
+
       maat_use_cases
       basic_tutorial
+      setup_multirealms
       multirealm_tutorial
+      layered_tutorial
       passport_creation_tutorial
       passport_use_tutorial
-      setup_multirealms
       ui_tutorial
       maat_attestation_manager_ui_tutorial
       measurement_specifications

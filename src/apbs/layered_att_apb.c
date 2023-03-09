@@ -309,7 +309,7 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
         // Delegate to the standard userspace measure_variable function
         return measure_variable_internal(ctxt, var, mtype, g_certfile,
                                          g_keyfile, NULL, NULL,
-                                         NULL, NULL, &mcount,
+                                         NULL, NULL, NULL, &mcount,
                                          apb_asps);
     }
 

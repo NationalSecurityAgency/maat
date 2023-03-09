@@ -58,7 +58,7 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
 {
     return measure_variable_internal(ctxt, var, mtype, certfile,
                                      keyfile, NULL, NULL,
-                                     NULL, NULL, &mcount,
+                                     NULL, NULL, NULL, &mcount,
                                      apb_asps);
 }
 

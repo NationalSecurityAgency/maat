@@ -28,7 +28,7 @@ stages:
         - package
         - deploy
         - systemtest
-        - sara-collect
+        #- sara-collect
 
 # Macros to build packages and tests. 
 .package-deb: &deb_build
@@ -41,7 +41,7 @@ stages:
                 - lsb_release -a
                 - autoreconf -i
                 - cd build
-                - ../configure --prefix=/usr --disable-selinux
+                - ../configure --prefix=/usr --disable-selinux --disable-tpm
                 - make dist
                 - cd ..
                 - rm -rf tmp staging
@@ -63,7 +63,7 @@ stages:
                 - cat /etc/redhat-release
                 - autoreconf -i
                 - cd build
-                - ../configure --prefix=/usr --disable-selinux-libdir-mapping
+                - ../configure --prefix=/usr --disable-selinux-libdir-mapping --disable-tpm
                 #- ../configure --prefix=/usr --disable-selinux
                 - make dist
                 - cd ..
@@ -76,14 +76,13 @@ stages:
                 - cp /etc/mock/epel-${release}-${arch}.cfg .
                 - mock -r epel-${release}-${arch}.cfg --buildsrpm --spec rpm/maat.spec --sources SOURCES
                 - rm -rf staging/epel/${release}/${arch}/maat-*.src.rpm
-                - cp /var/lib/mock/centos+epel-${release}-${arch}/result/maat-*.src.rpm staging/epel/${release}/${arch}
+                - cp /var/lib/mock/epel-${release}-${arch}/result/maat-*.src.rpm staging/epel/${release}/${arch}
                 - mock -v --no-clean -r epel-${release}-${arch}.cfg --rebuild staging/epel/${release}/${arch}/maat-*.src.rpm
                 - rm -f staging/epel/${release}/${arch}/maat-*.rpm
-                - cp -v  /var/lib/mock/centos+epel-${release}-${arch}/result/maat-*.rpm staging/epel/${release}/${arch}/
+                - cp -v  /var/lib/mock/epel-${release}-${arch}/result/maat-*.rpm staging/epel/${release}/${arch}/
                 - cd staging/epel/${release}/${arch}
                 - createrepo -p -d -v -s sha .
-                - cd ../../../
-                - scp -r epel builder@manda-archive:/home/builder/public_html/maat/maat-ci/maat-redhat/$CI_COMMIT_SHORT_SHA/
+                - cd ../../../../
 
 #
 # Build targets
@@ -96,11 +95,25 @@ build-ubuntu:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --disable-tpm"
                 - "make"
                 - "make install"
         tags:
                 - ubuntu
+
+build-ubuntu-tpm:
+        stage: build
+        script:
+                - echo " =========== Building Maat ================"
+                - lsb_release -a
+                - "autoreconf -i"
+                - "[ -d build ] || mkdir build"
+                - "cd build"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux"
+                - "make"
+                - "make install"
+        tags:
+                - maat-swtpm
 
 build-redhat-selinux:
         stage: build
@@ -112,11 +125,27 @@ build-redhat-selinux:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-tpm"
                 - "make"
                 - "make install"
         tags:
                 - redhat
+
+#build-centos-selinux:
+#        stage: build
+#        variables:
+#                GIT_SSL_NO_VERIFY: "1"
+#        script:
+#                - echo " =========== Building Maat ================"
+#                - cat /etc/centos-release
+#                - "autoreconf -i"
+#                - "[ -d build ] || mkdir build"
+#                - "cd build"
+#                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd"
+#                - "make"
+#                - "make install"
+#        tags:
+#                - centos
 
 build-redhat:
         stage: build
@@ -128,7 +157,7 @@ build-redhat:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --disable-tpm"
                 - "make"
                 - "make install"
         tags:
@@ -142,11 +171,30 @@ test-ubuntu-basic:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --disable-tpm"
                 - "make"
                 - "make check"
         tags:
                 - ubuntu
+        artifacts:
+                paths:
+                        - build/src/test/*.log
+                expire_in: 2 weeks
+                when: on_failure
+
+test-ubuntu-tpm-basic:
+        stage: test
+        script:
+                - echo " =========== Building Maat ================"
+                - lsb_release -a
+                - "autoreconf -i"
+                - "[ -d build ] || mkdir build"
+                - "cd build"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests"
+                - "make"
+                - "make check"
+        tags:
+                - maat-swtpm
         artifacts:
                 paths:
                         - build/src/test/*.log
@@ -161,12 +209,33 @@ docs-ubuntu:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --disable-tpm"
                 - "make"
                 - "make docs"
                 - "mv documentation/build ../maat-docs"
         tags:
                 - "ubuntu"
+        allow_failure: true
+        artifacts:
+                paths:
+                        - maat-docs
+                expire_in: 2 weeks
+                when: on_success
+                
+docs-ubuntu-tpm:
+        stage: docs
+        script:
+                - echo " =========== Building Maat ================"
+                - lsb_release -a
+                - "autoreconf -i"
+                - "[ -d build ] || mkdir build"
+                - "cd build"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests"
+                - "make"
+                - "make docs"
+                - "mv documentation/build ../maat-docs"
+        tags:
+                - "maat-swtpm"
         allow_failure: true
         artifacts:
                 paths:
@@ -186,7 +255,7 @@ test-redhat-basic:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --enable-tests --disable-selinux"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --enable-tests --disable-selinux --disable-tpm"
                 - "make"
                 - "make check"
         tags:
@@ -197,6 +266,49 @@ test-redhat-basic:
                 expire_in: 2 weeks
                 when: on_failure
 
+#test-ubuntu-coverage:
+#        stage: test
+#        script:
+#                - echo " =========== Building Maat ================"
+#                - lsb_release -a
+#                - "aut2oreconf -i"
+#                - "[ -d build ] || mkdir build"
+#                - "cd build"
+#                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --enable-coverage"
+#                - "make"
+#                - "python ../src/test/gcovr -d -e test -e example . -r . -o /dev/null"
+#                - "make check"
+#                - "python ../src/test/gcovr -e test -e example -x -o coverage.xml -r ."
+#                - "python ../src/test/gcovr -d -e test -e example -r ."
+#        tags:
+#                - ubuntu
+#        artifacts:
+#                paths:
+#                        - build/coverage.xml
+#                expire_in: 2 weeks
+
+#test-redhat-coverage:
+#        stage: test
+#        variables:
+#                GIT_SSL_NO_VERIFY: "1"
+#        script:
+#                - echo " =========== Building Maat ================"
+#                - cat /etc/redhat-release
+#                - "autoreconf -i"
+#                - "[ -d build ] || mkdir build"
+#                - "cd build"
+#                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --enable-tests --enable-coverage --disable-selinux"
+#                - "make"
+#                - "python ../src/test/gcovr -d -e test -e example . -r . -o /dev/null"
+#                - "make check"
+#                - "python ../src/test/gcovr -d -e test -e example -x -o coverage.xml -r ."
+#        tags:
+#                - redhat
+#        artifacts:
+#                paths:
+#                        - build/coverage.xml
+#                expire_in: 2 weeks
+
 test-ubuntu-asan:
         stage: test
         script:
@@ -205,7 +317,7 @@ test-ubuntu-asan:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests CFLAGS='-fsanitize=address -g -O0'"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --disable-tpm --enable-tests CFLAGS='-fsanitize=address -g -O0'"
                 - "make"
                 - "ASAN_OPTIONS=detect_leaks=0 make check"
         tags:
@@ -217,6 +329,25 @@ test-ubuntu-asan:
                 expire_in: 2 weeks
                 when: on_failure
 
+test-ubuntu-tpm-asan:
+        stage: test
+        script:
+                - echo " =========== Building Maat ================"
+                - lsb_release -a
+                - "autoreconf -i"
+                - "[ -d build ] || mkdir build"
+                - "cd build"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests CFLAGS='-fsanitize=address -g -O0'"
+                - "make"
+                - "ASAN_OPTIONS=detect_leaks=0 make check"
+        tags:
+                - maat-swtpm
+        allow_failure: true
+        artifacts:
+                paths:
+                        - build/src/test/*.log
+                expire_in: 2 weeks
+                when: on_failure
 
 test-redhat-asan:
         stage: test
@@ -228,7 +359,7 @@ test-redhat-asan:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --enable-tests CFLAGS='-fsanitize=address -g -O0' --disable-selinux"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-tpm --enable-tests CFLAGS='-fsanitize=address -g -O0' --disable-selinux"
                 - "make"
                 - "ASAN_OPTIONS=detect_leaks=0 make check"
         tags:
@@ -239,6 +370,63 @@ test-redhat-asan:
                         - build/src/test/*.log
                 expire_in: 2 weeks
                 when: on_failure
+
+
+#package-ubuntu-trusty-amd64-deb:
+#        stage: package
+#        variables:
+#                release: trusty
+#                arch: amd64
+#                PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-aptitude
+#        <<: *deb_build
+#        tags:
+#                - ubuntu
+#        artifacts:
+#                paths:
+#                        - staging
+#                expire_in: 2 weeks
+#
+#package-ubuntu-trusty-i386-deb:
+#        stage: package
+#        variables:
+#                release: trusty
+#                arch: i386
+#                PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-aptitude
+#        <<: *deb_build
+#        tags:
+#                - ubuntu
+#        artifacts:
+#                paths:
+#                        - staging
+#                expire_in: 2 weeks
+#
+#package-ubuntu-xenial-amd64-deb:
+#        stage: package
+#        variables:
+#                release: xenial
+#                arch: amd64
+#                PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-aptitude
+#        <<: *deb_build
+#        tags:
+#                - ubuntu
+#        artifacts:
+#                paths:
+#                        - staging
+#                expire_in: 2 weeks
+#
+#package-ubuntu-xenial-i386-deb:
+#        stage: package
+#        variables:
+#                release: xenial
+#                arch: i386
+#                PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-aptitude
+#        <<: *deb_build
+#        tags:
+#                - ubuntu
+#        artifacts:
+#                paths:
+#                        - staging
+#                expire_in: 2 weeks
 
 package-ubuntu-bionic-amd64-deb:
         stage: package
@@ -254,6 +442,91 @@ package-ubuntu-bionic-amd64-deb:
                         - staging
                 expire_in: 2 weeks
 
+package-ubuntu-focal-amd64-deb:
+        stage: package
+        variables:
+                release: focal
+                arch: amd64
+                PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-aptitude
+        <<: *deb_build
+        tags:
+                - maat-swtpm
+        artifacts:
+                paths:
+                        - staging
+                expire_in: 2 weeks
+
+#package-ubuntu-bionic-armhf-deb:
+#        stage: package
+#        variables:
+#                release: bionic
+#                arch: armhf
+#                PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-apt
+#        <<: *deb_build
+#        tags:
+#                - ubuntu
+#        artifacts:
+#                paths:
+#                        - staging
+#                expire_in: 2 weeks
+#        allow_failure: true
+#
+#package-ubuntu-bionic-arm64-deb:
+#        stage: package
+#        variables:
+#                release: bionic
+#                arch: arm64
+#                PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-apt
+#        <<: *deb_build
+#        tags:
+#                - ubuntu
+#        artifacts:
+#                paths:
+#                        - staging
+#                expire_in: 2 weeks
+#        allow_failure: true
+#
+#package-ubuntu-bionic-ppc64el-deb:
+#        stage: package
+#        variables:
+#                release: bionic
+#                arch: ppc64el
+#                PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-apt
+#        <<: *deb_build
+#        tags:
+#                - ubuntu
+#        artifacts:
+#                paths:
+#                        - staging
+#                expire_in: 2 weeks
+#        allow_failure: true
+#
+#package-epel-6-x86_64-rpm:
+#        stage: package
+#        variables:
+#                release: "6"
+#                arch: x86_64
+#        <<: *rpm_build
+#        tags:
+#                - fedora
+#        artifacts:
+#                paths:
+#                        - staging
+#                expire_in: 2 weeks
+#
+#package-epel-6-i386-rpm:
+#        stage: package
+#        variables:
+#                release: "6"
+#                arch: i386
+#        <<: *rpm_build
+#        tags:
+#                - fedora
+#        artifacts:
+#                paths:
+#                        - staging
+#                expire_in: 2 weeks
+
 package-epel-7-x86_64-rpm:
         stage: package
         variables:
@@ -267,6 +540,20 @@ package-epel-7-x86_64-rpm:
                 paths:
                         - staging
                 expire_in: 2 weeks
+
+create-rh7-repos:
+        stage: deploy
+        script:
+                - "cd staging"
+                - "scp -r epel builder@manda-archive:/home/builder/public_html/maat/maat-ci/maat-redhat/"
+        tags:
+                - redhat
+        artifacts:
+                paths:
+                        - maat-$CI_COMMIT_REF_SLUG/
+                expire_in: 2 weeks
+        needs:
+                - package-epel-7-x86_64-rpm
 
 #
 # Note, GitlabCI can't do multi-line or HERE comments, hence the "build file 
@@ -319,25 +606,69 @@ create-repos:
         needs:
                 - package-ubuntu-bionic-amd64-deb
 
+create-repos-tpm:
+        stage: deploy
+        script:
+                - "cd staging"
+                - "mkdir -p ubuntu-tpm/conf"
+                - "echo 'Origin: APL Maat Repo' > ubuntu-tpm/conf/distributions"
+                #- "echo 'Label: APL-Maat' >>  ubuntu/conf/distributions" 
+                #- "echo 'Codename: trusty' >>  ubuntu/conf/distributions"  
+                #- "echo 'Architectures: i386 amd64'  >>  ubuntu/conf/distributions"
+                #- "echo 'Components: multiverse' >>  ubuntu/conf/distributions"
+                #- "echo 'Description: The official APL Maat Repo'  >>  ubuntu/conf/distributions"
+                #- "echo 'SignWith: 8DC43B64'  >>  ubuntu/conf/distributions"
+                #- "echo '' >>  ubuntu/conf/distributions"
+                #- "echo 'Origin: APL Maat Repo' >> ubuntu/conf/distributions"
+                #- "echo 'Label: APL-Maat' >>  ubuntu/conf/distributions"
+                #- "echo 'Codename: xenial' >>  ubuntu/conf/distributions"  
+                #- "echo 'Architectures: i386 amd64'  >>  ubuntu/conf/distributions"
+                #- "echo 'Components: multiverse' >>  ubuntu/conf/distributions"
+                #- "echo 'Description: The official APL Maat Repo'  >>  ubuntu/conf/distributions"
+                #- "echo 'SignWith: 8DC43B64'  >>  ubuntu/conf/distributions"
+                #- "echo '' >>  ubuntu/conf/distributions"
+                #- "echo 'Origin: APL Maat Repo' >> ubuntu/conf/distributions"
+                - "echo 'Label: APL-Maat' >>  ubuntu-tpm/conf/distributions"
+                - "echo 'Codename: focal' >>  ubuntu-tpm/conf/distributions"  
+                - "echo 'Architectures: i386 amd64 arm64 armhf ppc64el'  >>  ubuntu-tpm/conf/distributions"
+                - "echo 'Components: multiverse' >>  ubuntu-tpm/conf/distributions"
+                - "echo 'Description: The official APL Maat Repo'  >>  ubuntu-tpm/conf/distributions"
+                - "echo 'SignWith: 08123D97BA5BEA706C0D06D1AC5CF4C3F7464DA8'  >>  ubuntu-tpm/conf/distributions"
+                - "echo '' >>  ubuntu-tpm/conf/distributions"
+                - "echo 'basedir .' > ubuntu-tpm/conf/options"
+                - cd ubuntu-tpm
+                #- reprepro -V includedeb trusty ../trusty-*-results/maat*.deb
+                #- reprepro -V includedeb xenial ../xenial-*-results/maat*.deb
+                - reprepro -V includedeb focal ../focal-*-results/maat*.deb
+                - cd ../..
+                - mv staging maat-$CI_COMMIT_REF_SLUG
+                - "scp -r maat-$CI_COMMIT_REF_SLUG builder@manda-archive.jhuapl.edu:public_html/maat/"
+
+        tags:
+                - maat-swtpm
+        artifacts:
+                paths:
+                        - maat-$CI_COMMIT_REF_SLUG/
+                expire_in: 2 weeks
+        needs:
+                - package-ubuntu-focal-amd64-deb
+
 system-test-selinux-rh7:
         stage: systemtest
         dependencies: []
         before_script:
                 - "sudo killall -15 attestmgr || true"
                 - "sudo killall -9 attestmgr || true"
-                - sudo semanage port -d -t attestmgr_port_t -p tcp 2343 || true
                 - sudo yum remove maat maat-selinux -y || true
         script:
                 - echo '[maat-redhat]' > maat.repo
                 - echo 'name=Maat RPM Repo' >> maat.repo
-                - echo "baseurl=http://manda-archive.jhuapl.edu/~builder/maat/maat-ci/maat-redhat/$CI_COMMIT_SHORT_SHA/7/x86_64" >> maat.repo
+                - echo 'baseurl=http://manda-archive.jhuapl.edu/~builder/maat/maat-ci/maat-redhat/epel/7/x86_64' >> maat.repo
                 - echo 'enabled=1' >> maat.repo
                 - echo 'gpgcheck=0' >> maat.repo
                 - cat maat.repo
                 - sudo cp maat.repo /etc/yum.repos.d
-                - sudo yum clean all
                 - sudo yum install maat maat-selinux -y
-                - sudo semanage port -a -t attestmgr_port_t -p tcp 2343
                 - sudo cp demo/credentials/client.pem /etc/maat/credentials
                 - sudo cp demo/credentials/client.key /etc/maat/credentials
                 - echo '========= Test system updated to latest maat source ======'
@@ -356,9 +687,9 @@ system-test-selinux-rh7:
                 - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
                 - cat test_client.log
         timeout: 2 hours
+        allow_failure: true
         tags:
-                - rhel7
-                - selinux
+                - system-test
 
 system-test-maat:
         stage: systemtest
@@ -398,7 +729,7 @@ system-test-maat:
                 - "kill %1 || true"
                 - "killall -15 attestmgr || true"
                 - "killall -9 attestmgr || true"
-                #- "sudo apt remove --assume-yes maat libmaat1 || true"
+                - "sudo apt remove --assume-yes maat libmaat1 || true"
                 - "sudo rm -f /etc/maat/credentials/client.*"
                 - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
                 - "cat test_client.log"
@@ -411,10 +742,10 @@ system-test-maat:
         tags:
                 - maat-deploy-test-only
 
-system-test-maat-failed-appraisal:
+system-test-maat-tpm:
         stage: systemtest
         variables:
-                release: bionic
+                release: focal
                 arch: amd64
         dependencies: []
         before_script:
@@ -434,10 +765,9 @@ system-test-maat-failed-appraisal:
                 - sudo apt-get --allow-unauthenticated update 
                 - sudo apt-get --allow-unauthenticated -y --reinstall install maat
                 - sudo cp demo/credentials/client.pem /etc/maat/credentials 
-                - sudo cp demo/credentials/client.key /etc/maat/credentials
-                - echo "Adding a package to the blacklist"
-                - echo "ubuntu-session 3.28.1-0ubuntu3 amd64" | sudo tee -a /usr/share/maat/asps/package.blacklist
-                - sudo cat /usr/share/maat/asps/package.blacklist
+                - sudo cp demo/credentials/client.key /etc/maat/credentials 
+                - sudo cp demo/credentials/ak.ctx /etc/maat/credentials 
+                - sudo cp demo/credentials/akpub.pem /etc/maat/credentials 
                 - echo '========= Test system updated to latest maat source ======'
                 - echo '============ Testing Demo 1 from TUTORIAL.md'
                 - echo '====== starting appraiser'
@@ -446,25 +776,25 @@ system-test-maat-failed-appraisal:
                 - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
                 - sleep 10
                 - echo '====== starting test'
-                - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r packages | tee test_client.log || true"
+                - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r processes | tee test_client.log || true"
                 - echo "====== Cleaning up"
                 - "kill %2 || true"
                 - "kill %1 || true"
                 - "killall -15 attestmgr || true"
                 - "killall -9 attestmgr || true"
-                - "sudo apt remove --assume-yes maat || true"
+                - "sudo apt remove --assume-yes maat libmaat1 || true"
                 - "sudo rm -f /etc/maat/credentials/client.*"
-                - "if ! grep FAIL test_client.log ; then echo 'Did not find FAIL!' ; exit 1 ; fi"
+                - "sudo rm -f /etc/maat/credentials/ak*"
+                - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
                 - "cat test_client.log"
 
-        after_script:
-                - sudo truncate -s 0 /usr/share/maat/asps/package.blacklist
+        #after_script:
         #        - "sudo killall -15 attestmgr || true"
         #        - "sudo killall -9 attestmgr || true"
         #        - "sudo apt remove --assume-yes maat libmaat1 || true"
         #        - "sudo rm -f /etc/maat/credentials/client.*"
         tags:
-                - maat-deploy-test-only
+                - maat-swtpm
 
 kickoff-saracode:
         stage: sara-kickoff
@@ -484,33 +814,33 @@ kickoff-saracode:
                 expire_in: 2 hours
                 when: on_success
 
-collect-saracode:
-        stage: sara-collect
-        variables:
-                GIT_SSL_NO_VERIFY: "1"
-        script:
-                - "HDR=\"X-Auth-Token: ${SARACODE_TOKEN}\""
-                - "ROOT=https://saracode-backend.jhuapl.edu/v2/project"
-                - . ./saracode_build_id
-                - "echo BUILD_ID=${BUILD_ID}"
-                - "while [ \"x$(curl -s -k -H \"${HDR}\" ${ROOT}/analysis/${BUILD_ID}/ready)\" = \"xfalse\" ]; do sleep 5; done"
-                - "curl -s -k -H \"${HDR}\" ${ROOT}/issues/${BUILD_ID} > issues.csv"
-                - "curl -s -k -H \"${HDR}\" ${ROOT}/analysis/${BUILD_ID}/console > console.txt"
-                - "function issue_file(){ echo $1 | cut -d ',' -f 4 | sed -e 's|^maat/||';}"
-                - "function issue_line(){ echo $1 | cut -d ',' -f 5;}"
-                - "function issue_message(){ echo $1 | cut -d ',' -f 9-; }"
-                - "function issue_tool(){ echo $1 | cut -d ',' -f 3;}"
-                - "function note_for_issue(){ echo -e \"$(issue_file \"$1\"):$(issue_line \"$1\")\\n\\n$(issue_message \"$1\")\\n\\nReported by $(issue_tool \"$1\")\"; }"
-                - "function issue_file_changed(){ git diff --name-only origin/unstable | grep -q \"$(issue_file \"$1\")\"; }"
-                - "COMMENT_URL=https://gitlab.jhuapl.edu/api/v4/projects/14/repository/commits/$(git rev-list HEAD -1)/comments"
-                - "function post_comment(){ curl -f -k -X POST ${COMMENT_URL} --header \"private-token: $COMMENT_POSTING_TOKEN\" --form \"note=$(note_for_issue \"$1\")\" --form \"path=$(issue_file \"$1\")\" --form \"line=$(issue_line \"$1\")\" --form \"line_type=new\" || echo \"failed to post\";}"
-                - "( read ; while read issue; do if issue_file_changed $issue; then echo \"Adding comment for issue: $issue\"; post_comment \"$issue\"; fi; done ) < issues.csv" 
-        allow_failure: true
-        artifacts:
-                paths:
-                        - issues.csv
-                        - console.txt
-                expire_in: 2 weeks
-                when: always
-        dependencies:
-                - kickoff-saracode
+# collect-saracode:
+#         stage: sara-collect
+#         variables:
+#                 GIT_SSL_NO_VERIFY: "1"
+#         script:
+#                 - "HDR=\"X-Auth-Token: ${SARACODE_TOKEN}\""
+#                 - "ROOT=https://saracode-backend.jhuapl.edu/v2/project"
+#                 - . ./saracode_build_id
+#                 - "echo BUILD_ID=${BUILD_ID}"
+#                 - "while [ \"x$(curl -s -k -H \"${HDR}\" ${ROOT}/analysis/${BUILD_ID}/ready)\" = \"xfalse\" ]; do sleep 5; done"
+#                 - "curl -s -k -H \"${HDR}\" ${ROOT}/issues/${BUILD_ID} > issues.csv"
+#                 - "curl -s -k -H \"${HDR}\" ${ROOT}/analysis/${BUILD_ID}/console > console.txt"
+#                 - "function issue_file(){ echo $1 | cut -d ',' -f 4 | sed -e 's|^maat/||';}"
+#                 - "function issue_line(){ echo $1 | cut -d ',' -f 5;}"
+#                 - "function issue_message(){ echo $1 | cut -d ',' -f 9-; }"
+#                 - "function issue_tool(){ echo $1 | cut -d ',' -f 3;}"
+#                 - "function note_for_issue(){ echo -e \"$(issue_file \"$1\"):$(issue_line \"$1\")\\n\\n$(issue_message \"$1\")\\n\\nReported by $(issue_tool \"$1\")\"; }"
+#                 - "function issue_file_changed(){ git diff --name-only origin/unstable | grep -q \"$(issue_file \"$1\")\"; }"
+#                 - "COMMENT_URL=https://iol-gitlab.jhuapl.edu/api/v4/projects/14/repository/commits/$(git rev-list HEAD -1)/comments"
+#                 - "function post_comment(){ curl -f -k -X POST ${COMMENT_URL} --header \"private-token: $COMMENT_POSTING_TOKEN\" --form \"note=$(note_for_issue \"$1\")\" --form \"path=$(issue_file \"$1\")\" --form \"line=$(issue_line \"$1\")\" --form \"line_type=new\" || echo \"failed to post\";}"
+#                 - "( read ; while read issue; do if issue_file_changed $issue; then echo \"Adding comment for issue: $issue\"; post_comment \"$issue\"; fi; done ) < issues.csv" 
+#         allow_failure: true
+#         artifacts:
+#                 paths:
+#                         - issues.csv
+#                         - console.txt
+#                 expire_in: 2 weeks
+#                 when: always
+#         needs:
+#                 - kickoff-saracode

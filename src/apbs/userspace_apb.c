@@ -52,6 +52,7 @@ char *keyfile  = NULL;
 char *keypass = NULL;
 char *nonce = NULL;
 char *tpmpass = NULL;
+char  *akctx = NULL;
 char *sign_tpm_str = NULL;
 
 static int measure_variable_shim(void *ctxt, measurement_variable *var,
@@ -59,7 +60,7 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
 {
     return measure_variable_internal(ctxt, var, mtype, certfile,
                                      keyfile, keypass, nonce,
-                                     tpmpass, sign_tpm_str,
+                                     tpmpass, akctx, sign_tpm_str,
                                      &mcount, apb_asps);
 }
 
@@ -135,21 +136,21 @@ static int execute_sign_send_pipeline(measurement_graph *graph,
 
         dlog(4, "Warning: no partner certificate for sign_send_asp\n");
 
-        char *sign_send_asp_argv[8] = {graph_path, peerchan_str,
+        char *sign_send_asp_argv[9] = {graph_path, peerchan_str,
                                        certfile, keyfile, keypass,
-                                       tpmpass, sign_tpm_str, workdir
+                                       tpmpass, akctx, sign_tpm_str, workdir
                                       };
-        ret_val = run_asp(sign_send_asp, -1, -1, false, 8,
+        ret_val = run_asp(sign_send_asp, -1, -1, false, 9,
                           sign_send_asp_argv, -1);
 
     } else {
 
-        char *sign_send_asp_argv[9] = {graph_path, peerchan_str,
+        char *sign_send_asp_argv[10] = {graph_path, peerchan_str,
                                        certfile, keyfile, keypass,
-                                       tpmpass, sign_tpm_str,
+                                       tpmpass, akctx, sign_tpm_str,
                                        workdir, partner_cert
                                       };
-        ret_val = run_asp(sign_send_asp, -1, -1, false, 9,
+        ret_val = run_asp(sign_send_asp, -1, -1, false, 10,
                           sign_send_asp_argv, -1);
 
     }
@@ -226,6 +227,12 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
         tpmpass = strdup(scen->tpmpass);;
     } else {
         tpmpass = "";
+    }
+
+    if(scen->akctx) {
+        akctx = strdup(scen->akctx);
+    } else {
+        akctx = "";
     }
 
     if((sign_tpm_str = (char *)g_strdup_printf("%d", scen->sign_tpm)) == NULL) {

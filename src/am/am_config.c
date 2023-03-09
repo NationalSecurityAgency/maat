@@ -195,6 +195,11 @@ int load_credentials_config(unsigned int xml_version UNUSED, xmlNode *credential
     int set_cert = 0;
     int set_cacert = 0;
     int set_tpm = 0;
+    int set_akctx = 0;
+    int set_akpubkey = 0;
+    int sign_tpm = 0;
+    int verify_tpm = 0;
+
     for(node = credentials->children; node != NULL; node = node->next) {
         char *node_name = validate_cstring_ascii(node->name, SIZE_MAX);
         if(node-> type != XML_ELEMENT_NODE || node_name == NULL) {
@@ -243,8 +248,8 @@ int load_credentials_config(unsigned int xml_version UNUSED, xmlNode *credential
                 set_cacert = 1;
             }
         } else if(strcasecmp(node_name, "tpm-password") == 0) {
-            if(cfg->tpm_pass == NULL) {
-                cfg->tpm_pass = contents;
+            if(cfg->tpmpass == NULL) {
+                cfg->tpmpass = contents;
                 set_tpm = 1;
             } else if (set_tpm) {
                 dlog(2, "Warning: multiple \"%s\" nodes not yet supported, "
@@ -253,6 +258,54 @@ int load_credentials_config(unsigned int xml_version UNUSED, xmlNode *credential
             } else {
                 dlog(2, "Warning: %s in the configuration file was overridden\n", node_name);
                 set_tpm = 1;
+            }
+        } else if(strcasecmp(node_name, "akctx") == 0) {
+            if(cfg->akctx == NULL) {
+                cfg->akctx = contents;
+                set_akctx = 1;
+            } else if (set_akctx) {
+                dlog(2, "Warning: multiple \"%s\" nodes not yet supported, "
+                     "ignoring extras\n", node_name);
+                xmlFree(contents);
+            } else {
+                dlog(2, "Warning: %s in the configuration file was overridden\n", node_name);
+                set_akctx = 1;
+            }
+        } else if(strcasecmp(node_name, "akpubkey") == 0) {
+            if(cfg->akpubkey == NULL) {
+                cfg->akpubkey = contents;
+                set_akpubkey = 1;
+            } else if (set_akpubkey) {
+                dlog(2, "Warning: multiple \"%s\" nodes not yet supported, "
+                     "ignoring extras\n", node_name);
+                xmlFree(contents);
+            } else {
+                dlog(2, "Warning: %s in the configuration file was overridden\n", node_name);
+                set_akpubkey = 1;
+            }
+	    } else if(strcasecmp(node_name, "sign-tpm") == 0) {
+            if(cfg->sign_tpm == 0) {
+	            cfg->sign_tpm = atoi(contents);
+                sign_tpm = 1;
+            } else if (sign_tpm) {
+                dlog(2, "Warning: multiple \"%s\" nodes not yet supported, "
+                     "ignoring extras\n", node_name);
+                xmlFree(contents);
+            } else {
+                dlog(2, "Warning: %s in the configuration file was overridden\n", node_name);
+                sign_tpm = 1;
+            }
+	    } else if(strcasecmp(node_name, "verify-tpm") == 0) {
+            if(cfg->verify_tpm == 0) {
+	            cfg->verify_tpm = atoi(contents);
+                verify_tpm = 1;
+            } else if (verify_tpm) {
+                dlog(2, "Warning: multiple \"%s\" nodes not yet supported, "
+                     "ignoring extras\n", node_name);
+                xmlFree(contents);
+            } else {
+                dlog(2, "Warning: %s in the configuration file was overridden\n", node_name);
+                verify_tpm = 1;
             }
         } else {
             dlog(1, "Error: unexpected credential node \"%s\"\n", node_name);
@@ -272,8 +325,12 @@ cleanup:
     cfg->cert_file = NULL;
     xmlFree(cfg->cacert_file);
     cfg->cacert_file = NULL;
-    xmlFree(cfg->tpm_pass);
-    cfg->tpm_pass = NULL;
+    xmlFree(cfg->tpmpass);
+    cfg->tpmpass = NULL;
+    xmlFree(cfg->akctx);
+    cfg->akctx = NULL;
+    xmlFree(cfg->akpubkey);
+    cfg->akpubkey = NULL;
     return -1;
 }
 

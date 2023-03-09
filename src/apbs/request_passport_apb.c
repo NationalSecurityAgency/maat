@@ -52,6 +52,8 @@ char *certfile = NULL;
 char *keyfile  = NULL;
 char *keypass = NULL;
 char *tpmpass = NULL;
+char *akctx = NULL;
+char *sign_tpm_str = NULL;
 char *nonce = NULL;
 
 char *passport_buffer = NULL;
@@ -287,7 +289,7 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
     char *req_args[6];
     char *serialize_args[1];
     char *encrypt_args[1];
-    char *create_con_args[8];
+    char *create_con_args[10];
 
     if( !scen->workdir || ((workdir = strdup(scen->workdir)) == NULL) ) {
         dlog(3, "Error: failed to copy workdir\n");
@@ -410,7 +412,7 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
                 if(scen->partner_cert && ((partner_cert = strdup(scen->partner_cert)) != NULL)) {
                     encrypt_args[0] = partner_cert;
 
-                    create_con_args[7] = "1";
+                    create_con_args[9] = "1";
 
                     ret_val = fork_and_buffer_async_asp(encrypt, 1, encrypt_args, fb_fd, &fb_fd);
                     if(ret_val == -2) {
@@ -424,7 +426,7 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
                         exit(0);
                     }
                 } else {
-                    create_con_args[7] = "0";
+                    create_con_args[9] = "0";
                 }
 
                 create_con_args[0] = workdir;
@@ -432,8 +434,10 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
                 create_con_args[2] = keyfile;
                 create_con_args[3] = keypass;
                 create_con_args[4] = tpmpass;
-                create_con_args[5] = "1";
-                create_con_args[6] = "1";
+                create_con_args[5] = akctx;
+                create_con_args[6] = sign_tpm_str;
+                create_con_args[7] = "1";
+                create_con_args[8] = "1";
 
                 //create con
                 ret_val = fork_and_buffer_async_asp(create_con, 8, create_con_args, fb_fd, &fb_fd);
@@ -562,6 +566,16 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid UN
         tpmpass = strdup(scen->tpmpass);
     } else {
         tpmpass = "";
+    }
+
+    if(scen->akctx) {
+        akctx = strdup(scen->akctx);
+    } else {
+        akctx = "";
+    }
+
+    if((sign_tpm_str = (char *)g_strdup_printf("%d", scen->sign_tpm)) == NULL) {
+        sign_tpm_str = "";
     }
 
     ret_val = execute_measurement_and_asp_pipeline(graph, mspec, arg_list[1]->value, arg_list[2]->value,

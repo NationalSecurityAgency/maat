@@ -25,6 +25,7 @@
 #include <check.h>
 #include <stdlib.h>
 
+#include <config.h>
 #include <graph/graph-core.h>
 #include <common/asp_info.h>
 #include <common/asp.h>
@@ -43,6 +44,11 @@
 #define PRIV_KEY SRCDIR "/credentials/client.key"
 #define CERT_FILE SRCDIR "/credentials/client.pem"
 #define NONCE "dd586e37ecc7a9fecd5cc00152031d7c18866aea"
+#if USE_TPM
+#define TPMPASS "maatpass"
+#define AKCTX SRCDIR "/credentials/ak.ctx" 
+#define AKPUB SRCDIR "/credentials/akpub.pem"
+#endif
 
 GList *asps = NULL;
 GList *apbs = NULL;
@@ -312,6 +318,18 @@ static int conduct_test(const char *args)
     scen.certfile = strdup(CERT_FILE);
     scen.nonce = strdup(NONCE);
 
+#ifdef USE_TPM
+    scen.sign_tpm = 1;
+    scen.verify_tpm = 1;
+    scen.tpmpass = strdup(TPMPASS);
+    scen.akctx = strdup(AKCTX);
+    scen.akpubkey = strdup(AKPUB);
+    if(scen.tpmpass == NULL || scen.akctx == NULL || scen.akpubkey == NULL) {
+      dlog(0, "Unable to create a scenario object\n");
+      goto error;
+    }
+#endif
+
     if(scen.contract == NULL || scen.workdir == NULL || scen.cacert == NULL
             || scen.keyfile == NULL || scen.certfile == NULL || scen.nonce == NULL) {
         dlog(0, "Unable to create a scenario object\n");
@@ -354,6 +372,11 @@ error:
     free(scen.keyfile);
     free(scen.certfile);
     free(scen.nonce);
+#ifdef USE_TPM
+    free(scen.tpmpass);
+    free(scen.akctx);
+    free(scen.akpubkey);
+#endif
     close(chan[1]);
     close(chan[0]);
     return ret;

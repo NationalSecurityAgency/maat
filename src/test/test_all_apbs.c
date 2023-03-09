@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <check.h>
 
+#include <config.h>
 #include <graph/graph-core.h>
 #include <common/asp_info.h>
 #include <common/asp.h>
@@ -99,7 +100,11 @@ START_TEST(test_all_apbs)
                      "</contract>");
     scen.size    = strlen(scen.contract);
     scen.workdir = strdup(SRCDIR"/workdirs/workdir-test-all-apbs");
-
+#ifdef USE_TPM
+     scen.tpmpass = strdup("maatpass");
+     scen.sign_tpm = 1;
+     scen.akctx = strdup(SRCDIR"/credentials/ak.ctx");
+#endif
     dlog(1,"Calling all APBs:\n");
     for (iter = apbs; iter && iter->data; iter = g_list_next(iter)) {
         apb = (struct apb *)iter->data;

@@ -26,6 +26,7 @@
 #ifndef __MAAT_APB_CONTRACTS_H__
 #define __MAAT_APB_CONTRACTS_H__
 
+#include <config.h>
 #include <glib.h>
 #include <stdint.h>
 #include <client/maat-client.h>
@@ -75,7 +76,16 @@ int handle_measurement_contract(struct scenario *scen,
 int create_integrity_response(target_id_type_t target_typ, xmlChar *target,
                               xmlChar *resource, xmlChar *result,
                               GList *entries, char *certfile, char *keyfile,
-                              char *keypass, char *nonce, char *tpmpass,
+                              char *keypass, char *nonce, 
+#ifdef USE_TPM
+                              char *tpmpass,
+                              char *akctx,
+                              int sign_tpm,
+#else
+			      char *tpmpass UNUSED,
+			      char *akctx UNUSED,
+			      int sign_tpm UNUSED,
+#endif
                               xmlChar **out, size_t *outsize);
 
 

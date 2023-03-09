@@ -32,8 +32,7 @@
 #include <openssl/x509_vfy.h>
 
 #ifdef USE_TPM
-#include <util/tpm.h>
-#include <util/sign_tpm.h>
+#include <util/tpm2/tools/sign.h>
 #endif
 
 #include <util/sign.h>
@@ -48,7 +47,7 @@
 /*
  * Create an empty signature node with the supplied cert id.
  */
-static xmlNode *signature_node(const char *certid)
+static xmlNode *signature_node(const char *certid, int flags)
 {
     xmlNode *sig;
     xmlNode *siginfo;
@@ -61,16 +60,39 @@ static xmlNode *signature_node(const char *certid)
     xmlNewProp(node, (xmlChar*)"algorithm", (xmlChar*)"XML C14N 1.0");
 
     node = xmlNewTextChild(siginfo, NULL, (xmlChar*)"signaturemethod", NULL);
-    xmlNewProp(node, (xmlChar*)"algorithm", (xmlChar*)"RSA");
+    if (flags & SIGNATURE_OPENSSL) {
+      xmlNewProp(node, (xmlChar*)"algorithm", (xmlChar*)"RSA");
+    } else {
+#ifdef USE_TPM
+      xmlNewProp(node, (xmlChar*)"algorithm", (xmlChar*)"RSASSA");
+#else
+      xmlNewProp(node, (xmlChar*)"algorithm", (xmlChar*)"RSA");
+#endif
+    }
 
     node = xmlNewTextChild(siginfo, NULL, (xmlChar*)"digestmethod", NULL);
-    xmlNewProp(node, (xmlChar*)"algorithm", (xmlChar*)"SHA-1");
-
+    if (flags & SIGNATURE_OPENSSL) {
+      xmlNewProp(node, (xmlChar*)"algorithm", (xmlChar*)"SHA-1");
+    } else {
+#ifdef USE_TPM
+      xmlNewProp(node, (xmlChar*)"algorithm", (xmlChar*)"SHA-256");
+#else
+      xmlNewProp(node, (xmlChar*)"algorithm", (xmlChar*)"SHA-1");
+#endif
+    }
+    
     xmlNewTextChild(sig, NULL, (xmlChar*)"signaturevalue", NULL);
     xmlNewTextChild(sig, NULL, (xmlChar*)"keyinfo", (xmlChar*)certid);
 
+    if (flags & SIGNATURE_TPM) {
+#ifdef USE_TPM
+      xmlNewTextChild(sig, NULL, (xmlChar*)"tpmquotevalue", NULL);
+#endif
+    }
+    
     return sig;
 }
+
 
 char *construct_cert_filename(const char *prefix, xmlNode *root)
 {
@@ -138,9 +160,11 @@ int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
 #ifdef USE_TPM
              const char* nonce,
              const char* tpm_password,
+             const char* akctx,
 #else
              const char* nonce UNUSED,
              const char* tpm_password UNUSED,
+             const char* akctx UNUSED,
 #endif
              int flags)
 {
@@ -157,7 +181,7 @@ int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
     if (!root || !doc)
         return -1;
 
-    sig = signature_node(certid);
+    sig = signature_node(certid, flags);
     if(!sig) {
         dlog(1, "Failed to create signature node\n");
         return -1;
@@ -184,18 +208,39 @@ int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
                                         privkey_pass);
     else if (flags & SIGNATURE_TPM) {
 #ifdef USE_TPM
-        unsigned char *bnonce = NULL;
-        size_t nsize = strlen(nonce);
-        bnonce = hexstr_to_bin(nonce, nsize);
-        if (bnonce)
-            nsize = nsize / 2;
-        else {
-            dlog(1, "Failed to convert nonce string to binary\n");
-            goto out;
+        dlog(6, "Using TPM to sign.\n");  
+        struct tpm_sig_quote *sig_quote;
+        sig_quote = tpm2_sign(buf, size_int+1, tpm_password, nonce, akctx);
+        xmlNode *quoteval;
+        char *b64quote;
+
+        if (!sig_quote || !sig_quote->quote || !sig_quote->signature) {
+        fprintf(stderr,"Error sign_xml: Could not generate sig.\n");
+        goto out;
         }
 
-        signature = sign_buffer_tpm(buf, &size, bnonce, nsize, tpm_password);
-        free(bnonce);
+        b64quote = b64_encode(sig_quote->quote, sig_quote->quote_size);
+        free(sig_quote->quote);
+        if (!b64quote) {
+        fprintf(stderr, "Error sign_xml: base64 encode quote.\n");
+        goto out;
+        }
+
+        for (quoteval = sig->children; quoteval; quoteval=quoteval->next) {
+        char *quotevalname = validate_cstring_ascii(quoteval->name, SIZE_MAX);
+        if (quotevalname != NULL && strcasecmp(quotevalname, "tpmquotevalue") == 0)
+        break;
+        }
+        xmlNodeAddContent(quoteval, (xmlChar*)b64quote);
+        b64_free(b64quote);
+        signature = malloc(sig_quote->sig_size);
+        if (!signature) {
+        fprintf(stderr,"Error sign_xml: Could not allocate space for  sig.\n");
+        goto out;
+        }
+        size = sig_quote->sig_size;
+        memcpy(signature, sig_quote->signature, size);
+        free(sig_quote->signature);
 #else
         dlog(4, "WARNING: TPM support disabled at compile time, "
              "using OPENSSL\n");
@@ -247,6 +292,11 @@ out:
  */
 int verify_xml(xmlDoc *doc, xmlNode *root, const char *prefix,
                const char* nonce,
+#ifdef USE_TPM
+	           const char *akpubkey,
+#else
+	           const char *akpubkey UNUSED,
+#endif
                int flags, const char *cacertfile)
 {
     xmlNode *sig;
@@ -254,8 +304,8 @@ int verify_xml(xmlDoc *doc, xmlNode *root, const char *prefix,
     xmlDoc *tmpdoc;
     xmlNode *newroot;
     char *b64sig;
-    unsigned char *signature, *buf;
-    size_t sigsize;
+    unsigned char *signature, *tpmquote, *buf;
+    size_t sigsize, quotesize;
     int size;
     int ret = 0;
     char *certfile = NULL;
@@ -291,6 +341,43 @@ int verify_xml(xmlDoc *doc, xmlNode *root, const char *prefix,
         return -1;
     }
 
+    if (flags & SIGNATURE_TPM) {
+#ifdef USE_TPM
+        xmlNode *quoteval;
+        char *b64quote;
+        
+        /* Find quote value within that element */
+        for (quoteval = sig->children; quoteval; quoteval=quoteval->next) {
+            char *quotevalname = validate_cstring_ascii(quoteval->name, SIZE_MAX);
+            if (quotevalname != NULL && strcasecmp(quotevalname, "tpmquotevalue") == 0)
+                break;
+        }
+
+        if (!quoteval) {
+            fprintf(stderr, "Error verify_xml: No xml TPM Quote node. Will use OPENSSL.\n");
+            flags = SIGNATURE_OPENSSL;
+            goto get_sig;
+        }
+        
+        b64quote = xmlNodeGetContentASCII(quoteval);
+        if (!b64quote) {
+            fprintf(stderr, "Error verify_xml: empty TPM quote value.\n");
+            goto out;
+        }
+
+        tpmquote = b64_decode(b64quote, &quotesize);
+        if (!tpmquote) {
+            fprintf(stderr, "Error verify_xml: could not decode quote.\n");
+            xmlFree(b64quote);
+            goto out;
+        }
+        xmlFree(b64quote);
+
+        /* remove the quote from the doc */
+        xmlNodeSetContent(quoteval, NULL);
+#endif
+    }
+ get_sig:
     /* Find signature value within that element */
     for (sigval = sig->children; sigval; sigval=sigval->next) {
         char *sigvalname = validate_cstring_ascii(sigval->name, SIZE_MAX);
@@ -358,17 +445,13 @@ int verify_xml(xmlDoc *doc, xmlNode *root, const char *prefix,
                                     certfile, cacertfile);
     } else if (flags & SIGNATURE_TPM)  {
 #ifdef USE_TPM
-        int nsize;
-        unsigned char* bin_nonce;
-
-        nsize = strlen(nonce);
-        if((bin_nonce = hexstr_to_bin(nonce, nsize)) == NULL) {
-            goto sig_out;
+        dlog(6, "Using TPM to verify.\n");
+        int res = checkquote(buf, size+1, signature, sigsize, nonce, akpubkey, tpmquote, quotesize);
+        if (res == 0) {
+            ret = 1;
+        } else {
+            ret = -1;
         }
-        nsize /= 2;
-        ret = verify_buffer_tpm(buf, size, signature, sigsize, certfile,
-                                cacertfile, bin_nonce, nsize);
-        free(bin_nonce);
 #else
         dlog(4,"WARNING: TPM support disabled at compile time"
              "using OPENSSL\n");
@@ -383,16 +466,16 @@ int verify_xml(xmlDoc *doc, xmlNode *root, const char *prefix,
 
     free(certfile);
     b64_free(signature);
+    if (flags & SIGNATURE_TPM) {
+#ifdef USE_TPM
+        b64_free(tpmquote);
+#endif
+}
     free(buf);
 
     xmlFreeDoc(tmpdoc);
 
     return ret;
-
-#ifdef USE_TPM
-sig_out:
-    g_free(signature);
-#endif
 
 non_out:
     free(contract_nonce);

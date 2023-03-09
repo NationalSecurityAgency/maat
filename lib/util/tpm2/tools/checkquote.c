@@ -34,24 +34,7 @@ static bool verify_signature() {
     goto err;
   }
   TPM2B_PUBLIC_KEY_RSA sig = cq_ctx.signature.signature.rsassa.sig;
-  
-  size_t i;
-  int j = 0;
-
-  char *sig_readable;
-  sig_readable = malloc(sizeof(char)*(sig.size*2+1));
-  if (!sig_readable) {
-    dlog(3, "Unable to allocate memory.\n");
-    goto err;
-  }
-  for (i = 0; i < sig.size; i++) {
-    sprintf(sig_readable+j, "%02x", sig.buffer[i]);
-    j += 2;
-  }
-  dlog(5, "\nsig: %s\n", sig_readable);
-  free(sig_readable);
-  sig_readable = NULL;
-    
+ 
 // Verify the signature matches message digest
   if (!RSA_verify(NID_sha256, cq_ctx.msg_hash.buffer, cq_ctx.msg_hash.size,
 		  sig.buffer, sig.size, pub_key)) {
@@ -198,6 +181,6 @@ int checkquote(const unsigned char *buf, int buf_size, unsigned char *sig, int s
     dlog(3, "Unable to run checkquote\n");    
   }
 
-  exit(ret);
+  return ret;
 }
 

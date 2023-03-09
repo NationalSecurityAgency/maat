@@ -291,38 +291,7 @@ static tool_rc quote_onrun(ESYS_CONTEXT *ectx) {
   if (rval != TPM2_RC_SUCCESS) {
     dlog(3, "%s(0x%X) - %s", "Esys_Quote\n", rval, Tss2_RC_Decode(rval));
     return tool_rc_from_tpm(rval);
-   }
-    
-  char *quoted_readable;
-  quoted_readable = malloc(sizeof(char)*((((TPM2B *)quoted)->size)*2+1));
-  if (!quoted_readable) {
-    dlog(3, "Failed to allocate memory.\n");
-    return -1;
   }
-
-  int j = 0;
-  size_t i = 0;
-  for (i = 0; i < ((TPM2B *)quoted)->size; i++) {
-    sprintf(quoted_readable+j, "%02x", ((TPM2B *)quoted)->buffer[i]);
-    j += 2;
-  }
-  dlog(5, "\nquoted: %s\n", quoted_readable);
-  free(quoted_readable);
-
-  char *sig_readable;
-  sig_readable = malloc(sizeof(char)*((signature->signature.rsassa.sig.size)*2+1));
-  if (!sig_readable) {
-    dlog(3, "Failed to allocate memory.\n");
-    return -1;
-  }
-
-  j = 0;
-  for (i = 0; i < signature->signature.rsassa.sig.size; i++) {
-    sprintf(sig_readable+j, "%02x", signature->signature.rsassa.sig.buffer[i]);
-    j += 2;
-  }
-  dlog(5, "\nsignature:\n  alg: rsassa\n  sig: %s\n", sig_readable);
-  free(sig_readable);
 
   // Gather PCR values from the TPM (the quote doesn't have them!)
   // call pcr_read
@@ -354,21 +323,6 @@ static tool_rc quote_onrun(ESYS_CONTEXT *ectx) {
 	
   // Print out PCR values as output
   TPM2B_DIGEST *b = &q_ctx.pcr.digests[0];
-  int k;
-  char *b_readable;
-  b_readable = malloc(sizeof(char)*((b->size)*2+1));
-  if (!b_readable) {
-    dlog(3, "Failed to allocate memory.\n");
-    return -1;
-  }
-  
-  j = 0;
-  for (k = 0; k < b->size; k++) {
-    sprintf(b_readable+j, "%02X", b->buffer[k]);
-    j += 2;
-  }
-  dlog(5,  "\npcr:\n  sha256:\n    16: 0x%s\n", b_readable);
-  free(b_readable);
   
   // Calculate the digest from our selected PCR values (to ensure correctness)
   TPM2B_DIGEST pcr_digest = TPM2B_TYPE_INIT(TPM2B_DIGEST, buffer);
@@ -377,21 +331,6 @@ static tool_rc quote_onrun(ESYS_CONTEXT *ectx) {
     dlog(3, "Failed to hash PCR values related to quote!\n");
     return tool_rc_general_error;
   }
-  
-  char *digest_readable;
-  digest_readable = malloc(sizeof(char)*((pcr_digest.size)*2+1));
-  if (!digest_readable) {
-    dlog(3, "Failed to allocate memory.\n");
-    return -1;
-  }
-
-  j = 0;
-  for (i = 0; i < pcr_digest.size; i++) {
-    sprintf(digest_readable+j, "%02x", pcr_digest.buffer[i]);
-    j += 2;
-  }
-  dlog(5,  "\ncalcDigest: %s\n", digest_readable);
-  free(digest_readable);
   
   // Make sure digest from quote matches calculated PCR digest
   // Sanity check -- they should at least be same size!
@@ -541,4 +480,3 @@ struct tpm_sig_quote *tpm2_sign(const unsigned char *buf, int buf_size, const ch
   }
   
 }
-

@@ -176,11 +176,11 @@ START_TEST (test_measurement_contract_asps)
     verify_argv[3] = AKPUBKEY;
     verify_argv[4] = "1";
 #else
-verify_argv[3] = "";
+    verify_argv[3] = "";
     verify_argv[4] = "0";
 #endif
     rc = run_asp_buffers(g_verifyasp, contract, contract_len, &result, &result_len,
-                         4, verify_argv, ASP_TO, -1);
+                         5, verify_argv, ASP_TO, -1);
     free(contract);
     fail_if(rc < 0, "Unable to verify contract");
 

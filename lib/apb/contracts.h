@@ -31,6 +31,7 @@
 #include <stdint.h>
 #include <client/maat-client.h>
 #include <common/scenario.h>
+#include <util/util.h>
 
 #define MAAT_APB_ASP_TIMEOUT 5
 #define MAAT_APB_PEER_TIMEOUT 10000

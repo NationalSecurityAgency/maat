@@ -57,6 +57,32 @@ stages:
                 - "/usr/bin/pbuilder-dist ${release} ${arch} build --buildresult $PWD/../staging/${release}-${arch}-results --configfile ~/.pbset-${release}-${arch} maat*${release}*.dsc"
                 - "cd .."
 
+.package-deb-tpm: &deb_build_tpm
+        script:
+                #- "#[ \"${arch}\" == \"amd64\" -a -e ~/pbuilder/${release}-base.tgz ] || /usr/bin/pbuilder-dist ${release} ${arch} create"
+                #- "#[ \"${arch}\" == \"i386\" -a -e ~/pbuilder/${release}-${arch}-base.tgz ] || /usr/bin/pbuilder-dist ${release} ${arch} create"
+                - "/usr/bin/pbuilder-dist ${release} ${arch} create"
+                - "/usr/bin/pbuilder-dist ${release} ${arch} update"
+                - "[ -d build ] || mkdir build"
+                - lsb_release -a
+                - autoreconf -i
+                - cd build
+                - ../configure --prefix=/usr --disable-selinux
+                - make dist
+                - cd ..
+                - rm -rf tmp staging
+                - mkdir staging
+                - cp build/maat-*.tar.gz staging
+                - mkdir tmp
+                - cd tmp
+                - tar xzf ../build/maat-*.tar.gz 
+                - sed -i.bak "s/-1)/-1${release}0)/g" maat-*/debian/changelog
+                - dpkg-source -b maat-*
+                - "echo $PBSAT"
+                - "echo \"PBUILDERSATISFYDEPENDSCMD=${PBSAT}\" > ~/.pbset-${release}-${arch}"
+                - "/usr/bin/pbuilder-dist ${release} ${arch} build --buildresult $PWD/../staging/${release}-${arch}-results --configfile ~/.pbset-${release}-${arch} maat*${release}*.dsc"
+                - "cd .."
+
 .package-rpm: &rpm_build
         script:
                 - "[ -d build ] || mkdir build"
@@ -448,7 +474,7 @@ package-ubuntu-focal-amd64-deb:
                 release: focal
                 arch: amd64
                 PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-aptitude
-        <<: *deb_build
+        <<: *deb_build_tpm
         tags:
                 - maat-swtpm
         artifacts:

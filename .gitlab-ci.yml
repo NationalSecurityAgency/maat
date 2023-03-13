@@ -633,7 +633,7 @@ create-repos-tpm:
                 - "echo 'Architectures: i386 amd64 arm64 armhf ppc64el'  >>  ubuntu-tpm/conf/distributions"
                 - "echo 'Components: multiverse' >>  ubuntu-tpm/conf/distributions"
                 - "echo 'Description: The official APL Maat Repo'  >>  ubuntu-tpm/conf/distributions"
-                #- "echo 'SignWith: 08123D97BA5BEA706C0D06D1AC5CF4C3F7464DA8'  >>  ubuntu-tpm/conf/distributions"
+                - "echo 'SignWith: 6511235797F7723BD099FEF2F939445A9B6548BE'  >>  ubuntu-tpm/conf/distributions"
                 - "echo '' >>  ubuntu-tpm/conf/distributions"
                 - "echo 'basedir .' > ubuntu-tpm/conf/options"
                 - cd ubuntu-tpm

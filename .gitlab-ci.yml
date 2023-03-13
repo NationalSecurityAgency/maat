@@ -633,7 +633,7 @@ create-repos-tpm:
                 - "echo 'Architectures: i386 amd64 arm64 armhf ppc64el'  >>  ubuntu-tpm/conf/distributions"
                 - "echo 'Components: multiverse' >>  ubuntu-tpm/conf/distributions"
                 - "echo 'Description: The official APL Maat Repo'  >>  ubuntu-tpm/conf/distributions"
-                - "echo 'SignWith: 6511235797F7723BD099FEF2F939445A9B6548BE'  >>  ubuntu-tpm/conf/distributions"
+                - "echo 'SignWith: 78C0DC724E774146EEF1DC04F298618BA7EB5A7E'  >>  ubuntu-tpm/conf/distributions"
                 - "echo '' >>  ubuntu-tpm/conf/distributions"
                 - "echo 'basedir .' > ubuntu-tpm/conf/options"
                 - cd ubuntu-tpm
@@ -756,7 +756,7 @@ system-test-maat-tpm:
                 - "echo \"${CI_COMMIT_REF_SLUG}\" > .maat_branch"
                 - "echo -n 'deb [allow-insecure=yes] http://manda-archive.jhuapl.edu/~builder/maat/maat-' >> maat.list"
                 - "echo -n `cat .maat_branch` >> maat.list"
-                - "echo -n '/ubuntu ' >> maat.list "
+                - "echo -n '/ubuntu-tpm ' >> maat.list "
                 - "echo -n ${release} >> maat.list"
                 - "echo ' multiverse'  >> maat.list"
                 - cat maat.list

@@ -41,7 +41,7 @@ stages:
                 - lsb_release -a
                 - autoreconf -i
                 - cd build
-                - ../configure --prefix=/usr --disable-selinux --disable-tpm
+                - ../configure --prefix=/usr --disable-selinux
                 - make dist
                 - cd ..
                 - rm -rf tmp staging
@@ -67,7 +67,7 @@ stages:
                 - lsb_release -a
                 - autoreconf -i
                 - cd build
-                - ../configure --prefix=/usr --disable-selinux
+                - ../configure --prefix=/usr --disable-selinux --enable-tpm
                 - make dist
                 - cd ..
                 - rm -rf tmp staging
@@ -89,7 +89,7 @@ stages:
                 - cat /etc/redhat-release
                 - autoreconf -i
                 - cd build
-                - ../configure --prefix=/usr --disable-selinux-libdir-mapping --disable-tpm
+                - ../configure --prefix=/usr --disable-selinux-libdir-mapping
                 #- ../configure --prefix=/usr --disable-selinux
                 - make dist
                 - cd ..
@@ -121,7 +121,7 @@ build-ubuntu:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --disable-tpm"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux"
                 - "make"
                 - "make install"
         tags:
@@ -135,7 +135,7 @@ build-ubuntu-tpm:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tpm"
                 - "make"
                 - "make install"
         tags:
@@ -151,7 +151,7 @@ build-redhat-selinux:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-tpm"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd"
                 - "make"
                 - "make install"
         tags:
@@ -183,7 +183,7 @@ build-redhat:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --disable-tpm"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux"
                 - "make"
                 - "make install"
         tags:
@@ -197,7 +197,7 @@ test-ubuntu-basic:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --disable-tpm"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests"
                 - "make"
                 - "make check"
         tags:
@@ -216,7 +216,7 @@ test-ubuntu-tpm-basic:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --enable-tpm"
                 - "make"
                 - "make check"
         tags:
@@ -235,7 +235,7 @@ docs-ubuntu:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --disable-tpm"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests"
                 - "make"
                 - "make docs"
                 - "mv documentation/build ../maat-docs"
@@ -256,7 +256,7 @@ docs-ubuntu-tpm:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --enable-tpm"
                 - "make"
                 - "make docs"
                 - "mv documentation/build ../maat-docs"
@@ -281,7 +281,7 @@ test-redhat-basic:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --enable-tests --disable-selinux --disable-tpm"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --enable-tests --disable-selinux"
                 - "make"
                 - "make check"
         tags:
@@ -343,7 +343,7 @@ test-ubuntu-asan:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --disable-tpm --enable-tests CFLAGS='-fsanitize=address -g -O0'"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests CFLAGS='-fsanitize=address -g -O0'"
                 - "make"
                 - "ASAN_OPTIONS=detect_leaks=0 make check"
         tags:
@@ -363,7 +363,7 @@ test-ubuntu-tpm-asan:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests CFLAGS='-fsanitize=address -g -O0'"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --enable-tpm CFLAGS='-fsanitize=address -g -O0'"
                 - "make"
                 - "ASAN_OPTIONS=detect_leaks=0 make check"
         tags:
@@ -385,7 +385,7 @@ test-redhat-asan:
                 - "autoreconf -i"
                 - "[ -d build ] || mkdir build"
                 - "cd build"
-                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-tpm --enable-tests CFLAGS='-fsanitize=address -g -O0' --disable-selinux"
+                - "../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --enable-tests CFLAGS='-fsanitize=address -g -O0' --disable-selinux"
                 - "make"
                 - "ASAN_OPTIONS=detect_leaks=0 make check"
         tags:

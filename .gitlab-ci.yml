@@ -79,8 +79,7 @@ stages:
                 - sed -i.bak "s/-1)/-1${release}0)/g" maat-*/debian/changelog
                 - dpkg-source -b maat-*
                 - "echo $PBSAT"
-                - "echo \"PBUILDERSATISFYDEPENDSCMD=${PBSAT}\" > ~/.pbset-${release}-${arch}"
-                - "echo \"--enable-tpm\" > ~/.pbset-${release}-${arch}"
+                - "echo \"PBUILDERSATISFYDEPENDSCMD=${PBSAT}\" > ~/.pbset-${release}-${arch}"ure
                 - "/usr/bin/pbuilder-dist ${release} ${arch} build --buildresult $PWD/../staging/${release}-${arch}-results --configfile ~/.pbset-${release}-${arch} maat*${release}*.dsc"
                 - "cd .."
 

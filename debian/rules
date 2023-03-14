@@ -13,3 +13,7 @@ override_dh_auto_configure:
 override_dh_fixperms:
 	dh_fixperms --exclude apb --exclude asp
 
+HOSTNAME ?= $(shell hostname)
+ifeq ($(HOSTNAME),maat-swtpm)
+CONFIGURE_FLAGS += --enable-tpm
+endif

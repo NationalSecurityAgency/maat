@@ -1,0 +1,27 @@
+Source: maat
+Section: admin
+Priority: optional
+Maintainer: Maat Developers <APL_Maat_Developers@listserv.jhuapl.edu>
+Build-Depends: debhelper (>= 8.0.0), autotools-dev, libglib2.0-dev (>= 2.40.0), libxml2-dev, libssl-dev, uuid-dev, libelf-dev, autotools-dev, libcap-dev, zlib1g-dev, make, libjson-c-dev
+Standards-Version: 3.9.4
+
+Package: maat
+Architecture: any
+Depends: libglib2.0-0 (>= 2.40.0), libxml2, libssl1.0.0, libuuid1, uuid-runtime, ${shlibs:Depends}, ${misc:Depends}
+Description: Measurement & Attestation Framework
+ Attestation manager and default attestation protocols, attestation service 
+ providers, and measurement specifications for Maat, a measurement and 
+ attestation architecture.
+
+Package: maat-webui
+Architecture: any
+Depends: maat, python3, python3-pika, mongodb, python3-pymongo, rabbitmq-server, lighttpd
+Description: Maat Web-based Admin console
+ Web-based administration console for scheduling measurements using
+ the Maat Measurement and Attestation framework.
+
+Package: maat-dev
+Architecture: any
+Depends: maat
+Description: Development headers for Maat
+  Development headers for Maat

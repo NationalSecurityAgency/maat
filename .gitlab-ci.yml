@@ -77,7 +77,7 @@ stages:
                 - cd tmp
                 - tar xzf ../build/maat-*.tar.gz 
                 - sed -i.bak "s/-1)/-1${release}0)/g" maat-*/debian/changelog
-                - dpkg-source -b maat-*
+                - dpkg-source -b maat-*/maat-tpm
                 - "echo $PBSAT"
                 - "echo \"PBUILDERSATISFYDEPENDSCMD=${PBSAT}\" > ~/.pbset-${release}-${arch}"
                 - "/usr/bin/pbuilder-dist ${release} ${arch} build --buildresult $PWD/../staging/${release}-${arch}-results --configfile ~/.pbset-${release}-${arch} maat*${release}*.dsc"

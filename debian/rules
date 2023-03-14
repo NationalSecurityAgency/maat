@@ -8,7 +8,7 @@ HOSTNAME=$(shell hostname)
 ifeq ($(HOSTNAME),maat-swtpm)
 OVERRIDE = dh_auto_configure -- --disable-selinux --enable-web-ui --enable-tpm
 else
-OVERRIDE = dh_auto_configure -- --disable-selinux --enable-web-ui --enable-tpm
+OVERRIDE = dh_auto_configure -- --disable-selinux --enable-web-ui
 endif
 
 override_dh_auto_configure:

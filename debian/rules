@@ -4,8 +4,15 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+HOSTNAME=$(shell hostname)
+ifeq ($(HOSTNAME),maat-swtpm)
+OVERRIDE = dh_auto_configure -- --disable-selinux --enable-web-ui --enable-tpm
+else
+OVERRIDE = dh_auto_configure -- --disable-selinux --enable-web-ui --enable-tpm
+endif
+
 override_dh_auto_configure:
-	dh_auto_configure -- --disable-selinux --enable-web-ui
+	$(OVERRIDE)
 
 %:
 	dh $@  --with autotools-dev
@@ -13,7 +20,3 @@ override_dh_auto_configure:
 override_dh_fixperms:
 	dh_fixperms --exclude apb --exclude asp
 
-HOSTNAME ?= $(shell hostname)
-ifeq ($(HOSTNAME),maat-swtpm)
-CONFIGURE_FLAGS += --enable-tpm
-endif

@@ -1,7 +1,0 @@
-/usr/lib/*/*.so.*
-/usr/bin/graph-shell
-/usr/share/maat/*
-/usr/lib/*/maat/*
-/usr/bin/attestmgr
-/usr/bin/test_client
-/etc/maat/*

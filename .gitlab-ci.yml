@@ -78,7 +78,8 @@ stages:
                 - tar xzf ../build/maat-*.tar.gz 
                 - sed -i.bak "s/-1)/-1${release}0)/g" maat-*/debian/changelog
                 - dpkg-source -b maat-*
-                - export PKG_CONFIG_PATH=/usr/local/lib/x86_64-linux-gnu/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/share/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig
+                - pkg-config --variable=pc_path pkg-config
+                - sudo ls /usr/lib/pkgconfig
                 - "echo $PBSAT"
                 - "echo \"PBUILDERSATISFYDEPENDSCMD=${PBSAT}\" > ~/.pbset-${release}-${arch}"
                 - "/usr/bin/pbuilder-dist ${release} ${arch} build --buildresult $PWD/../staging/${release}-${arch}-results --configfile ~/.pbset-${release}-${arch} maat*${release}*.dsc"

@@ -25,3 +25,9 @@ Architecture: any
 Depends: maat
 Description: Development headers for Maat
   Development headers for Maat
+
+Package: maat-tpm
+Architecture: any
+Depends: maat, 
+Description: TPM tools for Maat
+  TPM tools for Maat

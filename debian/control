@@ -28,6 +28,6 @@ Description: Development headers for Maat
 
 Package: maat-tpm
 Architecture: any
-Depends: maat, 
+Depends: maat, tss2-esys
 Description: TPM tools for Maat
   TPM tools for Maat

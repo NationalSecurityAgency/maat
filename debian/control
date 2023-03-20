@@ -28,6 +28,108 @@ Description: Development headers for Maat
 
 Package: maat-tpm
 Architecture: any
-Depends: maat, tpm2-tss, tpm2-abrmd, tpm2-tools
+Depends: maat, libtss2-esys-3.0.2-0
 Description: TPM tools for Maat
   TPM tools for Maat
+
+Package: libtss2-esys-3.0.2-0
+Architecture: any
+Depends: libtss2-tcti-cmd0,
+         libtss2-tcti-device0,
+         libtss2-tcti-mssim0,
+         libtss2-tcti-swtpm0,
+         tpm-udev,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Multi-Arch: same
+Breaks: libtss2-esys0 (<< 3.0.2-1)
+Replaces: libtss2-esys0 (<< 3.0.2-1)
+Description: TPM2 Software stack library - TSS and TCTI libraries
+ TPM2.0 TSS (Software Stack) consists of API layers provided to support
+ TPM 2.0 chips. It is made out of three layers:
+ .
+   - Enhanced System API (ESAPI)
+   - System API (SAPI), which implements the system layer API;
+   - Marshaling/Unmarshaling (MU)
+   - TPM Command Transmission Interface (TCTI), which is used by SAPI to
+     allow communication with the TAB/RM layer;
+ .
+ This package contains the TSS esys libraries that client applications
+ will link against when they require accessing the TPM.
+
+Package: libtss2-tcti-cmd0
+Architecture: any
+Depends: tpm-udev, ${misc:Depends}, ${shlibs:Depends}
+Multi-Arch: same
+Breaks: libtss2-esys0 (<< 3.0.1-2)
+Replaces: libtss2-esys0 (<< 3.0.1-2)
+Description: TPM2 Software stack library - TSS and TCTI libraries
+ TPM2.0 TSS (Software Stack) consists of API layers provided to support
+ TPM 2.0 chips. It is made out of three layers:
+ .
+   - Enhanced System API (ESAPI)
+   - System API (SAPI), which implements the system layer API;
+   - Marshaling/Unmarshaling (MU)
+   - TPM Command Transmission Interface (TCTI), which is used by SAPI to
+     allow communication with the TAB/RM layer;
+ .
+ This package contains the TCTI cmd libraries that client applications
+ will link against when they require accessing the TPM.
+
+Package: libtss2-tcti-device0
+Architecture: any
+Depends: tpm-udev, ${misc:Depends}, ${shlibs:Depends}
+Multi-Arch: same
+Breaks: libtss2-esys0 (<< 3.0.1-2)
+Replaces: libtss2-esys0 (<< 3.0.1-2)
+Description: TPM2 Software stack library - TSS and TCTI libraries
+ TPM2.0 TSS (Software Stack) consists of API layers provided to support
+ TPM 2.0 chips. It is made out of three layers:
+ .
+   - Enhanced System API (ESAPI)
+   - System API (SAPI), which implements the system layer API;
+   - Marshaling/Unmarshaling (MU)
+   - TPM Command Transmission Interface (TCTI), which is used by SAPI to
+     allow communication with the TAB/RM layer;
+ .
+ This package contains the TCTI device libraries that client applications
+ will link against when they require accessing the TPM.
+
+Package: libtss2-tcti-mssim0
+Architecture: any
+Depends: tpm-udev, ${misc:Depends}, ${shlibs:Depends}
+Multi-Arch: same
+Breaks: libtss2-esys0 (<< 3.0.1-2)
+Replaces: libtss2-esys0 (<< 3.0.1-2)
+Description: TPM2 Software stack library - TSS and TCTI libraries
+ TPM2.0 TSS (Software Stack) consists of API layers provided to support
+ TPM 2.0 chips. It is made out of three layers:
+ .
+   - Enhanced System API (ESAPI)
+   - System API (SAPI), which implements the system layer API;
+   - Marshaling/Unmarshaling (MU)
+   - TPM Command Transmission Interface (TCTI), which is used by SAPI to
+     allow communication with the TAB/RM layer;
+ .
+ This package contains the TCTI mssim libraries that client applications
+ will link against when they require accessing the TPM.
+
+Package: libtss2-tcti-swtpm0
+Architecture: any
+Depends: tpm-udev, ${misc:Depends}, ${shlibs:Depends}
+Multi-Arch: same
+Breaks: libtss2-esys0 (<< 3.0.1-2)
+Replaces: libtss2-esys0 (<< 3.0.1-2)
+Description: TPM2 Software stack library - TSS and TCTI libraries
+ TPM2.0 TSS (Software Stack) consists of API layers provided to support
+ TPM 2.0 chips. It is made out of three layers:
+ .
+   - Enhanced System API (ESAPI)
+   - System API (SAPI), which implements the system layer API;
+   - Marshaling/Unmarshaling (MU)
+   - TPM Command Transmission Interface (TCTI), which is used by SAPI to
+     allow communication with the TAB/RM layer;
+ .
+ This package contains the TCTI swtpm libraries that client applications
+ will link against when they require accessing the TPM.
+

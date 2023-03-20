@@ -6,7 +6,7 @@
 
 HOSTNAME=$(shell hostname)
 ifeq ($(HOSTNAME),maat-swtpm)
-OVERRIDE = dh_auto_configure -- --disable-selinux --enable-web-ui --enable-tpm PKG_CONFIG_PATH=/usr/local/lib/x86_64-linux-gnu/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/share/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig
+OVERRIDE = dh_auto_configure -- --disable-selinux --enable-web-ui --enable-tpm
 else
 OVERRIDE = dh_auto_configure -- --disable-selinux --enable-web-ui
 endif

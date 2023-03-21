@@ -2,7 +2,7 @@ Source: maat
 Section: admin
 Priority: optional
 Maintainer: Maat Developers <APL_Maat_Developers@listserv.jhuapl.edu>
-Build-Depends: debhelper (>= 8.0.0), autotools-dev, libglib2.0-dev (>= 2.40.0), libxml2-dev, libssl-dev, uuid-dev, libelf-dev, autotools-dev, libcap-dev, zlib1g-dev, make, libjson-c-dev
+Build-Depends: debhelper (>= 8.0.0), autotools-dev, libglib2.0-dev (>= 2.40.0), libxml2-dev, libssl-dev, uuid-dev, libelf-dev, autotools-dev, libcap-dev, zlib1g-dev, make, libjson-c-dev, libtss2-dev, libtss2-esys0, libtss2-udev
 Standards-Version: 3.9.4
 
 Package: maat
@@ -26,7 +26,7 @@ Depends: maat
 Description: Development headers for Maat
   Development headers for Maat
 
-Package: maat-tpm
+<!-- Package: maat-tpm
 Architecture: any
 Depends: maat, libtss2-esys-3.0.2-0
 Description: TPM tools for Maat
@@ -132,4 +132,4 @@ Description: TPM2 Software stack library - TSS and TCTI libraries
  .
  This package contains the TCTI swtpm libraries that client applications
  will link against when they require accessing the TPM.
-
+ -->

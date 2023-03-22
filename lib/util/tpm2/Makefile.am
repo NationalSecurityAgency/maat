@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
-INCLUDE_DIRS = -I$(abs_srcdir)/.. -I$(abs_srcdir)/tools -I$(abs_srcdir)/lib
+INCLUDE_DIRS = -I$(abs_srcdir)/.. -I$(abs_srcdir)/tools -I$(abs_srcdir)/lib -I$(abs_srcdir)
 
 library_includedir=$(includedir)/@PACKAGE_NAME@-@PACKAGE_VERSION@/tpm2
 library_include_HEADERS= lib/tpm2.h lib/tool_rc.h tools/sign.h

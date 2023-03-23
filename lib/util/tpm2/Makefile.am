@@ -19,7 +19,7 @@ libtpm2_la_LIBADD = $(LIB_COMMON) $(TSS2_ESYS_LIBS) $(TSS2_MU_LIBS) $(CRYPTO_LIB
 	$(TSS2_RC_LIBS)
 AM_LDFLAGS = -shared -pie -Wl,-z,relro -Wl,-z,now -Wl,--gc-sections
 
-TPM_RUNNING=$(shell ls /dev/tpm0)
+TPM_RUNNING=$(shell find /dev/tpm0)
 ifneq ($(TPM_RUNNING),/dev/tpm0)
 START_TPM = bash -c "mkdir /tmp/myvtpm && modprobe tpm_vtpm_proxy && swtpm chardev --vtpm-proxy --tpmstate dir=/tmp/myvtpm --tpm2 --ctrl type=tcp,port=2322"
 endif

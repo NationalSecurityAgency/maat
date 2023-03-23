@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
-INCLUDE_DIRS = -I$(abs_srcdir)/.. -I$(abs_srcdir)/tools -I$(abs_srcdir)/lib -I$(abs_srcdir)
+INCLUDE_DIRS = -I$(abs_srcdir)/.. -I$(abs_srcdir)/tools -I$(abs_srcdir)/lib
 
 library_includedir=$(includedir)/@PACKAGE_NAME@-@PACKAGE_VERSION@/tpm2
 library_include_HEADERS= lib/tpm2.h lib/tool_rc.h tools/sign.h
@@ -20,4 +20,5 @@ libtpm2_la_LIBADD = $(LIB_COMMON) $(TSS2_ESYS_LIBS) $(TSS2_MU_LIBS) $(CRYPTO_LIB
 AM_LDFLAGS = -shared -pie -Wl,-z,relro -Wl,-z,now -Wl,--gc-sections
 
 check-local:
-	bash -c "$(abs_srcdir)/setup.sh"
+	bash -c "export TPM2TOOLS_TCTI=tabrmd && tpm2_createek -c $(abs_top_srcdir)/demo/credentials/ek.handle && tpm2_createak -C $(abs_top_srcdir)/demo/credentials/ek.handle -c $(abs_top_srcdir)/demo/credentials/ak.ctx -u $(abs_top_srcdir)/demo/credentials/akpub.pem -f pem -p maatpass"
+#bash -c "$(abs_srcdir)/setup.sh"

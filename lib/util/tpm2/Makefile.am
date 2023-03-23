@@ -20,6 +20,6 @@ libtpm2_la_LIBADD = $(LIB_COMMON) $(TSS2_ESYS_LIBS) $(TSS2_MU_LIBS) $(CRYPTO_LIB
 AM_LDFLAGS = -shared -pie -Wl,-z,relro -Wl,-z,now -Wl,--gc-sections
 
 check-local:
-	bash -c "mkdir /tmp/myvtpm && modprobe tpm_vtpm_proxy && swtpm chardev --vtpm-proxy --tpmstate dir=/tmp/myvtpm --tpm2 --ctrl type=tcp,port=2322"
 	bash -c "export TPM2TOOLS_TCTI=tabrmd && tpm2_createek -c $(abs_top_srcdir)/demo/credentials/ek.handle && tpm2_createak -C $(abs_top_srcdir)/demo/credentials/ek.handle -c $(abs_top_srcdir)/demo/credentials/ak.ctx -u $(abs_top_srcdir)/demo/credentials/akpub.pem -f pem -p maatpass"
-#bash -c "$(abs_srcdir)/setup.sh"
+#bash -c "$(abs_srcdir)/setup.sh"	
+#bash -c "mkdir /tmp/myvtpm && modprobe tpm_vtpm_proxy && swtpm chardev --vtpm-proxy --tpmstate dir=/tmp/myvtpm --tpm2 --ctrl type=tcp,port=2322"

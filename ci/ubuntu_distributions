@@ -1,0 +1,6 @@
+Origin: APL Maat Repo
+Label: APL-Maat
+Architectures: i386 amd64 arm64 armhf ppc64el
+Components: multiverse
+Description: The official APL Maat Repo
+SignWith: A031BA17D4DD9E4F511D877FA5DF9A493E5663B9

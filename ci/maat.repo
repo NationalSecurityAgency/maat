@@ -1,0 +1,4 @@
+[maat-rhel]
+name=Maat RPM Repo
+enabled=1
+gpgcheck=0

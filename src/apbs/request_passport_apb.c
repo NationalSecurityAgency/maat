@@ -156,7 +156,7 @@ static int measure_variable(void *ctxt, measurement_variable *var,
     }
 
     length = strlen(passport_buffer)+1;
-    if (length == 1 || length < 1) {
+    if (length <= 1 || (SIZE_MAX > UINT32_MAX && length > UINT32_MAX)) {
         rc = -1;
         goto error;
     }
@@ -179,7 +179,8 @@ static int measure_variable(void *ctxt, measurement_variable *var,
     if (passport_buffer[length-1] != '\0')
         passport_buffer[length-1] = '\0';
     memcpy(blob->buffer, passport_buffer, length);
-    blob->size = length;
+    // Cast is justified because of previous bounds checkon the value of length
+    blob->size = (uint32_t)length;
 
     //serialize measurement
     md = marshall_measurement_data(&blob->d);
@@ -215,9 +216,12 @@ static int extract_passport(char *result_buf)
     const char *open_tag = "<result>";
     const char *end_tag = "</result>";
     char *start, *end;
+    size_t result_sz;
 
     unsigned char *encoded_passport = NULL;
     size_t encoded_sz;
+
+    uintptr_t diff;
 
     start = strstr((const char*)result_buf, open_tag);
     if(start == NULL) {
@@ -229,18 +233,28 @@ static int extract_passport(char *result_buf)
         if (end == NULL) {
             return -1;
         } else {
-            encoded_passport = (unsigned char*)malloc(end-start+1);
+            diff = (uintptr_t)end - (uintptr_t)start;
+
+            if (UINTPTR_MAX > SIZE_MAX && diff > SIZE_MAX - 1) {
+                return -1;
+            }
+
+            // This cast is justified because of the previous bounds check
+            result_sz = (size_t) diff;
+
+            encoded_passport = (unsigned char*)malloc(result_sz+1);
             if(encoded_passport == NULL) {
                 dlog(4, "Failed to allocate memory to passport\n");
                 return -1;
             }
-            memcpy(encoded_passport, start, end-start);
+            memcpy(encoded_passport, start, result_sz);
             encoded_passport[end-start] = '\0';
         }
 
     }
 
-    passport_buffer = b64_decode(encoded_passport, &encoded_sz);
+    /* The operations performed on this buffer do not depend on its signedness */
+    passport_buffer = (char *)b64_decode((char *)encoded_passport, &encoded_sz);
     free(encoded_passport);
 
     if (passport_buffer) {
@@ -347,7 +361,8 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
     } else if(ret_val == 0) {
 
         //read in userspace measurement result contract as passport
-        ret_val = maat_read_sz_buf(usm_fd, &result_buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, -1);
+        /* Cast is justified because the function does not regard the signedness of the argument */
+        ret_val = maat_read_sz_buf(usm_fd, (unsigned char **)&result_buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, 0);
         if(ret_val < 0 && ret_val != -EAGAIN) {
             dlog(3, "Error reading evidence from channel\n");
             goto data_error;

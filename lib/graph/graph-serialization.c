@@ -228,7 +228,6 @@ int serialize_measurement_graph(measurement_graph *g, size_t *sz,
 
                 s_node_id = measurement_edge_get_source(g, e);
                 d_node_id = measurement_edge_get_destination(g, e);
-
                 if(s_node_id == INVALID_NODE_ID || s_node_id >= node_id_max ||
                         d_node_id ==INVALID_NODE_ID || d_node_id >= node_id_max) {
                     dlog(1, "Edge has invalid source/destination node\n");

@@ -105,7 +105,7 @@ int generate_and_send_back_measurement_contract(int chan,
  * current @scen->contract and updates it with the contract read from
  * @chan.
  */
-int receive_measurement_contract(int chan, struct scenario *scen, int32_t max_size_supported);
+int receive_measurement_contract(int chan, struct scenario *scen, uint32_t max_size_supported);
 
 #endif /* __ACCESS_H__ */
 

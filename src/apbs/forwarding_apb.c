@@ -48,9 +48,9 @@ int apb_execute(struct apb *apb UNUSED, struct scenario *scen UNUSED,
     dlog(4, "Hello from the Forwarding APB\n");
     int ret_val = 0, eof_encountered;
     size_t msg_len, bytes_read, bytes_written;
-    char *msg;
+    unsigned char *msg;
 
-    ret_val = maat_read_sz_buf(peerchan, &msg, &msg_len, &bytes_read, &eof_encountered, 10000, -1);
+    ret_val = maat_read_sz_buf(peerchan, &msg, &msg_len, &bytes_read, &eof_encountered, 10000, 0);
     if(ret_val != 0) {
         dlog(1, "Error reading response. Returned status is %d: %s\n", ret_val,
              strerror(ret_val < 0 ? -ret_val : ret_val));

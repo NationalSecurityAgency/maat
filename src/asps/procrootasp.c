@@ -88,12 +88,6 @@ int asp_measure(int argc, char *argv[])
     char rootname[PATH_MAX+1] = {0};
     ssize_t rootname_len;
 
-    // graph stuff
-    node_id_t new_node = INVALID_NODE_ID;
-    measurement_variable *var;
-    file_addr *file_address;
-    edge_id_t new_edge = INVALID_EDGE_ID;
-
     if((argc < 3) ||
             ((node_id = node_id_of_str(argv[2])) == INVALID_NODE_ID) ||
             (map_measurement_graph(argv[1], &graph) != 0)) {

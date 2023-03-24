@@ -123,6 +123,7 @@ int proc_env_type_serialize_data(measurement_data *d, char **serial_data,
         goto mapping_error;
     }
 
+    //Serialize environment data into TPL node
     for (iter = g_list_first(envdata->envpairs); iter != NULL; iter = g_list_next(iter)) {
         env_kv_entry *orgKVEntry = (env_kv_entry *)iter->data;
         if (orgKVEntry == NULL) {
@@ -172,7 +173,6 @@ int proc_env_type_unserialize_data(char *sd, size_t sd_size, measurement_data **
     void *tplbuf =                  NULL;
     size_t tplsize =                0;
     env_kv_entry *env_entry =       NULL;
-    GList *iter =                   NULL;
     char *keyname =                 NULL;
     char *valuename =               NULL;
 
@@ -244,8 +244,6 @@ static int get_feature(measurement_data *d, char *feature, GList **out)
     GList *res =                  NULL;
     GList *iter =                 NULL;
     mode_t mode_filter =          0;
-    char * filename =             NULL;
-    env_kv_entry * envKVEntry =   NULL;
     char fieldname[64]; /* somewhat arbitrary max length for env vars. */
     char closebracket;
 

@@ -143,7 +143,7 @@ int asp_measure(int argc, char *argv[])
 {
     dlog(4, "IN encrypt ASP MEASURE\n");
 
-    char *buf       = NULL;
+    unsigned char *buf       = NULL;
     size_t bufsize  = 0;
     size_t bytes_read;
     size_t bytes_written;
@@ -220,7 +220,6 @@ int asp_measure(int argc, char *argv[])
 
 write_key_failed:
 write_failed:
-io_chan_out_failed:
     free(keybuf);
     keysize = 0;
     free(encbuf);
@@ -230,7 +229,6 @@ eof_enc:
     free(buf);
     bufsize = 0;
 read_failed:
-io_chan_in_failed:
     close(fd_in);
     close(fd_out);
 parse_args_failed:

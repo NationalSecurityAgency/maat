@@ -80,7 +80,7 @@ START_TEST(test_encryptdecrypt)
     char *b64                = NULL;
     unsigned char *buf       = NULL;
     unsigned char *key_buf   = NULL;
-    unsigned char *final_buf = NULL;
+    char *final_buf          = NULL;
     int encr_pipe_in_fd[2]   = {0};
     int encr_pipe_out_fd[2]  = {0};
     char *encrypt_argv[1]    = {0};
@@ -144,7 +144,8 @@ START_TEST(test_encryptdecrypt)
     decrypt_argv[1] = CERT_FILE;
     decrypt_argv[2] = "";
 
-    rc = run_asp_buffers(g_decryptasp, buf, buf_len, &final_buf, &buf_len, 3,
+    /* Cast is justified because the function does not regard the signedness of the argument */
+    rc = run_asp_buffers(g_decryptasp, buf, buf_len, (unsigned char **) &final_buf, &buf_len, 3,
                          decrypt_argv, ASP_TO, -1);
     fail_if(rc < 0, "Error running decrypt ASP");
 

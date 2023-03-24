@@ -47,7 +47,6 @@
 static int decompress(void *buf, size_t size, void **debuf, size_t *desize)
 {
     void *tmpbuf       = NULL;
-    void *tmp_keybuf   = NULL;
     size_t tmpsize     = 0;
     int ret = 0;
 
@@ -81,7 +80,7 @@ int asp_measure(int argc, char *argv[])
 {
     dlog(4, "IN decompress ASP MEASURE\n");
 
-    char *buf       = NULL;
+    unsigned char *buf = NULL;
     size_t bufsize  = 0;
     size_t bytes_read;
     size_t bytes_written;

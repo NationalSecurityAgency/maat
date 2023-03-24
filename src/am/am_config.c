@@ -93,7 +93,7 @@ int load_inet_iface_config(unsigned int xml_version UNUSED, xmlNode *iface, am_c
     int skip_neg                = 0;
     char *skipstr               = NULL;
     char *port_str		= NULL;
-    unsigned long port_ul	= ULONG_MAX;
+    unsigned long port_ul;
     char *endptr                = NULL;
     char *addr			= NULL;
     port_str = xmlGetPropASCII(iface, "port");

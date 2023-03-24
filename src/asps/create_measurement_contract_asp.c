@@ -371,7 +371,7 @@ int asp_measure(int argc, char *argv[])
     int encrypted        = 0;
 
     // Bufs in
-    char *buf            = NULL;
+    unsigned char *buf   = NULL;
     size_t bufsize       = 0;
     char *enckey         = NULL;
     size_t enckey_size   = 0;
@@ -388,24 +388,83 @@ int asp_measure(int argc, char *argv[])
     // Return value
     int ret_val          = 0;
 
+    // Holding values
+    long parse_fd_in;
+    long parse_fd_out;
+    long parse_sign_tpm;
+    long parse_compressed;
+    long parse_encrypted;
+
     errno = 0;
 
     if((argc < 11) ||
-            (((fd_in = strtol(argv[1], NULL, 10)) < 0) || errno != 0) ||
-            (((fd_out = strtol(argv[2], NULL, 10)) < 0) || errno != 0) ||
+            (((parse_fd_in = strtol(argv[1], NULL, 10)) < 0) || errno != 0) ||
+            (((parse_fd_out = strtol(argv[2], NULL, 10)) < 0) || errno != 0) ||
             ((workdir    = argv[3]) == NULL) ||
             ((certfile   = argv[4]) == NULL) ||
             ((keyfile    = argv[5]) == NULL) ||
             ((keypass    = argv[6]) == NULL) ||
             ((tpmpass    = argv[7]) == NULL) ||
-            (((sign_tpm   = strtol(argv[8], NULL, 10)) < 0) || errno != 0) ||
-            (((compressed = strtol(argv[9], NULL, 10)) < 0) || errno != 0) ||
-            (((encrypted  = strtol(argv[10], NULL, 10)) < 0) || errno != 0)) {
+            (((parse_sign_tpm   = strtol(argv[8], NULL, 10)) < 0) || errno != 0) ||
+            (((parse_compressed = strtol(argv[9], NULL, 10)) < 0) || errno != 0) ||
+            (((parse_encrypted  = strtol(argv[10], NULL, 10)) < 0) || errno != 0)) {
         asp_logerror("Usage: "ASP_NAME" <fd_in> <fd_out> <workdir> <certfile> <keyfile> <keypass> <tpmpass> <sign_tpm> <compressed> <encrypted>\n");
 
         ret_val = -EINVAL;
         goto parse_args_failed;
     }
+
+    // In pursuit of type correctness, we must check that the value contained in the long does not exceed
+    // the limits of an int, which is the destination type for each of these values
+    if (parse_fd_in > INT_MAX || parse_fd_in < INT_MIN) {
+        asp_logerror("Input file descriptor %ld value too large for bounds of type\n", parse_fd_in);
+
+        ret_val = -EINVAL;
+        goto parse_args_failed;
+
+    }
+
+    fd_in = (int) parse_fd_in;
+
+    if (parse_fd_out > INT_MAX || parse_fd_out < INT_MIN) {
+        asp_logerror("Output file descriptor value %ld too large for bounds of type\n", parse_fd_out);
+
+        ret_val = -EINVAL;
+        goto parse_args_failed;
+
+    }
+
+    fd_out = (int) parse_fd_out;
+
+    if (parse_sign_tpm > INT_MAX || parse_sign_tpm < INT_MIN) {
+        asp_logerror("Sign TPM value %ld too large for bounds of type\n", parse_sign_tpm);
+
+        ret_val = -EINVAL;
+        goto parse_args_failed;
+
+    }
+
+    sign_tpm = (int) parse_sign_tpm;
+
+    if (parse_compressed > INT_MAX || parse_compressed < INT_MIN) {
+        asp_logerror("Parse compressed value %ld too large for bounds of type\n", parse_compressed);
+
+        ret_val = -EINVAL;
+        goto parse_args_failed;
+
+    }
+
+    compressed = (int) parse_compressed;
+
+    if (parse_encrypted > INT_MAX || parse_encrypted < INT_MIN) {
+        asp_logerror("Parse encrypted value %ld too large for bounds of type\n", parse_encrypted);
+
+        ret_val = -EINVAL;
+        goto parse_args_failed;
+
+    }
+
+    encrypted = (int) parse_encrypted;
 
     ret_val = maat_read_sz_buf(fd_in, &buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, READ_MAX);
     if(ret_val < 0 && ret_val != -EAGAIN) {
@@ -421,7 +480,10 @@ int asp_measure(int argc, char *argv[])
     }
 
     if(encrypted) {
-        ret_val = maat_read_sz_buf(fd_in, &enckey, &enckey_size, &bytes_read, &eof_enc, TIMEOUT, -1);
+        /* Cast justified because the function does not regard the signedness of the buffer
+         * parameter */
+        ret_val = maat_read_sz_buf(fd_in, (unsigned char **) &enckey, &enckey_size,
+                                   &bytes_read, &eof_enc, TIMEOUT, 0);
         if(ret_val < 0 && ret_val != -EAGAIN) {
             dlog(0, "Error reading key from channel\n");
             ret_val = -1;
@@ -460,7 +522,6 @@ int asp_measure(int argc, char *argv[])
     asp_loginfo("create_measurement_contract ASP returning with success\n");
 
 write_failed:
-io_chan_out_failed:
     free(out);
     outsize = 0;
 create_msmt_contract_failed:
@@ -472,7 +533,6 @@ eof_enc:
     free(buf);
     bufsize = 0;
 read_failed:
-io_chan_in_failed:
     close(fd_in);
     close(fd_out);
 parse_args_failed:

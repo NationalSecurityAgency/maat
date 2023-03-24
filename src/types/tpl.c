@@ -30,6 +30,7 @@ static const char id[]="$Id: tpl.c 192 2009-04-24 10:35:30Z thanson $";
 #include <stdarg.h>  /* va_list */
 #include <string.h>  /* memcpy, memset, strchr */
 #include <stdio.h>   /* printf (tpl_hook.oops default function) */
+#include <limits.h>  /* ADDED FOR MAAT FOR INT_MAX AND OTHER MACROS */
 
 #ifndef _WIN32
 #include <unistd.h>     /* for ftruncate */
@@ -285,8 +286,8 @@ static tpl_node *tpl_node_new(tpl_node *parent)
 char *calc_field_addr(tpl_node *parent, int type,char *struct_addr, int ordinal)
 {
     tpl_node *prev;
-    int offset;
-    int align_sz;
+    uintptr_t offset;
+    uintptr_t align_sz;
 
     if (ordinal == 1) return struct_addr;  /* first field starts on structure address */
 
@@ -301,11 +302,21 @@ char *calc_field_addr(tpl_node *parent, int type,char *struct_addr, int ordinal)
         align_sz = sizeof(struct tpl_int64_alignment_detector) > 12 ? 8 : 4;
         break;
     default:
-        align_sz = tpl_types[type].sz;
+        if (SIZE_MAX > UINTPTR_MAX && tpl_types[type].sz > SIZE_MAX) {
+            tpl_hook.fatal("TPL type size cannot be represented as the required arithmetic type\n");
+        }
+
+        align_sz = (uintptr_t)tpl_types[type].sz;
         break;
     }
+
+    if (tpl_types[prev->type].sz < 0 || prev->num < 0) {
+        tpl_hook.fatal("TPL type size and TPL node number cannot be cast to required arithmetic type\n");
+    }
+
+    // Cast is justified because of the previous bounds check
     offset = ((uintptr_t)prev->addr - (uintptr_t)struct_addr)
-             + (tpl_types[prev->type].sz * prev->num);
+             + ((unsigned int)tpl_types[prev->type].sz * (unsigned int)prev->num);
     offset = (offset + align_sz - 1) / align_sz * align_sz;
     return struct_addr + offset;
 }
@@ -383,10 +394,17 @@ static tpl_node *tpl_map_va(char *fmt, va_list ap)
                 }
                 n->addr = calc_field_addr(parent,n->type,struct_addr,ordinal++);
             } else n->addr = (void*)va_arg(ap,void*);
-            n->data = tpl_hook.malloc(tpl_types[t].sz);
+
+            if (tpl_types[t].sz < 0 || (INT_MAX > SIZE_MAX && (unsigned int) tpl_types[t].sz > SIZE_MAX)) {
+                tpl_hook.fatal("Unable to represent TPL type size as the proper arithmetic type\n");
+            }
+
+            // Cast justified because of the previous bounds check
+            n->data = tpl_hook.malloc((size_t)tpl_types[t].sz);
             if (!n->data) fatal_oom();
             if (n->parent->type == TPL_TYPE_ARY)
-                ((tpl_atyp*)(n->parent->data))->sz += tpl_types[t].sz;
+                // Cast is justified because of the previous bounds check
+                ((tpl_atyp*)(n->parent->data))->sz += (size_t)tpl_types[t].sz;
             DL_ADD(parent->children,n);
             break;
         case 's':
@@ -426,17 +444,27 @@ static tpl_node *tpl_map_va(char *fmt, va_list ap)
             /* count up how many contiguous # and form their product */
             pound_prod=1;
             num_contig_fxlens=0;
+            if(INT_MAX < SIZE_MAX && (sizeof(contig_fxlens)/sizeof(contig_fxlens[0])) > INT_MAX) {
+                tpl_hook.fatal("Cannot represent hardcoded limit in contiguous # in arithmetic type\n");
+            }
+
             for(peek=c; *peek == '#'; peek++) {
                 pound_num = va_arg(ap, int);
                 if (pound_num < 1) {
                     tpl_hook.fatal("non-positive iteration count %d\n", pound_num);
                 }
-                if (num_contig_fxlens >= (sizeof(contig_fxlens)/sizeof(contig_fxlens[0]))) {
+                // Cast justified because of the previous bounds check
+                if (num_contig_fxlens >= (int)(sizeof(contig_fxlens)/sizeof(contig_fxlens[0]))) {
                     tpl_hook.fatal("contiguous # exceeds hardcoded limit\n");
                 }
                 contig_fxlens[num_contig_fxlens++] = pound_num;
                 pound_prod *= pound_num;
             }
+
+            if (INT_MAX > SIZE_MAX && num_contig_fxlens > SIZE_MAX) {
+                tpl_hook.fatal("Unable to represent num_contig_fxlens value in proper arithmetic type\n");
+            }
+
             /* increment c to skip contiguous # so its points to last one */
             c = peek-1;
             /* differentiate atom-# from struct-# by noting preceding rparen */
@@ -447,41 +475,78 @@ static tpl_node *tpl_map_va(char *fmt, va_list ap)
                 n->data = tpl_hook.malloc(sizeof(tpl_pound_data));
                 if (!n->data) fatal_oom();
                 pd = (tpl_pound_data*)n->data;
-                pd->inter_elt_len = inter_elt_len;
+
+                if (inter_elt_len < 0 || (INTPTR_MAX > SIZE_MAX && (uintptr_t)inter_elt_len > SIZE_MAX)) {
+                    tpl_hook.fatal("Failed to represent inter_elt_len value within proper arithmetic type\n");
+                }
+
+                // Cast justified because of the previous bounds check
+                pd->inter_elt_len = (size_t)inter_elt_len;
                 pd->iter_start_node = iter_start_node;
                 pd->iternum = 0;
                 DL_ADD(parent->children,n);
                 /* multiply the 'num' and data space on each atom in the structure */
                 for(np = iter_start_node; np != n; np = np->next) {
-                    if (n->parent->type == TPL_TYPE_ARY) {
-                        ((tpl_atyp*)(n->parent->data))->sz +=
-                            tpl_types[np->type].sz * (np->num * (n->num - 1));
+                    if (tpl_types[np->type].sz < 0 || np->num < 0 || n->num < 0 ||
+                        (INT_MAX > SIZE_MAX && ((unsigned int) tpl_types[np->type].sz > SIZE_MAX ||
+                                               (unsigned int) np->num > SIZE_MAX ||
+                                               (unsigned int) n->num > SIZE_MAX))) {
+                        tpl_hook.fatal("Failed to represent tpl type size or tpl node numbers as proper arithmetic type\n");
                     }
-                    np->data = tpl_hook.realloc(np->data, tpl_types[np->type].sz *
-                                                np->num * n->num);
+
+                    if (n->parent->type == TPL_TYPE_ARY) {
+                        if (np->num < 1) {
+                            tpl_hook.fatal("Failed to represent the tpl node number as proper arithmetic type\n");
+                        }
+
+                        ((tpl_atyp*)(n->parent->data))->sz +=
+                            (size_t)tpl_types[np->type].sz * ((size_t)np->num * ((size_t)n->num - 1));
+                    }
+
+                    np->data = tpl_hook.realloc(np->data, (size_t)tpl_types[np->type].sz *
+                                                (size_t)np->num * (size_t)n->num);
                     if (!np->data) fatal_oom();
-                    memset(np->data, 0, tpl_types[np->type].sz * np->num * n->num);
+                    memset(np->data, 0, (size_t) tpl_types[np->type].sz * (size_t) np->num * (size_t) n->num);
                 }
             } else { /* simple atom-# form does not require a loop */
                 preceding->num = pound_prod;
+
+                if (tpl_types[t].sz < 0 || preceding->num < 0 ||
+                    (INT_MAX > SIZE_MAX && ((unsigned int) tpl_types[t].sz > SIZE_MAX ||
+                                           (unsigned int) preceding->num > SIZE_MAX))) {
+                    tpl_hook.fatal("Failed to represent tpl type size or tpl node number as proper arithmetic type\n");
+                }
+
+                // Cast is justified because of the previous bounds check
                 preceding->data = tpl_hook.realloc(preceding->data,
-                                                   tpl_types[t].sz * preceding->num);
+                                                   (size_t)tpl_types[t].sz * (size_t)preceding->num);
                 if (!preceding->data) fatal_oom();
-                memset(preceding->data,0,tpl_types[t].sz * preceding->num);
+                memset(preceding->data,0,(size_t)tpl_types[t].sz * (size_t)preceding->num);
                 if (n->parent->type == TPL_TYPE_ARY) {
-                    ((tpl_atyp*)(n->parent->data))->sz += tpl_types[t].sz *
-                                                          (preceding->num-1);
+                    if (preceding->num < 1) {
+                        tpl_hook.fatal("Failed to represent tpl node number as proper arithmetic type\n");
+                    }
+
+                    // Cast is justified because of the previous bounds checks
+                    ((tpl_atyp*)(n->parent->data))->sz += (size_t) tpl_types[t].sz *
+                                                          ((size_t)preceding->num-1);
                 }
             }
-            root->ser_osz += (sizeof(uint32_t) * num_contig_fxlens);
+            root->ser_osz += (sizeof(uint32_t) * (size_t)num_contig_fxlens);
 
             j = ((tpl_root_data*)root->data)->num_fxlens; /* before incrementing */
             (((tpl_root_data*)root->data)->num_fxlens) += num_contig_fxlens;
             num_fxlens = ((tpl_root_data*)root->data)->num_fxlens; /* new value */
+
+            if (INT_MAX > SIZE_MAX && (unsigned int) num_fxlens > SIZE_MAX) {
+                tpl_hook.fatal("Failed to represent num_fxlens in proper arithmetic type\n");
+            }
+
             fxlens = ((tpl_root_data*)root->data)->fxlens;
-            fxlens = tpl_hook.realloc(fxlens, sizeof(int) * num_fxlens);
+            fxlens = tpl_hook.realloc(fxlens, sizeof(int) * (size_t) num_fxlens);
             if (!fxlens) fatal_oom();
             ((tpl_root_data*)root->data)->fxlens = fxlens;
+            /* contig_fxlens has num_contig_fxlens entries, which are initialized in this function */
             for(i=0; i < num_contig_fxlens; i++) fxlens[j++] = contig_fxlens[i];
 
             break;
@@ -876,8 +941,13 @@ static void *tpl_dump_atyp(tpl_node *n, tpl_atyp* at, void *dv)
             case TPL_TYPE_UINT64:
             case TPL_TYPE_INT16:
             case TPL_TYPE_UINT16:
-                dv = tpl_cpv(dv,datav,tpl_types[c->type].sz * c->num);
-                datav = (void*)((uintptr_t)datav + tpl_types[c->type].sz * c->num);
+                if (tpl_types[c->type].sz < 0 || (INT_MAX > SIZE_MAX && (unsigned int)tpl_types[c->type].sz > SIZE_MAX)
+                    || c->num < 0 || (INT_MAX > SIZE_MAX && (unsigned int) c->num > SIZE_MAX)) {
+                    tpl_hook.fatal("Cannot represent tpl type size or tpl node number as proper arithmetic type\n");
+                }
+
+                dv = tpl_cpv(dv,datav,(size_t)tpl_types[c->type].sz * (size_t)c->num);
+                datav = (void*)((uintptr_t)datav + (size_t)tpl_types[c->type].sz * (size_t)c->num);
                 break;
             case TPL_TYPE_BIN:
                 /* dump the buffer length followed by the buffer */
@@ -891,7 +961,7 @@ static void *tpl_dump_atyp(tpl_node *n, tpl_atyp* at, void *dv)
                 /* dump the string length followed by the string */
                 for(i=0; i < c->num; i++) {
                     memcpy(&strp,datav,sizeof(char*)); /* cp to aligned */
-                    slen = strp ? (strlen(strp)+1) : 0;
+                    slen = strp && strlen(strp) < UINT32_MAX ? (uint32_t)(strlen(strp)+1) : 0;
                     dv = tpl_cpv(dv,&slen,sizeof(uint32_t));
                     if (slen > 1) dv = tpl_cpv(dv,strp,slen-1);
                     datav = (void*)((uintptr_t)datav + sizeof(char*));
@@ -905,7 +975,13 @@ static void *tpl_dump_atyp(tpl_node *n, tpl_atyp* at, void *dv)
             case TPL_TYPE_POUND:
                 /* iterate over the preceding nodes */
                 pd = (tpl_pound_data*)c->data;
-                itermax = c->num;
+
+                if (c->num < 0 || (INT_MAX > SIZE_MAX && (unsigned int)c->num > SIZE_MAX)) {
+                    tpl_hook.fatal("Cannot represent node number in required arithmetic type\n");
+                }
+
+                // Failed to represent the node number in the proper arithmetic type
+                itermax = (size_t)c->num;
                 if (++(pd->iternum) < itermax) {
                     c = pd->iter_start_node;
                     continue;
@@ -941,6 +1017,10 @@ static size_t tpl_ser_osz(tpl_node *n)
     sz = n->ser_osz;    /* start with fixed overhead, already stored */
     c=n->children;
     while (c) {
+        if(c->num < 0 || (INT_MAX > SIZE_MAX && (unsigned int)c->num > SIZE_MAX)) {
+            tpl_hook.fatal("Unable to represent TPL node number in the required type for arithmetic operation\n");
+        }
+
         switch (c->type) {
         case TPL_TYPE_BYTE:
         case TPL_TYPE_DOUBLE:
@@ -950,7 +1030,12 @@ static size_t tpl_ser_osz(tpl_node *n)
         case TPL_TYPE_UINT64:
         case TPL_TYPE_INT16:
         case TPL_TYPE_UINT16:
-            sz += tpl_types[c->type].sz * c->num;
+            if(tpl_types[c->type].sz < 0 || (INT_MAX > SIZE_MAX && (unsigned int)tpl_types[c->type].sz > SIZE_MAX) ) {
+                tpl_hook.fatal("Unable to represent TPL node size in the required type for arithmetic operation\n");
+            }
+
+            // Cast is justified because of the previous bounds checks
+            sz += (size_t) tpl_types[c->type].sz * (size_t)c->num;
             break;
         case TPL_TYPE_BIN:
             sz += sizeof(uint32_t);  /* binary buf len */
@@ -970,21 +1055,36 @@ static size_t tpl_ser_osz(tpl_node *n)
             break;
         case TPL_TYPE_POUND:
             /* iterate over the preceding nodes */
-            itermax = c->num;
+            // Cast justified by previous bounds check
+            itermax = (size_t)c->num;
             pd = (tpl_pound_data*)c->data;
             if (++(pd->iternum) < itermax) {
                 for(np=pd->iter_start_node; np != c; np = np->next) {
+                    if(np->num < 0 || (INT_MAX > SIZE_MAX && (unsigned int)np->num > SIZE_MAX) ||
+                       tpl_types[np->type].sz < 0 ||
+                       (INT_MAX > SIZE_MAX && (unsigned int) tpl_types[np->type].sz > SIZE_MAX) ) {
+                        tpl_hook.fatal("Unable to represent TPL node size in the required type for arithmetic operation\n");
+                    }
+
+                    // Cast is justified because of previous bounds checks
                     np->data = (char*)(np->data) +
-                               (tpl_types[np->type].sz * np->num);
+                               ((size_t)tpl_types[np->type].sz * (size_t)np->num);
                 }
                 c = pd->iter_start_node;
                 continue;
             } else { /* loop complete. */
                 pd->iternum = 0;
                 for(np=pd->iter_start_node; np != c; np = np->next) {
+                    if(np->num < 0 || (INT_MAX > SIZE_MAX && (unsigned int)np->num > SIZE_MAX) ||
+                       tpl_types[np->type].sz < 0 ||
+                       (INT_MAX > SIZE_MAX && (unsigned int) tpl_types[np->type].sz > SIZE_MAX) ) {
+                        tpl_hook.fatal("Unable to represent TPL node size in the required type for arithmetic operation\n");
+                    }
+
+                    // Cast is justified because of previous bounds checks
                     np->data = (char*)(np->data) - ((itermax-1) *
-                                                    tpl_types[np->type].sz *
-                                                    np->num);
+                                                    (size_t) tpl_types[np->type].sz *
+                                                    (size_t) np->num);
                 }
             }
             break;
@@ -1003,7 +1103,8 @@ TPL_APB int tpl_dump(tpl_node *r, int mode, ...)
     va_list ap;
     char *filename, *bufv;
     void **addr_out,*buf, *pa_addr;
-    int fd,rc=0;
+    int fd;
+    ssize_t rc = 0;
     size_t sz,*sz_out, pa_sz;
 
     if (((tpl_root_data*)(r->data))->flags & TPL_RDONLY) {  /* unusual */
@@ -1036,8 +1137,9 @@ TPL_APB int tpl_dump(tpl_node *r, int mode, ...)
         do {
             rc = write(fd,bufv,sz);
             if (rc > 0) {
-                sz -= rc;
-                bufv += rc;
+                // This cast is justified by the bounds check and the definition of the types involved
+                sz -= (size_t)rc;
+                bufv += (size_t)rc;
             } else if (rc == -1) {
                 if (errno == EINTR || errno == EAGAIN) continue;
                 tpl_hook.oops("error writing to fd %d: %s\n", fd, strerror(errno));
@@ -1072,7 +1174,13 @@ TPL_APB int tpl_dump(tpl_node *r, int mode, ...)
         rc=-1;
     }
     va_end(ap);
-    return rc;
+
+    if (rc >= 0 && INT_MAX > SSIZE_MAX && (size_t) rc > INT_MAX) {
+        return -1;
+    }
+
+    // Cast is justified because of the previous bounds check
+    return (int)rc;
 }
 
 /* This function expects the caller to have set up a memory buffer of
@@ -1093,7 +1201,13 @@ static int tpl_dump_to_mem(tpl_node *r,void *addr,size_t sz)
     flags = 0;
     if (tpl_cpu_bigendian()) flags |= TPL_FL_BIGENDIAN;
     if (strchr(fmt,'s')) flags |= TPL_FL_NULLSTRINGS;
-    sz32 = sz;
+
+    if(sz > UINT32_MAX) {
+        tpl_hook.fatal("Unable to represent the size of the tpl dump in the dump buffer\n");
+        return 0;
+    }
+
+    sz32 = (uint32_t)sz;
 
     dv = addr;
     dv = tpl_cpv(dv,TPL_MAGIC,3);         /* copy tpl magic prefix */
@@ -1101,7 +1215,13 @@ static int tpl_dump_to_mem(tpl_node *r,void *addr,size_t sz)
     dv = tpl_cpv(dv,&sz32,sizeof(uint32_t));/* overall length (inclusive) */
     dv = tpl_cpv(dv,fmt,strlen(fmt)+1);   /* copy format with NUL-term */
     fxlens = tpl_fxlens(r,&num_fxlens);
-    dv = tpl_cpv(dv,fxlens,num_fxlens*sizeof(uint32_t));/* fmt # lengths */
+
+    if (num_fxlens < 0 || (INT_MAX > SIZE_MAX && (unsigned int) num_fxlens > SIZE_MAX)) {
+        tpl_hook.fatal("Failed to represent the number of fxlens within the proper arithmetic types\n");
+        return 0;
+    }
+
+    dv = tpl_cpv(dv,fxlens,(size_t)num_fxlens*sizeof(uint32_t));/* fmt # lengths */
 
     /* serialize the tpl content, iterating over direct children of root */
     c = r->children;
@@ -1115,7 +1235,13 @@ static int tpl_dump_to_mem(tpl_node *r,void *addr,size_t sz)
         case TPL_TYPE_UINT64:
         case TPL_TYPE_INT16:
         case TPL_TYPE_UINT16:
-            dv = tpl_cpv(dv,c->data,tpl_types[c->type].sz * c->num);
+            if (c->num < 0 || (INT_MAX > SIZE_MAX && (unsigned) c->num > SIZE_MAX) || tpl_types[c->type].sz < 0 ||
+                (INT_MAX > SIZE_MAX && (unsigned) tpl_types[c->type].sz > SIZE_MAX)) {
+                    tpl_hook.fatal("Unable to represent TPL node num value or the TPL type size within size type\n");
+                    break;
+            }
+
+            dv = tpl_cpv(dv,c->data,(size_t)tpl_types[c->type].sz * (size_t)c->num);
             break;
         case TPL_TYPE_BIN:
             slen = (*(tpl_bin**)(c->data))->sz;
@@ -1125,7 +1251,14 @@ static int tpl_dump_to_mem(tpl_node *r,void *addr,size_t sz)
         case TPL_TYPE_STR:
             for(i=0; i < c->num; i++) {
                 char *str = ((char**)c->data)[i];
-                slen = str ? strlen(str)+1 : 0;
+
+                if (SIZE_MAX > UINT32_MAX && str && strlen(str) >= UINT32_MAX) {
+                    tpl_hook.fatal("Unable to represent string length within arithmetic type\n");
+                    break;
+                }
+
+                // Cast justified by the previous bounds check
+                slen = str ? (uint32_t)(strlen(str)+1) : 0;
                 dv = tpl_cpv(dv,&slen,sizeof(uint32_t));  /* string len */
                 if (slen>1) dv = tpl_cpv(dv,str,slen-1); /*string*/
             }
@@ -1135,13 +1268,26 @@ static int tpl_dump_to_mem(tpl_node *r,void *addr,size_t sz)
             break;
         case TPL_TYPE_POUND:
             pd = (tpl_pound_data*)c->data;
-            itermax = c->num;
+
+            if (c->num < 0 || (INT_MAX > SIZE_MAX && (unsigned) c->num > SIZE_MAX)) {
+                    tpl_hook.fatal("Unable to represent TPL node num value or the TPL type size within size type\n");
+                    break;
+            }
+
+            // Cast is justified because of the previous bounds check
+            itermax = (size_t)c->num;
             if (++(pd->iternum) < itermax) {
 
                 /* in start or midst of loop. advance data pointers. */
                 for(np=pd->iter_start_node; np != c; np = np->next) {
+                    if(np->num < 0 || (uint64_t) np->num > SIZE_MAX || tpl_types[np->type].sz < 0
+                       || (uint64_t) tpl_types[np->type].sz > SIZE_MAX) {
+                        tpl_hook.fatal("Invalid TPL node or TPL type information\n");
+                        break;
+                    }
+                    // Cast is justified because of a previous bounds check
                     np->data = (char*)(np->data) +
-                               (tpl_types[np->type].sz * np->num);
+                               ((size_t)tpl_types[np->type].sz * (size_t)np->num);
                 }
                 /* do next iteration */
                 c = pd->iter_start_node;
@@ -1152,9 +1298,15 @@ static int tpl_dump_to_mem(tpl_node *r,void *addr,size_t sz)
                 /* reset iteration index and addr/data pointers. */
                 pd->iternum = 0;
                 for(np=pd->iter_start_node; np != c; np = np->next) {
+                    if(np->num < 0 || (INT_MAX > SIZE_MAX && (unsigned) np->num > SIZE_MAX) || tpl_types[np->type].sz < 0
+                       || (INT_MAX > SIZE_MAX && (unsigned) tpl_types[np->type].sz > SIZE_MAX)) {
+                        tpl_hook.fatal("Invalid TPL node or TPL type information\n");
+                        break;
+                    }
+
                     np->data = (char*)(np->data) - ((itermax-1) *
-                                                    tpl_types[np->type].sz *
-                                                    np->num);
+                                                    (size_t) tpl_types[np->type].sz *
+                                                    (size_t) np->num);
                 }
 
             }
@@ -1189,10 +1341,10 @@ static int tpl_cpu_bigendian()
 static int tpl_sanity(tpl_node *r, int excess_ok)
 {
     uint32_t intlsz;
-    int found_nul=0,rc, octothorpes=0, num_fxlens, *fxlens, flen;
+    int found_nul=0,rc, num_fxlens, *fxlens, flen;
     void *d, *dv;
     char intlflags, *fmt, c, *mapfmt;
-    size_t bufsz, serlen;
+    size_t bufsz, serlen, octothorpes=0;
 
     d = ((tpl_root_data*)(r->data))->mmap.text;
     bufsz = ((tpl_root_data*)(r->data))->mmap.text_sz;
@@ -1256,7 +1408,7 @@ static int tpl_sanity(tpl_node *r, int excess_ok)
 
 static void *tpl_find_data_start(void *d)
 {
-    int octothorpes=0;
+    size_t octothorpes=0;
     d = (void*)((uintptr_t)d + 4); /* skip TPL_MAGIC and flags byte */
     d = (void*)((uintptr_t)d + 4); /* skip int32 overall len */
     while(*(char*)d != '\0') {
@@ -1279,9 +1431,10 @@ static int tpl_needs_endian_swap(void *d)
 
 static size_t tpl_size_for(char c)
 {
-    int i;
+    size_t i;
     for(i=0; i < sizeof(tpl_types)/sizeof(tpl_types[0]); i++) {
-        if (tpl_types[i].c == c) return tpl_types[i].sz;
+        if (tpl_types[i].c == c && tpl_types[i].sz >= 0 &&
+           (INT_MAX <= SIZE_MAX || (unsigned)tpl_types[i].sz <= SIZE_MAX)) return (size_t) tpl_types[i].sz;
     }
     return 0;
 }
@@ -1292,7 +1445,7 @@ TPL_APB char* tpl_peek(int mode, ...)
     int xendian=0,found_nul=0,old_string_format=0;
     char *filename=NULL, *datapeek_f=NULL, *datapeek_c, *datapeek_s;
     void *addr=NULL, *dv, *datapeek_p=NULL;
-    size_t sz=0, fmt_len, first_atom, num_fxlens=0;
+    size_t sz=0, fmt_len, first_atom, num_fxlens=0, tmp;
     uint32_t datapeek_ssz, datapeek_csz, datapeek_flen;
     tpl_mmap_rec mr = {0,NULL,0};
     char *fmt,*fmt_cpy=NULL,c;
@@ -1352,7 +1505,13 @@ TPL_APB char* tpl_peek(int mode, ...)
         dv = (void*)((uintptr_t)dv + 1);
     }
     if (!found_nul) goto fail;  /* runaway format string */
-    fmt_len = (char*)dv - fmt;  /* include space for \0 */
+
+    if (UINTPTR_MAX > SIZE_MAX && ((uintptr_t)dv - (uintptr_t)fmt) > SIZE_MAX) {
+        tpl_hook.oops("Cannot represent pointer different between %p and %p as proper type\n", dv, fmt);
+        goto fail;
+    }
+
+    fmt_len = (size_t)((uintptr_t)dv - (uintptr_t)fmt);  /* include space for \0 */
     fmt_cpy = tpl_hook.malloc(fmt_len);
     if (fmt_cpy == NULL) {
         fatal_oom();
@@ -1366,9 +1525,17 @@ TPL_APB char* tpl_peek(int mode, ...)
         }
     }
     if ((mode & TPL_FXLENS) && (num_fxlens > 0)) {
+        if(SIZE_MAX > UINT32_MAX && num_fxlens > UINT32_MAX) {
+            tpl_hook.oops("invalid value for num_fxlens_out: %zu\n", num_fxlens);
+            tpl_hook.free(fmt_cpy);
+            fmt_cpy = NULL; /* fail */
+            goto fail;
+        }
+
         *fxlens = tpl_hook.malloc(num_fxlens * sizeof(uint32_t));
         if (*fxlens == NULL) tpl_hook.fatal("out of memory");
-        *num_fxlens_out = num_fxlens;
+        // Cast justified because of previous bounds check
+        *num_fxlens_out = (uint32_t)num_fxlens;
         fxlensv = *fxlens;
         while(num_fxlens--) {
             memcpy(fxlensv,dv,sizeof(uint32_t));
@@ -1382,7 +1549,16 @@ TPL_APB char* tpl_peek(int mode, ...)
 
         first_atom = strspn(fmt, "S()"); /* skip any leading S() */
 
-        datapeek_flen = strlen(datapeek_f);
+        tmp = strlen(datapeek_f);
+        if(SIZE_MAX > UINT32_MAX && tmp > UINT32_MAX) {
+            tpl_hook.oops("invalid value for datapeek length: %zu\n", tmp);
+            tpl_hook.free(fmt_cpy);
+            fmt_cpy = NULL; /* fail */
+            goto fail;
+        }
+
+        // Cast justified due to previous bounds check
+        datapeek_flen = (uint32_t)tmp;
         if (strspn(datapeek_f, tpl_datapeek_ok_chars) < datapeek_flen) {
             tpl_hook.oops("invalid TPL_DATAPEEK format: %s\n", datapeek_f);
             tpl_hook.free(fmt_cpy);
@@ -1409,12 +1585,19 @@ TPL_APB char* tpl_peek(int mode, ...)
                     goto fail;
                 }
                 memcpy(&datapeek_ssz,dv,sizeof(uint32_t)); /* get slen */
+                if (UINT32_MAX > SIZE_MAX && datapeek_ssz > SIZE_MAX) {
+                    tpl_hook.oops("tpl_peek: data size cannot be represented in type for data operations\n");
+                    tpl_hook.free(fmt_cpy);
+                    fmt_cpy = NULL;
+                    goto fail;
+                }
+
                 if (xendian) tpl_byteswap(&datapeek_ssz, sizeof(uint32_t));
                 if (old_string_format) datapeek_ssz++;
                 dv = (void*)((uintptr_t)dv + sizeof(uint32_t)); /* adv. to str */
                 if (datapeek_ssz == 0) datapeek_s = NULL;
                 else {
-                    if ((uintptr_t)dv-(uintptr_t)addr + datapeek_ssz-1 > sz) {
+                    if ((uintptr_t)dv-(uintptr_t)addr + (size_t)datapeek_ssz-1 > sz) {
                         tpl_hook.oops("tpl_peek: tpl has insufficient length\n");
                         tpl_hook.free(fmt_cpy);
                         fmt_cpy = NULL; /* fail */
@@ -1422,22 +1605,34 @@ TPL_APB char* tpl_peek(int mode, ...)
                     }
                     datapeek_s = tpl_hook.malloc(datapeek_ssz);
                     if (datapeek_s == NULL) fatal_oom();
-                    memcpy(datapeek_s, dv, datapeek_ssz-1);
-                    datapeek_s[datapeek_ssz-1] = '\0';
-                    dv = (void*)((uintptr_t)dv + datapeek_ssz-1);
+                    memcpy(datapeek_s, dv, (size_t)datapeek_ssz-1);
+                    datapeek_s[(size_t)datapeek_ssz-1] = '\0';
+                    dv = (void*)((uintptr_t)dv + (size_t)datapeek_ssz-1);
                 }
                 *(char**)datapeek_p = datapeek_s;
             } else {
-                datapeek_csz = tpl_size_for(*datapeek_c);
-                if ((uintptr_t)dv-(uintptr_t)addr + datapeek_csz > sz) {
+                tmp = tpl_size_for(*datapeek_c);
+
+                if((SIZE_MAX > UINT32_MAX && tmp > UINT32_MAX) ||
+                   (SIZE_MAX > INT_MAX && tmp > INT_MAX)) {
+                    tpl_hook.oops("tpl_peek: data size cannot be represented in type for data operations\n");
+                    tpl_hook.free(fmt_cpy);
+                    fmt_cpy = NULL;
+                    goto fail;
+                }
+
+                // Casts of tmp and datapeek_csz justified because of the previous bounds check
+                datapeek_csz = (uint32_t)tmp;
+
+                if ((uintptr_t)dv-(uintptr_t)addr + (size_t)datapeek_csz > sz) {
                     tpl_hook.oops("tpl_peek: tpl has insufficient length\n");
                     tpl_hook.free(fmt_cpy);
                     fmt_cpy = NULL; /* fail */
                     goto fail;
                 }
-                memcpy(datapeek_p, dv, datapeek_csz);
-                if (xendian) tpl_byteswap(datapeek_p, datapeek_csz);
-                dv = (void*)((uintptr_t)dv + datapeek_csz);
+                memcpy(datapeek_p, dv, (size_t)datapeek_csz);
+                if (xendian) tpl_byteswap(datapeek_p, (int)datapeek_csz);
+                dv = (void*)((uintptr_t)dv + (size_t)datapeek_csz);
             }
         }
     }
@@ -1521,7 +1716,6 @@ TPL_APB int tpl_load(tpl_node *r, int mode, ...)
         fd = va_arg(ap,int);
     } else {
         tpl_hook.oops("unsupported tpl_load mode %d\n", mode);
-        va_end(ap);
         return -1;
     }
     va_end(ap);
@@ -1589,8 +1783,9 @@ TPL_APB int tpl_Alen(tpl_node *r, int i)
         tpl_hook.oops("invalid index %d to tpl_unpack\n", i);
         return -1;
     }
-    if (n->type != TPL_TYPE_ARY) return -1;
-    return ((tpl_atyp*)(n->data))->num;
+    if (n->type != TPL_TYPE_ARY || n->num > INT_MAX) return -1;
+    // Cast is justified because of the previous bounds check
+    return (int)((tpl_atyp*)(n->data))->num;
 }
 
 static void tpl_free_atyp(tpl_node *n, tpl_atyp *atyp)
@@ -1601,9 +1796,9 @@ static void tpl_free_atyp(tpl_node *n, tpl_atyp *atyp)
     tpl_bin *binp;
     tpl_atyp *atypp;
     char *strp;
+    int i;
     size_t itermax;
     tpl_pound_data *pd;
-    int i;
 
     bb = atyp->bb;
     while (bb) {
@@ -1611,6 +1806,14 @@ static void tpl_free_atyp(tpl_node *n, tpl_atyp *atyp)
         dv = bb->data;
         c=n->children;
         while (c) {
+            if (tpl_types[c->type].sz < 0 ||
+                    (INT_MAX > SIZE_MAX && (unsigned) tpl_types[c->type].sz > SIZE_MAX) ||
+                    c->num < 0 ||
+                    (INT_MAX > SIZE_MAX && (unsigned) c->num > SIZE_MAX)) {
+                        tpl_hook.fatal("Invalid TPL type size\n");
+                        return;
+            }
+
             switch (c->type) {
             case TPL_TYPE_BYTE:
             case TPL_TYPE_DOUBLE:
@@ -1620,7 +1823,8 @@ static void tpl_free_atyp(tpl_node *n, tpl_atyp *atyp)
             case TPL_TYPE_UINT64:
             case TPL_TYPE_INT16:
             case TPL_TYPE_UINT16:
-                dv = (void*)((uintptr_t)dv + tpl_types[c->type].sz*c->num);
+                // Cast justified because of the previous bounds check
+                dv = (void*)((uintptr_t)dv + (size_t)tpl_types[c->type].sz*(size_t)c->num);
                 break;
             case TPL_TYPE_BIN:
                 memcpy(&binp,dv,sizeof(tpl_bin*)); /* cp to aligned */
@@ -1637,7 +1841,8 @@ static void tpl_free_atyp(tpl_node *n, tpl_atyp *atyp)
                 break;
             case TPL_TYPE_POUND:
                 /* iterate over the preceding nodes */
-                itermax = c->num;
+                // Cast is justified because of the previous bounds check
+                itermax = (size_t)c->num;
                 pd = (tpl_pound_data*)c->data;
                 if (++(pd->iternum) < itermax) {
                     c = pd->iter_start_node;
@@ -1700,9 +1905,17 @@ static int tpl_serlen(tpl_node *r, tpl_node *n, void *dv, size_t *serlen)
             case TPL_TYPE_INT16:
             case TPL_TYPE_UINT16:
                 for(fidx=0; fidx < c->num; fidx++) {  /* octothorpe support */
-                    if ((uintptr_t)dv + tpl_types[c->type].sz > buf_past) return -1;
-                    dv = (void*)((uintptr_t)dv + tpl_types[c->type].sz);
-                    len += tpl_types[c->type].sz;
+                    if (tpl_types[c->type].sz < 0 ||
+                        (INT_MAX > SIZE_MAX && (unsigned) tpl_types[c->type].sz > SIZE_MAX)) {
+                        tpl_hook.fatal("TPL type size cannot be represented within needed artihmetic type\n");
+                        break;
+                    }
+
+                    if ((uintptr_t)dv + (size_t)tpl_types[c->type].sz > buf_past) return -1;
+
+                    // Casts are justified because of the previous bounds check
+                    dv = (void*)((uintptr_t)dv + (size_t)tpl_types[c->type].sz);
+                    len += (size_t)tpl_types[c->type].sz;
                 }
                 break;
             case TPL_TYPE_BIN:
@@ -1738,7 +1951,13 @@ static int tpl_serlen(tpl_node *r, tpl_node *n, void *dv, size_t *serlen)
                 break;
             case TPL_TYPE_POUND:
                 /* iterate over the preceding nodes */
-                itermax = c->num;
+                if (c->num < 0 || (INT_MAX > SIZE_MAX && (unsigned int) c->num > SIZE_MAX)) {
+                    tpl_hook.fatal("Unable to represent TPL node num value within size type\n");
+                    break;
+                }
+
+                // Cast is justified because of the previous bounds check
+                itermax = (size_t)c->num;
                 pd = (tpl_pound_data*)c->data;
                 if (++(pd->iternum) < itermax) {
                     c = pd->iter_start_node;
@@ -1782,7 +2001,13 @@ static int tpl_mmap_output_file(char *filename, size_t sz, void **text_out)
         close(fd);
         return -1;
     }
-    if (ftruncate(fd,sz) == -1) {
+
+    /* THIS CAST IS UNCHECKED
+     * Unfortunately, POSIX does not require a off_t MAX value to be defined for range checking purposes.
+     * However, it is unlikely for a value within a size_t to overflow an off_t, so we will have to cast
+     * and hope for the best.
+     */
+    if (ftruncate(fd, (off_t)sz) == -1) {
         tpl_hook.oops("ftruncate failed: %s\n", strerror(errno));
         munmap( text, sz );
         close(fd);
@@ -1807,8 +2032,16 @@ static int tpl_mmap_file(char *filename, tpl_mmap_rec *mr)
         return -1;
     }
 
+    //off_t does not define a max size, so the best we can do is assume that an
+    //off_t value is at most 64 bits and check using that assumption
+    if (stat_buf.st_size < 0 && (INT64_MAX > SIZE_MAX && (uint64_t)stat_buf.st_size > SIZE_MAX)) {
+        tpl_hook.oops("Size of file given by stat cannot be used by mmap\n");
+        return -1;
+    }
+
+    // Cast justified because of previous bounds check
     mr->text_sz = (size_t)stat_buf.st_size;
-    mr->text = mmap(0, stat_buf.st_size, PROT_READ, MAP_PRIVATE, mr->fd, 0);
+    mr->text = mmap(0, (size_t)stat_buf.st_size, PROT_READ, MAP_PRIVATE, mr->fd, 0);
     if (mr->text == MAP_FAILED) {
         close(mr->fd);
         tpl_hook.oops("Failed to mmap %s: %s\n", filename, strerror(errno));
@@ -1854,10 +2087,19 @@ TPL_APB int tpl_pack(tpl_node *r, int i)
         case TPL_TYPE_UINT64:
         case TPL_TYPE_INT16:
         case TPL_TYPE_UINT16:
+            if (child->num < 0 || (INT_MAX > SIZE_MAX && (unsigned) child->num > SIZE_MAX) ||
+                tpl_types[child->type].sz < 0 ||
+                  (INT_MAX > SIZE_MAX && (unsigned) tpl_types[child->type].sz > SIZE_MAX)) {
+                tpl_hook.oops("invalid child tpl node values\n");
+                return -1;
+            }
+
+
             /* no need to use fidx iteration here; we can copy multiple values in one memcpy */
-            memcpy(child->data,child->addr,tpl_types[child->type].sz * child->num);
-            if (datav) datav = tpl_cpv(datav,child->data,tpl_types[child->type].sz * child->num);
-            if (n->type == TPL_TYPE_ARY) n->ser_osz += tpl_types[child->type].sz * child->num;
+            // Casts justified because of the previoud bounds check
+            memcpy(child->data,child->addr,(size_t)tpl_types[child->type].sz * (size_t)child->num);
+            if (datav) datav = tpl_cpv(datav,child->data,(size_t)tpl_types[child->type].sz * (size_t)child->num);
+            if (n->type == TPL_TYPE_ARY) n->ser_osz += (size_t)tpl_types[child->type].sz * (size_t)child->num;
             break;
         case TPL_TYPE_BIN:
             /* copy the buffer to be packed */
@@ -1895,7 +2137,14 @@ TPL_APB int tpl_pack(tpl_node *r, int i)
                    block also works if the string pointer is NULL. */
                 char *caddr = ((char**)child->addr)[fidx];
                 char **cdata = &((char**)child->data)[fidx];
-                slen = caddr ?  (strlen(caddr) + 1) : 0;
+
+                if (SIZE_MAX > UINT32_MAX && caddr && strlen(caddr) >= UINT32_MAX) {
+                    tpl_hook.oops("Cannot represent string length %zu in buffer\n", strlen(caddr));
+                    return -1;
+                }
+
+                // Cast justified because of the previous bounds check
+                slen = caddr ?  ((uint32_t)(strlen(caddr) + 1)) : 0;
                 if (slen) {
                     str = tpl_hook.malloc(slen);
                     if (!str) fatal_oom();
@@ -1939,10 +2188,22 @@ TPL_APB int tpl_pack(tpl_node *r, int i)
             break;
 
         case TPL_TYPE_POUND:
+            if (INT_MAX > SIZE_MAX && (unsigned int) child->num > SIZE_MAX) {
+                tpl_hook.oops("Invalid TPL node child number %d\n", child->num);
+                return -1;
+            }
+
             /* we need to iterate n times over preceding nodes in S(...).
              * we may be in the midst of an iteration each time or starting. */
             pd = (tpl_pound_data*)child->data;
-            itermax = child->num;
+            if (SIZE_MAX > UINTPTR_MAX && pd->inter_elt_len > UINTPTR_MAX) {
+                tpl_hook.oops("Invalid inter_elt_len value %zu in tpl_pound data\n",
+                                pd->inter_elt_len);
+                return -1;
+            }
+
+            // Cast is justified because of the previous bounds check
+            itermax = (size_t) child->num;
 
             /* itermax is total num of iterations needed  */
             /* pd->iternum is current iteration index  */
@@ -1950,12 +2211,19 @@ TPL_APB int tpl_pack(tpl_node *r, int i)
             /* pd->iter_start_node is where we jump to at each iteration. */
 
             if (++(pd->iternum) < itermax) {
-
                 /* in start or midst of loop. advance addr/data pointers. */
                 for(np=pd->iter_start_node; np != child; np = np->next) {
-                    np->data = (char*)(np->data) +
-                               (tpl_types[np->type].sz * np->num);
-                    np->addr = (char*)(np->addr) + pd->inter_elt_len;
+                    if (tpl_types[np->type].sz < 0 || np->num < 0
+                        || (INT_MAX > UINTPTR_MAX && (unsigned int) tpl_types[np->type].sz > UINTPTR_MAX)
+                        || (INT_MAX > UINTPTR_MAX && (unsigned int) np->num > UINTPTR_MAX)) {
+                        tpl_hook.oops("invalid tpl type size %d or node number %d\n",
+                                        tpl_types[np->type].sz, np->num);
+                        return -1;
+                    }
+
+                    np->data = (char *)((uintptr_t)(np->data) +
+                               ((uintptr_t)tpl_types[np->type].sz * (uintptr_t)np->num));
+                    np->addr = (char *)((uintptr_t)(np->addr) + (uintptr_t)pd->inter_elt_len);
                 }
                 /* do next iteration */
                 child = pd->iter_start_node;
@@ -1966,10 +2234,21 @@ TPL_APB int tpl_pack(tpl_node *r, int i)
                 /* reset iteration index and addr/data pointers. */
                 pd->iternum = 0;
                 for(np=pd->iter_start_node; np != child; np = np->next) {
-                    np->data = (char*)(np->data) - ((itermax-1) *
-                                                    tpl_types[np->type].sz *
-                                                    np->num);
-                    np->addr = (char*)(np->addr) - ((itermax-1) * pd->inter_elt_len);
+                    if (tpl_types[np->type].sz < 0 || np->num < 0
+                        || (INT_MAX > UINTPTR_MAX && (unsigned int) tpl_types[np->type].sz > UINTPTR_MAX)
+                        || (INT_MAX > UINTPTR_MAX && (unsigned int) np->num > UINTPTR_MAX)
+                        || (SIZE_MAX > UINTPTR_MAX && itermax > UINTPTR_MAX)) {
+                        tpl_hook.oops("invalid tpl type size %d or node number %d\n",
+                                        tpl_types[np->type].sz, np->num);
+                        return -1;
+                    }
+
+                    // Cast is justified because of previous bounds checking
+                    np->data = (char *)((uintptr_t)(np->data) - (((uintptr_t)itermax-1) *
+                                                    (uintptr_t) tpl_types[np->type].sz *
+                                                    (uintptr_t) np->num));
+                    np->addr = (char *)((uintptr_t)(np->addr) - (((uintptr_t)itermax-1) *
+                                                        (uintptr_t) pd->inter_elt_len));
                 }
 
             }
@@ -2017,7 +2296,15 @@ TPL_APB int tpl_unpack(tpl_node *r, int i)
         dv = tpl_find_data_start( ((tpl_root_data*)(n->data))->mmap.text );
     } else if (n->type == TPL_TYPE_ARY) {
         if (((tpl_atyp*)(n->data))->num <= 0) return 0; /* array consumed */
-        else rc = ((tpl_atyp*)(n->data))->num--;
+        else {
+            if (((tpl_atyp*)(n->data))->num == 0 || ((tpl_atyp*)(n->data))->num - 1 > INT_MAX) {
+                tpl_hook.fatal("Node number cannot be represented in return type\n");
+            }
+
+            // Cast is justified because of the previous bounds check
+            rc = (int)((tpl_atyp*)(n->data))->num--;
+        }
+
         dv = ((tpl_atyp*)(n->data))->cur;
         if (!dv) tpl_hook.fatal("must unpack parent of node before node itself\n");
     }
@@ -2036,18 +2323,76 @@ TPL_APB int tpl_unpack(tpl_node *r, int i)
             /* unpack elements of cross-endian octothorpic array individually */
             if (((tpl_root_data*)(r->data))->flags & TPL_XENDIAN) {
                 for(fidx=0; fidx < c->num; fidx++) {
-                    caddr = (void*)((uintptr_t)c->addr + (fidx * tpl_types[c->type].sz));
-                    memcpy(caddr,dv,tpl_types[c->type].sz);
+                    if (tpl_types[c->type].sz < 0 ||
+                        (INT_MAX > SIZE_MAX && (unsigned) tpl_types[c->type].sz > SIZE_MAX)) {
+                        tpl_hook.fatal("Invalid TPL type size\n");
+                    }
+
+                    // Cast is justified because of previous bounds checking and the construction of this loop
+                    caddr = (void*)((uintptr_t)c->addr + ((size_t)fidx * (size_t)tpl_types[c->type].sz));
+                    /*
+                     * Maat Team:
+                     * Some static analyzers give a NULL dereference error for this line. This,
+                     * however, cannot happen except in cases where tpl_nodes have been deliberately
+                     * corrupted to caused errors.
+                     *
+                     * The loop's outer condition confirms that c is non-null.
+                     *
+                     * dv is non-null because, to be null, the parent node n would need to both
+                     * not be a node of type TPL_TYPE_ROOT or a node of type TPL_TYPE_ARY, such that
+                     * the allocation of dv that occurs before this while loop does not occur.
+                     * Furthermoew, no further assignments of dv within this loop would have to occur
+                     * before this point. However, to enter this loop n must have children, and
+                     * n can only have children if n is a root or array node with the corresponding
+                     * types. Therefore, dv will be non-null as well.
+                     */
+                    // Casts are justified because of the previous bounds check
+                    memcpy(caddr,dv,(size_t) tpl_types[c->type].sz);
                     tpl_byteswap(caddr, tpl_types[c->type].sz);
-                    dv = (void*)((uintptr_t)dv + tpl_types[c->type].sz);
+                    dv = (void*)((uintptr_t)dv + (size_t) tpl_types[c->type].sz);
                 }
             } else {
                 /* bulk unpack ok if not cross-endian */
-                memcpy(c->addr, dv, tpl_types[c->type].sz * c->num);
-                dv = (void*)((uintptr_t)dv + tpl_types[c->type].sz * c->num);
+                /*
+                 * Maat Team:
+                 * Some static analyzers give a NULL dereference error for this line. This,
+                 * however, cannot happen except in cases where tpl_nodes have been deliberately
+                 * corrupted to caused errors.
+                 *
+                 * The loop's outer condition confirms that c and c->addr are non-null.
+                 *
+                 * dv is non-null because, to be null, the parent node n would need to both
+                 * not be a node of type TPL_TYPE_ROOT or a node of type TPL_TYPE_ARY, such that
+                 * the allocation of dv that occurs before this while loop does not occur.
+                 * Furthermoew, no further assignments of dv within this loop would have to occur
+                 * before this point. However, to enter this loop n must have children, and
+                 * n can only have children if n is a root or array node with the corresponding
+                 * types. Therefore, dv will be non-null as well.
+                 */
+                if (c->num < 0 || (INT_MAX > SIZE_MAX && (unsigned) c->num > SIZE_MAX)) {
+                    tpl_hook.fatal("Invalid values within TPL node\n");
+                }
+
+                // Casts are justified because of previous bounds check
+                memcpy(c->addr, dv, (size_t)tpl_types[c->type].sz * (size_t)c->num);
+                dv = (void*)((uintptr_t)dv + (size_t)tpl_types[c->type].sz * (size_t)c->num);
             }
             break;
         case TPL_TYPE_BIN:
+            /*
+             * Maat Team:
+             * Some static analyzers give a NULL dereference error for this line. This,
+             * however, cannot happen except in cases where tpl_nodes have been deliberately
+             * corrupted to caused errors.
+             *
+             * dv is non-null because, to be null, the parent node n would need to both
+             * not be a node of type TPL_TYPE_ROOT or a node of type TPL_TYPE_ARY, such that
+             * the allocation of dv that occurs before this while loop does not occur.
+             * Furthermoew, no further assignments of dv within this loop would have to occur
+             * before this point. However, to enter this loop n must have children, and
+             * n can only have children if n is a root or array node with the corresponding
+             * types. Therefore, dv will be non-null as well.
+             */
             memcpy(&slen,dv,sizeof(uint32_t));
             if (((tpl_root_data*)(r->data))->flags & TPL_XENDIAN)
                 tpl_byteswap(&slen, sizeof(uint32_t));
@@ -2082,7 +2427,13 @@ TPL_APB int tpl_unpack(tpl_node *r, int i)
         case TPL_TYPE_POUND:
             /* iterate over preceding nodes */
             pd = (tpl_pound_data*)c->data;
-            itermax = c->num;
+
+            if (c->num < 0 || (INT_MAX > SIZE_MAX && (unsigned) c->num > SIZE_MAX)) {
+                tpl_hook.fatal("Invalid TPL node num value\n");
+            }
+
+            // Cast is justified because of the previous bounds check
+            itermax = (size_t)c->num;
             if (++(pd->iternum) < itermax) {
                 /* in start or midst of loop. advance addr/data pointers. */
                 for(np=pd->iter_start_node; np != c; np = np->next) {
@@ -2105,6 +2456,24 @@ TPL_APB int tpl_unpack(tpl_node *r, int i)
         case TPL_TYPE_ARY:
             if (tpl_serlen(r,c,dv, &A_bytes) == -1)
                 tpl_hook.fatal("internal error in unpack\n");
+            /*
+             * Maat Team:
+             * Some static analyzers give a NULL dereference error for this line. This,
+             * however, cannot happen except in cases where tpl_nodes have been deliberately
+             * corrupted to caused errors.
+             *
+             * The loop's outer condition confirms that c is non-null, and the dereference
+             * to get the member num is dereferencing a pointer to the memory location of
+             * c->data, which is non-null because c is non-null.
+             *
+             * dv is non-null because, to be null, the parent node n would need to both
+             * not be a node of type TPL_TYPE_ROOT or a node of type TPL_TYPE_ARY, such that
+             * the allocation of dv that occurs before this while loop does not occur.
+             * Furthermoew, no further assignments of dv within this loop would have to occur
+             * before this point. However, to enter this loop n must have children, and
+             * n can only have children if n is a root or array node with the corresponding
+             * types. Therefore, dv will be non-null as well.
+             */
             memcpy( &((tpl_atyp*)(c->data))->num, dv, sizeof(uint32_t));
             if (((tpl_root_data*)(r->data))->flags & TPL_XENDIAN)
                 tpl_byteswap(&((tpl_atyp*)(c->data))->num, sizeof(uint32_t));
@@ -2147,7 +2516,17 @@ static int tpl_unpackA0(tpl_node *r)
         case TPL_TYPE_INT16:
         case TPL_TYPE_UINT16:
             for(fidx=0; fidx < c->num; fidx++) {
-                dv = (void*)((uintptr_t)dv + tpl_types[c->type].sz);
+                // Cast is justified because of bounds checking
+                if (tpl_types[c->type].sz < 0 ||
+                    (INT_MAX > UINTPTR_MAX && (unsigned int) tpl_types[c->type].sz > UINTPTR_MAX)) {
+                    // Maat Team: Unlikely that this would be the case,
+                    // but this must be done for completeness. Best guess at
+                    // ideal behavior
+                    break;
+                }
+
+                // Cast of tpl type size justified by previous bounds check
+                dv = (void*)((uintptr_t)dv + (uintptr_t)tpl_types[c->type].sz);
             }
             break;
         case TPL_TYPE_BIN:
@@ -2170,7 +2549,12 @@ static int tpl_unpackA0(tpl_node *r)
             break;
         case TPL_TYPE_POUND:
             /* iterate over the preceding nodes */
-            itermax = c->num;
+            if (c->num < 0 || (INT_MAX > SIZE_MAX && (unsigned) c->num > SIZE_MAX)) {
+                tpl_hook.fatal("Invalid value in TPL node num member");
+            }
+
+            // Cast is justified because of the previous bounds check
+            itermax = (size_t)c->num;
             pd = (tpl_pound_data*)c->data;
             if (++(pd->iternum) < itermax) {
                 c = pd->iter_start_node;
@@ -2271,7 +2655,8 @@ TPL_APB int tpl_gather(int mode, ...)
 static int tpl_gather_blocking(int fd, void **img, size_t *sz)
 {
     char preamble[8];
-    int i=0, rc;
+    size_t i = 0;
+    ssize_t rc;
     uint32_t tpllen;
 
     if(img == NULL || sz == NULL) {
@@ -2281,7 +2666,8 @@ static int tpl_gather_blocking(int fd, void **img, size_t *sz)
 
     do {
         rc = read(fd,&preamble[i],8-i);
-        i += (rc>0) ? rc : 0;
+        // Cast is justified by the bounds check and the defintiion of the involved types
+        i += (rc>0) ? (size_t)rc : 0;
     } while ((rc==-1 && (errno==EINTR||errno==EAGAIN)) || (rc>0 && i<8));
 
     if (rc<0) {
@@ -2303,26 +2689,33 @@ static int tpl_gather_blocking(int fd, void **img, size_t *sz)
         return -1;
     }
 
+    if (UINT32_MAX > SIZE_MAX && tpllen > SIZE_MAX) {
+        tpl_hook.oops("tpl exceeds max system length for allocations and other computations");
+        return -3;
+    }
+
     /* malloc space for remainder of tpl image (overall length tpllen)
      * and read it in
      */
     if (tpl_hook.gather_max > 0 &&
-            tpllen > tpl_hook.gather_max) {
+            (size_t) tpllen > tpl_hook.gather_max) {
         tpl_hook.oops("tpl exceeds max length %d\n",
                       tpl_hook.gather_max);
         return -2;
     }
-    *sz = tpllen;
-    if ( (*img = tpl_hook.malloc(tpllen)) == NULL) {
+    // Cast is justified because of previous bounds check
+    *sz = (size_t)tpllen;
+    if ( (*img = tpl_hook.malloc((size_t)tpllen)) == NULL) {
         fatal_oom();
     }
 
     memcpy(*img,preamble,8);  /* copy preamble to output buffer */
     i=8;
     do {
-        rc = read(fd,&((*(char**)img)[i]),tpllen-i);
-        i += (rc>0) ? rc : 0;
-    } while ((rc==-1 && (errno==EINTR||errno==EAGAIN)) || (rc>0 && i<tpllen));
+        rc = read(fd,&((*(char**)img)[i]),(size_t)tpllen-i);
+        // Cast is justified because of the bounds check and the definition of the types
+        i += (rc>0) ? (size_t)rc : 0;
+    } while ((rc==-1 && (errno==EINTR||errno==EAGAIN)) || (rc>0 && i<(size_t)tpllen));
 
     if (rc<0) {
         tpl_hook.oops("tpl_gather_fd_blocking failed: %s\n", strerror(errno));
@@ -2332,7 +2725,8 @@ static int tpl_gather_blocking(int fd, void **img, size_t *sz)
         /* tpl_hook.oops("tpl_gather_fd_blocking: eof\n"); */
         tpl_hook.free(*img);
         return 0;
-    } else if (i != tpllen) {
+    // Cast is justified due to previous bounds check
+    } else if (i != (ssize_t)tpllen) {
         tpl_hook.oops("internal error\n");
         tpl_hook.free(*img);
         return -1;
@@ -2346,9 +2740,11 @@ static int tpl_gather_blocking(int fd, void **img, size_t *sz)
 static int tpl_gather_nonblocking( int fd, tpl_gather_t **gs, tpl_gather_cb *cb, void *data)
 {
     char buf[TPL_GATHER_BUFLEN], *img, *tpl;
-    int rc, keep_looping, cbrc=0;
+    int keep_looping, cbrc=0;
+    ssize_t rc;
     size_t catlen;
     uint32_t tpllen;
+    uintptr_t tmp;
 
     if(gs == NULL) {
         tpl_hook.oops("Null gs given to tpl_gather_nonblocking\n");
@@ -2379,8 +2775,18 @@ static int tpl_gather_nonblocking( int fd, tpl_gather_t **gs, tpl_gather_cb *cb,
             return 0;                      /* EOF, caller should close fd */
         } else {
             /* concatenate any partial tpl from last read with new buffer */
+            if (INT_MAX > SIZE_MAX && (unsigned)rc > SIZE_MAX) {
+                fatal_oom();
+            }
+
             if (*gs) {
-                catlen = (*gs)->len + rc;
+                // Cast is justified because of the previous bounds check
+                if((*gs)->len < 0 || (INT_MAX > SIZE_MAX && (unsigned int)(*gs)->len > SIZE_MAX)) {
+                    fatal_oom();
+                }
+
+                // Casts are justified from previous bounds check
+                catlen = (size_t)(*gs)->len + (size_t)rc;
                 if (tpl_hook.gather_max > 0 &&
                         catlen > tpl_hook.gather_max) {
                     tpl_hook.free( (*gs)->img );
@@ -2393,12 +2799,14 @@ static int tpl_gather_nonblocking( int fd, tpl_gather_t **gs, tpl_gather_cb *cb,
                 if ( (img = tpl_hook.realloc((*gs)->img, catlen)) == NULL) {
                     fatal_oom();
                 }
-                memcpy(img + (*gs)->len, buf, rc);
+                // Cast is justified because of the previous bounds check
+                memcpy(img + (*gs)->len, buf, (size_t)rc);
                 tpl_hook.free(*gs);
                 *gs = NULL;
             } else {
                 img = buf;
-                catlen = rc;
+                // Cast is justified because of the previous bounds check
+                catlen = (size_t) rc;
             }
             /* isolate any full tpl(s) in img and invoke cb for each */
             tpl = img;
@@ -2430,22 +2838,37 @@ static int tpl_gather_nonblocking( int fd, tpl_gather_t **gs, tpl_gather_cb *cb,
             }
             /* store any leftover, partial tpl fragment for next read */
             if (tpl == img && img != buf) {
+                if (catlen > INT_MAX) {
+                    fatal_oom();
+                }
+
                 /* consumed nothing from img!=buf */
                 if ( (*gs = tpl_hook.malloc(sizeof(tpl_gather_t))) == NULL ) {
                     fatal_oom();
                 }
                 (*gs)->img = tpl;
-                (*gs)->len = catlen;
+                // Cast is justified becaise of the previous bounds check
+                (*gs)->len = (int) catlen;
             } else if (tpl < img+catlen) {
+                if (SIZE_MAX > UINTPTR_MAX && catlen > UINTPTR_MAX) {
+                    tpl_hook.fatal("Unable to represent catlen in required arithmetic type\n");
+                }
+
+                tmp = (uintptr_t)(img + (uintptr_t) catlen - tpl);
+
+                if ((UINTPTR_MAX > SIZE_MAX && tmp > SIZE_MAX) || (UINTPTR_MAX > INT_MAX && tmp > INT_MAX)) {
+                    fatal_oom();
+                }
+
                 /* consumed 1+ tpl(s) from img!=buf or 0 from img==buf */
                 if ( (*gs = tpl_hook.malloc(sizeof(tpl_gather_t))) == NULL ) {
                     fatal_oom();
                 }
-                if ( ((*gs)->img = tpl_hook.malloc(img+catlen - tpl)) == NULL ) {
+                if ( ((*gs)->img = tpl_hook.malloc((size_t)(tmp))) == NULL ) {
                     fatal_oom();
                 }
-                (*gs)->len = img+catlen - tpl;
-                memcpy( (*gs)->img, tpl, img+catlen - tpl);
+                (*gs)->len = (int)(tmp);
+                memcpy( (*gs)->img, tpl, (size_t)(tmp));
                 /* free partially consumed concat buffer if used */
                 if (img != buf) tpl_hook.free(img);
             } else {                        /* tpl(s) fully consumed */
@@ -2463,6 +2886,7 @@ static int tpl_gather_mem( char *buf, size_t len, tpl_gather_t **gs, tpl_gather_
     int keep_looping, cbrc=0;
     size_t catlen;
     uint32_t tpllen;
+    uintptr_t tmp;
 
     if(gs == NULL) {
         tpl_hook.oops("Null gs given to tpl_gather_mem\n");
@@ -2471,7 +2895,12 @@ static int tpl_gather_mem( char *buf, size_t len, tpl_gather_t **gs, tpl_gather_
 
     /* concatenate any partial tpl from last read with new buffer */
     if (*gs) {
-        catlen = (*gs)->len + len;
+        // Cast is justified because of the bounds check
+        if ((*gs)->len < 0 || (INT_MAX > SIZE_MAX && (*gs)->len > SIZE_MAX)) {
+            return -5;
+        }
+
+        catlen = (size_t)(*gs)->len + len;
         if (tpl_hook.gather_max > 0 &&
                 catlen > tpl_hook.gather_max) {
             tpl_hook.free( (*gs)->img );
@@ -2521,22 +2950,41 @@ static int tpl_gather_mem( char *buf, size_t len, tpl_gather_t **gs, tpl_gather_
     }
     /* store any leftover, partial tpl fragment for next read */
     if (tpl == img && img != buf) {
+        if(SIZE_MAX > INT_MAX && catlen > INT_MAX) {
+            tpl_hook.fatal("Unable to represent catlen in required arithmetic type\n");
+        }
+
         /* consumed nothing from img!=buf */
         if ( (*gs = tpl_hook.malloc(sizeof(tpl_gather_t))) == NULL ) {
             fatal_oom();
         }
         (*gs)->img = tpl;
-        (*gs)->len = catlen;
+        // Cast justified because of the previous bounds check
+        (*gs)->len = (int) catlen;
     } else if (tpl < img+catlen) {
+        if (SIZE_MAX > UINTPTR_MAX && catlen > UINTPTR_MAX) {
+            tpl_hook.fatal("Unable to represent catlen in required arithmetic type\n");
+        }
+
+        tmp = (uintptr_t)(img + (uintptr_t) catlen - tpl);
+
+        if ((UINTPTR_MAX > SIZE_MAX && tmp > SIZE_MAX) || (UINTPTR_MAX > INT_MAX && tmp > INT_MAX)) {
+            tpl_hook.fatal("Cannot represent value within required arithmetic type\n");
+        }
+
         /* consumed 1+ tpl(s) from img!=buf or 0 from img==buf */
         if ( (*gs = tpl_hook.malloc(sizeof(tpl_gather_t))) == NULL ) {
             fatal_oom();
         }
-        if ( ((*gs)->img = tpl_hook.malloc(img+catlen - tpl)) == NULL ) {
+        // Cast is justified because of the previous bounds check
+        if ( ((*gs)->img = tpl_hook.malloc((size_t)tmp)) == NULL ) {
             fatal_oom();
         }
-        (*gs)->len = img+catlen - tpl;
-        memcpy( (*gs)->img, tpl, img+catlen - tpl);
+        // Cast is justified because of the previous bounds check
+        (*gs)->len = (int) (tmp);
+
+        // Cast is justified because of the previous bounds check
+        memcpy( (*gs)->img, tpl, (size_t)(tmp));
         /* free partially consumed concat buffer if used */
         if (img != buf) tpl_hook.free(img);
     } else {                        /* tpl(s) fully consumed */

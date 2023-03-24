@@ -141,7 +141,7 @@ int asp_measure(int argc, char *argv[])
         }
 
         // read link of folder
-        int linkread = readlinkat(dfd, pFile->d_name, linkBuffer, PATH_MAX);
+        ssize_t linkread = readlinkat(dfd, pFile->d_name, linkBuffer, PATH_MAX);
 
         if (linkread < 0) {
             asp_logwarn("Could not readlink \"%s/%s\": %s\n", fds_path, pFile->d_name, strerror(errno));

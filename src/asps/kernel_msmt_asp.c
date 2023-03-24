@@ -61,13 +61,13 @@
  * routine to read these files in.
  */
 static unsigned char *virtual_file_to_buffer(const char *filename,
-        unsigned int *size)
+        size_t *size)
 {
     unsigned char scratch[256];
-    int ret;
+    ssize_t ret;
     unsigned int max;
     unsigned char *buffer = NULL, *tmp = NULL;
-    unsigned int count;
+    size_t count;
     int fd;
 
     *size = 0;
@@ -84,24 +84,24 @@ static unsigned char *virtual_file_to_buffer(const char *filename,
     do {
         ret = read(fd, scratch, sizeof(scratch));
         if(ret < 0) {
-            dlog(0, "read() returned %d\n", ret);
+            dlog(0, "read() returned %zd\n", ret);
             break;
         }
 
-        tmp = realloc(buffer, ((count + ret) > max) ? max : (count + ret));
+        tmp = realloc(buffer, ((count + (size_t)ret) > max) ? max : (count + (size_t)ret));
         if(!tmp) {
             dlog(0, "realloc() failed\n");
             break;
         }
         buffer = tmp; // prevents us from losing the pointer
 
-        if((count + ret) < max) {
-            memcpy(buffer + count, scratch, ret);
+        if((count + (size_t)ret) < max) {
+            memcpy(buffer + count, scratch, (size_t)ret);
         } else {
             memcpy(buffer + count, scratch, max - count);
         }
 
-        count += ret;
+        count += (size_t)ret;
         if(count > max)
             count = max;
     } while(ret > 0 && count < max);
@@ -114,12 +114,12 @@ static unsigned char *virtual_file_to_buffer(const char *filename,
 
 static char *virtual_file_to_string(const char *filename)
 {
-    unsigned int size = 0;
+    size_t size = 0;
     unsigned char *buf = NULL;
     char *rtn = NULL;
 
     buf = virtual_file_to_buffer(filename, &size);
-    if(buf) {
+    if(buf && size < SIZE_MAX) {
         rtn = realloc(buf, size + 1);
         if(rtn == NULL) {
             printf("Error, could not realloc\n");
@@ -138,7 +138,6 @@ static char *virtual_file_to_string(const char *filename)
 struct kernel_measurement_data *get_kernel_msmt(void)
 {
     kernel_measurement_data *kernel_data = NULL;
-    int ret_val	= 0;
     size_t vmlinux_size = 0;
     uint8_t *vmlinux_buffer = NULL;
     char *cmdline = NULL;
@@ -212,7 +211,6 @@ err_free_vmlinux_buffer:
     if (vmlinux_buffer != empty_buffer) {
         free(vmlinux_buffer);
     }
-err_free_msmt_data:
     free_measurement_data(&kernel_data->meas_data);
 err_generic:
     return NULL;
@@ -220,7 +218,6 @@ err_generic:
 
 int asp_init(int argc, char *argv[])
 {
-    int ret_val = 0;
     asp_logdebug("Initialized kernel_msmt ASP\n");
 
     register_types();
@@ -241,7 +238,6 @@ int asp_measure(int argc, char *argv[])
     address *address	= NULL;
     kernel_measurement_data *kernel_data = NULL;
     int ret_val	= 0;
-
 
     if((argc < 3) ||
             ((node_id = node_id_of_str(argv[2])) == INVALID_NODE_ID) ||

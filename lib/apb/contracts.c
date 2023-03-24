@@ -710,7 +710,7 @@ int generate_and_send_back_measurement_contract(int chan, struct scenario *scen,
     return 0;
 }
 
-int receive_measurement_contract(int chan, struct scenario *scen, int32_t max_size_supported)
+int receive_measurement_contract(int chan, struct scenario *scen, uint32_t max_size_supported)
 {
 
     int ret = 0;
@@ -729,7 +729,9 @@ int receive_measurement_contract(int chan, struct scenario *scen, int32_t max_si
 
     free(scen->contract);
     scen->contract = NULL;
-    status = maat_read_sz_buf(chan, &scen->contract, &tmpsize,
+    /* Cast of scen->contract is justified because operations on the buffer do not regard the signedness of its
+     * contents */
+    status = maat_read_sz_buf(chan, (unsigned char **)&scen->contract, &tmpsize,
                               &bytes_read, &eof_encountered,
                               MAAT_APB_PEER_TIMEOUT, max_size_supported);
 

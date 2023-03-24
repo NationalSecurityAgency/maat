@@ -145,7 +145,8 @@ START_TEST(test_sendexecutetcp)
     struct sockaddr_in sin;
     socklen_t len = sizeof(sin);
     char port_buf[6] = {0};
-    char *msg, *asp_argv[ASP_ARG_NO];
+    char *msg;
+    char *asp_argv[ASP_ARG_NO];
 
     /* If setup fails, this will be NULL */
     fail_unless(g_sendexecutetcpasp != NULL, "ASP NOT FOUND");
@@ -190,7 +191,8 @@ START_TEST(test_sendexecutetcp)
     acc_sock = accept(sock, NULL, NULL);
     fail_if(acc_sock < 0, "Unable to accept connection on socket");
 
-    rc = maat_read_sz_buf(acc_sock, &msg, &msg_len, &bytes_read, &eof_encountered, READ_TO, -1);
+    /* Cast is justified because function does not regard signedness of the buffer  */
+    rc = maat_read_sz_buf(acc_sock, (unsigned char **)&msg, &msg_len, &bytes_read, &eof_encountered, READ_TO, 0);
     if(rc != 0) {
         stop_asp(g_sendexecutetcpasp);
         fail_if(true, "Error reading from the child");

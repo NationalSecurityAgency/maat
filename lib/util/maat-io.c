@@ -105,7 +105,7 @@ static time_t timeout_check(time_t timer, struct timeval start)
 }
 
 
-int maat_read(int chan, char *buf,
+int maat_read(int chan, unsigned char *buf,
               size_t bufsize, size_t *bytes_read,
               int *eof_encountered,
               time_t timeout_secs)
@@ -184,10 +184,10 @@ int maat_read(int chan, char *buf,
     return 0;
 }
 
-int maat_read_sz_buf(int chan, char **buf,
+int maat_read_sz_buf(int chan, unsigned char **buf,
                      size_t *bufsize, size_t *bytes_read,
                      int *eof_encountered,
-                     time_t timeout_secs, int32_t max_size)
+                     time_t timeout_secs, size_t max_size)
 {
     uint32_t sizeval;
     int res;
@@ -196,8 +196,11 @@ int maat_read_sz_buf(int chan, char **buf,
     size_t bread;
 
     // 1 MB default
-    if(max_size < 0) {
+    if(max_size == 0) {
         max_size = 1000000;
+    } else if (max_size < UINT32_MAX) {
+        //Max size that could have been transmitted is UINT32_MAX
+        max_size = UINT32_MAX;
     }
 
     *eof_encountered = 0;
@@ -219,7 +222,7 @@ int maat_read_sz_buf(int chan, char **buf,
     }
 
     dlog(DEBUG_MAAT_IO_LEVEL, "reading buffer size\n");
-    if((res = maat_read(chan, (char*)&sizeval, sizeof(uint32_t), &bread,
+    if((res = maat_read(chan, (unsigned char *)&sizeval, sizeof(uint32_t), &bread,
                         eof_encountered, timeout_secs)) != 0) {
         dlog(0, "Failed to read size: %s\n", strerror(errno));
         return res;
@@ -241,17 +244,20 @@ int maat_read_sz_buf(int chan, char **buf,
         return -1;
     }
 
-    sizeval      = ntohl(sizeval);
+    sizeval = be32toh(sizeval);
 
     /* Check that the size of the message is less than max_size */
-    dlog(4, "DEBUG: size read from stream: %d. Max size is %d\n", sizeval, max_size);
-    if(sizeval > max_size) {
+    dlog(4, "DEBUG: size read from stream: %"PRIu32". Max size is %zu\n", sizeval, max_size);
+    /* Cast is valid because of a previous bounds check guarentees max_size in [0, UINT32_MAX]*/
+    if(sizeval > (uint32_t)max_size) {
         dlog(1, "Stream size exceeds maximum size\n");
         return -EMSGSIZE;
         // Alternatively could read max_size below instead of quitting out here
     }
 
-    *buf         = malloc(sizeval);
+    /* The cast of a uint32_t is justified because max_size, which bounds sizeval, is a
+     * size_t */
+    *buf = malloc((size_t)sizeval);
 
     dlog(DEBUG_MAAT_IO_LEVEL, "allocated buffer of size %"PRIu32"\n", sizeval);
 
@@ -260,7 +266,9 @@ int maat_read_sz_buf(int chan, char **buf,
         return -1;
     }
 
-    res = maat_read(chan, *buf, sizeval, &bread, eof_encountered, time_left);
+    /* The cast of a uint32_t is justified because max_size, which bounds sizeval, is a
+     * size_t */
+    res = maat_read(chan, *buf, (size_t)sizeval, &bread, eof_encountered, time_left);
 
     if(res < 0) {
         dlog(0, "Failed to read message content\n");
@@ -372,7 +380,7 @@ int maat_write_sz_buf(int chan, const unsigned char *buf,
                       size_t bufsize, size_t *bytes_written,
                       time_t timeout_secs)
 {
-    uint32_t sizeval = htonl((uint32_t)bufsize);
+    uint32_t sizeval;
     int res;
     struct timeval pre;
     time_t time_left;
@@ -387,6 +395,9 @@ int maat_write_sz_buf(int chan, const unsigned char *buf,
         dlog(DEBUG_MAAT_IO_LEVEL, "Attempt to write buffer of size %zu > UINT32_MAX\n", bufsize);
         return -EINVAL;
     }
+
+    /* Cast is justified because bufsize must be in [0, UINT32_MAX]  */
+    sizeval = htobe32((uint32_t)bufsize);
 
     dlog(DEBUG_MAAT_IO_LEVEL, "Writing buffer of size %zu\n", bufsize);
     if(bytes_written != NULL) {

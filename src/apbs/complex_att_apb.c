@@ -299,7 +299,6 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
         }// End of serialize child
     }// End of send_request child
 
-fb_req_err:
 find_asp_err:
 keyfile_error:
 certfile_error:

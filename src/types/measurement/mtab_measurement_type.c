@@ -78,6 +78,7 @@ static int serialize_mtab_data(measurement_data *d, char **serial_data, size_t *
     if(tn == NULL) {
         return -1;
     }
+    /* Packing mtab data, stored in ent, into tpl node */
     for(iter = g_list_first(dd->mntents); iter != NULL; iter = g_list_next(iter)) {
         ent = *((struct mntent *)iter->data);
         tpl_pack(tn, 1);

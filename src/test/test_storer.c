@@ -118,7 +118,8 @@ START_TEST(test_storer)
         char *result;
         size_t result_sz;
 
-        ret = maat_read_sz_buf(fd_out[0], &result, &result_sz, &bytes_read, &eof_enc, TIMEOUT, -1);
+        /* Sign is justified because function does not care about signedness of contents */
+        ret = maat_read_sz_buf(fd_out[0], (unsigned char **)&result, &result_sz, &bytes_read, &eof_enc, TIMEOUT, 0);
         fail_if(ret < 0, "Error reading storer result from chan\n");
         fail_if(eof_enc, "EOF encountered before complete buffer read\n");
 

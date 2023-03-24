@@ -129,7 +129,7 @@ parse_error:
     return -2;
 }
 
-static int handle_consumer(int fd, char *flag, char *buf, size_t bufsize)
+static int handle_consumer(int fd, char *flag, unsigned char *buf, size_t bufsize)
 {
     int ret_val = 0;
     size_t bytes_written = 0;
@@ -161,7 +161,7 @@ int asp_measure(int argc, char *argv[])
 {
     asp_loginfo("IN split ASP MEASURE\n");
 
-    char *buf                  = NULL;
+    unsigned char *buf         = NULL;
     size_t bufsize             = 0;
     size_t bytes_read          = 0;
     int eof_enc                = 0;
@@ -177,7 +177,7 @@ int asp_measure(int argc, char *argv[])
 
     /* Read the output that is to be operated on */
     ret_val = maat_read_sz_buf(arg_set.fd_in, &buf, &bufsize,
-                               &bytes_read, &eof_enc, TIMEOUT, -1);
+                               &bytes_read, &eof_enc, TIMEOUT, 0);
     if (ret_val == -EAGAIN) {
         dlog(1, "Warning: timeout occured before read could complete\n");
     } else if(ret_val < 0) {

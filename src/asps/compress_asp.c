@@ -71,7 +71,7 @@ int asp_measure(int argc, char *argv[])
 {
     dlog(6, "IN compress ASP MEASURE\n");
 
-    char *buf       = NULL;
+    unsigned char *buf       = NULL;
     size_t bufsize  = 0;
     void *compbuf   = NULL;
     size_t compsize = 0;

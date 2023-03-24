@@ -74,7 +74,9 @@ int proc_root_type_serialize_data(measurement_data *d, char **serial_data,
         goto invalid_arg_error;
     }
 
-    b64 = b64_encode(rootdata->rootlinkpath, strlen(rootdata->rootlinkpath)+1);
+    // Cast is justified because the function does not regard or affect the signedness of the
+    // contents of the buffer
+    b64 = (char *)b64_encode((unsigned char *)rootdata->rootlinkpath, strlen(rootdata->rootlinkpath)+1);
     if (!b64) {
         goto out_err;
     }
@@ -98,7 +100,9 @@ int proc_root_type_unserialize_data(char *sd, size_t sd_size, measurement_data *
     proc_root_meas_data *rootdata = NULL;
     char *buf;
     size_t buflen;
-    buf = b64_decode(sd, &buflen);
+    // Cast is justified because the decode operation does not affect or regard the
+    // signedness of the contents of the buffer
+    buf = (char *)b64_decode(sd, &buflen);
     if(!buf) {
         dlog(0, "Could Not un-Base64 Data\n");
         goto decode_error;

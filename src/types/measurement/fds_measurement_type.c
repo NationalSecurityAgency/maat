@@ -50,9 +50,7 @@ static measurement_data *copy_fds_measurement_data(measurement_data *d)
 static int fds_serialize_data(measurement_data *d, char **serial_data,
                               size_t *serial_data_size)
 {
-    size_t sz = 0;
-    char *buf;
-    tpl_node *tn = NULL;
+    /* FIXME: Serialize the data correctly */
     fds_data *id = (fds_data*)d;
     *serial_data = strdup("");
     if(*serial_data) {

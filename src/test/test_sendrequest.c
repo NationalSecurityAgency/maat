@@ -214,7 +214,10 @@ START_TEST(test_sendrequest)
     acc_sock = accept(sock, NULL, NULL);
     fail_if(acc_sock < 0, "Unable to accept connection on socket");
 
-    rc = maat_read_sz_buf(acc_sock, &msg, &msg_len, &bytes_read, &eof_encountered, READ_TO, -1);
+    /* Cast is acceptable because the function does not regard the signedness of the
+     * argument */
+    rc = maat_read_sz_buf(acc_sock, (unsigned char **) &msg, &msg_len, &bytes_read,
+                            &eof_encountered, READ_TO, 0);
     if(rc != 0) {
         stop_asp(g_sendrequestasp);
         fail_if(true, "Error reading from the child");

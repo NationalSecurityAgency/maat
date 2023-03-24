@@ -141,6 +141,11 @@ int asp_measure(int argc, char *argv[])
                 continue;
             }
 
+            if(file_stats.st_size < 0 || (uintmax_t)file_stats.st_size > SIZE_MAX) {
+                asp_logerror("Failed state size cannot be represented in measurement variables");
+                continue;
+            }
+
             /* not a regular file */
             if(!S_ISREG(file_stats.st_mode))
                 continue;
@@ -149,9 +154,11 @@ int asp_measure(int argc, char *argv[])
                 asp_logerror("failed to allocate new file address structure for file %s\n", filename);
                 continue;
             }
+
             file_address->device_major		= major(file_stats.st_dev);
             file_address->device_minor		= minor(file_stats.st_dev);
-            file_address->file_size		= file_stats.st_size;
+            // Cast is justified because of the previous bounds check
+            file_address->file_size		= (size_t) file_stats.st_size;
             file_address->node			= file_stats.st_ino;
             file_address->fullpath_file_name    = strdup(filename);
             if(file_address->fullpath_file_name == NULL) {

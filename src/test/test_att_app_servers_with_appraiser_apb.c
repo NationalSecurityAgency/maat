@@ -197,7 +197,7 @@ START_TEST(test_appraiser_apb)
     fail_if(appraiser_chan < 0, "Failed to connect to appraiser with error: %d", -appraiser_chan);
 
     // send request
-    int msglen;
+    size_t msglen;
     //need to fill in the target_id
     create_integrity_request(TARGET_TYPE_HOST_PORT, host, att_port, resource,
                              NULL, NULL, NULL, NULL, (xmlChar **)&request_contract, &msglen);
@@ -226,13 +226,13 @@ START_TEST(test_appraiser_apb)
     status = maat_read_sz_buf(appraiser_chan, &resp_contract,
                               &resp_contract_sz, &bytes_read,
                               &eof_encountered,
-                              6666660, -1);
+                              6666660, 0);
     close(appraiser_chan);
     dlog(6, "Received response from appraiser\n");
     fail_if(status != 0, "Reading from appraiser returned unexpected status: "
             "%d (expected %d)", status, 0);
     dlog(6, "Parsing response from appraiser\n");
-    ret = parse_integrity_response(resp_contract, (int)resp_contract_sz, &target_type,
+    ret = parse_integrity_response(resp_contract, resp_contract_sz, &target_type,
                                    (xmlChar **)&target_id, (xmlChar **)&resource,
                                    &result, &data_count, (xmlChar ***)&data_idents,
                                    (xmlChar ***)&data_entries);

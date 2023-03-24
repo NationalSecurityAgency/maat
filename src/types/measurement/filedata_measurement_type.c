@@ -92,13 +92,18 @@ int filedata_serialize_data(measurement_data *d, char **serial_data, size_t *ser
 
     filedata_measurement_data *fmd = container_of(d, filedata_measurement_data, meas_data);
 
+    if (SIZE_MAX > UINT32_MAX && fmd->contents_length > UINT32_MAX) {
+        return -1;
+    }
+
     temp = fmd->contents_length;
     tn	= tpl_map("uUB", &fmd->meas_data.type->magic, &temp, &tb);
     if(tn == NULL) {
         return -1;
     }
 
-    tb.sz   = fmd->contents_length;
+    // Cast justified because of the previous bounds check
+    tb.sz   = (uint32_t)fmd->contents_length;
     tb.addr = fmd->contents;
 
     tpl_pack(tn, 0);

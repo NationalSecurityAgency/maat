@@ -179,7 +179,8 @@ int asp_measure(int argc, char *argv[])
         }
 
         marshalled_data *md = NULL;
-        ret = measurement_node_get_data(graph, n, &ima_measurement_type, &md);
+        /* FIXME: handle return value of measurement_node_get_data */
+        measurement_node_get_data(graph, n, &ima_measurement_type, &md);
         if (md != NULL) {
             measurement_data *data = unmarshall_measurement_data(md);
             free_measurement_data(&md->meas_data);

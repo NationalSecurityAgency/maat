@@ -174,12 +174,17 @@ int asp_measure(int argc, char *argv[])
     char *cacert         = NULL;
     int verify_tpm       = -1;
 
+    // Parse variables
+    long int parse_fd_in;
+    long int parse_fd_out;
+    long int parse_verify_tpm;
+
     // Buf in
-    char *buf            = NULL;
+    unsigned char *buf   = NULL;
     size_t bufsize       = 0;
 
     // Buf out
-    unsigned char *out   = NULL;
+    char *out            = NULL;
     size_t outsize       = 0;
 
     // IO status values
@@ -193,16 +198,40 @@ int asp_measure(int argc, char *argv[])
     errno = 0;
 
     if((argc < 6) ||
-            (((fd_in = strtol(argv[1], NULL, 10)) < 0) || errno != 0) ||
-            (((fd_out = strtol(argv[2], NULL, 10)) < 0) || errno != 0) ||
+            (((parse_fd_in = strtol(argv[1], NULL, 10)) < 0) || errno != 0) ||
+            (((parse_fd_out = strtol(argv[2], NULL, 10)) < 0) || errno != 0) ||
             ((workdir    = argv[3]) == NULL) ||
             ((nonce      = argv[4]) == NULL) ||
             ((cacert    = argv[5]) == NULL)  ||
-            (((verify_tpm = strtol(argv[6], NULL, 10)) < 0) || errno != 0)) {
+            (((parse_verify_tpm = strtol(argv[6], NULL, 10)) < 0) || errno != 0)) {
         asp_logerror("Usage: "ASP_NAME" <fd_in> <fd_out> <workdir> <nonce> <cacert> <verify_tpm>\n");
         ret_val = -EINVAL;
         goto parse_args_failed;
     }
+
+    if(parse_fd_in > INT_MAX || parse_fd_in < INT_MIN) {
+        asp_logerror("Input file descriptor value %ld too large for bounds of type\n", parse_fd_in);
+        ret_val = -EINVAL;
+        goto parse_args_failed;
+    }
+
+    fd_in = (int)parse_fd_in;
+
+    if(parse_fd_out > INT_MAX || parse_fd_out < INT_MIN) {
+        asp_logerror("Input file descriptor value %ld too large for bounds of type\n", parse_fd_out);
+        ret_val = -EINVAL;
+        goto parse_args_failed;
+    }
+
+    fd_out = (int)parse_fd_out;
+
+    if(parse_verify_tpm > INT_MAX || parse_verify_tpm < INT_MIN) {
+        asp_logerror("Input file descriptor value %ld too large for bounds of type\n", parse_verify_tpm);
+        ret_val = -EINVAL;
+        goto parse_args_failed;
+    }
+
+    verify_tpm = (int)parse_verify_tpm;
 
     if(!(verify_tpm == 0 || verify_tpm == 1)) {
         asp_logerror("Usage: "ASP_NAME" <fd_in> <fd_out> <workdir> <nonce> <cacert> <verify_tpm>\n");
@@ -238,7 +267,8 @@ int asp_measure(int argc, char *argv[])
     }
 
     // Write the verification result to fd_out
-    ret_val = maat_write_sz_buf(fd_out, out, outsize, &bytes_written, TIMEOUT);
+    // Cast is justified because the function does not regard the signedness of the argument
+    ret_val = maat_write_sz_buf(fd_out, (unsigned char *)out, outsize, &bytes_written, TIMEOUT);
     if(ret_val < 0) {
         dlog(0, "Error writing verification result to channel\n");
         ret_val = -1;
@@ -258,9 +288,7 @@ eof_enc:
     bufsize = 0;
 read_failed:
     close(fd_out);
-io_chan_out_failed:
     close(fd_in);
-io_chan_in_failed:
 parse_args_failed:
     return ret_val;
 }

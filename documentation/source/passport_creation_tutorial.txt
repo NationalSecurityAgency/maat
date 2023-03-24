@@ -46,7 +46,7 @@ For Ubuntu Machines:
    mongodb
    sudo service mongodb start
 
-For CentOS Machines: 
+For RHEL Machines: 
 
 .. code-block:: bash
    

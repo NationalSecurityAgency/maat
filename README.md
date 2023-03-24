@@ -31,8 +31,7 @@ Userspace Implants" (DOI not yet available).
 Please see ROADMAP.md for an overview of our current status and listing of 
 items on our roadmap.
 
-Maat currently supports CentOS 7.7, and Ubuntu 18.04.4. Support for CentOS 8 is 
-in progress, please refer to ROADMAP.md for updates on this effort. 
+Maat currently supports RHEL 7 and 8, and Ubuntu 20.04 and 22.04.
 
 Documentation
 -------------

@@ -7,7 +7,7 @@ Standards-Version: 3.9.4
 
 Package: maat
 Architecture: any
-Depends: libglib2.0-0 (>= 2.40.0), libxml2, libssl1.0.0, libuuid1, uuid-runtime, ${shlibs:Depends}, ${misc:Depends}
+Depends: libglib2.0-0 (>= 2.40.0), libxml2, libssl1.1, libuuid1, uuid-runtime, ${shlibs:Depends}, ${misc:Depends}
 Description: Measurement & Attestation Framework
  Attestation manager and default attestation protocols, attestation service 
  providers, and measurement specifications for Maat, a measurement and 

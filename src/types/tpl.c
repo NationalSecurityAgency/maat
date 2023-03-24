@@ -1521,7 +1521,6 @@ TPL_APB int tpl_load(tpl_node *r, int mode, ...)
         fd = va_arg(ap,int);
     } else {
         tpl_hook.oops("unsupported tpl_load mode %d\n", mode);
-        va_end(ap);
         return -1;
     }
     va_end(ap);

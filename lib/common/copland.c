@@ -1729,6 +1729,7 @@ int place_perm_to_str(place_perm_t perm, char **str)
     if (ret < 0) {
         dlog(1,
              "Unable to convert place perm %"PRIu32" to str\n", perm);
+        free(tmp);
         return -1;
     }
 
@@ -1951,8 +1952,8 @@ static int query_place_info_csv(const struct apb *apb,
 
     if (ret == 1) {
         dlog(1, "Unable to find place in the CSV file\n");
-        free(tmp);
-        return 2;
+        ret = 2;
+        goto err;
     } else if (ret < 0) {
         goto err;
     }

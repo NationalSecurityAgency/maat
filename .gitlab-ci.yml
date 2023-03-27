@@ -792,7 +792,8 @@ system-test-maat-tpm:
                 - sudo apt-get --allow-unauthenticated update 
                 - sudo apt-get --allow-unauthenticated -y --reinstall install maat
                 - sudo cp demo/credentials/client.pem /etc/maat/credentials 
-                - sudo cp demo/credentials/client.key /etc/maat/credentials 
+                - sudo cp demo/credentials/client.key /etc/maat/credentials
+                - export TPM2TOOLS_TCTI=tabrmd && tpm2_createek -c demo/credentials/ek.handle && tpm2_createak -C demo/credentials/ek.handle -c demo/credentials/ak.ctx -u demo/credentials/akpub.pem -f pem -p maatpass 
                 - sudo cp demo/credentials/ak.ctx /etc/maat/credentials 
                 - sudo cp demo/credentials/akpub.pem /etc/maat/credentials 
                 - echo '========= Test system updated to latest maat source ======'

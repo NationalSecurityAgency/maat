@@ -1,2 +1,0 @@
-libtss2-esys-3.0.2-0: possible-gpl-code-linked-with-openssl
-libtss2-esys-3.0.2-0: package-name-doesnt-match-sonames libtss2-esys0

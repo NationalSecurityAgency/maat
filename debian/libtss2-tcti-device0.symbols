@@ -1,3 +1,0 @@
-libtss2-tcti-device.so.0 libtss2-tcti-device0 #MINVER#
- Tss2_Tcti_Device_Init@Base 3.0.1
- Tss2_Tcti_Info@Base 3.0.1

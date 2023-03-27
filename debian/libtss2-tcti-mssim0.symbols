@@ -1,4 +1,0 @@
-libtss2-tcti-mssim.so.0 libtss2-tcti-mssim0 #MINVER#
- Tss2_Tcti_Info@Base 3.0.1
- Tss2_Tcti_Mssim_Init@Base 3.0.1
- tcti_platform_command@Base 3.0.1

@@ -19,44 +19,10 @@ static bool pcr_on_arg(const unsigned char *buf, int buf_size) {
     return false;
   }
   
-  FILE *f = fopen((char *) buf, "rb" );
-
-  // this may not be needed anymore - seems like buf will always be a buffer and never a file
-  if (f) { // if buf is a file path
-    dlog(6, "buf is a file path\n");
-    long length = (long) get_file_size(f);
-    if (!length) {
-      dlog(3, "empty file\n");
-      fclose(f);
-      return false;
-    }
-    unsigned char *buffer = malloc(length +1);
-    if (buffer) {
-      int read = fread(buffer, 1, length, f);
-      if (read != length){
-	dlog(3, "error reading file!\n");
-	fclose(f);
-	return false;
-      }
-      fclose(f);
-      buffer[length] = '\0';
-      res = openssl_check(buffer, length, (BYTE *) &pcr_ctx.digest_spec->digests.digests[0].digest, &digest_size);
-      free(buffer);
-      if (!res) {
-	dlog(3, "Failed to create pcr digest\n");
-	return false;
-      }
-    } else {
-      fclose(f);
-      return false;
-    }
-  } else { // if buf is a buffer
-    dlog(6, "buf is a buffer\n");
-    res = openssl_check(buf, buf_size, (BYTE *) &pcr_ctx.digest_spec->digests.digests[0].digest, &digest_size);   
-    if (!res) {
-      dlog(3, "Failed to create pcr digest\n");
-      return false;
-    }
+  res = openssl_check(buf, buf_size, (BYTE *) &pcr_ctx.digest_spec->digests.digests[0].digest, &digest_size);   
+  if (!res) {
+    dlog(3, "Failed to create pcr digest\n");
+    return false;
   }
   
   ESYS_TR pcr_index = 16;

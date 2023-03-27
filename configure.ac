@@ -160,7 +160,7 @@ AM_CONDITIONAL([ENABLE_MONGO_SELECTOR], [test "x$enable_mongo_selector" = xyes])
 AC_ARG_ENABLE([tpm],
 	[AS_HELP_STRING([--disable-tpm], [Disable the use of the TPM])],
 	[enable_tpm=$enableval],
-	[enable_tpm=no])
+	[enable_tpm=yes])
 AS_IF([test "x$enable_tpm" = xyes],[
 	AC_DEFINE([USE_TPM], [1], [Compile in support for using the TPM])
         PKG_CHECK_MODULES([TSS2_ESYS_3_0], [tss2-esys >= 3.0.0],

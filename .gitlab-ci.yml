@@ -702,9 +702,9 @@ system-test-selinux-rh7:
                 - echo '========= Test system updated to latest maat source ======'
                 - echo '============ Testing Demo 1 from TUTORIAL.md'
                 - echo '====== starting appraiser'
-                - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
+                - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml -T 0 -v 0 &
                 - echo '====== starting attester'
-                - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
+                - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml -T 0 -v 0 &
                 - sleep 10
                 - echo '====== starting test'
                 - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r processes | tee test_client.log || true"
@@ -746,9 +746,9 @@ system-test-maat:
                 - echo '========= Test system updated to latest maat source ======'
                 - echo '============ Testing Demo 1 from TUTORIAL.md'
                 - echo '====== starting appraiser'
-                - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
+                - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml -T 0 -v 0 &
                 - echo '====== starting attester'
-                - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
+                - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml -T 0 -v 0 &
                 - sleep 10
                 - echo '====== starting test'
                 - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r processes | tee test_client.log || true"

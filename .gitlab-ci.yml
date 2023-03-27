@@ -652,6 +652,8 @@ system-test-ubuntu20-tpm:
     - sudo cp maat.list /etc/apt/sources.list.d/
     - sudo apt-get --allow-unauthenticated update
     - sudo apt-get --allow-unauthenticated -y --reinstall install maat
+    - export TPM2TOOLS_TCTI=tabrmd && tpm2_createek -c demo/credentials/ek.handle && tpm2_createak -C demo/credentials/ek.handle -c demo/credentials/ak.ctx -u demo/credentials/akpub.pem -f pem -p maatpass 
+    - sudo cp demo/credentials/ak* /etc/maat/credentials/
     - sudo cp demo/credentials/client.* /etc/maat/credentials/
     - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
     - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
@@ -659,6 +661,7 @@ system-test-ubuntu20-tpm:
     - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r processes | tee test_client.log || true"
     - "kill %2 || true"
     - "kill %1 || true"
+    - sudo rm -f /etc/maat/credentials/ak*
     - sudo rm -f /etc/maat/credentials/client.*
     - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
   artifacts:
@@ -685,6 +688,8 @@ system-test-ubuntu20-fail-tpm:
     - sudo cp maat.list /etc/apt/sources.list.d/
     - sudo apt-get --allow-unauthenticated update
     - sudo apt-get --allow-unauthenticated -y --reinstall install maat
+    - export TPM2TOOLS_TCTI=tabrmd && tpm2_createek -c demo/credentials/ek.handle && tpm2_createak -C demo/credentials/ek.handle -c demo/credentials/ak.ctx -u demo/credentials/akpub.pem -f pem -p maatpass 
+    - sudo cp demo/credentials/ak* /etc/maat/credentials/
     - sudo cp demo/credentials/client.* /etc/maat/credentials/
     - echo "ubuntu-session 3.36.0-2ubuntu1 amd64" | sudo tee -a /usr/share/maat/asps/package.blacklist
     - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
@@ -693,6 +698,7 @@ system-test-ubuntu20-fail-tpm:
     - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r packages | tee test_client.log || true"
     - "kill %2 || true"
     - "kill %1 || true"
+    - "sudo rm -f /etc/maat/credentials/ak*"
     - "sudo rm -f /etc/maat/credentials/client.*"
     - "if ! grep FAIL test_client.log ; then echo 'Did not find FAIL!' ; exit 1 ; fi"
   after_script:

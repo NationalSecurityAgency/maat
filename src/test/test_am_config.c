@@ -749,8 +749,6 @@ START_TEST(test_attestmgr_load_full_config)
                          "<private-key password=\"aPassword\">/opt/maat/etc/maat/credentials/client.key</private-key>\n"
                          "<certificate>/opt/maat/etc/maat/credentials/client.pem</certificate>\n"
                          "<ca-certificate>/opt/maat/etc/maat/credentials/ca.pem</ca-certificate>\n"
-                         "<sign-tpm>1</sign-tpm>\n"
-                         "<verify-tpm>1</verify-tpm>\n"
                          "<tpm-password>maatpass</tpm-password>\n"
                          "<akctx>/opt/maat/etc/maat/credentials/ak.ctx</akctx>\n"
                          "<akpubkey>/opt/maat/etc/maat/credentials/akpub.pem</akpubkey>\n"
@@ -827,8 +825,6 @@ START_TEST(test_attestmgr_load_full_config)
         ck_assert_str_eq(cfg.privkey_file, "/opt/maat/etc/maat/credentials/client.key");
         ck_assert_str_eq(cfg.cert_file, "/opt/maat/etc/maat/credentials/client.pem");
         ck_assert_str_eq(cfg.cacert_file, "/opt/maat/etc/maat/credentials/ca.pem");
-        ck_assert_int_eq(cfg.sign_tpm, 1);
-        ck_assert_int_eq(cfg.verify_tpm, 1);
         ck_assert_str_eq(cfg.tpmpass, "maatpass");
         ck_assert_str_eq(cfg.akctx, "/opt/maat/etc/maat/credentials/ak.ctx");
         ck_assert_str_eq(cfg.akpubkey, "/opt/maat/etc/maat/credentials/akpub.pem");

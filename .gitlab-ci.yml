@@ -550,8 +550,8 @@ system-test-selinux-rhel7:
     - sudo yum install maat maat-selinux -y
     - sudo semanage port -a -t attestmgr_port_t -p tcp 2343
     - sudo cp demo/credentials/client.* /etc/maat/credentials/
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml -T 0 -v 0 &
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml -T 0 -v 0 &
+    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
+    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
     - sleep 10
     - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r userspace | tee test_client.log || true"
     - "kill %2 || true"
@@ -584,8 +584,8 @@ system-test-ubuntu20:
     - sudo apt-get --allow-unauthenticated update
     - sudo apt-get --allow-unauthenticated -y --reinstall install maat
     - sudo cp demo/credentials/client.* /etc/maat/credentials/
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml -T 0 -v 0 &
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml -T 0 -v 0 &
+    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
+    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
     - sleep 10
     - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r processes | tee test_client.log || true"
     - "kill %2 || true"
@@ -618,8 +618,8 @@ system-test-ubuntu20-fail:
     - sudo apt-get --allow-unauthenticated -y --reinstall install maat
     - sudo cp demo/credentials/client.* /etc/maat/credentials/
     - echo "ubuntu-session 3.36.0-2ubuntu1 amd64" | sudo tee -a /usr/share/maat/asps/package.blacklist
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml -T 0 -v 0 &
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml -T 0 -v 0 &
+    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
+    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
     - sleep 10
     - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r packages | tee test_client.log || true"
     - "kill %2 || true"
@@ -655,8 +655,8 @@ system-test-ubuntu20-tpm:
     - export TPM2TOOLS_TCTI=tabrmd && tpm2_createek -c demo/credentials/ek.handle && tpm2_createak -C demo/credentials/ek.handle -c demo/credentials/ak.ctx -u demo/credentials/akpub.pem -f pem -p maatpass 
     - sudo cp demo/credentials/ak* /etc/maat/credentials/
     - sudo cp demo/credentials/client.* /etc/maat/credentials/
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
+    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml -T 1 -v 1 &
+    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml -T 1 -v 1 &
     - sleep 10
     - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r processes | tee test_client.log || true"
     - "kill %2 || true"
@@ -692,8 +692,8 @@ system-test-ubuntu20-fail-tpm:
     - sudo cp demo/credentials/ak* /etc/maat/credentials/
     - sudo cp demo/credentials/client.* /etc/maat/credentials/
     - echo "ubuntu-session 3.36.0-2ubuntu1 amd64" | sudo tee -a /usr/share/maat/asps/package.blacklist
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
+    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml -T 1 -v 1 &
+    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml -T 1 -v 1 &
     - sleep 10
     - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r packages | tee test_client.log || true"
     - "kill %2 || true"

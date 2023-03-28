@@ -54,7 +54,7 @@
  * @buf_size is the size of @buf
  * Returns 0 on success, < 0 on error
  */
-static int send(int peerchan, char *buf, size_t buf_size)
+static int send(int peerchan, unsigned char *buf, size_t buf_size)
 {
     gsize bytes_written = 0;
     int status;
@@ -95,7 +95,7 @@ int asp_measure(int argc, char *argv[])
 
     int fd_out   = -1;
     int fd_in      = -1;
-    char *buf      = NULL;
+    unsigned char *buf      = NULL;
     size_t bufsize    = 0;
 
     int ret_val    = 0;
@@ -143,7 +143,6 @@ eof_enc:
     free(buf);
     bufsize = 0;
 read_failed:
-io_chan_in_failed:
     close(fd_in);
 parse_args_failed:
     return ret_val;

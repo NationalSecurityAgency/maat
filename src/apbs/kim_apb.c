@@ -53,8 +53,8 @@ static GList *report_data_list = NULL; /* GList of XML key/value pairs for
  */
 int perform_measurement(measurement_graph *graph)
 {
-    int ret = -1;
-    char *gpath = NULL, *asp_argv[2];
+    int ret;
+    char *asp_argv[2];
     unit_address *uaddr = NULL;
     measurement_variable *var = NULL;
     node_id_t n;
@@ -226,7 +226,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid UN
         xmlChar *evaluation;
 
         /* Receive measurement contract from attester APB. */
-        ret_val = receive_measurement_contract(peerchan, scen, -1);
+        ret_val = receive_measurement_contract(peerchan, scen, 0);
         if(ret_val) {
             dlog(0, "Unable to recieve a measurement contract with error %d\n", ret_val);
             return ret_val;

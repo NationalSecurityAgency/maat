@@ -99,6 +99,7 @@ int ima_serialize_data(measurement_data *d, char **serial_data,
         goto out_err;
 
     tpl_pack(tn, 0);
+    //Pack IMA measurements
     for(iter = imd->msmts; iter && iter->data; iter = g_list_next(iter)) {
         tmp = (char *)iter->data;
         tpl_pack(tn, 1);

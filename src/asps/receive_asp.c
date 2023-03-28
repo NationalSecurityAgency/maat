@@ -53,7 +53,7 @@
  * @buf_size is the size of @buf
  * Returns 0 on success, < 0 on error
  */
-static int receive(int peerchan, char **buf, size_t *buf_size)
+static int receive(int peerchan, unsigned char **buf, size_t *buf_size)
 {
     size_t bytes_read = 0;
     int status = 0;
@@ -95,7 +95,7 @@ static int receive(int peerchan, char **buf, size_t *buf_size)
  * @buf_size is the size of @buf
  * Returns 0 on success, < 0 on error
  */
-static int write_buf(int out_fd, char *buf, size_t buf_size)
+static int write_buf(int out_fd, unsigned char *buf, size_t buf_size)
 {
     gsize bytes_written = 0;
     int status;
@@ -136,15 +136,12 @@ int asp_measure(int argc, char *argv[])
 {
     dlog(6, "IN receive ASP MEASURE\n");
 
-    int fd_out     = -1;
-    int fd_in      = -1;
-    char *buf      = NULL;
-    size_t bufsize = 0;
+    int fd_out         = -1;
+    int fd_in          = -1;
+    unsigned char *buf = NULL;
+    size_t bufsize     = 0;
 
-    int ret_val    = 0;
-
-    size_t bytes_written;
-    int eof_enc;
+    int ret_val        = 0;
 
     if((argc < 3) ||
             ((fd_in = atoi(argv[1])) < 0) ||
@@ -174,7 +171,6 @@ int asp_measure(int argc, char *argv[])
 send_failed:
     free(buf);
 recv_failed:
-io_chan_out_failed:
     close(fd_out);
 parse_args_failed:
     return ret_val;

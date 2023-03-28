@@ -255,7 +255,7 @@ static int create_empty_contract_with_nonce(char *nonce, xmlDoc **out,
     xmlDocSetRootElement(doc, root);
     xmlNewProp(root, (xmlChar*)"type", (xmlChar*)"measurement");
 
-    if(xmlNewProp(root, (xmlChar*)"version", MAAT_CONTRACT_VERSION) == NULL) {
+    if(xmlNewProp(root, (xmlChar*)"version", (xmlChar*)MAAT_CONTRACT_VERSION) == NULL) {
         dlog(0, "Failed to create version attr of contract\n");
         goto error_add_version;
     }
@@ -379,7 +379,7 @@ static int future_create_msmt_contract_asp(char *workdir, char *certfile, char *
     }
 
     ret = create_empty_contract_with_nonce(nonce, &doc, &opt_node, &subcontract_node);
-    if(doc == NULL) {
+    if(ret < 0 || doc == NULL) {
         dlog(0, "Error: failed to create basic measurement contract\n");
         ret = -1;
         goto create_contract_failed;
@@ -393,7 +393,7 @@ static int future_create_msmt_contract_asp(char *workdir, char *certfile, char *
     }
 
     // Add the resultant buffer as a child to the passed node
-    if((msmt_node = xmlNewTextChild(opt_node, NULL, (xmlChar *)"measurement", b64)) == NULL) {
+    if((msmt_node = xmlNewTextChild(opt_node, NULL, (xmlChar *)"measurement", (xmlChar *)b64)) == NULL) {
         dlog(0, "Failed to create measurement node\n");
         ret = -1;
         goto create_msmt_node_failed;
@@ -472,7 +472,7 @@ parse_execon_failed:
  * @buf_size is the size of @buf
  * Returns 0 on success, < 0 on error
  */
-static int future_send_asp(int peerchan, char *buf, size_t buf_size)
+static int future_send_asp(int peerchan, unsigned char *buf, size_t buf_size)
 {
     gsize bytes_written = 0;
     int status;
@@ -494,7 +494,6 @@ int asp_measure(int argc, char *argv[])
     // These all come in command line
     measurement_graph *graph  = NULL;
     int peerchan;
-    int i;
     int sign_tpm;
     char *certfile     = NULL;
     char *keyfile      = NULL;
@@ -592,7 +591,7 @@ int asp_measure(int argc, char *argv[])
         goto create_msmt_contract_failed;
     }
 
-    ret_val =  future_send_asp(peerchan, response, response_size);
+    ret_val = future_send_asp(peerchan, response, response_size);
     if(ret_val < 0) {
         dlog(0, "Error sending the measurement contract to peer\n");
         ret_val = -1;

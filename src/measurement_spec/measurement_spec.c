@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include <util/util.h>
 #include <util/keyvalue.h>
@@ -769,25 +770,33 @@ static int submeasure_instruction_spec_to_str(instruction_spec *spec, char *buf,
     int count;
     int total = 0;
     GList *iter;
+    // Cast is justified due to bounds checking
     if((count = snprintf(buf, buflen, "%s:submeasure(%s, 0x%x, ",
                          sspec->i.name,
                          sspec->i.target_type->name,
-                         sspec->i.address_space->magic)) >= buflen) {
+                         sspec->i.address_space->magic)) < 0
+        || (SIZE_MAX < INT_MAX && (unsigned int) count > SIZE_MAX)
+        || (size_t) count > buflen) {
         return count;
     }
     total   = count;
-    buflen -= count;
+    // Cast is justified because of the previous condition checks
+    buflen -= (size_t) count;
     buf    += count;
 
     for(iter = g_list_first(sspec->actions) ; iter != NULL; iter = g_list_next(iter)) {
         feature_instruction_pair *p = (feature_instruction_pair *)iter->data;
+        // Cast is justified due to bounds checking
         if((count = snprintf(buf, buflen, "%s, %s%s",
                              p->feature, (char*)p->instruction,
-                             (g_list_next(iter) == NULL ? ")" : ", "))) >= buflen) {
+                             (g_list_next(iter) == NULL ? ")" : ", "))) < 0
+             || (SIZE_MAX < INT_MAX && (unsigned int) count > SIZE_MAX)
+             || (size_t) count > buflen) {
             return (total + count);
         }
         total  += count;
-        buflen -= count;
+        // Cast is justified because of the previous condition checks
+        buflen -= (size_t) count;
         buf    += count;
     }
     return total;
@@ -844,7 +853,7 @@ static instruction_spec *parse_submeasure_instruction_spec(xmlNode *n)
                      "action node has invalid \"feature\" attribute\n");
                 break;
             }
-            if((instruction = xmlGetProp(child, "instruction")) == NULL) {
+            if((instruction = xmlGetProp(child, (xmlChar *)"instruction")) == NULL) {
                 dlog(0, "Error: while parsing submeasure instruction: "
                      "action node has invalid \"instruction\" attribute\n");
                 free(feature);
@@ -975,7 +984,7 @@ static instruction_filter *parse_instruction_filter(xmlNode *n)
             goto error;
         }
     } else if(strcasecmp(name, "predicate") == 0) {
-        char *mtype_magic_str, *endptr;
+        char *mtype_magic_str;
         magic_t mtype_magic;
         char *quant = NULL;
         filter->type = BASE_FILTER;
@@ -985,13 +994,14 @@ static instruction_filter *parse_instruction_filter(xmlNode *n)
             goto error;
         }
         errno = 0;
-        mtype_magic = strtoul(mtype_magic_str, &endptr, 0);
-        if(errno != 0 || *endptr != '\0') {
+        //magic_t is a typedef to uint32_t
+        if(sscanf(mtype_magic_str, "0x"MAGIC_FMT"", &mtype_magic) != 1) {
             dlog(0, "Error: invalid magic number '%s' for measurement_type.\n",
                  mtype_magic_str);
             free(mtype_magic_str);
             goto error;
         }
+
         free(mtype_magic_str);
         filter->u.b.mtype = find_measurement_type(mtype_magic);
         if(filter->u.b.mtype == NULL) {
@@ -1059,31 +1069,35 @@ static int instruction_filter_to_str(instruction_filter *f, char *buf, size_t bu
     case LOGICAL_OP_FILTER:
         if(f->u.o.op == FILTER_NOT_OP) {
             int used = snprintf(buf, buflen, "(not ");
-            if(used < 0 || used >= buflen) {
+            if(used < 0 || (INT_MAX > SIZE_MAX && (unsigned int) used > SIZE_MAX) || (size_t) used >= buflen) {
                 return used;
             }
-            used += instruction_filter_to_str(f->u.o.e1, buf + used, buflen - used);
-            if(used < 0 || used >= buflen) {
+            // Cast is justified because of the previous bounds check
+            used += instruction_filter_to_str(f->u.o.e1, buf + used, buflen - (size_t) used);
+            if(used < 0 || (INT_MAX > SIZE_MAX && (unsigned int) used > SIZE_MAX) || (size_t) used >= buflen) {
                 return used;
             }
-            used += snprintf(buf, buflen - used, ")");
+            // Cast is justified because of the previous bounds check
+            used += snprintf(buf, buflen - (size_t) used, ")");
             return used;
         } else {
             int used = snprintf(buf, buflen, "(%s ",
                                 (f->u.o.op == FILTER_AND_OP ? "and" : "or"));
-            if(used < 0 || used >= buflen) {
+            if(used < 0 || (INT_MAX > SIZE_MAX && (unsigned int) used > SIZE_MAX) || (size_t) used >= buflen) {
                 return used;
             }
-            used += instruction_filter_to_str(f->u.o.e1, buf + used, buflen - used);
-            if(used < 0 || used >= buflen) {
+            // Cast is justified because of the previous bounds check
+            used += instruction_filter_to_str(f->u.o.e1, buf + used, buflen - (size_t) used);
+            if(used < 0 || (INT_MAX > SIZE_MAX && (unsigned int) used > SIZE_MAX) || (size_t) used >= buflen) {
                 return used;
             }
             used += snprintf(buf, buflen, " ");
-            if(used < 0 || used >= buflen) {
+            if(used < 0 || (INT_MAX > SIZE_MAX && (unsigned int) used > SIZE_MAX) || (size_t) used >= buflen) {
                 return used;
             }
-            used += instruction_filter_to_str(f->u.o.e1, buf + used, buflen - used);
-            if(used < 0 || used >= buflen) {
+            // Cast is justified because of the previous bounds check
+            used += instruction_filter_to_str(f->u.o.e1, buf + used, buflen - (size_t) used);
+            if(used < 0 || (INT_MAX > SIZE_MAX && (unsigned int) used > SIZE_MAX) || (size_t) used >=  buflen) {
                 return used;
             }
             used += snprintf(buf, buflen, ")");

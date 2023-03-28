@@ -74,7 +74,7 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
  * 0: Successful execution
  */
 int run_asp_buffers(struct asp *asp, const unsigned char *buf_in,
-                    size_t buf_in_len, char **out_buf, size_t *buf_out_len,
+                    size_t buf_in_len, unsigned char **out_buf, size_t *buf_out_len,
                     int asp_argc, char *asp_argv[], int timeout, ...);
 
 /**

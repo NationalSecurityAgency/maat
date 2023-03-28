@@ -263,7 +263,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
         return ret;
 
     /* Receive measurement contract from attester APB. */
-    receive_measurement_contract(peerchan, scen, -1);
+    receive_measurement_contract(peerchan, scen, 0);
     dlog(0, "Received Measurement Contract in appraiser APB\n");
 
     if(scen->contract == NULL) {

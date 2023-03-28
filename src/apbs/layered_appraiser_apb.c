@@ -208,6 +208,10 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
         // the resource that was requested and the place that the measurement was
         // taken from
         addr = (dynamic_measurement_request_address*) measurement_node_get_address(mg, node);
+        if (addr == NULL) {
+            dlog(0, "Failed to parse the dynamic measurement address space for node "ID_FMT"\n", node);
+            return -1;
+        }
 
         snprintf(attester, ATT_MAX_LEN, "%s", addr->attester);
         snprintf(resource, RES_MAX_LEN, "%s", addr->resource);
@@ -237,7 +241,6 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
     for (data_it = measurement_node_iterate_data(mg, node);
             data_it != NULL;
             data_it = measurement_iterator_next(data_it)) {
-        ret = 0;
         data_type = measurement_iterator_get_type(data_it);
 
         if(data_type == BLOB_MEASUREMENT_TYPE_MAGIC) {

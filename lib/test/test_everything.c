@@ -75,7 +75,7 @@ START_TEST(test_exampleam)
     struct scenario *attester_scen = malloc(sizeof(struct scenario));
     struct scenario *appraiser_scen = malloc(sizeof(struct scenario));
     xmlChar *request_contract;
-    int request_sz;
+    size_t request_sz;
 
     am = new_attestation_manager(ASP_DIR, SPEC_DIR, APB_DIR, "XML", SELECTOR_CFG,
                                  EXECCON_RESPECT_DESIRED, EXECCON_SET_UNIQUE_CATEGORIES);
@@ -110,7 +110,7 @@ START_TEST(test_exampleam)
                   APPRAISER_KEY,
                   NULL,
                   (char*)request_contract,
-                  (size_t)request_sz,
+                  request_sz,
                   APPRAISER);
 
 

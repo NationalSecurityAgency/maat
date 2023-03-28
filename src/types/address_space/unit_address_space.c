@@ -65,7 +65,6 @@ static address *copy_unit_address(const address *a)
 
 static char *serialize_unit_address(const address *a)
 {
-    const unit_address *orig = (const unit_address *)a;
     return strdup("unit");
 }
 
@@ -84,7 +83,6 @@ static address *unserialize_unit_adddress(const char *buf, size_t len)
 
 static char *unit_address_to_ascii(const address *a)
 {
-    const unit_address *orig = (const unit_address *)a;
     return strdup("unit");
 }
 
@@ -103,15 +101,11 @@ static address *unit_address_from_ascii(const char *str)
 
 static gboolean unit_address_equal(const address *a, const address *b)
 {
-    unit_address *orig_a = (unit_address *)a;
-    unit_address *orig_b = (unit_address *)b;
-
     return TRUE;
 }
 
 static guint hash_unit_address(const address *a)
 {
-    unit_address *orig_a = (unit_address *)a;
     /* Return a simple constant. */
     return 42;
 }

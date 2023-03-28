@@ -143,7 +143,9 @@ static int human_readable(measurement_data *d, char **out, size_t *outsz)
 {
     sha256_measurement_data *smd = container_of(d, sha256_measurement_data,
                                    meas_data);
-    *out = strdup(smd->sha256_hash);
+    // Cast is justified because the function does not regard the signedness
+    // of the buffer
+    *out = strdup((char *)smd->sha256_hash);
     if(*out == NULL) {
         return -1;
     }

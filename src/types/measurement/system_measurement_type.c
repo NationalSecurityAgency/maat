@@ -49,10 +49,8 @@ int serialize_system_data(measurement_data *d, char **serial_data, size_t *seria
 {
     int ret_val = 0;
 
-    tpl_node *tn = NULL;
     void *tplbuf = NULL;
     char *b64    = NULL;
-    GList *iter  = NULL;
     size_t tplsize = 0;
 
     if(!d) {
@@ -100,7 +98,6 @@ int unserialize_system_data(char *serialized, size_t serialized_sz, measurement_
     void *tplbuf     = NULL;
     tpl_node *tn     = NULL;
     size_t tplsize   = 0;
-    tpl_bin tb;
     uint32_t as_magic;
 
     int ret_val = 0;

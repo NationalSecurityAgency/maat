@@ -717,7 +717,7 @@ int handle_modified_contract(struct attestation_manager *manager,
     xmlNode *root, *subc, *optnode, *next_optnode;
     copland_phrase *selected, *parsed_option;
     char *fingerprint = NULL, *contract_type = NULL, *opt;
-    int rc = AM_OK, pid = -1, respsize;
+    int rc = AM_OK, pid, respsize;
     GList *options = NULL;
 
     /* Check that we have a valid XML contract of type "initial" */

@@ -126,8 +126,8 @@ static int invoke_send_execute_tcp(struct asp *execute_asp, char *addr,
                                    char *port, char *resource,
                                    char **msmt_con, size_t *con_len)
 {
-    int rc                 = -1;
-    size_t buf_len         = -1;
+    int rc;
+    size_t buf_len         = 0;
     char *buf              = NULL;
     char *send_execute_args[9] = {0};
 
@@ -141,8 +141,8 @@ static int invoke_send_execute_tcp(struct asp *execute_asp, char *addr,
     send_execute_args[7] = g_tpmpass;
     send_execute_args[8] = g_verify_tpm;
 
-    rc = run_asp_buffers(execute_asp, NULL, 0, &buf, &buf_len,
-                         9, send_execute_args, TIMEOUT, -1);
+    rc = run_asp_buffers(execute_asp, NULL, 0, (unsigned char **) &buf,
+                         &buf_len, 9, send_execute_args, TIMEOUT, -1);
 
     if (rc == 0) {
         *msmt_con = buf;
@@ -169,8 +169,8 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
                                  measurement_type *mtype)
 {
     int rc                                  = 0;
-    size_t con_len                          = -1;
-    size_t tmp_con_len                      = -1;
+    size_t con_len                          = 0;
+    size_t tmp_con_len                      = 0;
     char *graph_path                        = NULL;
     char *contract                          = NULL;
     char *tmp_contract                      = NULL;
@@ -196,7 +196,7 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
     if(asp == NULL) {
         dlog(0, "Failed to find satisfactory ASP\n");
         rc = -ENOENT;
-        goto error;
+        return rc;
     }
 
     if (strcmp(asp->name, "kernel_msmt_asp") == 0) {
@@ -463,10 +463,7 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
 
     free(graph_path);
 graph_path_err:
-fb_req_err:
 find_asp_err:
-keyfile_error:
-certfile_error:
     free(workdir);
 workdir_error:
     return ret_val;

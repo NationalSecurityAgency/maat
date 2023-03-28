@@ -174,7 +174,7 @@ err:
  */
 static void get_distribution(measurement_graph *g, char **dist)
 {
-    node_id_t sys_id = INVALID_NODE_ID;
+    node_id_t sys_id;
     measurement_data *data = NULL;
     char *distribution = NULL;
     char *tmp = NULL;

@@ -133,9 +133,12 @@ static int parse_stats(char *stats, process_metadata_measurement *out)
 
     /* seriously?! the major number is bits [15,8]
      * and the minor is ([31,20] >> 12) & [7,0]
+     *
+     * Casts are justified because the operations being performed are bitwise and the output will be positive
+     * due to the bitshifting
      */
-    int rc = snprintf(out->tty, 16, "(%02x,%06x)", (tty_nr & 0xff00) >> 8,
-                      ((tty_nr & 0xfff00000) >> 12) & (tty_nr & 0xff));
+    int rc = snprintf(out->tty, 16, "(%02x,%06x)",  (unsigned int)(((unsigned int)tty_nr & 0xff00) >> 8),
+                      (unsigned int)((((unsigned int)tty_nr & 0xfff00000) >> 12) & ((unsigned int) tty_nr & 0xff)));
     if(rc >= 16 || rc < 0) {
         return -1;
     }
@@ -146,7 +149,6 @@ static int parse_stats(char *stats, process_metadata_measurement *out)
 static int parse_process_status_line(char *status, process_metadata_measurement *out)
 {
     char *colon;
-    int i = 0;
     char *field = status;
 
     colon = strchr(field, ':');
@@ -199,6 +201,7 @@ static int read_process_metadata(long p, process_metadata_measurement **out,
     measurement_data *data = NULL;
     process_metadata_measurement *proc_data = NULL;
     int rc = 0;
+    ssize_t bytes_read;
     FILE *f = NULL;
 
     data = alloc_measurement_data(&process_metadata_measurement_type);
@@ -275,12 +278,14 @@ static int read_process_metadata(long p, process_metadata_measurement **out,
         goto error;
     }
     memset(proc_data->executable, 0, sizeof(proc_data->executable));
-    rc = readlink(path, proc_data->executable, sizeof(proc_data->executable)-1);
-    if (rc < 0 || rc >= sizeof(proc_data->executable)-1) {
-        dlog(0, "Error reading proc exe link name for path (%s). rc=%d\n", path, rc);
-        if(rc == -1) {
+    bytes_read = readlink(path, proc_data->executable, sizeof(proc_data->executable)-1);
+    // Cast is justified because of the check for negative values in bytes_read
+    if (bytes_read < 0 || (size_t)bytes_read >= sizeof(proc_data->executable)-1) {
+        if(bytes_read == -1) {
             dlog(0, "Errno: %d (%s)\n", errno, strerror(errno));
         }
+
+        dlog(0, "Error reading proc exe link name for path (%s). rc=%zd\n", path, bytes_read);
         goto error;
     }
     /*
@@ -307,7 +312,7 @@ static int read_process_metadata(long p, process_metadata_measurement **out,
 
     if(fgets(buf, sizeof(buf), f) != NULL) {
         int nullcnt = 0;
-        int i;
+        size_t i;
 
         memset(proc_data->command_line, 0, sizeof(proc_data->command_line));
 
@@ -438,8 +443,14 @@ int asp_measure(int argc, char *argv[])
             goto alloc_address_failed;
         }
 
+        if(LONG_MAX > UINT32_MAX && pid > UINT32_MAX) {
+            asp_logwarn("Unable to represent PID %ld in measurement\n", pid);
+            goto pid_rep_failed;
+        }
+
         pid_address *paddr      = container_of(mvar.address, pid_address, a);
-        paddr->pid    	        = (pid_t)pid;
+        // Cast is justified because of previous check
+        paddr->pid    	        = (uint32_t)pid;
         mvar.type		= &process_target_type;
 
         if(measurement_graph_add_node(graph, &mvar, NULL, &new_node) < 0) {
@@ -492,6 +503,7 @@ marshall_data_failed:
 read_metadata_failed:
 add_node_failed:
         free_address(mvar.address);
+pid_rep_failed:
 alloc_address_failed:
 not_a_pid:
 not_a_dir:

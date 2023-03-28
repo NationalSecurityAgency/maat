@@ -323,7 +323,9 @@ int asp_measure(int argc, char *argv[])
 
     while(getline(&line, &len, fp) != -1) {
         if(add_package_node(graph, node_id, line) != 0) {
-            ret_val = -1;
+            /* FIXME: change handling of this failure case
+             * as is, the return value is not even used in any way */
+            // ret_val = -1;
         }
     }
 

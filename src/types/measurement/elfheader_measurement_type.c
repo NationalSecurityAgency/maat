@@ -196,17 +196,6 @@ static int elfheader_type_serialize_data(measurement_data *d, char **serial_data
     GList *iter = NULL;
     tpl_node *tn = NULL;
 
-    char * sectName = NULL;
-    uint32_t sh_name, sh_type, sh_link, sh_info;
-    uint64_t sh_flags, sh_addr, sh_offset;
-    uint64_t sh_size, sh_addralign, sh_entsize;
-    char * symbolName;
-    char * fileName;
-    char * refName;
-    int version;
-    int symlength, reflength, filelength;
-    uint64_t st_name, st_shndx, st_value, st_size;
-    char st_info, st_other;
     char * dependName = NULL;
     GElf_Phdr phdr = {0};
     elf_sct_hdr shdr = {0};
@@ -220,7 +209,7 @@ static int elfheader_type_serialize_data(measurement_data *d, char **serial_data
     tn = tpl_map("sc#vvuUUUuvvvvvv"  /* ELF header info */
                  "A(uuUUUUUU)"       /* Program headers */
                  "A(suuUUUUuuUU)"    /* Section headers */
-                 "A(sssiUccUUU)"     /* Symbols */
+                 "A(sssiuccvUU)"     /* Symbols */
                  "A(s)",             /* Dependencies */
                  &elfdata->filename,
                  elfdata->elf_header.e_ident, 16,
@@ -279,8 +268,8 @@ static int elfheader_type_serialize_data(measurement_data *d, char **serial_data
     tpl_pack(tn, 0);
 
     // pack the program headers
-    int i;
-    for(i = 0; i < (int)elfdata->nr_phdrs; i++) {
+    size_t i;
+    for(i = 0; i < elfdata->nr_phdrs; i++) {
         phdr = elfdata->program_headers[i];
         tpl_pack(tn, 1);
     }
@@ -340,21 +329,20 @@ static int elfheader_type_unserialize_data(char *sd, size_t sd_size, measurement
     tpl_node *tn;
     void *tplbuf;
     size_t tplsize;
-    GList *iter;
     char *sectName = NULL;
-    uint32_t sh_name, sh_type, sh_link, sh_info;
+    uint16_t st_shndx;
+    uint32_t sh_name, sh_type, sh_link, sh_info, st_name;
     uint64_t sh_flags, sh_addr, sh_offset;
     uint64_t sh_size, sh_addralign, sh_entsize;
     char *symbolName = NULL;
     char *fileName = NULL;
     char *refName = NULL;
     int version;
-    uint64_t st_name, st_shndx, st_value, st_size;
+    uint64_t st_value, st_size;
     char st_info, st_other;
     char * dependName = NULL;
 
     GElf_Phdr phdr		= {0};
-    GElf_Shdr *shdr		= NULL;
     elf_symbol * elfSym		= NULL;
     elf_sct_hdr *elfSectHdr	= NULL;
 
@@ -374,7 +362,7 @@ static int elfheader_type_unserialize_data(char *sd, size_t sd_size, measurement
     tn = tpl_map("sc#vvuUUUuvvvvvv"  /* ELF header info */
                  "A(uuUUUUUU)"       /* Program headers */
                  "A(suuUUUUuuUU)"    /* Section headers */
-                 "A(sssiUccUUU)"     /* Symbols */
+                 "A(sssiuccvUU)"     /* Symbols */
                  "A(s)",             /* Dependencies */
                  &elfdata->filename,
                  elfdata->elf_header.e_ident, 16,
@@ -477,8 +465,10 @@ error_alloc_elfsecthdr:
 
         elfSym->version = version;
         elfSym->symbol.st_name	= st_name;
-        elfSym->symbol.st_info	= st_info;
-        elfSym->symbol.st_other = st_other;
+        // Casts are justified because serialization library does not differentiate
+        // between signed and unsigned characters
+        elfSym->symbol.st_info	= (unsigned char)st_info;
+        elfSym->symbol.st_other = (unsigned char)st_other;
         elfSym->symbol.st_shndx = st_shndx;
         elfSym->symbol.st_value = st_value;
         elfSym->symbol.st_size	= st_size;
@@ -628,10 +618,10 @@ static int human_readable(measurement_data *d, char **out, size_t *outsize)
     }
     size_t bufsz = strlen(buf)+1;
 
-    int i = 0;
+    size_t i = 0;
     for(i = 0; i < ed->nr_phdrs; i++) {
         GElf_Phdr *phdr = &ed->program_headers[i];
-        char *pbuf = g_strdup_printf("phdr[%d]: {\n"
+        char *pbuf = g_strdup_printf("phdr[%zu]: {\n"
                                      "\ttype:   %s\n"
                                      "\tflags:  %c%c%c [%0"PRIx64"]\n"
                                      "\toffset: %016"PRIx64"\n"

@@ -60,7 +60,7 @@ if __name__ == '__main__':
         #print(s.send(struct.pack("!i",len(request))))
         #print(s.send(struct.pack("%ds" % (len(request)+1), request)))
         print('Waiting on response.')
-        respsz, resp = maatclient.maat_read_sz_buf(s, -1)
+        respsz, resp = maatclient.maat_read_sz_buf(s, 0)
         print(resp)
 
         # the response contract is likely to be null terminated.

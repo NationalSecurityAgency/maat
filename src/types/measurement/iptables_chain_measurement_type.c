@@ -125,6 +125,7 @@ static int iptables_serialize_data(measurement_data *d, char **serial_data,
         return -1;
     }
     tpl_pack(tn, 0);
+    //Pack IPtables information into TPL node
     for(iter = g_list_first(id->rules); iter!= NULL && iter->data != NULL;
             iter = g_list_next(iter)) {
         ir = (iptables_rule *)iter->data;
@@ -139,7 +140,9 @@ static int iptables_serialize_data(measurement_data *d, char **serial_data,
     tpl_free(tn);
 
     /* Now, convert this to a string... base64 encode it */
-    *serial_data = b64_encode(buf, sz);
+    // Cast is justified because the decode operation does not affect the
+    // signedness of the buffer contents
+    *serial_data = (char *)b64_encode((unsigned char *)buf, sz);
     free(buf);
     if(*serial_data == NULL) {
         dlog(0, "Error while b64 encoding buffer, returned NULL.\n");

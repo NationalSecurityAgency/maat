@@ -25,7 +25,13 @@
 
 static measurement_data *alloc_path_list()
 {
-    return calloc(1, sizeof(path_list));
+    path_list *ret;
+    ret = (path_list *)calloc(1, sizeof(*ret));
+    if (!ret) {
+        return NULL;
+    }
+
+    return (measurement_data *)ret;
 }
 
 static measurement_data *copy_path_list(measurement_data *d)

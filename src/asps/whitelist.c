@@ -140,7 +140,6 @@ int asp_measure(int argc, char *argv[])
     measurement_data *data;
     magic_t data_type;
     int found = 0;
-    char *ptr;
     char scratch[256];
     char *msg;
     int ret;

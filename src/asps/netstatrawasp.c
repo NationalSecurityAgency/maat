@@ -62,7 +62,6 @@ int asp_exit(int status)
 netstat_raw_line *chunk_line_data(char *raw_line)
 {
     int rc;
-    size_t sz = (size_t)16;
     netstat_raw_line *ret = malloc(sizeof(netstat_raw_line));
     if (ret == NULL) {
         goto error;
@@ -70,7 +69,7 @@ netstat_raw_line *chunk_line_data(char *raw_line)
     memset(ret, 0, sizeof(netstat_raw_line));
     char *tmp;
     char addr[16] = {0};
-    int port;
+    long int port;
     struct in_addr ip = {0};
 
     tmp = strtok(raw_line, ":"); //tmp = sl
@@ -78,16 +77,18 @@ netstat_raw_line *chunk_line_data(char *raw_line)
     if(strcmp(tmp, "00000000") == 0)
         strcpy(addr, "127.0.0.1\0");
     else {
-        ip.s_addr = strtol(tmp, NULL, 16);
+        ip.s_addr = (in_addr_t)strtoul(tmp, NULL, 16);
         inet_ntop(AF_INET, &ip, addr, 15);
     }
     tmp = strtok(NULL, " "); //tmp = local_address port
     port = strtol(tmp, NULL, 16);
-    rc = snprintf(ret->local_addr, sizeof(ret->local_addr), "%s:%d", addr, port);
+    // Cast is safe because ports fit within a short
+    rc = snprintf(ret->local_addr, sizeof(ret->local_addr), "%s:%d", addr, (int) port);
     if(rc < 0) {
         dlog(0, "Error: formatting local address\n");
         goto error;
-    } else if(rc >= sizeof(ret->local_addr)) {
+    // Cast is justified because of bounds checking
+    } else if(((INT_MAX > SIZE_MAX) && (unsigned int)rc > SIZE_MAX) || (size_t)rc >= sizeof(ret->local_addr)) {
         dlog(0, "Error: local address is too long\n");
         goto error;
     }
@@ -96,16 +97,17 @@ netstat_raw_line *chunk_line_data(char *raw_line)
     if(strcmp(tmp, "00000000") == 0)
         strcpy(addr, "127.0.0.1\0");
     else {
-        ip.s_addr = strtol(tmp, NULL, 16);
+        ip.s_addr = (in_addr_t)strtoul(tmp, NULL, 16);
         inet_ntop(AF_INET, &ip, addr, 15);
     }
     tmp = strtok(NULL, " "); //tmp = rem_address port
     port = strtol(tmp, NULL, 16);
-    rc = snprintf(ret->rem_addr, sizeof(ret->rem_addr), "%s:%d", addr, port);
+    rc = snprintf(ret->rem_addr, sizeof(ret->rem_addr), "%s:%d", addr, (int)port);
     if(rc < 0) {
         dlog(0, "Error: formatting remote address\n");
         goto error;
-    } else if(rc >= sizeof(ret->rem_addr)) {
+    // Cast is justified because of bounds checking
+    } else if((INT_MAX > SIZE_MAX && (unsigned int)rc > SIZE_MAX) || (size_t)rc >= sizeof(ret->rem_addr)) {
         dlog(0, "Error: remote address is too long\n");
         goto error;
     }
@@ -160,9 +162,16 @@ int asp_measure(int argc, char *argv[])
         unmap_measurement_graph(graph);
         return -1;
     }
+
+    if(file_stats.st_size < 0 || (uintmax_t)file_stats.st_size > SIZE_MAX) {
+        asp_logerror("File state size cannot be represented in measurement variable\n");
+        return -1;
+    }
+
     file_address->device_major = major(file_stats.st_dev);
     file_address->device_minor = minor(file_stats.st_dev);
-    file_address->file_size = file_stats.st_size;
+    // Cast is safe due to previous bounds check
+    file_address->file_size = (size_t)file_stats.st_size;
     file_address->node = file_stats.st_ino;
     file_address->fullpath_file_name = strdup("/proc/net/raw");
     if(file_address->fullpath_file_name == NULL) {

@@ -287,7 +287,7 @@ START_TEST(test_write_read_sz_buf)
 
     r = maat_io_channel_new(p[0]);
     fail_if(r < 0, "Failed to open io channel for read end of pipe");
-    res = maat_read_sz_buf(r, &read_string, &buf_size, &bytes_read, &eof_encountered, 1, -1);
+    res = maat_read_sz_buf(r, (unsigned char **)&read_string, &buf_size, &bytes_read, &eof_encountered, 1, 0);
     fail_if(eof_encountered, "EOF Encountered");
     fail_if(res != 0,
             "Failed to read test string (read_sz_buf returned: %d, bytes_read = %d)",

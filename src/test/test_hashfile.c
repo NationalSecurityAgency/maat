@@ -333,7 +333,7 @@ static int conduct_test(const char *args)
         goto error;
     }
 
-    ret = receive_measurement_contract(chan[0], &scen, -1);
+    ret = receive_measurement_contract(chan[0], &scen, 0);
 
     if(ret < 0) {
         dlog(0, "Unable to acquire measurement contract\n");

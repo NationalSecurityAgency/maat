@@ -58,9 +58,11 @@ static const gchar introspection_xml[] =
 
 /* ------------------------------------------------------------------------ */
 
-static char *parse_results(char *result, int size)
+static char *parse_results(char *result, size_t size)
 {
-    xmlDoc *doc = get_doc_from_blob(result, size);
+    /* The operations to be performed on this buffer do not regard the signedness
+     * of the content */
+    xmlDoc *doc = get_doc_from_blob((unsigned char *)result, size);
     if (doc == NULL)
         return "FAIL xml read";
 
@@ -89,7 +91,7 @@ static void handle_method_call(GDBusConnection *connection,
         printf("Asked for initial contract with resource '%s'.\n", resource);
 
         int ret;
-        int msglen = 0;
+        size_t msglen = 0;
         size_t bytes_read = 0;
 
         char *targ_portnum = "2342";
@@ -163,7 +165,6 @@ static void handle_method_call(GDBusConnection *connection,
         }
 
         int iostatus;
-        GError *error = NULL;
 
         printf("sending request: %s\n", tmp);
         iostatus = maat_write_sz_buf(appraiser_chan, tmp, msglen, NULL, 2);
@@ -176,7 +177,8 @@ static void handle_method_call(GDBusConnection *connection,
 
         char result[512];
         int eof_encountered = 0;
-        iostatus = maat_read(appraiser_chan, result, 512, &bytes_read, &eof_encountered, 10);
+        // Function does not regards to signedness of the buffer
+        iostatus = maat_read(appraiser_chan, (unsigned char *)result, 512, &bytes_read, &eof_encountered, 10);
         if(iostatus != 0) {
             printf("debug: %s\n", result);
             printf("Error reading response. returned status is %d: %s\n", iostatus,
@@ -234,7 +236,8 @@ exit:
 static const GDBusInterfaceVTable interface_vtable = {
     handle_method_call,
     NULL,
-    NULL
+    NULL,
+    {NULL}
 };
 
 /* -------------------------------------------------------------------------------------------- */
@@ -271,7 +274,7 @@ static void on_name_lost(GDBusConnection *connection,
     exit(1);
 }
 
-int main (int argc, char **argv)
+int main (int argc UNUSED, char **argv UNUSED)
 {
     guint owner_id;
     GMainLoop *loop;

@@ -258,7 +258,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
         return ret_val;
     }
 
-    ret_val = receive_measurement_contract(peerchan, scen, -1);
+    ret_val = receive_measurement_contract(peerchan, scen, 0);
     dlog(6, "Received Measurement Contract in quiot tlm appraiser APB\n");
 
     if(scen->contract == NULL) {

@@ -36,8 +36,8 @@
 typedef struct netstat_udp6_line {
     int32_t inode;
     int32_t uid;
-    char local_addr[48];
-    char rem_addr[48];
+    char local_addr[52];
+    char rem_addr[52];
     char State[16];
 } netstat_udp6_line;
 

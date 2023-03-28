@@ -72,7 +72,9 @@ static int serialize_report_data(measurement_data *d, char **serial_data,
                                  size_t *serial_data_size)
 {
     report_data *dd = (report_data *)d;
-    char *tmp = b64_encode(dd->text_data, dd->text_data_len);
+    // Cast is justified because the function does not regard the signedness of the
+    // buffer
+    char *tmp = b64_encode((unsigned char *)dd->text_data, dd->text_data_len);
 
     if (tmp == NULL)
         return -1;
@@ -112,12 +114,14 @@ static int unserialize_report_data(char *sd, size_t sd_size,
     }
     /* Loglevel is the first byte of the buffer as an ascii 0-9 */
     dd->loglevel = (enum report_levels)(sd[0] - 0x30);
-    text = b64_decode(sd+1, &sz);
+    // Cast is justified because the operations performed on the function
+    // don't regard its signedness
+    text = (char *)b64_decode(sd+1, &sz);
     if(text == NULL) {
         dlog(1,"Error decoding report data\n");
         free_measurement_data(&dd->d);
     }
-    dd->text_data	= text;
+    dd->text_data = text;
     dd->text_data_len	= sz;
     *d = &dd->d;
     return 0;
@@ -168,7 +172,8 @@ void report_data_set_text(report_data *rmd, char *text, size_t length)
 
 xmlNode *report_data_to_xml(report_data *rmd)
 {
-    xmlChar *b64 = (xmlChar*)b64_encode(rmd->text_data, rmd->text_data_len);
+    // Cast is justified because the function does not regard the signedness of the buffer
+    xmlChar *b64 = (xmlChar*)b64_encode((unsigned char *)rmd->text_data, rmd->text_data_len);
     if(b64 == NULL) {
         return NULL;
     }

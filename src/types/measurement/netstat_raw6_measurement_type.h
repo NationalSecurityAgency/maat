@@ -36,8 +36,8 @@
 typedef struct netstat_raw6_line {
     int32_t inode;
     int32_t uid;
-    char local_addr[49];
-    char rem_addr[49];
+    char local_addr[55];
+    char rem_addr[55];
     char State[17];
 } netstat_raw6_line;
 

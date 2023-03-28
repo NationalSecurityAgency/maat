@@ -208,13 +208,6 @@ static int appraise(struct scenario *scen, GList *values,
         dlog(0,"Error parsing measurement graph.\n");
         goto cleanup;
     }
-    /*Load meas specs*/
-    char *mspec_dir = getenv(ENV_MAAT_MEAS_SPEC_DIR);
-    if(mspec_dir == NULL) {
-        dlog(1, "Warning: environment variable " ENV_MAAT_MEAS_SPEC_DIR
-             " not set. Using default path " DEFAULT_MEAS_SPEC_DIR);
-        mspec_dir = DEFAULT_MEAS_SPEC_DIR;
-    }
 
     ret = 0;
 
@@ -285,7 +278,11 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     uuid_copy(appraisal_policy_spec_uuid, meas_spec_uuid);
 
     /* Receive measurement contract from attester APB. */
-    err = receive_measurement_contract(peerchan, scen, -1);
+    err = receive_measurement_contract(peerchan, scen, 0);
+    if (err < 0) {
+        return err;
+    }
+
     dlog(6, "Received Measurement Contract in appraiser APB\n");
 
     if(scen->contract == NULL) {

@@ -1898,8 +1898,6 @@ static int query_place_info_csv(const struct apb *apb,
         return -1;
     }
 
-    len = strlen(id);
-
     if(len >= COPLAND_CSV_LINE_MAX_LEN) {
         dlog(1, "Given ID is longer than the maximum allowed line length\n");
         return -1;
@@ -1915,6 +1913,7 @@ static int query_place_info_csv(const struct apb *apb,
         return -1;
     }
 
+    len = strlen(id);
     perm_len = strlen(perm);
 
     if(len + perm_len >= COPLAND_CSV_LINE_MAX_LEN) {

@@ -22,11 +22,11 @@ Group:          Administration/Monitoring
 License:        Apache License, Version 2.0
 Source:         %{name}-%{version}.tar.gz
 
-BuildRequires: autoconf, automake, libtool, glib2-devel, libxml2-devel
+BuildRequires: autoconf, automake, libtool, glib2-devel, libxml2-devel, 
 BuildRequires: openssl-devel, libuuid-devel, make, python3-devel
 BuildRequires: selinux-policy-devel, libselinux
 BuildRequires: elfutils-devel, libcap-devel, json-c-devel
-BuildRequires: mongo-c-driver
+BuildRequires: mongo-c-driver, libtss2-dev, tpm2-tools
 Requires:       libcap, json-c, mongo-c-driver-devel, libbson
 %{?el7:Requires: systemd}
 Provides:       maat

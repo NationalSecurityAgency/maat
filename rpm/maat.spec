@@ -26,7 +26,7 @@ BuildRequires: autoconf, automake, libtool, glib2-devel, libxml2-devel,
 BuildRequires: openssl-devel, libuuid-devel, make, python3-devel
 BuildRequires: selinux-policy-devel, libselinux
 BuildRequires: elfutils-devel, libcap-devel, json-c-devel
-BuildRequires: mongo-c-driver, tpm2-tss, tpm2-tools
+BuildRequires: mongo-c-driver, tpm2-tss-devel, tpm2-tools
 Requires:       libcap, json-c, mongo-c-driver-devel, libbson
 %{?el7:Requires: systemd}
 Provides:       maat

@@ -3,7 +3,7 @@ Basic Maat Tutorial
 
 .. Copyright
 
-   Copyright 2020 United States Government
+   Copyright 2023 United States Government
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -42,6 +42,16 @@ Copy the demo credentials to the appropriate install directory with:
     cd ~/maat/demo/credentials
     sudo cp client.key client.pem server.key server.pem \
          /opt/maat/etc/maat/credentials/
+
+If you are running with TPM2.0 enabled, you will also need to copy the 
+demo credentials used by TPM2.0. : 
+
+.. code-block:: bash
+
+    sudo cp ak.ctx akpub.pem /opt/maat/etc/maat/credentials/
+
+If these files don't exist, 
+refer to ../../lib/util/tpm2/README.md for information on how to create them.
 
 If you are running with Maat's SELinux policy loaded, you will have to reset the
 security context of the files you just copied over with: 

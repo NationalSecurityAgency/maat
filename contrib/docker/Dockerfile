@@ -19,11 +19,11 @@ RUN apt-get update -y
 # Install Maat dependencies
 RUN apt-get install -y autoconf automake libtool check libglib2.0-dev \
     libxml2-dev libssl-dev uuid-dev libcap-dev make libelf-dev libjson-c-dev \
-    build-essential
+    build-essential libtss2-dev tpm2-tools
 
 ADD ./maat /app/maat
 
 RUN cd /app/maat ; autoreconf -i ; ./configure --prefix=/opt/maat --disable-selinux ; make ; make check ; make install
 
-RUN cd /app/maat/demo/credentials ; cp client.key client.pem server.key server.pem /opt/maat/etc/maat/credentials/
+RUN cd /app/maat/demo/credentials ; cp client.key client.pem server.key server.pem ak.ctx akpub.pem /opt/maat/etc/maat/credentials/
 

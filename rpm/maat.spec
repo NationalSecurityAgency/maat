@@ -1,5 +1,5 @@
 #
-# Copyright 2020 United States Government
+# Copyright 2023 United States Government
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ and base set of APBs and ASPs.
 %build
 %configure --disable-static --enable-web-ui \
 	   --with-asp-install-dir=%{_libexecdir}/maat/asps --with-apb-install-dir=%{_libexecdir}/maat/apbs \
-	   --disable-selinux-libdir-mapping
+	   --disable-selinux-libdir-mapping --disable-tpm
 
 # see https://fedoraproject.org/wiki/Packaging:Guidelines#Beware_of_Rpath
 sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool

@@ -357,6 +357,8 @@ START_TEST(test_load_credentials_config)
         "<certificate>/elsewhere/cert</certificate>"
         "<ca-certificate>/whoknowswhere/ca-cert</ca-certificate>"
         "<tpm-password>cherry</tpm-password>"
+        "<akctx>/where/ctx</akctx>"
+        "<akpubkey>/whereelse/pubkey</akpubkey>"
         "</credentials>";
     am_config cfg = {0};
     xmlDoc *d = get_doc_from_blob(creds_cfg_str, xmlStrlen(creds_cfg_str));
@@ -367,7 +369,10 @@ START_TEST(test_load_credentials_config)
     ck_assert_str_eq(cfg.privkey_file, "/somewhere/pk");
     ck_assert_str_eq(cfg.cert_file, "/elsewhere/cert");
     ck_assert_str_eq(cfg.cacert_file, "/whoknowswhere/ca-cert");
-    ck_assert_str_eq(cfg.tpm_pass, "cherry");
+    ck_assert_str_eq(cfg.tpmpass, "cherry");
+    ck_assert_str_eq(cfg.akctx, "/where/ctx");
+    ck_assert_str_eq(cfg.akpubkey, "/whereelse/pubkey");
+
     xmlFreeDoc(d);
     free_am_config_data(&cfg);
 
@@ -382,7 +387,10 @@ START_TEST(test_load_credentials_config)
     ck_assert(cfg.privkey_pass == NULL);
     ck_assert(cfg.cert_file == NULL);
     ck_assert(cfg.cacert_file == NULL);
-    ck_assert(cfg.tpm_pass == NULL);
+    ck_assert(cfg.tpmpass == NULL);
+    ck_assert(cfg.akctx == NULL);
+    ck_assert(cfg.akpubkey == NULL);
+
     xmlFreeDoc(d);
 }
 END_TEST
@@ -397,6 +405,8 @@ START_TEST(test_load_invalid_credentials_config)
         "<certificate>/elsewhere/cert</certificate>"
         "<ca-certificate>/whoknowswhere/ca-cert</ca-certificate>"
         "<tpm-password>cherry</tpm-password>"
+        "<akctx>/where/ctx</akctx>"
+        "<akpubkey>/whereelse/pubkey</akpubkey>"
         "</credentials>";
     am_config cfg = {0};
     xmlDoc *d = get_doc_from_blob(creds_cfg_str, xmlStrlen(creds_cfg_str));
@@ -407,7 +417,9 @@ START_TEST(test_load_invalid_credentials_config)
     ck_assert(cfg.privkey_file == NULL);
     ck_assert(cfg.cert_file == NULL);
     ck_assert(cfg.cacert_file == NULL);
-    ck_assert(cfg.tpm_pass == NULL);
+    ck_assert(cfg.tpmpass == NULL);
+    ck_assert(cfg.akctx == NULL);
+    ck_assert(cfg.akpubkey == NULL);
     xmlFreeDoc(d);
 
     // Invalid nodes (missing content)
@@ -417,6 +429,8 @@ START_TEST(test_load_invalid_credentials_config)
         "<certificate>/elsewhere/cert</certificate>"
         "<ca-certificate>/whoknowswhere/ca-cert</ca-certificate>"
         "<tpm-password>cherry</tpm-password>"
+        "<akctx>/where/ctx</akctx>"
+        "<akpubkey>/whereelse/pubkey</akpubkey>"
         "</credentials>";
     bzero(&cfg, sizeof(cfg));
     d = get_doc_from_blob(creds_cfg_str, xmlStrlen(creds_cfg_str));
@@ -427,7 +441,9 @@ START_TEST(test_load_invalid_credentials_config)
     ck_assert(cfg.privkey_file == NULL);
     ck_assert(cfg.cert_file == NULL);
     ck_assert(cfg.cacert_file == NULL);
-    ck_assert(cfg.tpm_pass == NULL);
+    ck_assert(cfg.tpmpass == NULL);
+    ck_assert(cfg.akctx == NULL);
+    ck_assert(cfg.akpubkey == NULL);
     xmlFreeDoc(d);
 
     creds_cfg_str =
@@ -436,6 +452,8 @@ START_TEST(test_load_invalid_credentials_config)
         "<certificate/>"
         "<ca-certificate>/whoknowswhere/ca-cert</ca-certificate>"
         "<tpm-password>cherry</tpm-password>"
+        "<akctx>/where/ctx</akctx>"
+        "<akpubkey>/whereelse/pubkey</akpubkey>"
         "</credentials>";
     bzero(&cfg, sizeof(cfg));
     d = get_doc_from_blob(creds_cfg_str, xmlStrlen(creds_cfg_str));
@@ -446,7 +464,9 @@ START_TEST(test_load_invalid_credentials_config)
     ck_assert(cfg.privkey_file == NULL);
     ck_assert(cfg.cert_file == NULL);
     ck_assert(cfg.cacert_file == NULL);
-    ck_assert(cfg.tpm_pass == NULL);
+    ck_assert(cfg.tpmpass == NULL);
+    ck_assert(cfg.akctx == NULL);
+    ck_assert(cfg.akpubkey == NULL);
     xmlFreeDoc(d);
 
     creds_cfg_str =
@@ -455,6 +475,8 @@ START_TEST(test_load_invalid_credentials_config)
         "<certificate>/elsewhere/cert</certificate>"
         "<ca-certificate/>"
         "<tpm-password>cherry</tpm-password>"
+        "<akctx>/where/ctx</akctx>"
+        "<akpubkey>/whereelse/pubkey</akpubkey>"
         "</credentials>";
     bzero(&cfg, sizeof(cfg));
     d = get_doc_from_blob(creds_cfg_str, xmlStrlen(creds_cfg_str));
@@ -465,7 +487,9 @@ START_TEST(test_load_invalid_credentials_config)
     ck_assert(cfg.privkey_file == NULL);
     ck_assert(cfg.cert_file == NULL);
     ck_assert(cfg.cacert_file == NULL);
-    ck_assert(cfg.tpm_pass == NULL);
+    ck_assert(cfg.tpmpass == NULL);
+    ck_assert(cfg.akctx == NULL);
+    ck_assert(cfg.akpubkey == NULL);
     xmlFreeDoc(d);
 
     creds_cfg_str =
@@ -474,6 +498,8 @@ START_TEST(test_load_invalid_credentials_config)
         "<certificate>/elsewhere/cert</certificate>"
         "<ca-certificate>/whoknowswhere/ca-cert</ca-certificate>"
         "<tpm-password/>"
+        "<akctx>/where/ctx</akctx>"
+        "<akpubkey>/whereelse/pubkey</akpubkey>"
         "</credentials>";
     bzero(&cfg, sizeof(cfg));
     d = get_doc_from_blob(creds_cfg_str, xmlStrlen(creds_cfg_str));
@@ -484,7 +510,9 @@ START_TEST(test_load_invalid_credentials_config)
     ck_assert(cfg.privkey_file == NULL);
     ck_assert(cfg.cert_file == NULL);
     ck_assert(cfg.cacert_file == NULL);
-    ck_assert(cfg.tpm_pass == NULL);
+    ck_assert(cfg.tpmpass == NULL);
+    ck_assert(cfg.akctx == NULL);
+    ck_assert(cfg.akpubkey == NULL);
     xmlFreeDoc(d);
 
     // Redundant nodes
@@ -721,6 +749,9 @@ START_TEST(test_attestmgr_load_full_config)
                          "<private-key password=\"aPassword\">/opt/maat/etc/maat/credentials/client.key</private-key>\n"
                          "<certificate>/opt/maat/etc/maat/credentials/client.pem</certificate>\n"
                          "<ca-certificate>/opt/maat/etc/maat/credentials/ca.pem</ca-certificate>\n"
+                         "<tpm-password>maatpass</tpm-password>\n"
+                         "<akctx>/opt/maat/etc/maat/credentials/ak.ctx</akctx>\n"
+                         "<akpubkey>/opt/maat/etc/maat/credentials/akpub.pem</akpubkey>\n"
                          "</credentials>\n"
                          "<metadata type=\"asps\" dir=\"/opt/maat/share/maat/asps\" />\n"
                          "<metadata type=\"apbs\" dir=\"/opt/maat/share/maat/apbs\" />\n"
@@ -794,6 +825,9 @@ START_TEST(test_attestmgr_load_full_config)
         ck_assert_str_eq(cfg.privkey_file, "/opt/maat/etc/maat/credentials/client.key");
         ck_assert_str_eq(cfg.cert_file, "/opt/maat/etc/maat/credentials/client.pem");
         ck_assert_str_eq(cfg.cacert_file, "/opt/maat/etc/maat/credentials/ca.pem");
+        ck_assert_str_eq(cfg.tpmpass, "maatpass");
+        ck_assert_str_eq(cfg.akctx, "/opt/maat/etc/maat/credentials/ak.ctx");
+        ck_assert_str_eq(cfg.akpubkey, "/opt/maat/etc/maat/credentials/akpub.pem");
 
         // metadata
         ck_assert_str_eq(cfg.asp_metadata_dir, "/opt/maat/share/maat/asps");

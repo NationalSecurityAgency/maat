@@ -157,6 +157,7 @@ AS_IF([test "x$enable_mongo_selector" = xyes], [
 
 AM_CONDITIONAL([ENABLE_MONGO_SELECTOR], [test "x$enable_mongo_selector" = xyes])
 
+<<<<<<< HEAD
 # Check for TrouSerS libraries
 AC_ARG_ENABLE([tpm],
 	[AS_HELP_STRING([--disable-tpm], [Disable the use of the TPM])],
@@ -170,6 +171,27 @@ AS_IF([test "x$enable_tpm" = xyes],[
         ],
 	AC_MSG_ERROR([You must have the TrouSerS libraries installed.]))
 	])
+=======
+AC_ARG_ENABLE([tpm],
+	[AS_HELP_STRING([--disable-tpm], [Disable the use of the TPM])],
+	[enable_tpm=$enableval],
+	[enable_tpm=yes])
+AS_IF([test "x$enable_tpm" = xyes],[
+	AC_DEFINE([USE_TPM], [1], [Compile in support for using the TPM])
+        PKG_CHECK_MODULES([TSS2_ESYS_3_0], [tss2-esys >= 3.0.0],
+                  [AC_DEFINE([ESYS_3_0], [1], [Esys3.0])]
+                  [AC_SUBST([TSS2_ESYS_CFLAGS], [$TSS2_ESYS_3_0_CFLAGS])
+                   AC_SUBST([TSS2_ESYS_LIBS], [$TSS2_ESYS_3_0_LIBS])],
+                  [PKG_CHECK_MODULES([TSS2_ESYS_2_3], [tss2-esys >= 2.3.0],
+                  [AC_DEFINE([ESYS_2_3], [1], [Esys2.3])]
+                  [AC_SUBST([TSS2_ESYS_CFLAGS], [$TSS2_ESYS_2_3_CFLAGS])
+                   AC_SUBST([TSS2_ESYS_LIBS], [$TSS2_ESYS_2_3_LIBS])])])
+	PKG_CHECK_MODULES([TSS2_TCTILDR], [tss2-tctildr])
+	PKG_CHECK_MODULES([TSS2_MU], [tss2-mu])
+	PKG_CHECK_MODULES([TSS2_RC], [tss2-rc])
+	PKG_CHECK_MODULES([CRYPTO], [libcrypto >= 1.0.2g])
+])
+>>>>>>> tpm-updates
 AM_CONDITIONAL(USETPM, test "x$enable_tpm" = xyes)
 
 
@@ -534,7 +556,13 @@ AC_CONFIG_HEADERS([src/include/config.h])
 AC_CONFIG_FILES([lib/Makefile lib/util/Makefile lib/graph/Makefile lib/asp/Makefile 
 	         lib/apb/Makefile
 		 lib/sgraph/Makefile
+<<<<<<< HEAD
 		 lib/test/Makefile lib/common/Makefile
+=======
+		 lib/test/Makefile
+		 lib/util/tpm2/Makefile
+		 lib/common/Makefile
+>>>>>>> tpm-updates
 		 lib/measurement_spec/Makefile
 		 lib/client/Makefile
 		 lib/libmaat.pc

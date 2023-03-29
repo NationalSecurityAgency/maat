@@ -43,6 +43,16 @@ Copy the demo credentials to the appropriate install directory with:
     sudo cp client.key client.pem server.key server.pem \
          /opt/maat/etc/maat/credentials/
 
+If you are running with TPM2.0 enabled, you will also need to copy the 
+demo credentials used by TPM2.0. : 
+
+.. code-block:: bash
+
+    sudo cp ak.ctx akpub.pem /opt/maat/etc/maat/credentials/
+
+If these files don't exist, 
+refer to ../../lib/util/tpm2/README.md for information on how to create them.
+
 If you are running with Maat's SELinux policy loaded, you will have to reset the
 security context of the files you just copied over with: 
 
@@ -91,6 +101,14 @@ Demo 1 - Package Inventory Measurement
 
 For ease of demonstration, it is recommended that you open three terminals, and
 designate them "Attester", "Appraiser", and "Test Client".
+
+If you are running with TPM2.0 enabled, you will need additional arguments to 
+indicate that you want to sign and verify with TPM2.0. Add the arguments in the 
+Appraiser and Attester terminals below: 
+
+.. code-block:: bash
+
+    -T 1 -v 1
 
 In the Appraiser Terminal, run
 

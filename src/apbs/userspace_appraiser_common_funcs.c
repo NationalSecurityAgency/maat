@@ -172,7 +172,7 @@ static int verify_contract(GList *apb_asps, struct scenario *scen)
     char *verify_res                = NULL;
     struct asp *verify_contract_asp = NULL;
     char verify_tpm_str[33]         = {0};
-    char *verify_args[4]            = {0};
+    char *verify_args[5]            = {0};
 
     /* Load all ASPs */
     verify_contract_asp = find_asp(apb_asps, "verify_measurement_contract_asp");
@@ -190,11 +190,11 @@ static int verify_contract(GList *apb_asps, struct scenario *scen)
     verify_args[0] = scen->workdir;
     verify_args[1] = scen->nonce;
     verify_args[2] = scen->cacert;
-    verify_args[3] = verify_tpm_str;
+    verify_args[3] = scen->akpubkey;
+    verify_args[4] = verify_tpm_str;
 
-    /* Casts are justified because the signedness of the buffer does not matter for this function */
-    ret = run_asp_buffers(verify_contract_asp, (unsigned char *) scen->contract,
-                          scen->size, (unsigned char **)&verify_res, &read, 4, verify_args, TIMEOUT, -1);
+    ret = run_asp_buffers(verify_contract_asp, scen->contract, scen->size,
+                          &verify_res, &read, 5, verify_args, TIMEOUT, -1);
     if(ret < 0) {
         dlog(0, "Failed to run %s ASP\n", verify_contract_asp->name);
         goto run_asp_err;
@@ -500,7 +500,7 @@ int adjust_measurement_contract_to_access_contract(struct scenario *scen)
     /* sign contract with that cert */
     fingerprint_buf = get_fingerprint(scen->certfile, NULL);
     ret = sign_xml(doc, root, fingerprint_buf, scen->keyfile, scen->keypass,
-                   scen->nonce, scen->tpmpass, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+                   scen->nonce, scen->tpmpass, scen->akctx, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
     free(fingerprint_buf);
     fingerprint_buf = NULL;
     if(ret != 0) {

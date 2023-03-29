@@ -97,10 +97,11 @@ static char *find_phrase(char *resource)
 }
 
 static int send_to_attester_listen_for_result(char *attester_path, char *resource,
-        char *certfile, char *keyfile, char *keypass, char *nonce, char *tpmpass,
-        int sign_tpm, char **out, size_t *out_size)
+        char *certfile, char *keyfile, char *keypass,
+        char *nonce, char *tpmpass, char *akctx, int sign_tpm, 
+        char **out, size_t *out_size)
 {
-    int attester_chan;
+    int attester_chan = -1;
     xmlChar *exe_contract;
     size_t csize;
     int ret_val = 0;
@@ -126,7 +127,7 @@ static int send_to_attester_listen_for_result(char *attester_path, char *resourc
     ret_val = create_execute_contract(MAAT_CONTRACT_VERSION,
                                       sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL,
                                       phrase, certfile, keyfile, keypass, nonce, tpmpass,
-                                      &exe_contract, &csize);
+                                      akctx, &exe_contract, &csize);
     if(ret_val != 0 || exe_contract == NULL) {
         dlog(0, "create_execute_contract failed: %d\n", ret_val);
         ret_val = -1;
@@ -232,6 +233,7 @@ int asp_measure(int argc, char *argv[])
     char *keypass       = NULL;
     char *nonce         = NULL;
     char *tpmpass       = NULL;
+    char *akctx         = NULL;
     int  sign_tpm       = 0;
 
     char *result        = NULL;
@@ -243,10 +245,10 @@ int asp_measure(int argc, char *argv[])
     int ret_val = 0;
 
     // Parse args
-    if((argc < 9) ||
+    if((argc < 10) ||
             ((node_id = node_id_of_str(argv[2])) == INVALID_NODE_ID) ||
             (map_measurement_graph(argv[1], &graph) != 0)) {
-        asp_logerror("Usage: "ASP_NAME" <graph path> <node id> <certfile> <keyfile> <keypass> <nonce> <tpmpass> <sign_tpm>\n");
+        asp_logerror("Usage: "ASP_NAME" <graph path> <node id> <certfile> <keyfile> <keypass> <nonce> <tpmpass> <akctx> <sign_tpm>\n");
         return -EINVAL;
     }
     certfile = argv[3];
@@ -254,7 +256,8 @@ int asp_measure(int argc, char *argv[])
     keypass  = argv[5];
     nonce    = argv[6];
     tpmpass  = argv[7];
-    sign_tpm   = atoi(argv[8]);
+    akctx    = argv[8];
+    sign_tpm   = atoi(argv[9]);
 
     asp_logdebug("measurement_request: nodeid "ID_FMT"\n", node_id);
 
@@ -266,7 +269,7 @@ int asp_measure(int argc, char *argv[])
 
     dlog(4, "Send execute contract to %s\n", va->attester);
     ret_val = send_to_attester_listen_for_result(va->attester, va->resource, certfile, keyfile,
-              keypass, nonce, tpmpass, sign_tpm, &result, &rsize);
+              keypass, nonce, tpmpass, akctx, sign_tpm, &result, &rsize);
 
     free_address(&va->a);
     if(ret_val < 0) {

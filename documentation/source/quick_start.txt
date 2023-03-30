@@ -64,7 +64,7 @@ For Ubuntu Machines:
 
    sudo apt install build-essential autoconf automake libtool check    \
         libglib2.0-dev libxml2-dev libssl-dev uuid-dev libcap-dev make \
-        libelf-dev libjson-c-dev 
+        libelf-dev libjson-c-dev libtss2-dev tpm2-tools
 
 For RHEL Machines: 
 
@@ -73,7 +73,7 @@ For RHEL Machines:
    sudo yum install autoconf automake libtool check-devel glib2-devel   \
         libxml2-devel openssl-devel libuuid-devel libcap-devel make     \
         elfutils-devel json-c-devel selinux-policy-devel \
-        libselinux-devel 
+        libselinux-devel tpm2-tss, tpm2-tss-devel, tpm2-tools
 
 
 
@@ -107,6 +107,12 @@ For RHEL Machines:
 | build-essential            | selinux-policy-devel       |
 +----------------------------+----------------------------+
 |                            | libselinux-devel           |
++----------------------------+----------------------------+
+| libtss2-dev                | tpm2-tss-devel             |
++----------------------------+----------------------------+
+|                            | tpm2-tss                   |
++----------------------------+----------------------------+
+| tpm2-tools                 | tpm2-tools                 |
 +----------------------------+----------------------------+
 
 
@@ -164,6 +170,10 @@ in the commands below.
    Please refer to the :ref:`security model description<security_model>`
    for more information on the added security
    provided to Maat by SELinux access controls.
+
+The default compilation of the Maat framework includes use of TPM2.0. If you 
+are using a system without TPM2.0, you can disable compilation of the 
+TPM2.0 commands by compiling with `--disable-tpm`. 
 
 The following instructions install the Maat framework into the '/opt/maat' 
 directory. You can choose a different install prefix if you wish via the 

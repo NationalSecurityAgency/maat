@@ -50,9 +50,11 @@ int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
 #ifdef USE_TPM
              const char* nonce,
              const char* tpm_password,
+             const char* akctx,
 #else
              const char* nonce UNUSED,
              const char* tpm_password UNUSED,
+             const char* akctx UNUSED,
 #endif
              int flags);
 
@@ -68,7 +70,13 @@ int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
  *
  */
 int verify_xml(xmlDoc *doc, xmlNode *root, const char *keyfile,
-               const char* nonce, int flags, const char* cacertfile);
+               const char* nonce, 
+#ifdef USE_TPM
+ 	           const char* akpubkey,
+#else
+ 	           const char* akpubkey UNUSED,
+#endif
+               int flags, const char* cacertfile);
 
 /**
  * Create a filename for a certificate file which corresponds to the xml root.

@@ -1001,6 +1001,7 @@ static instruction_filter *parse_instruction_filter(xmlNode *n)
             free(mtype_magic_str);
             goto error;
         }
+
         free(mtype_magic_str);
         filter->u.b.mtype = find_measurement_type(mtype_magic);
         if(filter->u.b.mtype == NULL) {

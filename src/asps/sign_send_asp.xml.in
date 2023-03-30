@@ -38,7 +38,7 @@
 	  attestation.
 	  certfile and keyfile are the files this ASP should use for signing 
 	  the measurement.
-	  sign_tpm is 1 if a TPM should be used for signing, 0 if not.
+	  sign_tpm is 0 if a TPM should be used for signing, 1 if not.
 	  workdir is the working directory for the current attestation, where
 	  this ASP will find the execute contract.
 	</inputdescription>

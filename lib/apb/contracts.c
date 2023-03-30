@@ -273,11 +273,11 @@ int handle_measurement_contract(struct scenario *scen, appraise_fn *appraise, in
             if (scen->verify_tpm)
                 ret = verify_xml(doc,
                                  subcobj->nodesetval->nodeTab[i], tmpstr,
-                                 scen->nonce, scen->akpubkey, SIGNATURE_TPM, scen->cacert);
+                                 scen->nonce, SIGNATURE_TPM, scen->cacert);
             else
                 ret = verify_xml(doc,
                                  subcobj->nodesetval->nodeTab[i], tmpstr,
-                                 scen->nonce, scen->akpubkey, SIGNATURE_OPENSSL,
+                                 scen->nonce, SIGNATURE_OPENSSL,
                                  scen->cacert);
 
 
@@ -325,7 +325,7 @@ int handle_measurement_contract(struct scenario *scen, appraise_fn *appraise, in
     /* sign contract with that cert */
     fingerprint_buf = get_fingerprint(scen->certfile, NULL);
     ret = sign_xml(doc, root, fingerprint_buf, scen->keyfile, scen->keypass,
-                   scen->nonce, scen->tpmpass, scen->akctx, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+                   scen->nonce, scen->tpmpass, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
 
     if(ret != 0) {
         dlog(0, "Failed to sign access contract\n");
@@ -372,17 +372,7 @@ bad_xml:
 int create_integrity_response(target_id_type_t target_typ, xmlChar *target,
                               xmlChar *resource, xmlChar *result,
                               GList *entries, char *certfile, char *keyfile,
-                              char *keypass, char *nonce, 
-#ifdef USE_TPM
-                              char *tpmpass,
-                              char *akctx,
-                              int sign_tpm,
-#else
-			                  char *tpmpass UNUSED,
-			                  char *akctx UNUSED,
-			                  int sign_tpm UNUSED,
-#endif
-                              xmlChar **out,
+                              char *keypass, char *nonce, char *tpmpass, xmlChar **out,
                               size_t *outsize)
 {
     xmlDoc *doc = NULL;
@@ -477,11 +467,7 @@ int create_integrity_response(target_id_type_t target_typ, xmlChar *target,
         }
 
         fprint = get_fingerprint(certfile, NULL);
-#ifdef USE_TPM
-        ret = sign_xml(doc, root, fprint, keyfile, keypass, nonce, tpmpass, akctx, sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
-#else
-        ret = sign_xml(doc, root, fprint, keyfile, keypass, NULL, NULL, NULL, SIGNATURE_OPENSSL);
-#endif
+        ret = sign_xml(doc, root, fprint, keyfile, keypass, nonce, tpmpass, SIGNATURE_OPENSSL);
         free(fprint);
         if(ret != 0) {
             dlog(0, "Failed to sign integrity response contract\n");
@@ -650,7 +636,7 @@ unsigned char *generate_measurement_contract(struct scenario *scen,
             scratch = get_fingerprint(scen->certfile, NULL);
 
             ret = sign_xml(doc, subc, scratch, scen->keyfile, scen->keypass,
-                           scen->nonce, scen->tpmpass, scen->akctx,
+                           scen->nonce, scen->tpmpass,
                            scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
 
             if(ret != 0) {

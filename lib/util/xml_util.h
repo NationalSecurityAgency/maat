@@ -45,7 +45,7 @@ int create_execute_contract(char *version, int sig_flags,
                             char *phrase, char *certfile,
                             char *keyfile, char *keyfilepass,
                             char *nonce, char *tpmpass,
-                            char *akctx, xmlChar **out, size_t *csize);
+                            xmlChar **out, size_t *csize);
 xmlNode *create_credential_node(const char *certfile);
 
 /**

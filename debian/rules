@@ -7,9 +7,6 @@
 override_dh_auto_configure:
 	dh_auto_configure -- --disable-selinux --enable-web-ui
 
-override_dh_auto_test:
-	
-
 %:
 	dh $@  --with autotools-dev
 

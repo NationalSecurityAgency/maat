@@ -110,11 +110,6 @@ START_TEST(test_attestmgr_getopt)
         "-a", "a_CA_cert_file",
         "-f", "a_cert_file",
         "-k", "a_private_key_file",
-        "-T", "1",
-        "-v", "1",
-        "-P", "a_password",
-        "-x", "a_context_file",
-        "-A", "a_pubkey_file",
         "-S", "an_asp_metadata_dir",
         "-I", "an_apb_metadata_dir",
         "-M", "an_mspec_dir",
@@ -160,11 +155,6 @@ START_TEST(test_attestmgr_getopt)
     ck_assert_str_eq(cfg.cacert_file, "a_CA_cert_file");
     ck_assert_str_eq(cfg.cert_file, "a_cert_file");
     ck_assert_str_eq(cfg.privkey_file, "a_private_key_file");
-    ck_assert_int_eq(cfg.sign_tpm, 1);
-    ck_assert_int_eq(cfg.verify_tpm, 1);
-    ck_assert_str_eq(cfg.tpmpass, "a_password");
-    ck_assert_str_eq(cfg.akctx, "a_context_file");
-    ck_assert_str_eq(cfg.akpubkey, "a_pubkey_file");
     ck_assert_str_eq(cfg.asp_metadata_dir, "an_asp_metadata_dir");
     ck_assert_str_eq(cfg.apb_metadata_dir, "an_apb_metadata_dir");
     ck_assert_str_eq(cfg.mspec_dir, "an_mspec_dir");
@@ -243,9 +233,7 @@ START_TEST(test_attestmgr_getopt_full_config_xml)
                          "<private-key password=\"aPassword\">/opt/maat/etc/maat/credentials/client.key</private-key>\n"
                          "<certificate>/opt/maat/etc/maat/credentials/client.pem</certificate>\n"
                          "<ca-certificate>/opt/maat/etc/maat/credentials/ca.pem</ca-certificate>\n"
-                         "<tpm-password>maatpass</tpm-password>\n"
-                         "<akctx>/opt/maat/etc/maat/credentials/ak.ctx</akctx>\n"
-                         "<akpubkey>/opt/maat/etc/maat/credentials/akpub.pem</akpubkey>\n"
+                         "<tpm-password>cherry</tpm-password>\n"
                          "</credentials>\n"
                          "<metadata type=\"asps\" dir=\"/opt/maat/share/maat/asps\" />\n"
                          "<metadata type=\"apbs\" dir=\"/opt/maat/share/maat/apbs\" />\n"
@@ -317,9 +305,7 @@ START_TEST(test_attestmgr_getopt_full_config_xml)
         ck_assert_str_eq(cfg.privkey_file, "/opt/maat/etc/maat/credentials/client.key");
         ck_assert_str_eq(cfg.cert_file, "/opt/maat/etc/maat/credentials/client.pem");
         ck_assert_str_eq(cfg.cacert_file, "/opt/maat/etc/maat/credentials/ca.pem");
-        ck_assert_str_eq(cfg.tpmpass, "maatpass");
-        ck_assert_str_eq(cfg.akctx, "/opt/maat/etc/maat/credentials/ak.ctx");
-        ck_assert_str_eq(cfg.akpubkey, "/opt/maat/etc/maat/credentials/akpub.pem");
+        ck_assert_str_eq(cfg.tpm_pass, "cherry");
 
         // metadata
         ck_assert_str_eq(cfg.asp_metadata_dir, "/opt/maat/share/maat/asps");
@@ -383,9 +369,6 @@ START_TEST(test_attestmgr_getopt_opts_trump_all)
                      "<private-key password=\"aPassword\">/opt/maat/etc/maat/credentials/client.key</private-key>\n"
                      "<certificate>/opt/maat/etc/maat/credentials/client.pem</certificate>\n"
                      "<ca-certificate>/opt/maat/etc/maat/credentials/ca.pem</ca-certificate>\n"
-                     "<tpm-password>maatpass</tpm-password>\n"
-                     "<akctx>/opt/maat/etc/maat/credentials/ak.ctx</akctx>\n"
-                     "<akpubkey>/opt/maat/etc/maat/credentials/akpub.pem</akpubkey>\n"
                      "</credentials>\n"
                      "<metadata type=\"asps\" dir=\"/opt/maat/share/maat/asps\" />\n"
                      "<metadata type=\"apbs\" dir=\"/opt/maat/share/maat/apbs\" />\n"
@@ -420,11 +403,6 @@ START_TEST(test_attestmgr_getopt_opts_trump_all)
             "-a", "a_CA_cert_file",
             "-f", "a_cert_file",
             "-k", "a_private_key_file",
-            "-T", "1",
-            "-v", "1",
-            "-P", "a_password",
-            "-x", "a_context_file",
-            "-A", "a_pubkey_file",
             "-S", "an_asp_metadata_dir",
             "-I", "an_apb_metadata_dir",
             "-M", "an_mspec_dir",
@@ -470,11 +448,6 @@ START_TEST(test_attestmgr_getopt_opts_trump_all)
         ck_assert_str_eq(cfg.cacert_file, "a_CA_cert_file");
         ck_assert_str_eq(cfg.cert_file, "a_cert_file");
         ck_assert_str_eq(cfg.privkey_file, "a_private_key_file");
-        ck_assert_int_eq(cfg.sign_tpm, 1);
-        ck_assert_int_eq(cfg.verify_tpm, 1);
-        ck_assert_str_eq(cfg.tpmpass, "a_password");
-        ck_assert_str_eq(cfg.akctx, "a_context_file");
-        ck_assert_str_eq(cfg.akpubkey, "a_pubkey_file");
         ck_assert_str_eq(cfg.asp_metadata_dir, "an_asp_metadata_dir");
         ck_assert_str_eq(cfg.apb_metadata_dir, "an_apb_metadata_dir");
         ck_assert_str_eq(cfg.mspec_dir, "an_mspec_dir");
@@ -517,9 +490,6 @@ START_TEST(test_attestmgr_getopt_env_trumps_config)
                      "<private-key password=\"aPassword\">/opt/maat/etc/maat/credentials/client.key</private-key>\n"
                      "<certificate>/opt/maat/etc/maat/credentials/client.pem</certificate>\n"
                      "<ca-certificate>/opt/maat/etc/maat/credentials/ca.pem</ca-certificate>\n"
-                     "<tpm-password>maatpass</tpm-password>\n"
-                     "<akctx>/opt/maat/etc/maat/credentials/ak.ctx</akctx>\n"
-                     "<akpubkey>/opt/maat/etc/maat/credentials/akpub.pem</akpubkey>\n"
                      "</credentials>\n"
                      "<metadata type=\"asps\" dir=\"/opt/maat/share/maat/asps\" />\n"
                      "<metadata type=\"apbs\" dir=\"/opt/maat/share/maat/apbs\" />\n"
@@ -551,11 +521,6 @@ START_TEST(test_attestmgr_getopt_env_trumps_config)
             "-a", "a_CA_cert_file",
             "-f", "a_cert_file",
             "-k", "a_private_key_file",
-            "-T", "1",
-            "-v", "1",
-            "-P", "a_password",
-            "-x", "a_context_file",
-            "-A", "a_pubkey_file",
             "-w", "a_workdir"
         };
         int argc = sizeof(argv)/sizeof(*argv);
@@ -619,11 +584,6 @@ START_TEST(test_attestmgr_getopt_env_trumps_config)
         ck_assert_str_eq(cfg.cacert_file, "a_CA_cert_file");
         ck_assert_str_eq(cfg.cert_file, "a_cert_file");
         ck_assert_str_eq(cfg.privkey_file, "a_private_key_file");
-        ck_assert_int_eq(cfg.sign_tpm, 1);
-        ck_assert_int_eq(cfg.verify_tpm, 1);
-        ck_assert_str_eq(cfg.tpmpass, "a_password");
-        ck_assert_str_eq(cfg.akctx, "a_context_file");
-        ck_assert_str_eq(cfg.akpubkey, "a_pubkey_file");
         ck_assert_str_eq(cfg.workdir, "a_workdir");
         cleanup_config(&cfg);
     } else {

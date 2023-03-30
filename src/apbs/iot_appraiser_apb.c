@@ -287,8 +287,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
               (xmlChar*)target,
               (xmlChar*)resource, evaluation, NULL,
               scen->certfile, scen->keyfile, scen->keypass, NULL,
-              scen->tpmpass, scen->akctx, scen->sign_tpm,
-              (xmlChar **)&response_buf, &sz);    //check the NULL on report_data_list
+              scen->tpmpass, (xmlChar **)&response_buf, &sz);    //check the NULL on report_data_list
 
     dlog(0, "error is: %d\n", err);
 

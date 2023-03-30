@@ -42,9 +42,6 @@
 #define ATTESTER_CERT   (CREDS_DIR "/client.pem")
 #define APPRAISER_KEY   (CREDS_DIR "/server.key")
 #define APPRAISER_CERT  (CREDS_DIR "/server.pem")
-#define TPMPASS         "maatpass"
-#define AKCTX           (CREDS_DIR "/ak.ctx")
-#define AKPUB           (CREDS_DIR "/akpub.pem")
 
 #define LIBMAAT_APBMAIN  (BUILDDIR "/../am/apbmain")
 #define LIBMAAT_ASPMAIN  (BUILDDIR "/../asp/aspmain")

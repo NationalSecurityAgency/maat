@@ -29,19 +29,14 @@ default:
   - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux
   - make install
 
-# configure and build without selinux and without TPM
-.build_no_selinux_no_tpm: &build_no_selinux_no_tpm
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --disable-tpm
-  - make install
-
-# configure and build with selinux and without TPM
-.build_with_selinux_no_tpm: &build_with_selinux_no_tpm
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-tpm
+# configure and build with selinux
+.build_with_selinux: &build_with_selinux
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd
   - make install
 
 # build documentation
 .build_docs: &build_docs
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --disable-tpm
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests
   - make docs
   - mv documentation/build ../maat-docs
 
@@ -50,20 +45,9 @@ default:
   - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests
   - make check
 
-# run check tests without selinux adn without TPM
-.test_no_selinux_no_tpm: &test_no_selinux_no_tpm
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --disable-tpm
-  - make check
-
 # Run check tests with gcc address sanitizer enabled
 .test_asan: &test_asan
   - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests CFLAGS='-fsanitize=address -g -O0'
-  # There are actual ODR violations but ignore for now
-  - ASAN_OPTIONS='detect_leaks=0 detect_odr_violation=0' make check
-
-# Run check tests with gcc address sanitizer enabled without TPM
-.test_asan_no_tpm: &test_asan_no_tpm
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --disable-tpm --enable-tests CFLAGS='-fsanitize=address -g -O0'
   # There are actual ODR violations but ignore for now
   - ASAN_OPTIONS='detect_leaks=0 detect_odr_violation=0' make check
 
@@ -71,7 +55,7 @@ default:
 .deb_build: &deb_build
   - /usr/bin/pbuilder-dist ${release} ${arch} create
   - /usr/bin/pbuilder-dist ${release} ${arch} update # is this necessary?
-  - ../configure --prefix=/usr --disable-selinux --disable-tpm
+  - ../configure --prefix=/usr --disable-selinux
   - make dist
   - mkdir staging
   - cp maat-*.tar.gz staging
@@ -98,7 +82,7 @@ default:
 
 # Create RPM repo for ${release} and ${arch}
 .rpm_repo: &rpm_repo
-  - ../configure --prefix=/usr --disable-selinux-libdir-mapping --disable-tpm
+  - ../configure --prefix=/usr --disable-selinux-libdir-mapping
   - make dist
   - "[ -d SOURCES ] || mkdir SOURCES"
   - cp maat-*.tar.gz SOURCES/
@@ -141,23 +125,15 @@ build-ubuntu20:
   tags:
     - ubuntu20
   script:
-    - *build_no_selinux_no_tpm
-
-# build without selinux with TPM for ubuntu20
-build-ubuntu20-tpm:
-  stage: build
-  tags:
-    - maat-swtpm
-  script:
     - *build_no_selinux
 
 # build without selinux for ubuntu22
-# build-ubuntu22:
-#   stage: build
-#   tags:
-#     - ubuntu22
-#   script:
-#     - *build_no_selinux_no_tpm
+build-ubuntu22:
+  stage: build
+  tags:
+    - ubuntu22
+  script:
+    - *build_no_selinux
 
 # build without selinux for rhel7
 build-rhel7-no-selinux:
@@ -165,7 +141,7 @@ build-rhel7-no-selinux:
   tags:
     - rhel7
   script:
-    - *build_no_selinux_no_tpm
+    - *build_no_selinux
 
 # build with selinux for rhel7
 build-rhel7-selinux:
@@ -173,7 +149,7 @@ build-rhel7-selinux:
   tags:
     - rhel7
   script:
-    - *build_with_selinux_no_tpm
+    - *build_with_selinux
   after_script:
     - sudo semodule -r maat
 
@@ -183,7 +159,7 @@ build-rhel8-no-selinux:
   tags:
     - rhel8
   script:
-    - *build_no_selinux_no_tpm
+    - *build_no_selinux
 
 # build with selinux for rhel8
 build-rhel8-selinux:
@@ -191,7 +167,7 @@ build-rhel8-selinux:
   tags:
     - rhel8
   script:
-    - *build_with_selinux_no_tpm
+    - *build_with_selinux
   after_script:
     - sudo semodule -r maat
 
@@ -201,7 +177,7 @@ build-rhel9-no-selinux:
   tags:
     - rhel9
   script:
-    - *build_no_selinux_no_tpm
+    - *build_no_selinux
 
 # build with selinux for rhel9
 build-rhel9-selinux:
@@ -209,7 +185,7 @@ build-rhel9-selinux:
   tags:
     - rhel9
   script:
-    - *build_with_selinux_no_tpm
+    - *build_with_selinux
   after_script:
     - sudo semodule -r maat
   allow_failure: true # for now this is allowed because of an issue with flask header
@@ -251,19 +227,6 @@ test-ubuntu20-basic:
   tags:
     - ubuntu20
   script:
-    - *test_no_selinux_no_tpm
-  artifacts:
-    paths:
-      - build/src/test/*.log
-    expire_in: 2 weeks
-    when: always
-
-# regular make check tests on ubuntu20 with TPM
-test-ubuntu20-basic-tpm:
-  stage: test
-  tags:
-    - maat-swtpm
-  script:
     - *test_no_selinux
   artifacts:
     paths:
@@ -277,19 +240,6 @@ test-ubuntu20-asan:
   tags:
     - ubuntu20
   script:
-    - *test_asan_no_tpm
-  artifacts:
-    paths:
-      - build/src/test/*.log
-    expire_in: 2 weeks
-    when: always
-
-# make check tests with address sanitizer on ubuntu20
-test-ubuntu20-asan-tpm:
-  stage: test
-  tags:
-    - maat-swtpm
-  script:
     - *test_asan
   artifacts:
     paths:
@@ -298,30 +248,30 @@ test-ubuntu20-asan-tpm:
     when: always
 
 # regular make check tests on ubuntu22
-# test-ubuntu22-basic:
-#   stage: test
-#   tags:
-#     - ubuntu22
-#   script:
-#     - *test_no_selinux_no_tpm
-#   artifacts:
-#     paths:
-#       - build/src/test/*.log
-#     expire_in: 2 weeks
-#     when: always
+test-ubuntu22-basic:
+  stage: test
+  tags:
+    - ubuntu22
+  script:
+    - *test_no_selinux
+  artifacts:
+    paths:
+      - build/src/test/*.log
+    expire_in: 2 weeks
+    when: always
 
-# # make check tests with address sanitizer on ubuntu22
-# test-ubuntu22-asan:
-#   stage: test
-#   tags:
-#     - ubuntu22
-#   script:
-#     - *test_asan_no_tpm
-#   artifacts:
-#     paths:
-#       - build/src/test/*.log
-#     expire_in: 2 weeks
-#     when: always
+# make check tests with address sanitizer on ubuntu22
+test-ubuntu22-asan:
+  stage: test
+  tags:
+    - ubuntu22
+  script:
+    - *test_asan
+  artifacts:
+    paths:
+      - build/src/test/*.log
+    expire_in: 2 weeks
+    when: always
 
 # regular make check tests without selinux on rhel7
 test-rhel7-basic-no-selinux:
@@ -329,7 +279,7 @@ test-rhel7-basic-no-selinux:
   tags:
     - rhel7
   script:
-    - *test_no_selinux_no_tpm
+    - *test_no_selinux
   artifacts:
     paths:
       - build/src/test/*.log
@@ -342,7 +292,7 @@ test-rhel7-asan:
   tags:
     - rhel7
   script:
-    - *test_asan_no_tpm
+    - *test_asan
   artifacts:
     paths:
       - build/src/test/*.log
@@ -356,7 +306,7 @@ test-rhel8-basic-no-selinux:
   tags:
     - rhel8
   script:
-    - *test_no_selinux_no_tpm
+    - *test_no_selinux
   artifacts:
     paths:
       - build/src/test/*.log
@@ -369,7 +319,7 @@ test-rhel8-asan:
   tags:
     - rhel8
   script:
-    - *test_asan_no_tpm
+    - *test_asan
   artifacts:
     paths:
       - build/src/test/*.log
@@ -383,7 +333,7 @@ test-rhel9-basic-no-selinux:
   tags:
     - rhel9
   script:
-    - *test_no_selinux_no_tpm
+    - *test_no_selinux
   artifacts:
     paths:
       - build/src/test/*.log
@@ -397,7 +347,7 @@ test-rhel9-asan:
   tags:
     - rhel9
   script:
-    - *test_asan_no_tpm
+    - *test_asan
   artifacts:
     paths:
       - build/src/test/*.log
@@ -424,20 +374,20 @@ package-ubuntu20-amd64-deb:
     expire_in: 2 weeks
 
 # package ubuntu22 jammy deb
-# package-ubuntu22-amd64-deb:
-#   stage: package
-#   tags:
-#     - ubuntu22
-#   variables:
-#     release: jammy
-#     arch: amd64
-#     PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-aptitude
-#   script:
-#     - *deb_build
-#   artifacts:
-#     paths:
-#       - build/staging
-#     expire_in: 2 weeks
+package-ubuntu22-amd64-deb:
+  stage: package
+  tags:
+    - ubuntu22
+  variables:
+    release: jammy
+    arch: amd64
+    PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-aptitude
+  script:
+    - *deb_build
+  artifacts:
+    paths:
+      - build/staging
+    expire_in: 2 weeks
 
 # package rhel7 rpm
 package-rhel7-x86_64-rpm:
@@ -510,22 +460,22 @@ create-ubuntu20-repo:
     expire_in: 2 weeks
 
 # create ubuntu22 jammy repo
-# create-ubuntu22-repo:
-#   stage: deploy
-#   tags:
-#     - ubuntu22
-#   needs:
-#     - package-ubuntu22-amd64-deb
-#   inherit:
-#     default: false
-#   variables:
-#     release: jammy
-#   script:
-#     - *deb_repo
-#   artifacts:
-#     paths:
-#       - maat-$CI_COMMIT_SHORT_SHA/
-#     expire_in: 2 weeks
+create-ubuntu22-repo:
+  stage: deploy
+  tags:
+    - ubuntu22
+  needs:
+    - package-ubuntu22-amd64-deb
+  inherit:
+    default: false
+  variables:
+    release: jammy
+  script:
+    - *deb_repo
+  artifacts:
+    paths:
+      - maat-$CI_COMMIT_SHORT_SHA/
+    expire_in: 2 weeks
 
 ## systemtest
 
@@ -624,81 +574,6 @@ system-test-ubuntu20-fail:
     - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r packages | tee test_client.log || true"
     - "kill %2 || true"
     - "kill %1 || true"
-    - "sudo rm -f /etc/maat/credentials/client.*"
-    - "if ! grep FAIL test_client.log ; then echo 'Did not find FAIL!' ; exit 1 ; fi"
-  after_script:
-    - sudo truncate -s 0 /usr/share/maat/asps/package.blacklist
-  artifacts:
-    paths:
-      - test_client.log
-    expire_in: 2 weeks
-
-# system test on ubuntu20
-system-test-ubuntu20-tpm:
-  stage: systemtest
-  tags:
-    - maat-swtpm
-  inherit:
-    default: false
-  dependencies: []
-  variables:
-    release: focal
-    arch: amd64
-  before_script:
-    - "sudo killall -15 attestmgr || true"
-    - "sudo killall -9 attestmgr || true"
-  script:
-    - echo -n "deb [allow-insecure=yes] http://$ARCHIVE_HOST/deb/maat-$CI_COMMIT_SHORT_SHA/ubuntu ${release} multiverse" > maat.list
-    - sudo cp maat.list /etc/apt/sources.list.d/
-    - sudo apt-get --allow-unauthenticated update
-    - sudo apt-get --allow-unauthenticated -y --reinstall install maat
-    - export TPM2TOOLS_TCTI=tabrmd && tpm2_createek -c demo/credentials/ek.handle && tpm2_createak -C demo/credentials/ek.handle -c demo/credentials/ak.ctx -u demo/credentials/akpub.pem -f pem -p maatpass 
-    - sudo cp demo/credentials/ak* /etc/maat/credentials/
-    - sudo cp demo/credentials/client.* /etc/maat/credentials/
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml -T 1 -v 1 &
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml -T 1 -v 1 &
-    - sleep 10
-    - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r processes | tee test_client.log || true"
-    - "kill %2 || true"
-    - "kill %1 || true"
-    - sudo rm -f /etc/maat/credentials/ak*
-    - sudo rm -f /etc/maat/credentials/client.*
-    - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
-  artifacts:
-    paths:
-      - test_client.log
-    expire_in: 2 weeks
-
-# system test on ubunt20 that is expected to fail
-system-test-ubuntu20-fail-tpm:
-  stage: systemtest
-  tags:
-    - maat-swtpm
-  inherit:
-    default: false
-  dependencies: []
-  variables:
-    release: focal
-    arch: amd64
-  before_script:
-    - "sudo killall -15 attestmgr || true"
-    - "sudo killall -9 attestmgr || true"
-  script:
-    - echo -n "deb [allow-insecure=yes] http://$ARCHIVE_HOST/deb/maat-$CI_COMMIT_SHORT_SHA/ubuntu ${release} multiverse" > maat.list
-    - sudo cp maat.list /etc/apt/sources.list.d/
-    - sudo apt-get --allow-unauthenticated update
-    - sudo apt-get --allow-unauthenticated -y --reinstall install maat
-    - export TPM2TOOLS_TCTI=tabrmd && tpm2_createek -c demo/credentials/ek.handle && tpm2_createak -C demo/credentials/ek.handle -c demo/credentials/ak.ctx -u demo/credentials/akpub.pem -f pem -p maatpass 
-    - sudo cp demo/credentials/ak* /etc/maat/credentials/
-    - sudo cp demo/credentials/client.* /etc/maat/credentials/
-    - echo "ubuntu-session 3.36.0-2ubuntu1 amd64" | sudo tee -a /usr/share/maat/asps/package.blacklist
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml -T 1 -v 1 &
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml -T 1 -v 1 &
-    - sleep 10
-    - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r packages | tee test_client.log || true"
-    - "kill %2 || true"
-    - "kill %1 || true"
-    - "sudo rm -f /etc/maat/credentials/ak*"
     - "sudo rm -f /etc/maat/credentials/client.*"
     - "if ! grep FAIL test_client.log ; then echo 'Did not find FAIL!' ; exit 1 ; fi"
   after_script:

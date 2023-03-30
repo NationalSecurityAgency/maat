@@ -228,19 +228,12 @@ static int append_line_to_file(const char *filename, const char *line)
     }
 
     ret = fprintf(fp, "%s\n", line);
-<<<<<<< HEAD
     fclose(fp);
-=======
->>>>>>> tpm-updates
     if (ret < 0) {
         dlog(1, "Unable to write to file %s\n", filename);
         return -1;
     }
 
-<<<<<<< HEAD
-=======
-    fclose(fp);
->>>>>>> tpm-updates
     return 0;
 }
 

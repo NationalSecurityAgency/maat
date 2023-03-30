@@ -35,7 +35,7 @@ AM_CFLAGS       = -std=gnu99 -g -Wall
 LDADD           = ../common/libcommon.la \
 		  ../util/libmaat_util-@PACKAGE_VERSION@.la \
 		  @CHECK_LIBS@ $(SELINUX_LIBS) \
-		  $(XML_LIBS) $(GLIB_LIBS) $(OPENSSL_LIBS) \
+		  $(XML_LIBS) $(GLIB_LIBS) $(OPENSSL_LIBS) $(TPM_LIBS) \
 		  -luuid -ldl -lz
 
 if BUILD_COVERAGE

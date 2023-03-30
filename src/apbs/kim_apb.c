@@ -254,8 +254,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid UN
                       parse_target_id_type((xmlChar*)target_type),
                       (xmlChar*)target,
                       (xmlChar*)resource, evaluation, report_data_list,
-                      scen->certfile, scen->keyfile, scen->keypass, NULL, 
-                      scen->tpmpass, scen->akctx, scen->sign_tpm,
+                      scen->certfile, scen->keyfile, scen->keypass, NULL, scen->tpmpass,
                       (xmlChar **)&response_buf, &sz);
 
         if(ret_val < 0 || response_buf == NULL) {

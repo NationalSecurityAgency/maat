@@ -33,7 +33,7 @@
 
 #define DEFAULT_AM_PORT 2342
 
-static const char *short_options = "hi:s:m:a:f:k:T:v:P:x:A:I:M:S:p:w:Wu:C:U:G:t:XZ";
+static const char *short_options = "hi:s:m:a:f:k:I:M:S:p:w:Wu:C:U:G:t:XZ";
 static const struct option long_options[] = {
     {
         .name           = "help",
@@ -88,36 +88,6 @@ static const struct option long_options[] = {
         .has_arg	= 1,
         .flag		= NULL,
         .val		= 'k'
-    },
-    {
-        .name		= "sign-tpm",
-        .has_arg	= 1,
-        .flag		= NULL,
-        .val		= 'T'
-    },
-    {
-        .name		= "verify-tpm",
-        .has_arg	= 1,
-        .flag		= NULL,
-        .val		= 'v'
-    },
-    {
-        .name		= "tpm-pass",
-        .has_arg	= 1,
-        .flag		= NULL,
-        .val		= 'P'
-    },
-    {
-        .name		= "akctx",
-        .has_arg	= 1,
-        .flag		= NULL,
-        .val		= 'x'
-    },
-    {
-        .name		= "akpubkey",
-        .has_arg	= 1,
-        .flag		= NULL,
-        .val		= 'A'
     },
     {
         .name           = "apb-directory",
@@ -208,18 +178,14 @@ void print_usage(char *progname)
          "[--work-directory <dir>] [--keep-workdir] [-m COPLAND|MONGO [-s <selector-config>]]\n\t"
          "[--ignore-desired-contexts] [--use-default-categories]\n\t"
          "[--user username] [--group groupname] [-C <config-file>] [-t <timeout>]\n\t"
-         "-a <cacert file> -f <certfile> -k <private key file>\n\t" 
-	     "-T <sign with tpm?>  -v <verify with tpm?> -P <tpm password> -x <AK context file> -A <AK public key file>\n\t"
-	     "-p <place file name>\n", progname);
+         "-a <cacert file> -f <certfile> -k <private key file> -p <place file name>\n", progname);
     fprintf(stderr,
             "Usage: %s [-i <address>[:<port>]]* [-u <socket-path]* [--apb-directory <dir>]\n\t"
             "[--measurement-spec-directory <dir>] [--asp-directory <dir>]\n\t"
             "[--work-directory <dir>] [--keep-workdir] [-m COPLAND|MONGO [-s <selector-config>]]\n\t"
             "[--ignore-desired-contexts] [--use-default-categories]\n\t"
             "[--user username] [--group groupname] [-C <config-file>] [-t <timeout>]\n\t"
-            "-a <cacert file> -f <certfile> -k <private key file>\n\t"
-	        "-T <sign with tpm?>  -v <verify with tpm?> -P <tpm password> -x <AK context file> -A <AK public key file>\n\t"
-	        "-p <place file name>\n", progname);
+            "-a <cacert file> -f <certfile> -k <private key file> -p <place file name>\n", progname);
 
 }
 
@@ -356,24 +322,6 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
             }
         }
         break;
-        case 'T':
-            if(strcasecmp(optarg, "yes") == 0 ||
-	       strcasecmp(optarg, "true") == 0 ||
-	       strcasecmp(optarg, "1") == 0) {
-	      cfg->sign_tpm = 1;
-            } else {
-	      cfg->sign_tpm = 0;
-            }
-        break;
-        case 'v':
-            if(strcasecmp(optarg, "yes")  == 0 ||
-	       strcasecmp(optarg, "true") == 0 ||
-	       strcasecmp(optarg, "1")    == 0) {
-	      cfg->verify_tpm = 1;
-            } else {
-	      cfg->verify_tpm = 0;
-            }
-        break;
 
         OPT_CASE('C', config_file);
         OPT_CASE('s', cfg->selector_source.loc);
@@ -381,9 +329,6 @@ int attestmgr_getopt(int argc, char **argv, am_config *cfg)
         OPT_CASE('a', cfg->cacert_file);
         OPT_CASE('f', cfg->cert_file);
         OPT_CASE('k', cfg->privkey_file);
-        OPT_CASE('P', cfg->tpmpass);
-        OPT_CASE('x', cfg->akctx);
-        OPT_CASE('A', cfg->akpubkey);
         OPT_CASE('p', cfg->place_file);
         OPT_CASE('S', cfg->asp_metadata_dir);
         OPT_CASE('I', cfg->apb_metadata_dir);

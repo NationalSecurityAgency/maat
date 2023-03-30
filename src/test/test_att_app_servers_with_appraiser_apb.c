@@ -39,7 +39,6 @@
 #include <common/asp_info.h>
 #include <common/asp.h>
 #include <measurement_spec/find_types.h>
-#include <config.h>
 #include <util/util.h>
 #include <common/apb_info.h>
 #include <am/selector.h>
@@ -146,13 +145,6 @@ START_TEST(test_appraiser_apb)
                         "-a", CREDS_DIR"/ca.pem",
                         "-f", CREDS_DIR"/client.pem",
                         "-k", CREDS_DIR"/client.key",
-#ifdef USE_TPM
-                        "-T", "yes",
-                        "-v", "yes",
-                        "-P", "maatpass",
-                        "-x", CREDS_DIR"/ak.ctx",
-                        "-A", CREDS_DIR"/akpub.pem",
-#endif
                         "-u", "/tmp/att.sock"
                       };
     int attargc = sizeof(attargv)/sizeof(attargv[0]);
@@ -175,13 +167,6 @@ START_TEST(test_appraiser_apb)
                         "-a", CREDS_DIR"/ca.pem",
                         "-f", CREDS_DIR"/server.pem",
                         "-k", CREDS_DIR"/server.key",
-#ifdef USE_TPM
-                        "-T", "yes",
-                        "-v", "yes",
-                        "-P", "maatpass",
-                        "-x", CREDS_DIR"/ak.ctx",
-                        "-A", CREDS_DIR"/akpub.pem",
-#endif
                         "-u", "/tmp/app.sock"
                       };
     int appargc = sizeof(appargv)/sizeof(appargv[0]);

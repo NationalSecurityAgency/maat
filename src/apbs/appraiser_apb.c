@@ -304,8 +304,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     err = create_integrity_response(parse_target_id_type((xmlChar*)target_type), (xmlChar*)target,
                                     (xmlChar*)resource, evaluation, report_data_list,
                                     scen->certfile, scen->keyfile, scen->keypass, NULL,
-                                    scen->tpmpass, scen->akctx, scen->sign_tpm, 
-                                    (xmlChar **)&response_buf, &sz);
+                                    scen->tpmpass, (xmlChar **)&response_buf, &sz);
 
     if(err < 0) {
         dlog(0, "Error: created_intergrity_response returned %d\n", err);

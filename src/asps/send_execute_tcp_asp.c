@@ -92,7 +92,7 @@ static char *find_phrase(char *resource)
 static int send_to_attester_listen_for_result(int attester_chan, char *resource,
         char *certfile, char *keyfile,
         char *keypass, char *nonce,
-        char *tpmpass, char *akctx, int sign_tpm,
+        char *tpmpass, int sign_tpm,
         char **out, size_t *out_size)
 {
     int ret_val           = 0;
@@ -115,7 +115,7 @@ static int send_to_attester_listen_for_result(int attester_chan, char *resource,
     ret_val = create_execute_contract(MAAT_CONTRACT_VERSION,
                                       sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL,
                                       phrase, certfile, keyfile, keypass, nonce, tpmpass,
-                                      akctx, &exe_contract, &csize);
+                                      &exe_contract, &csize);
     if(ret_val != 0 || exe_contract == NULL) {
         dlog(0, "create_execute_contract failed: %d\n", ret_val);
         ret_val = -1;
@@ -202,7 +202,6 @@ int asp_measure(int argc, char *argv[])
     char *keypass                   = NULL;
     char *nonce                     = NULL;
     char *tpmpass                   = NULL;
-    char *akctx                     = NULL;
     int  sign_tpm                   = 0;
 
     char *result                    = NULL;
@@ -212,11 +211,11 @@ int asp_measure(int argc, char *argv[])
 
     // Parse args
     errno = 0;
-    if((argc != 13) ||
+    if((argc != 12) ||
             (((parse_out_fd = strtol(argv[2], NULL, 10)) < 0) || errno != 0) ||
             (((parse_port = strtol(argv[4], NULL, 10)) < 0) || errno != 0)   ||
-            (((parse_sign_tpm = strtol(argv[12], NULL, 10)) < 0) || errno != 0)) {
-        asp_logerror("Usage: "ASP_NAME" <in_fd [unused]> <out_fd> <addr> <port> <resource> <certfile> <keyfile> <keypass> <nonce> <tpmpass> <akctx> <sign_tpm>\n");
+            (((parse_sign_tpm = strtol(argv[11], NULL, 10)) < 0) || errno != 0)) {
+        asp_logerror("Usage: "ASP_NAME" <in_fd [unused]> <out_fd> <addr> <port> <resource> <certfile> <keyfile> <keypass> <nonce> <tpmpass> <sign_tpm>\n");
         return -EINVAL;
     }
 
@@ -241,7 +240,6 @@ int asp_measure(int argc, char *argv[])
 
     sign_tpm = (int)parse_sign_tpm;
 
-
     addr     = argv[3];
     resource = argv[5];
     certfile = argv[6];
@@ -249,7 +247,6 @@ int asp_measure(int argc, char *argv[])
     keypass  = argv[8];
     nonce    = argv[9];
     tpmpass  = argv[10];
-    akctx    = argv[11];
 
     errno = 0;
     targ_chan = create_channel(addr, port);
@@ -260,7 +257,7 @@ int asp_measure(int argc, char *argv[])
     }
 
     ret_val = send_to_attester_listen_for_result(targ_chan, resource, certfile, keyfile,
-              keypass, nonce, tpmpass, akctx, sign_tpm, &result, &rsize);
+              keypass, nonce, tpmpass, sign_tpm, &result, &rsize);
     if(ret_val < 0) {
         dlog(0, "Unable to send execute contract to attester or get a result\n");
         goto error;

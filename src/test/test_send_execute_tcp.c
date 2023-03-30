@@ -24,7 +24,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#include <config.h>
 #include <common/asp.h>
 #include <common/apb_info.h>
 #include <am/contracts.h>
@@ -33,7 +32,7 @@
 #include <apb/apb.h>
 
 #define LISTEN_BACK 1
-#define ASP_ARG_NO 10
+#define ASP_ARG_NO 9
 #define ATT_PORT "6666"
 #define ATT_ADDR "127.0.0.1"
 #define RESOURCE "userspace"
@@ -45,10 +44,6 @@
 
 #define CA_CERT SRCDIR "/credentials/ca.pem"
 #define CERT_FILE SRCDIR "/credentials/client.key"
-#ifdef USE_TPM
-#define AKCTX SRCDIR "/credentials/ak.ctx"
-#define TPMPASS "maatpass"
-#endif
 
 /* Global variables  */
 GList *g_asps = NULL;
@@ -179,15 +174,9 @@ START_TEST(test_sendexecutetcp)
     asp_argv[4] = CERT_FILE;
     asp_argv[5] = strdup(""); //keypass
     asp_argv[6] = NONCE;
-#ifdef USE_TPM
-    asp_argv[7] = TPMPASS;
-    asp_argv[8] = AKCTX;
-    asp_argv[9] = strdup("1");
-#else
-    asp_argv[7] = ""; 
-    asp_argv[8] = "";
-    asp_argv[9] = strdup("0");
-#endif
+    asp_argv[7] = strdup(""); //tpmpass
+    asp_argv[8] = strdup("0");
+
     fail_if(asp_argv[0] == NULL || asp_argv[2] == NULL || rc < 0,
             "Unable to convert address or port ASP arguments");
 

@@ -159,6 +159,7 @@ int asp_measure(int argc, char *argv[])
         unmap_measurement_graph(graph);
         return -1;
     }
+
     if(stat("/proc/net/udp", &file_stats) != 0) {
         asp_logerror("Failed to stat() /proc/net/udp\n");
         free_address(&file_address->address);

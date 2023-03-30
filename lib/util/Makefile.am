@@ -24,24 +24,28 @@ libmaat_util_@PACKAGE_VERSION@_la_SOURCES = util.c csv.c xml_util.c base64.c che
 			signfile.c inet-socket.c unix-socket.c maat-io.c \
 			glib-compat.c
 
+if USETPM
+libmaat_util_@PACKAGE_VERSION@_la_SOURCES += sign_tpm.c tpm.c
+endif
+
 library_includedir=$(includedir)/@PACKAGE_NAME@-@PACKAGE_VERSION@/util
 library_include_HEADERS = util.h csv.h xml_util.h base64.h checksum.h crypto.h \
-			validate.h compress.h sign.h keyvalue.h signfile.h \
+			validate.h compress.h tpm.h sign.h keyvalue.h signfile.h \
 			inet-socket.h unix-socket.h maat-io.h
+
+if USETPM
+library_include_HEADERS += sign_tpm.h
+endif
 
 AM_CPPFLAGS= -I$(srcdir) -I$(srcdir)/.. $(GLIB_CFLAGS) \
 		$(XML_CPPFLAGS) $(OPENSSL_CFLAGS)
-libmaat_util_@PACKAGE_VERSION@_la_LIBADD = -luuid $(GLIB_LIBS) $(XML_LIBS) $(OPENSSL_LIBS)
+libmaat_util_@PACKAGE_VERSION@_la_LIBADD = -luuid $(GLIB_LIBS) $(XML_LIBS) $(OPENSSL_LIBS) \
+								$(TPM_LIBS) 
 libmaat_util_@PACKAGE_VERSION@_la_LDFLAGS = -version-info $(UTIL_LIBTOOL_VERSION)
 
 if BUILD_COVERAGE
 AM_CFLAGS += -fprofile-arcs -ftest-coverage
 libmaat_util_@PACKAGE_VERSION@_la_LDFLAGS += -fprofile-arcs -ftest-coverage
-endif
-
-if USETPM
-SUBDIRS = tpm2
-libmaat_util_@PACKAGE_VERSION@_la_LIBADD += -Ltpm2 -ltpm2
 endif
 
 clean-local:

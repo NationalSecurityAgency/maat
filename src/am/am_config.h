@@ -82,12 +82,7 @@ typedef struct am_config {
     char *cert_file;
     char *privkey_file;
     char *privkey_pass;
-    char *tpmpass;
-    char *akctx;
-    char *akpubkey;
-    int sign_tpm;
-    int verify_tpm;
-
+    char *tpm_pass;
 
     char *asp_metadata_dir;
     char *apb_metadata_dir;

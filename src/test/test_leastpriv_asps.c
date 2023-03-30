@@ -25,7 +25,6 @@
 #include <unistd.h>
 #include <check.h>
 
-#include <config.h>
 #include <graph/graph-core.h>
 #include <common/asp_info.h>
 #include <common/asp.h>
@@ -45,11 +44,6 @@
 
 #define TIMEOUT 1000
 
-#ifdef USE_TPM
-#define NONCE "dd586e37ecc7a9fecd5cc00152031d7c18866aea"
-#define TPMPASS "maatpass"
-#endif
-
 GList *asps = NULL;
 struct asp *mtab_asp; //not a least priv ASP itself, used to create a graph to push through pipe
 struct asp *serialize_graph_asp;
@@ -63,7 +57,6 @@ node_id_t path_node;
 
 char *workdir           = SRCDIR "/workdirs/workdir-test-leastpriv-asps";
 char *nonce;
-char *akctx_filename;
 char *partner_cert;
 char *partner_key;
 char *cacert_filename;
@@ -141,21 +134,12 @@ void setup(void)
     fail_unless(partner_key != NULL, "Failed to strdup partner key filename (CREDS_DIR=%s)\n", CREDS_DIR);
 
     cacert_filename = (char *) g_strdup_printf("%s/ca.pem", CREDS_DIR);
-    fail_unless(cacert_filename != NULL, "Failed to strdup cacert filename (CREDS_DIR=%s)\n", CREDS_DIR);
+    fail_unless(partner_key != NULL, "Failed to strdup cacert filename (CREDS_DIR=%s)\n", CREDS_DIR);
 
     /* Finally create it */
-#ifdef USE_TPM
-    akctx_filename = (char *) g_strdup_printf("%s/ak.ctx", CREDS_DIR);
-    fail_unless(akctx_filename != NULL, "Failed to strdup akctx filename (CREDS_DIR=%s)\n", CREDS_DIR);
-
-    rc = create_execute_contract(MAAT_CONTRACT_VERSION, SIGNATURE_TPM, phrase,
-                                 partner_cert, partner_key, NULL, NONCE, TPMPASS,
-                                 akctx_filename, &exe_contract_str, &csize);
-#else
     rc = create_execute_contract(MAAT_CONTRACT_VERSION, SIGNATURE_OPENSSL, phrase,
                                  partner_cert, partner_key, NULL, NULL, NULL,
-                                 NULL, &exe_contract_str, &csize);
-#endif
+                                 &exe_contract_str, &csize);
     fail_if(rc != 0 || exe_contract_str == NULL, "Failed to create execute contract\n");
 
     /* Save off the nonce for later */
@@ -398,15 +382,8 @@ START_TEST(test_create_contract_asp)
     unsigned char *contract_blob;
     size_t cblob_size;
 
-#ifdef USE_TPM
-    char *sign_tpm = "1";
-    char *tpm_pass = "maatpass";
-    char *akctx = akctx_filename;
-#else    
     char *sign_tpm = "0";
-    char *tpm_pass = "";
-    char *akctx = "";
-#endif
+    char *tpm_pass = "maatpass";
 
     char *compressed = "0";
     char *encrypted = "0";
@@ -424,9 +401,9 @@ START_TEST(test_create_contract_asp)
         close(fd_out[0]);
 
         /* The keypass argument is given as an empty string because no password is needed for the demo certificates */
-        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, akctx, sign_tpm, compressed, encrypted};
+        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, sign_tpm, compressed, encrypted};
 
-        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 9, asp_argv, -1);
+        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 8, asp_argv, -1);
 
         close(fd_in[0]);
         close(fd_out[1]);
@@ -470,15 +447,8 @@ START_TEST(test_create_contract_asp_encrypted)
     unsigned char *contract_blob;
     size_t cblob_size;
 
-#ifdef USE_TPM
-    char *sign_tpm = "1";
-    char *tpm_pass = "maatpass";
-    char *akctx = akctx_filename;
-#else    
     char *sign_tpm = "0";
-    char *tpm_pass = "";
-    char *akctx = "";
-#endif
+    char *tpm_pass = "maatpass";
 
     char *compressed = "0";
     char *encrypted = "1";
@@ -496,9 +466,9 @@ START_TEST(test_create_contract_asp_encrypted)
         close(fd_out[0]);
 
         /* The keypass argument is given as an empty string because no password is needed for the demo certificates */
-        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, akctx, sign_tpm, compressed, encrypted};
+        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, sign_tpm, compressed, encrypted};
 
-        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 9, asp_argv, -1);
+        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 8, asp_argv, -1);
 
         close(fd_in[0]);
         close(fd_out[1]);
@@ -546,15 +516,8 @@ START_TEST(test_create_contract_asp_compressed)
     unsigned char *contract_blob;
     size_t cblob_size;
 
-#ifdef USE_TPM
-    char *sign_tpm = "1";
-    char *tpm_pass = "maatpass";
-    char *akctx = akctx_filename;
-#else    
     char *sign_tpm = "0";
-    char *tpm_pass = "";
-    char *akctx = "";
-#endif
+    char *tpm_pass = "maatpass";
 
     char *compressed = "1";
     char *encrypted = "0";
@@ -571,9 +534,9 @@ START_TEST(test_create_contract_asp_compressed)
         close(fd_in[1]);
         close(fd_out[0]);
 
-        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, akctx, sign_tpm, compressed, encrypted};
+        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, sign_tpm, compressed, encrypted};
 
-        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 9, asp_argv, -1);
+        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 8, asp_argv, -1);
 
         close(fd_in[0]);
         close(fd_out[1]);
@@ -617,15 +580,8 @@ START_TEST(test_create_contract_asp_compressed_encrypted)
     unsigned char *contract_blob;
     size_t cblob_size;
 
-#ifdef USE_TPM
-    char *sign_tpm = "1";
-    char *tpm_pass = "maatpass";
-    char *akctx = akctx_filename;
-#else    
     char *sign_tpm = "0";
-    char *tpm_pass = "";
-    char *akctx = "";
-#endif
+    char *tpm_pass = "maatpass";
 
     char *compressed = "1";
     char *encrypted = "1";
@@ -642,9 +598,9 @@ START_TEST(test_create_contract_asp_compressed_encrypted)
         close(fd_in[1]);
         close(fd_out[0]);
 
-        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, akctx, sign_tpm, compressed, encrypted};
+        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, sign_tpm, compressed, encrypted};
 
-        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 9, asp_argv, -1);
+        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 8, asp_argv, -1);
 
         close(fd_in[0]);
         close(fd_out[1]);

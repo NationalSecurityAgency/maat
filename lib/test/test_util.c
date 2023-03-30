@@ -52,8 +52,8 @@
 #include <util/maat-io.h>
 
 #ifdef USE_TPM
-#include <util/tpm2/tools/sign.h>
-#define NONCE "dd586e37ecc7a9fecd5cc00152031d7c18866aea"
+#include <util/sign_tpm.h>
+#include <util/tpm.h>
 #endif
 
 #include "test-data.h"
@@ -580,36 +580,82 @@ START_TEST(test_sign_openssl_big)
 END_TEST
 
 #ifdef USE_TPM
+START_TEST(test_tpm_read_pcr)
+{
+    struct tpm_state *tpm;
+    unsigned char *value;
+    uint32_t size;
+    int ret;
+
+    tpm = tpm_init("maat_test_pass");
+    fail_if(!tpm, "tpm_init_failed");
+
+    ret = tpm_read_pcr(tpm, 0, &value, &size);
+    fail_if(ret);
+    fail_if(size != 20);
+
+    tpm_exit(tpm);
+}
+END_TEST
+
+START_TEST(test_tpm_reset_pcr)
+{
+    struct tpm_state *tpm;
+    unsigned char *value;
+    uint32_t size;
+    unsigned char zeros[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                            };
+    int ret;
+
+    tpm = tpm_init("maat_test_pass");
+    fail_if(!tpm, "tpm_init_failed");
+
+    ret = tpm_reset_pcr(tpm, 16);
+    fail_if(ret);
+
+    ret = tpm_read_pcr(tpm, 16, &value, &size);
+    fail_if(ret);
+    fail_if(size != 20);
+    fail_if(memcmp(value, zeros, size));
+
+    tpm_exit(tpm);
+}
+END_TEST
 
 START_TEST(test_sign_tpm_small)
 {
-    struct tpm_sig_quote *sig_quote = tpm2_sign(test_string, strlen(test_string), TPMPASS, NONCE, AKCTX);
-    fail_if(!sig_quote, "no signature or quote returned\n");
-    fail_if(sig_quote->sig_size == 0, "signature size %d\n", sig_quote->sig_size);
-    fail_if(!sig_quote->signature, "failed to create signature\n");
-    fail_if(sig_quote->quote_size == 0, "quote size %d\n", sig_quote->quote_size);
-    fail_if(!sig_quote->quote, "failed to create quote\n");
+    unsigned char *signature;
+    int size;
+    int ret;
 
-    int res = checkquote(test_string, strlen(test_string), sig_quote->signature, sig_quote->sig_size, NONCE, AKPUB, sig_quote->quote, sig_quote->quote_size);
-    free(sig_quote->signature);
-    free(sig_quote->quote);
-    fail_if(res != 0, "checkquote failure %d\n", res);
+    size = strlen(test_string)+1;
+    signature = sign_buffer_tpm(test_string, &size, bnonce, 20, "maatpass");
+    fail_if(!signature, "signing failed");
+
+    ret = verify_buffer_tpm(test_string, strlen(test_string)+1,
+                            signature, size, certfile, cacertfile,
+                            bnonce, 20);
+    fail_if(ret != 1, "verification failed");
+    free(signature);
 }
 END_TEST
 
 START_TEST(test_sign_tpm_big)
 {
-    struct tpm_sig_quote *sig_quote = tpm2_sign(mostly_ones, RANDOMBUF, TPMPASS, NONCE, AKCTX);
-    fail_if(!sig_quote, "no signature or quote returned\n");
-    fail_if(sig_quote->sig_size == 0, "signature size %d\n", sig_quote->sig_size);
-    fail_if(!sig_quote->signature, "failed to create signature\n");
-    fail_if(sig_quote->quote_size == 0, "quote size %d\n", sig_quote->quote_size);
-    fail_if(!sig_quote->quote, "failed to create quote\n");
+    unsigned char *signature;
+    int size;
+    int ret;
 
-    int res = checkquote(mostly_ones, RANDOMBUF, sig_quote->signature, sig_quote->sig_size, NONCE, AKPUB, sig_quote->quote, sig_quote->quote_size);
-    free(sig_quote->signature);
-    free(sig_quote->quote);
-    fail_if(res != 0, "checkquote failure %d\n", res);
+    size = RANDOMBUF;
+    signature = sign_buffer_tpm(mostly_ones, &size, bnonce, 20, "maatpass");
+    fail_if(!signature, "signing failed");
+
+    ret = verify_buffer_tpm(mostly_ones, RANDOMBUF,
+                            signature, size, certfile, cacertfile,
+                            bnonce, 20);
+    fail_if(ret != 1, "verification failed");
+    free(signature);
 }
 END_TEST
 #endif
@@ -844,6 +890,8 @@ int main(void)
     tpm = tcase_create("tpm");
     tcase_add_unchecked_fixture(tpm, unchecked_setup,
                                 unchecked_teardown);
+    tcase_add_test(tpm, test_tpm_read_pcr);
+    tcase_add_test(tpm, test_tpm_reset_pcr);
     suite_add_tcase(util, tpm);
 
 #endif

@@ -27,9 +27,6 @@
         <private-key>@credsdir@/client.key</private-key>
         <certificate>@credsdir@/client.pem</certificate>
         <ca-certificate>@credsdir@/ca.pem</ca-certificate>
-        <tpm-password>maatpass</tpm-password>
-        <akctx>@credsdir@/ak.ctx</akctx>
-        <akpubkey>@credsdir@/akpub.pem</akpubkey>
     </credentials>
     <metadata type="asps" dir="@aspinfodir@" />
     <metadata type="apbs" dir="@apbinfodir@" />

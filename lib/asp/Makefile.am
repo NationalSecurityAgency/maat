@@ -27,7 +27,7 @@ AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/.. $(GLIB_CFLAGS) \
 		$(XML_CPPFLAGS) $(OPENSSL_CFLAGS)
 
 
-LDADD=$(GLIB_LIBS) $(XML_LIBS) $(OPENSSL_LIBS) $(SELINUX_LIBS) \
+LDADD=$(GLIB_LIBS) $(XML_LIBS) $(OPENSSL_LIBS) $(TPM_LIBS) $(SELINUX_LIBS) \
                                 -luuid -L../util -L../graph \
 				-lmaat_util-@PACKAGE_VERSION@ \
 				../common/libcommon.la

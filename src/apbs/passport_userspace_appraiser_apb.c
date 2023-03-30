@@ -718,8 +718,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
                   (xmlChar*)target,
                   (xmlChar*)resource, (xmlChar*)passport_buf, NULL,
                   scen->certfile, scen->keyfile, scen->keypass, NULL,
-                  scen->tpmpass, scen->akctx, scen->sign_tpm,
-                  (xmlChar **)&response_buf, &sz);
+                  scen->tpmpass, (xmlChar **)&response_buf, &sz);
 
         if(ret < 0 || response_buf == NULL) {
             dlog(3, "Error: created_intergrity_response returned %d\n", ret);

@@ -28,9 +28,6 @@ measurement in different configurations. One of these demonstrations is an
 implementation of Userspace Measurement, as described in "Runtime Detection of 
 Userspace Implants" (DOI not yet available). 
 
-Please see ROADMAP.md for an overview of our current status and listing of 
-items on our roadmap.
-
 Maat currently supports RHEL 7 and 8, and Ubuntu 20.04 and 22.04.
 
 Documentation
@@ -41,9 +38,6 @@ but can also be built using `make docs` in the Maat repository.  Additionally,
 there are:
 
 - README.md :  This file, which contains a high level overview of Maat
-
-- ROADMAP.md : Current status of Maat supported features, and items on our 
-  	       roadmap.
 
 - am-ui/maat-attestation-manager-ui-TUTORIAL.md: Tutorial for setting up the Attestation Manager User 
 						 Interface to step through a recent measurement.

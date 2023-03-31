@@ -134,6 +134,8 @@ measurement_data *alloc_dummy_measurement_data()
     if(d) {
         d->d.type = &dummy_measurement_type;
         d->x = 0;
+    } else {
+        return NULL;
     }
     return &d->d;
 }
@@ -189,8 +191,11 @@ int unserialize_dummy_measurement_data(char *sd, size_t sd_size UNUSED,
 address *alloc_simple_address()
 {
     simple_address *a = malloc(sizeof(simple_address));
-    if(a)
+    if(a) {
         a->a.space = &simple_address_space;
+    } else {
+        return NULL;
+    }
     return &a->a;
 }
 

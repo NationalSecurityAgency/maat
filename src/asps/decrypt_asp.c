@@ -69,6 +69,7 @@ static int decrypt(void *encbuf, size_t encsize, char *eph_key,
     b64_free(unc_eph_key);
     if (ret < 0 || tmp_keysize != (ENC_KEY_SIZE + ENC_IV_SIZE)) {
         dlog(0, "Unable to decrypt encryption key\n");
+        free(key_iv_buf);
         goto decrypt_key_err;
     }
 

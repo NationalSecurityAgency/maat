@@ -188,6 +188,7 @@ static int measure_variable(void *ctxt, measurement_variable *var,
     md = marshall_measurement_data(&blob->d);
     if (md == NULL) {
         dlog(3, "could not serialize data\n");
+        free(blob->buffer);
         goto error;
     }
 

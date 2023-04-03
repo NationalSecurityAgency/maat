@@ -15,7 +15,7 @@
 #
 
 Name:           maat
-Version:        1.3
+Version:        1.4
 Release:        1%{?dist}
 Summary:        Maat Measurement & Attestation Framework
 Group:          Administration/Monitoring

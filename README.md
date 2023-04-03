@@ -26,7 +26,14 @@ Manager (the main program of the Maat Framework), as well as various Attestation
 Protocol Blocks (APBs) and Attestation Service Providers (ASPs) to demonstrate 
 measurement in different configurations. One of these demonstrations is an 
 implementation of Userspace Measurement, as described in "Runtime Detection of 
-Userspace Implants" (DOI not yet available). 
+Userspace Implants" (DOI: 10.1109/MILCOM47813.2019.9020783).
+
+Maat uses the Copland language, and supports many of the usecases, described in
+"Flexible Mechanisms for Remote Attestation" (DOI: 10.1145/3470535). Furthe
+documents on Copland and the design of measurement and attestation protocols can
+be found in "Orchestrating Layered Attestations" (DOI:
+10.1007/978-3-030-17138-4_9) and "Automated Trust Analysis of Copland
+Specifications for Layered Attestations" (DOI: 10.1145/3479394.3479418).
 
 Maat currently supports RHEL 7 and 8, and Ubuntu 20.04 and 22.04.
 

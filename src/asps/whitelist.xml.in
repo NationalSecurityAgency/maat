@@ -27,7 +27,7 @@
 		</satisfier>
 	</measurers>
 	<security_context>
-	  <selinux><type>whitelist_t</type></selinux>
+	  <selinux><type>whitelist_asp_t</type></selinux>
 	  <user>maat</user>
   	</security_context>
 	<usage>

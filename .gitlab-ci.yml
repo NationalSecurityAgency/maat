@@ -550,6 +550,7 @@ system-test-selinux-rhel7:
     - sudo yum install maat maat-selinux -y
     - sudo semanage port -a -t attestmgr_port_t -p tcp 2343
     - sudo cp demo/credentials/client.* /etc/maat/credentials/
+    - sudo rpm -qa --qf "%{NAME}\n" | sudo tee -a /usr/share/maat/asps/packages.whitelist
     - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
     - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
     - sleep 10

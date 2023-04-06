@@ -803,10 +803,13 @@ allow blacklist_asp_t userspace_appraiser_apb_t:fifo_file {read write};
 type whitelist_asp_t;
 type whitelist_asp_exe_t;
 define_asp(whitelist_asp_t, whitelist_asp_exe_t)
+allow whitelist_asp_t asp_info_dir_t:dir {search};
+allow whitelist_asp_t cert_t:dir {search};
 
 type whitelist_t;
 files_type(whitelist_t)
 allow whitelist_asp_t whitelist_t:file {read_file_perms};
+allow whitelist_asp_t userspace_appraiser_apb_t:fifo_file {read write};
 
 # DPKG check ASP
 type dpkg_check_asp_t;

@@ -302,7 +302,7 @@ static int extract_measurement(struct scenario *scen, void **msmt,
 
     if (SIZE_MAX > INT_MAX && scen->size > INT_MAX) {
         dlog(0, "Size given in scenario structure for measurement contract size %zu cannot be represented to XML API\n",
-                scen->size);
+             scen->size);
         goto xml_err;
     }
 
@@ -1070,6 +1070,36 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
                 */
                 ret = run_asp(appraiser_asp, -1, -1, false, 3, asp_argv,-1);
                 dlog(5, "Result from appraiser ASP %d\n", ret);
+            }
+        }
+        if(ret != 0) {
+            appraisal_stat++;
+        }
+        /* also run whitelist asp if datatype is process or package */
+        struct asp *whitelist_appraiser_asp = NULL;
+        ret = 0;
+        /* add  `|| PROCESSMETADATA_TYPE_MAGIC` for process whitelist appraisal */
+        if (data_type == PKG_DETAILS_TYPE_MAGIC) {
+            whitelist_appraiser_asp = find_asp(apb_asps, "whitelist");
+            if(!whitelist_appraiser_asp) {
+                dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", type_str);
+                ret = 0;
+                //ret = -1; // not a failure at this point - don't have sub ASPs for all yet
+            } else {
+                dlog(4, "appraiser_asp == %p (%p %d)\n", whitelist_appraiser_asp, apb_asps,
+                     g_list_length(apb_asps));
+
+                char *asp_argv[] = {graph_path,
+                                    node_str,
+                                    type_str
+                                   };
+                /*
+                  FIXME: This is just using the ASP's exit value to
+                  determine pass/fail status. We'd like to separate
+                  out errors of execution from failures of appraisal.
+                */
+                ret = run_asp(whitelist_appraiser_asp, -1, -1, false, 3, asp_argv,-1);
+                dlog(5, "Result from whitelist appraiser ASP %d\n", ret);
             }
         }
         if(ret != 0) {

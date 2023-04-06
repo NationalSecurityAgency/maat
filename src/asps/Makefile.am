@@ -277,6 +277,7 @@ endif
 if BUILD_whitelist_ASP
 asp_PROGRAMS    += whitelist
 aspinfo_DATA    += datafiles/modules.whitelist \
+                   datafiles/packages.whitelist \
                    datafiles/process.whitelist
 whitelist_SOURCES = whitelist.c
 endif

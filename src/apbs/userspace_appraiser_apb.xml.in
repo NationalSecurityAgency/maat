@@ -24,6 +24,7 @@
 	<asps ordered="False">
 		<asp uuid="2cddba1c-182c-4f4d-bd8b-109e8447f64d" initial="True">system_appraise</asp>
 		<asp uuid="bef082ae-a790-4f5a-a881-72384ab6c9ab">blacklist</asp>
+		<asp uuid="b4cda8d8-4361-45b1-a4da-d54af4257362">whitelist</asp>
 		<asp uuid="9d2e791d-f0c7-436e-9abf-af33cfac40b3">dpkg_check</asp>
 		<asp uuid="3ecdf802-831a-4c08-a690-ae3a82fe946f">kernel_msmt_asp</asp>
 		<asp uuid="c51385da-0865-461c-b36e-13e8b81bd5b2">receieve_asp</asp>

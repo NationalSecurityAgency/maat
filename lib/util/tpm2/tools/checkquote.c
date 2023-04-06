@@ -10,35 +10,244 @@ static tpm2_verifysig_ctx cq_ctx = {
 static bool verify_signature() {
 
   bool result = false;
-  
-  // Read in the AKpub they provided as an RSA object
-  FILE *pubkey_input = fopen(cq_ctx.pubkey_file_path, "rb");
-  if (!pubkey_input) {
-    dlog(3, "Could not open RSA pubkey input file \"%s\" error: \"%s\"\n",
-	    cq_ctx.pubkey_file_path, strerror(errno));
+  EVP_PKEY_CTX *pkey_ctx = NULL;
+
+  // read the public key
+  EVP_PKEY *pkey = NULL;
+  BIO *bio = NULL;
+
+  /*
+   * Order Matters. You must check for the smallest TSS size first, which
+   * it the TPMT_PUBLIC as it's embedded in the TPM2B_PUBLIC. It's possible
+   * to have valid TPMT's and have them parse as valid TPM2B_PUBLIC's (apparantly).
+   *
+   * If none of them convert, we try it as a plain signature.
+   */
+  TPM2B_PUBLIC public = { 0 };
+  bool ret = files_load_template_silent(cq_ctx.pubkey_file_path, &public.publicArea);
+  if (ret) {
+    goto convert_to_pem;
+  }
+
+  ret = files_load_public_silent(cq_ctx.pubkey_file_path, &public);
+  if (ret) {
+    goto convert_to_pem;
+  }
+
+  // not a tss format, just treat it as a pem file
+  bio = BIO_new_file(cq_ctx.pubkey_file_path, "rb");
+  if (!bio) {
+    dlog(3, "Failed to open public key output file '%s': %s", cq_ctx.pubkey_file_path,
+	 ERR_error_string(ERR_get_error(), NULL));
     return false;
   }
-  RSA *pub_key = PEM_read_RSA_PUBKEY(pubkey_input, NULL, NULL, NULL);
-  if (!pub_key) {
-    pub_key = PEM_read_RSAPublicKey(pubkey_input, NULL, NULL, NULL);
+
+  // not a tpm data structure, must be pem
+  goto try_pem;
+
+ convert_to_pem:
+  bio = BIO_new(BIO_s_mem());
+  if (!bio) {
+    dlog(3, "Failed to allocate memory bio: %s",
+	 ERR_error_string(ERR_get_error(), NULL));
+    return false;
   }
-  if (!pub_key) {
-    ERR_print_errors_fp(stderr);
-    dlog(3, "Failed to load RSA public key from file\n");
+
+  EVP_PKEY *pubkey = NULL;
+  int ssl_res = 0;
+  
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+  RSA *rsa_key = NULL;
+#else
+  OSSL_PARAM_BLD *build = NULL;
+  OSSL_PARAM *params = NULL;
+  EVP_PKEY_CTX *ctx = NULL;
+#endif
+  BIGNUM *e = NULL, *n = NULL;
+  
+  UINT32 exponent = public.publicArea.parameters.rsaDetail.exponent;
+  if (exponent == 0) {
+    exponent = 0x10001;
+  }
+
+  n = BN_bin2bn(public.publicArea.unique.rsa.buffer, public.publicArea.unique.rsa.size, NULL);
+  if (!n) {
+    print_ssl_error("Failed to convert data to SSL internal format");
+    ret = false;
+    goto error;
+  }
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+  rsa_key = RSA_new();
+  if (!rsa_key) {
+    print_ssl_error("Failed to allocate OpenSSL RSA structure");
+    ret = false;
+    goto error;
+  }
+
+  e = BN_new();
+  if (!e) {
+    print_ssl_error("Failed to convert data to SSL internal format");
+    ret = false;
+    goto error;
+  }
+  int rc = BN_set_word(e, exponent);
+  if (!rc) {
+    print_ssl_error("Failed to convert data to SSL internal format");
+    ret = false;
+    goto error;
+  }
+
+  rc = RSA_set0_key(rsa_key, n, e, NULL);
+  if (!rc) {
+    print_ssl_error("Failed to set RSA modulus and exponent components");
+    ret = false;
+    goto error;
+  }
+
+  /* modulus and exponent components are now owned by the RSA struct */
+  n = e = NULL;
+
+  pubkey = EVP_PKEY_new();
+  if (!pubkey) {
+    print_ssl_error("Failed to allocate OpenSSL EVP structure");
+    goto error;
+  }
+
+  rc = EVP_PKEY_assign_RSA(pubkey, rsa_key);
+  if (!rc) {
+    print_ssl_error("Failed to set OpenSSL EVP structure");
+    ret = false;
+    EVP_PKEY_free(pubkey);
+    pubkey = NULL;
+    goto error;
+  }
+  /* rsa key is now owner by the EVP_PKEY struct */
+  rsa_key = NULL;
+#else
+  build = OSSL_PARAM_BLD_new();
+  if (!build) {
+    print_ssl_error("Failed to allocate OpenSSL parameters");
+    ret = false;
+    goto error;
+  }
+
+  int rc = OSSL_PARAM_BLD_push_BN(build, OSSL_PKEY_PARAM_RSA_N, n);
+  if (!rc) {
+    print_ssl_error("Failed to set RSA modulus");
+    ret = false;
+    goto error;
+  }
+
+  rc = OSSL_PARAM_BLD_push_uint32(build, OSSL_PKEY_PARAM_RSA_E, exponent);
+  if (!rc) {
+    print_ssl_error("Failed to set RSA exponent");
+    ret = false;
+    goto error;
+  }
+
+  params = OSSL_PARAM_BLD_to_param(build);
+  if (!params) {
+    print_ssl_error("Failed to build OpenSSL parameters");
+    ret = false;
+    goto error;
+  }
+
+  ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
+  if (!ctx) {
+    print_ssl_error("Failed to allocate RSA key context");
+    ret = false;
+    goto error;
+  }
+
+  rc = EVP_PKEY_fromdata_init(ctx);
+  if (rc <= 0) {
+    print_ssl_error("Failed to initialize RSA key creation");
+    ret = false;
+    goto error;
+  }
+
+  rc = EVP_PKEY_fromdata(ctx, &pubkey, EVP_PKEY_PUBLIC_KEY, params);
+  if (rc <= 0) {
+    print_ssl_error("Failed to create a RSA public key");
+    ret = false;
+    goto error;
+  }
+#endif
+
+ error:
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+  RSA_free(rsa_key);
+#else
+  EVP_PKEY_CTX_free(ctx);
+  OSSL_PARAM_free(params);
+  OSSL_PARAM_BLD_free(build);
+#endif
+  BN_free(n);
+  BN_free(e);
+
+  if (pubkey == NULL) {
+    ret = false;
+    goto load_pkey_out;
+  }
+
+  ssl_res = PEM_write_bio_PUBKEY(bio, pubkey);
+
+  EVP_PKEY_free(pubkey);
+
+  if (ssl_res <= 0) {
+    print_ssl_error("OpenSSL public key conversion failed");
+    ret = false;
+    goto load_pkey_out;
+  }
+
+ try_pem:
+  pkey = PEM_read_bio_PUBKEY(bio, NULL, NULL, NULL);
+  if (!pkey) {
+    dlog(3, "Failed to convert public key from file '%s': %s", cq_ctx.pubkey_file_path,
+	 ERR_error_string(ERR_get_error(), NULL));
+    ret = false;
+    goto load_pkey_out;
+  }
+
+  ret = true;
+  
+ load_pkey_out:
+  if (bio) {
+    BIO_free(bio);
+  }
+  if (!ret) {
+    return false;
+  }
+
+  pkey_ctx = EVP_PKEY_CTX_new(pkey, NULL);
+  if (!pkey_ctx) {
+    dlog(3,"EVP_PKEY_CTX_new failed: %s", ERR_error_string(ERR_get_error(), NULL));
     goto err;
   }
 
-  // Get the signature ready
-  if (cq_ctx.signature.sigAlg != TPM2_ALG_RSASSA) {
-    dlog(3, "Only RSASSA is supported for signatures\n");
+  const EVP_MD *md = EVP_sha256();
+
+  rc = EVP_PKEY_verify_init(pkey_ctx);
+  if (!rc) {
+    dlog(3, "EVP_PKEY_verify_init failed: %s", ERR_error_string(ERR_get_error(), NULL));
     goto err;
   }
-  TPM2B_PUBLIC_KEY_RSA sig = cq_ctx.signature.signature.rsassa.sig;
- 
-// Verify the signature matches message digest
-  if (!RSA_verify(NID_sha256, cq_ctx.msg_hash.buffer, cq_ctx.msg_hash.size,
-		  sig.buffer, sig.size, pub_key)) {
-    dlog(3, "Error validating signed message with public key provided\n");
+
+  rc = EVP_PKEY_CTX_set_signature_md(pkey_ctx, md);
+  if (!rc) {
+    dlog(3, "EVP_PKEY_CTX_set_signature_md failed: %s", ERR_error_string(ERR_get_error(), NULL));
+    goto err;
+  }
+
+  // Verify the signature matches message digest
+  rc = EVP_PKEY_verify(pkey_ctx, cq_ctx.signature.buffer, cq_ctx.signature.size,
+		       cq_ctx.msg_hash.buffer, cq_ctx.msg_hash.size);
+  if (rc != 1) {
+    if (rc == 0) {
+      dlog(3, "Error validating signed message with public key provided");
+    } else {
+      dlog(3,"Error %s", ERR_error_string(ERR_get_error(), NULL));
+    }
     goto err;
   }
 
@@ -69,11 +278,9 @@ static bool verify_signature() {
   result = true;
 
  err:
-  if (pubkey_input) {
-    fclose(pubkey_input);
-  }
+  EVP_PKEY_free(pkey);
+  EVP_PKEY_CTX_free(pkey_ctx);
 
-  RSA_free(pub_key);
   return result;
 }
 
@@ -84,13 +291,21 @@ static tool_rc init(const unsigned char *buf, int buf_size, unsigned char *sig, 
   UINT16 digest_size;
   BYTE extended[TPM2_SHA256_DIGEST_SIZE*2];
   size_t offset = 0;
+  TPMT_SIGNATURE tmp;
   
-  TSS2_RC rval = Tss2_MU_TPMT_SIGNATURE_Unmarshal(sig, sigsize, &offset, &cq_ctx.signature); 
+  TSS2_RC rval = Tss2_MU_TPMT_SIGNATURE_Unmarshal(sig, sigsize, &offset, &tmp); 
   if (rval != TSS2_RC_SUCCESS) { 
-    dlog(3, "Error serializing "str(&cq_ctx.signature)" structure\n"); 
+    dlog(3, "Error serializing "str(&tmp)" structure\n"); 
     dlog(3, "The input file needs to be a valid TPMT_SIGNATURE data structure\n"); 
     goto err; 
   }
+  cq_ctx.signature.size = tmp.signature.rsassa.sig.size;
+  if (cq_ctx.signature.size > sizeof(cq_ctx.signature.buffer)) {
+      dlog(3, "Signature size bigger than buffer, got: %u expected"
+	   " less than %zu", cq_ctx.signature.size, sizeof(cq_ctx.signature.buffer));
+      goto err;
+  }
+  memcpy(cq_ctx.signature.buffer, tmp.signature.rsassa.sig.buffer, cq_ctx.signature.size);
   
   bool result = openssl_check((BYTE *)buf, buf_size, digest_data, &digest_size);  
   if (!result) {
@@ -149,7 +364,7 @@ static tool_rc checkquote_onrun(const unsigned char *buf, int buf_size, unsigned
   return tool_rc_success;
 }
 
-int checkquote(const unsigned char *buf, int buf_size, unsigned char *sig, int sigsize, const char *nonce, char *pubkey, unsigned char *quote, int quotesize) {
+int checkquote(const unsigned char *buf, int buf_size, unsigned char *sig, int sigsize, const char *nonce, const char *pubkey, unsigned char *quote, int quotesize) {
 
   tool_rc ret = tool_rc_general_error;
 
@@ -166,8 +381,8 @@ int checkquote(const unsigned char *buf, int buf_size, unsigned char *sig, int s
 
   if (nonce != NULL) {
     cq_ctx.extra_data.size = sizeof(cq_ctx.extra_data.buffer);                                                                                                                                                                                   
-    bool result = bin_from_hex_or_file(nonce, &cq_ctx.extra_data.size,
-				       cq_ctx.extra_data.buffer);                                                                                                                                                                                 
+    bool result = bin_from_hex(nonce, &cq_ctx.extra_data.size,
+			       cq_ctx.extra_data.buffer);                                                                                                                                                                                 
     if (!result) {                                                                                                                                                                                                                               
       dlog(3, "Unable to get nonce.\n");
       goto out;                                                                                                                                                                                                          

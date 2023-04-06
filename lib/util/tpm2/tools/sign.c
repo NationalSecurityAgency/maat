@@ -368,7 +368,7 @@ static void main_onexit(void) {
   teardown_full(&ctx.ectx);
  }
 
-struct tpm_sig_quote *tpm2_sign(const unsigned char *buf, int buf_size, const char *pass, const char *nonce, char *ctx_path) {
+struct tpm_sig_quote *tpm2_sign(const unsigned char *buf, int buf_size, const char *pass, const char *nonce, const char *ctx_path) {
 
   bool result = false;
   tool_rc ret = tool_rc_general_error;
@@ -402,8 +402,8 @@ struct tpm_sig_quote *tpm2_sign(const unsigned char *buf, int buf_size, const ch
   }
   if (nonce != NULL) {
     q_ctx.qualification_data.size = sizeof(q_ctx.qualification_data.buffer);
-    result = bin_from_hex_or_file(nonce, &q_ctx.qualification_data.size,
-				       q_ctx.qualification_data.buffer);
+    result = bin_from_hex(nonce, &q_ctx.qualification_data.size,
+			  q_ctx.qualification_data.buffer);
     if (!result) {
       dlog(3, "Failed to get nonce.\n");
     }

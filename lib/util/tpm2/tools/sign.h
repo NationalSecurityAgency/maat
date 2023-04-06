@@ -43,7 +43,7 @@ struct tpm_sig_quote {
 
 //tool_rc handle_sign_options(int argc, char **argv,TSS2_TCTI_CONTEXT **tcti);
 
-struct tpm_sig_quote *tpm2_sign(const unsigned char *buf, int buf_size, const char *pass, const char *nonce, char *ctx_path);
+struct tpm_sig_quote *tpm2_sign(const unsigned char *buf, int buf_size, const char *pass, const char *nonce, const char *ctx_path);
 
 typedef struct tpm2_verifysig_ctx tpm2_verifysig_ctx;
 struct tpm2_verifysig_ctx {
@@ -51,10 +51,10 @@ struct tpm2_verifysig_ctx {
   TPM2B_DIGEST pcr_hash;
   TPMS_ATTEST attest;
   TPM2B_DATA extra_data;
-  TPMT_SIGNATURE signature;
+  TPM2B_MAX_BUFFER signature;
   const char *pubkey_file_path;
 };
 
 //tool_rc handle_checkquote_options(int argc, char **argv);
 
-int checkquote(const unsigned char *buf, int buf_size, unsigned char *sig, int sigsize, const char *nonce, char *pubkey, unsigned char *quote, int quotesize);
+int checkquote(const unsigned char *buf, int buf_size, unsigned char *sig, int sigsize, const char *nonce, const char *pubkey, unsigned char *quote, int quotesize);

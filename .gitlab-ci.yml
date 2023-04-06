@@ -152,12 +152,12 @@ build-ubuntu20-tpm:
     - *build_no_selinux
 
 # build without selinux for ubuntu22
-# build-ubuntu22:
-#   stage: build
-#   tags:
-#     - ubuntu22
-#   script:
-#     - *build_no_selinux_no_tpm
+build-ubuntu22:
+  stage: build
+  tags:
+    - ubuntu22
+  script:
+    - *build_no_selinux_no_tpm
 
 # build without selinux for rhel7
 build-rhel7-no-selinux:
@@ -298,30 +298,30 @@ test-ubuntu20-asan-tpm:
     when: always
 
 # regular make check tests on ubuntu22
-# test-ubuntu22-basic:
-#   stage: test
-#   tags:
-#     - ubuntu22
-#   script:
-#     - *test_no_selinux_no_tpm
-#   artifacts:
-#     paths:
-#       - build/src/test/*.log
-#     expire_in: 2 weeks
-#     when: always
+test-ubuntu22-basic:
+  stage: test
+  tags:
+    - ubuntu22
+  script:
+    - *test_no_selinux_no_tpm
+  artifacts:
+    paths:
+      - build/src/test/*.log
+    expire_in: 2 weeks
+    when: always
 
-# # make check tests with address sanitizer on ubuntu22
-# test-ubuntu22-asan:
-#   stage: test
-#   tags:
-#     - ubuntu22
-#   script:
-#     - *test_asan_no_tpm
-#   artifacts:
-#     paths:
-#       - build/src/test/*.log
-#     expire_in: 2 weeks
-#     when: always
+# make check tests with address sanitizer on ubuntu22
+test-ubuntu22-asan:
+  stage: test
+  tags:
+    - ubuntu22
+  script:
+    - *test_asan_no_tpm
+  artifacts:
+    paths:
+      - build/src/test/*.log
+    expire_in: 2 weeks
+    when: always
 
 # regular make check tests without selinux on rhel7
 test-rhel7-basic-no-selinux:
@@ -424,20 +424,20 @@ package-ubuntu20-amd64-deb:
     expire_in: 2 weeks
 
 # package ubuntu22 jammy deb
-# package-ubuntu22-amd64-deb:
-#   stage: package
-#   tags:
-#     - ubuntu22
-#   variables:
-#     release: jammy
-#     arch: amd64
-#     PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-aptitude
-#   script:
-#     - *deb_build
-#   artifacts:
-#     paths:
-#       - build/staging
-#     expire_in: 2 weeks
+package-ubuntu22-amd64-deb:
+  stage: package
+  tags:
+    - ubuntu22
+  variables:
+    release: jammy
+    arch: amd64
+    PBSAT: /usr/lib/pbuilder/pbuilder-satisfydepends-aptitude
+  script:
+    - *deb_build
+  artifacts:
+    paths:
+      - build/staging
+    expire_in: 2 weeks
 
 # package rhel7 rpm
 package-rhel7-x86_64-rpm:
@@ -510,22 +510,22 @@ create-ubuntu20-repo:
     expire_in: 2 weeks
 
 # create ubuntu22 jammy repo
-# create-ubuntu22-repo:
-#   stage: deploy
-#   tags:
-#     - ubuntu22
-#   needs:
-#     - package-ubuntu22-amd64-deb
-#   inherit:
-#     default: false
-#   variables:
-#     release: jammy
-#   script:
-#     - *deb_repo
-#   artifacts:
-#     paths:
-#       - maat-$CI_COMMIT_SHORT_SHA/
-#     expire_in: 2 weeks
+create-ubuntu22-repo:
+  stage: deploy
+  tags:
+    - ubuntu22
+  needs:
+    - package-ubuntu22-amd64-deb
+  inherit:
+    default: false
+  variables:
+    release: jammy
+  script:
+    - *deb_repo
+  artifacts:
+    paths:
+      - maat-$CI_COMMIT_SHORT_SHA/
+    expire_in: 2 weeks
 
 ## systemtest
 

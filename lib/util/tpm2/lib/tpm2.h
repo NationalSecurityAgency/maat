@@ -12,9 +12,16 @@
 #include <string.h>
 #include <ctype.h>
 #include <openssl/pem.h>
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 #include <openssl/rsa.h>
+#else
+#include <openssl/core_names.h>
+#include <openssl/params.h>
+#include <openssl/param_build.h>
+#endif
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/bn.h>
 #include <tss2/tss2_esys.h>
 #include <tss2/tss2_mu.h>
 #include <tss2/tss2_tctildr.h>
@@ -86,11 +93,16 @@ bool read32(FILE *f, UINT32 *data, size_t size);
 
 bool read64(FILE *f, UINT64 *data, size_t size);
 
+bool files_load_public_silent(const char *path, TPM2B_PUBLIC *public);
+
+bool files_load_template_silent(const char *path, TPMT_PUBLIC *public);
+
 unsigned long get_file_size(FILE *f);
+
+void print_ssl_error(const char *failed_action);
 
 bool openssl_check(const UINT8 *buffer, UINT16 len, UINT8 *hash_buffer, UINT16 *hash_size);
 
-bool bin_from_hex_or_file(const char *input, UINT16 *len, BYTE *buffer);
+bool bin_from_hex(const char *input, UINT16 *len, BYTE *buffer);
 
-int print_hex(unsigned char *read, size_t size, char *name);
 #endif /* LIB_TPM2_H_ */

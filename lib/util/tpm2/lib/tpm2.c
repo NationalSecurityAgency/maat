@@ -79,6 +79,7 @@ bool read8(FILE *f, UINT8 *data, size_t size) {
     
     return true;
 }
+
 unsigned long get_file_size(FILE *f) {
 
     unsigned long file_size;
@@ -113,8 +114,58 @@ unsigned long get_file_size(FILE *f) {
     return file_size;
   }
 
+
+#define LOAD_TYPE_SILENT(type, name) \
+  bool files_load_##name##_silent(const char *path, type *name) { \
+    \
+        UINT8 buffer[sizeof(*name)]; \
+        UINT16 size = sizeof(buffer); \
+        if (!path) { \
+            return false; \
+        } \
+        FILE *f = fopen(path, "rb"); \
+        if (!f) { \
+            dlog(3, "Could not open file \"%s\" error %s", path, strerror(errno)); \
+            return false; \
+        } \
+        bool result = false; \
+        unsigned long file_size = get_file_size(f); \
+        if (file_size > size || file_size == 0) { \
+            goto out; \
+        } \
+        size = read8(f, buffer, size); \
+        if (size < file_size) { \
+            goto out; \
+        } \
+        result = true; \
+    out: \
+        fclose(f); \
+        if (!result) { \
+            return false; \
+        } \
+        \
+        size_t offset = 0; \
+        TSS2_RC rc = Tss2_MU_##type##_Unmarshal(buffer, size, &offset, name); \
+        if (rc != TSS2_RC_SUCCESS) { \
+            return false; \
+        } \
+        \
+        return rc == TPM2_RC_SUCCESS; \
+  }
+
+LOAD_TYPE_SILENT(TPM2B_PUBLIC, public);
+LOAD_TYPE_SILENT(TPMT_PUBLIC, template);
+
 static inline const char *get_openssl_err(void) {
   return ERR_error_string(ERR_get_error(), NULL);
+}
+
+void print_ssl_error(const char *failed_action) {
+    char errstr[256] = { 0 };
+    unsigned long errnum = ERR_get_error();
+
+    ERR_error_string_n(errnum, errstr, sizeof(errstr));
+    dlog(3, "%s: %s", failed_action, errstr);
 }
 
 bool openssl_check(const UINT8 *buffer, UINT16 len, UINT8 *hash_buffer, UINT16 *hash_size) {
@@ -158,87 +209,39 @@ out:
     return result;  
 
 }
-bool bin_from_hex_or_file(const char *input, UINT16 *len, BYTE *buffer) {
+bool bin_from_hex(const char *input, UINT16 *len, BYTE *buffer) {
 
     bool result = false;
 
-    FILE *f = fopen(input, "rb");
-    if (!f) {
-
-        int str_length; //if the input_string likes "1a2b...", no prefix "0x"
-        int i = 0;
-        if (input == NULL || len == NULL || buffer == NULL)
-            result = -1;
-        str_length = strlen(input);
-        if (str_length % 2)
-            result = -2;
-        for (i = 0; i < str_length; i++) {
-            if (!isxdigit(input[i]))
-                result = -3;
-        }
-
-        if (*len < str_length / 2)
-            result = -4;
-
-        *len = str_length / 2;
-
-        for (i = 0; i < *len; i++) {
-            char tmp_str[4] = { 0 };
-            tmp_str[0] = input[i * 2];
-            tmp_str[1] = input[i * 2 + 1];
-            buffer[i] = strtol(tmp_str, NULL, 16);
-        }
-
-        result = 1;
-        goto out;
+    int str_length; //if the input_string likes "1a2b...", no prefix "0x"
+    int i = 0;
+    if (input == NULL || len == NULL || buffer == NULL)
+      goto out;
+    str_length = strlen(input);
+    if (str_length % 2) 
+      goto out;
+    for (i = 0; i < str_length; i++) {
+      if (!isxdigit(input[i]))
+	goto out;
     }
 
-    unsigned long file_size = get_file_size(f);
+    if (*len < str_length / 2)
+      goto out;
 
-    if (file_size > *len) {
-        if (input) {
-	    dlog(3, "File \"%s\" size is larger than buffer, got %lu expected "
-                    "less than or equal to %u\n", input, file_size, *len);
-        }
-        result = false;
-        goto close;
+    *len = str_length / 2;
+
+    for (i = 0; i < *len; i++) {
+      char tmp_str[4] = { 0 };
+      tmp_str[0] = input[i * 2];
+      tmp_str[1] = input[i * 2 + 1];
+      buffer[i] = strtol(tmp_str, NULL, 16);
     }
 
-    result = read8(f, buffer, file_size);
+    result = true;
 
+ out:   
     if (!result) {
-        if (input) {
-	    dlog(3, "Could not read data from file \"%s\"\n", input);
-        }
-        goto close;
-    }
-
-    *len = file_size;
-
-close:
-    fclose(f);
-out:
-    
-    if (!result) {
-        dlog(3, "Could not convert \"%s\". Neither a file path nor hex string.\n", input);
+      dlog(3, "Could not convert \"%s\". Neither a file path nor hex string.\n", input);
     }
     return result;
-}
-
-int print_hex(unsigned char *read, size_t size, char *name) {
-  char *readable;
-  size_t i;
-  int j = 0;
-  readable = malloc(sizeof(char)*(size*2+1));
-  if (!readable) {
-    dlog(3, "Unable to allocate memory.\n");
-    return -1;
-  }
-  for (i = 0; i < size; i++) {
-    sprintf(readable+j, "%02x", read[i]);
-    j += 2;
-  }
-  dlog(5, "\n%s: %s\n", name, readable);
-  free(readable);
-  return 0;
 }

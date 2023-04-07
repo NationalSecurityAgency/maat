@@ -210,7 +210,7 @@ int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
 #ifdef USE_TPM
         dlog(6, "Using TPM to sign.\n");  
         struct tpm_sig_quote *sig_quote;
-        sig_quote = tpm2_sign(buf, size_int+1, tpm_password, nonce, akctx);
+        sig_quote = tpm2_sign(buf, size_int, tpm_password, nonce, akctx);
         xmlNode *quoteval;
         char *b64quote;
 
@@ -446,7 +446,7 @@ int verify_xml(xmlDoc *doc, xmlNode *root, const char *prefix,
     } else if (flags & SIGNATURE_TPM)  {
 #ifdef USE_TPM
         dlog(6, "Using TPM to verify.\n");
-        int res = checkquote(buf, size+1, signature, sigsize, nonce, akpubkey, tpmquote, quotesize);
+        int res = checkquote(buf, size, signature, sigsize, nonce, akpubkey, tpmquote, quotesize);
         if (res == 0) {
             ret = 1;
         } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,11 +156,16 @@ int asp_measure(int argc, char *argv[])
             continue;
         }
 
-        if(snprintf(path, sizeof(path),"%s%s%s", dir_address->fullpath_file_name,
-                    insert_slash ? "/" : "", dent->d_name) >= sizeof(path)) {
+        // Cast is justified because the length of a full path will not exceed the value of
+        // what can be stored in an int
+        if((ret_val = snprintf(path, sizeof(path),"%s%s%s", dir_address->fullpath_file_name,
+                      insert_slash ? "/" : "", dent->d_name)) < 0
+           || (INT_MAX > SIZE_MAX && ret_val > SIZE_MAX)
+           || (size_t)ret_val >= sizeof(path)) {
             dlog(0, "failed to combine long path names %s%s\n",
                  dir_address->fullpath_file_name, dent->d_name);
         }
+
         if(lstat(path, &stats) != 0) {
             asp_logwarn("Failed to stat path \"%s\"\n", path);
             continue;
@@ -168,13 +173,24 @@ int asp_measure(int argc, char *argv[])
 
         //build a file target
         if(!(file_address = (typeof(file_address))alloc_address(&file_addr_space))) {
-            ret_val = ASP_APB_ERROR_NOMEM;
             continue;
         }
+
+        if((uintmax_t)stats.st_ino > UINT_MAX) {
+            asp_logwarn("Parsed invalid inode value: %"PRIuMAX" at path %s\n", (uintmax_t)stats.st_ino, path);
+            continue;
+        }
+
+        if(stats.st_size < 0 || (uintmax_t) stats.st_size > ULONG_MAX) {
+            asp_logwarn("Parsed invalid size value: %"PRIdMAX" at path %s\n", (intmax_t) stats.st_size, path);
+            continue;
+        }
+
         file_address->device_major = major(stats.st_dev);
         file_address->device_minor = minor(stats.st_dev);
-        file_address->file_size = stats.st_size;
-        file_address->node = stats.st_ino;
+        file_address->file_size = (unsigned long int)stats.st_size;
+        //Cast is justified because of the previous bounds check
+        file_address->node = (unsigned int) stats.st_ino;
         file_address->fullpath_file_name = strdup(path);
         if(file_address->fullpath_file_name == NULL) {
             dlog(0, "failed to allocate memory for file path\n");
@@ -186,7 +202,6 @@ int asp_measure(int argc, char *argv[])
         // create a new measurement for it
         var = new_measurement_variable(file_tgt_type, &file_address->address);
         if(!var) {
-            ret_val = ASP_APB_ERROR_NOMEM;
             goto loop_failed_measurement_var;
         }
         dlog(4, "Measurement made\n");
@@ -194,7 +209,6 @@ int asp_measure(int argc, char *argv[])
         asp_loginfo("adding graph node for file %s\n",
                     file_address->fullpath_file_name);
         if(measurement_graph_add_node(graph, var, NULL, &new_node) < 0) {
-            ret_val = ASP_APB_ERROR_GRAPHOPERATION;
             goto loop_failed_add_graph_node;
         }
 
@@ -202,7 +216,6 @@ int asp_measure(int argc, char *argv[])
 
         // link to graph
         if(measurement_graph_add_edge(graph, node_id, "path_list.paths", new_node, &new_edge) < 0) {
-            ret_val = ASP_APB_ERROR_GRAPHOPERATION;
             goto loop_failed_add_graph_edge;
         }
 
@@ -224,7 +237,6 @@ int asp_measure(int argc, char *argv[])
         }
         if(link_label != NULL) {
             if(measurement_graph_add_edge(graph, node_id, link_label, new_node, &new_edge) < 0) {
-                ret_val = ASP_APB_ERROR_GRAPHOPERATION;
                 goto loop_failed_add_graph_edge;
             }
         }

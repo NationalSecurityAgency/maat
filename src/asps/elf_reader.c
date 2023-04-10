@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -420,7 +420,6 @@ int asp_exit(int status)
 static int hash_load_segment(char *elf_path, int fd, GElf_Phdr *phdr,
                              measurement_graph *g, node_id_t parent)
 {
-    Elf_Data *data;
     measurement_variable mvar;
     measurement_data *meas_data;
     sha256_measurement_data *hash_data = NULL;
@@ -428,7 +427,6 @@ static int hash_load_segment(char *elf_path, int fd, GElf_Phdr *phdr,
     marshalled_data *md = NULL;
     int rc;
     size_t mapsz = phdr->p_memsz;
-    GChecksum *csum = NULL;
 
     mapsz += 0x1000 - (mapsz % 0x1000);
     char *buf = calloc(1, mapsz);
@@ -612,7 +610,7 @@ int asp_measure(int argc, char *argv[])
     Elf_Scn *scn	= NULL;
     Elf_Scn *symScn	= NULL;
     Elf_Scn *verScn	= NULL;
-    GElf_Shdr gshdr, gsymShdr, gverShdr;
+    GElf_Shdr gshdr;
     size_t shstrndx;
 
     Reference *refs = NULL;
@@ -738,7 +736,7 @@ int asp_measure(int argc, char *argv[])
     char *sectName = NULL;
     elf_sct_hdr *elfSectHdr = NULL;
     int scanned_verneed = 0;
-    Elf64_Word symStrTabNum = -1;
+    Elf64_Word symStrTabNum;
     // Scan through all the header sections,
     // and append each section header to list of section headers
     while ((scn = elf_nextscn(elf, scn)) != NULL ) {

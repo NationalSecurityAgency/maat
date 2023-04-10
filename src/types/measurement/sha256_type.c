@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,7 +143,9 @@ static int human_readable(measurement_data *d, char **out, size_t *outsz)
 {
     sha256_measurement_data *smd = container_of(d, sha256_measurement_data,
                                    meas_data);
-    *out = strdup(smd->sha256_hash);
+    // Cast is justified because the function does not regard the signedness
+    // of the buffer
+    *out = strdup((char *)smd->sha256_hash);
     if(*out == NULL) {
         return -1;
     }

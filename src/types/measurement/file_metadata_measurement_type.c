@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -247,9 +247,14 @@ static int file_metadata_human_readable(measurement_data *d, char **out, size_t 
                       fmd->file_metadata.has_extended_acl);
     if(rc < 0) {
         return -1;
+    } else if (INT_MAX > SIZE_MAX && (unsigned int)rc > SIZE_MAX) {
+        free(tmp);
+        return -1;
     }
+
     *out = tmp;
-    *outsize = rc + 1;
+    // Cast justified because of previous bounds check
+    *outsize = (size_t) rc + 1;
     return 0;
 }
 

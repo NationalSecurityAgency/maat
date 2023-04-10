@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,9 @@ static address *file_region_address_from_ascii(const char *str)
         dlog(0, "Error creating fra struct from ascii\n");
         goto error;
     }
-    if(pathlen > SIZE_MAX -1 || pathlen + path_offset > len) {
+    // Casts are justified because of the previous bounds checking
+    if(path_offset < 0 || (INT_MAX > SIZE_MAX && (unsigned int) path_offset > SIZE_MAX)
+       || SIZE_MAX - pathlen < (size_t) path_offset || pathlen + (size_t) path_offset > len) {
         dlog(0, "Error: Advertised pathlen is too long!\n");
         goto error;
     }
@@ -188,7 +190,8 @@ int file_region_address_set_offset(address *a, off_t offset)
     }
 
     file_region_address *fa = container_of(a, file_region_address, a);
-    if(offset < 0 || offset > UINT64_MAX) {
+    // Cast is justified because of the negative bounds check
+    if(offset < 0 || (uintmax_t) offset > UINT64_MAX) {
         return -EINVAL;
     }
     fa->offset = (uint64_t)offset;

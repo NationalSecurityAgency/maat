@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,6 @@ int asp_measure(int argc, char *argv[])
     measurement_data *data    = NULL;
     system_data *s_data       = NULL;
     measurement_graph *graph  = NULL;
-    measurement_variable *var = NULL;
     node_id_t node_id  = INVALID_NODE_ID;
 
     FILE *fp    = NULL;

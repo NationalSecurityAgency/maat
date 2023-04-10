@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ static address *pid_alloc_address()
         return NULL;
     }
     pa->pid = -1;
-    pa->offset = -1;
+    pa->offset = UINT64_MAX;
     pa->size = 0;
 
     return (address *)pa;
@@ -152,11 +152,18 @@ static char *pid_mem_to_ascii(const address *a)
     const pid_mem_range *pa = (const pid_mem_range*)a;
 
     // compute the string length
-    int len = snprintf(NULL, 0, "%d, %" PRIu64 ", %" PRIu64 "\n", pa->pid, pa->offset, pa->size) + 1;
-    char *ascii_str = malloc(len);
+    int len = snprintf(NULL, 0, "%d, %" PRIu64 ", %" PRIu64 "\n", pa->pid, pa->offset, pa->size);
+
+    if (len < 0 || (INT_MAX > SIZE_MAX && (unsigned int)len + 1 > SIZE_MAX)) {
+        return NULL;
+    }
+
+    // Cast justified because of the previous bounds check
+    char *ascii_str = malloc((size_t)len + 1);
     if(ascii_str) {
         sprintf(ascii_str, "%d %" PRIu64 " %" PRIu64 "\n", pa->pid, pa->offset, pa->size);
     }
+
     return ascii_str;
 }
 
@@ -192,7 +199,7 @@ static gboolean pid_mem_range_equal(const address *a, const address *b)
 static guint pid_mem_range_hash(const address *a)
 {
     pid_mem_range *pa = (pid_mem_range *)a;
-    return pa->pid;
+    return (guint)pa->pid;
 }
 
 static void *pid_read_bytes(address *a, size_t size)

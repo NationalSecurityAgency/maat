@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,7 +182,8 @@ int asp_measure(int argc, char *argv[])
     }
 
     //read passport from pipe
-    ret_val = maat_read_sz_buf(in_fd, &buffer, &buf_sz, &bytes_read, &eof_enc, TIMEOUT, -1);
+    /* Cast is justified because the function does not regard the signedness of the function */
+    ret_val = maat_read_sz_buf(in_fd, (unsigned char **)&buffer, &buf_sz, &bytes_read, &eof_enc, TIMEOUT, 0);
     if (ret_val != 0 || buffer == NULL || eof_enc != 0) {
         asp_logerror("error reading passport\n");
         return -1;
@@ -195,7 +196,8 @@ int asp_measure(int argc, char *argv[])
         result = "FAIL";
 
     //send result to appraiser
-    ret_val = maat_write_sz_buf(out_fd, result, strlen(result), &bytes_written, TIMEOUT);
+    /* Cast is justified because the function does not regard the signedness of the function */
+    ret_val = maat_write_sz_buf(out_fd, (unsigned char *)result, strlen(result), &bytes_written, TIMEOUT);
     if (ret_val != 0) {
         asp_logerror("failed to send result to apb: %s\n", strerror(-ret_val));
         return -1;

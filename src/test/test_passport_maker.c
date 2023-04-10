@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,7 +198,8 @@ START_TEST(test_passport_maker)
         fail_if(waitpid(childpid, &status, 0) < 0, "run_asp returned error status\n");
         fail_unless(WEXITSTATUS(status) == 0, "ASP exit value != 0 and is %d\n", status);
 
-        ret = maat_read_sz_buf(fd_out[0], &passport_buf, &passport_sz, &bytes_read, &eof_enc, TIMEOUT, -1);
+        /* Cast is justified because the function does not regard the signedness of the argument */
+        ret = maat_read_sz_buf(fd_out[0], &passport_buf, &passport_sz, &bytes_read, &eof_enc, TIMEOUT, 0);
 
         fail_if(ret < 0, "Error reading passport from chan");
         fail_if(eof_enc, "EOF encountered before complete buffer read\n");

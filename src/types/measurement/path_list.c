@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,13 @@
 
 static measurement_data *alloc_path_list()
 {
-    return calloc(1, sizeof(path_list));
+    path_list *ret;
+    ret = (path_list *)calloc(1, sizeof(*ret));
+    if (!ret) {
+        return NULL;
+    }
+
+    return (measurement_data *)ret;
 }
 
 static measurement_data *copy_path_list(measurement_data *d)

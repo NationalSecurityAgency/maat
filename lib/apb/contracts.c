@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,11 +273,11 @@ int handle_measurement_contract(struct scenario *scen, appraise_fn *appraise, in
             if (scen->verify_tpm)
                 ret = verify_xml(doc,
                                  subcobj->nodesetval->nodeTab[i], tmpstr,
-                                 scen->nonce, SIGNATURE_TPM, scen->cacert);
+                                 scen->nonce, scen->akpubkey, SIGNATURE_TPM, scen->cacert);
             else
                 ret = verify_xml(doc,
                                  subcobj->nodesetval->nodeTab[i], tmpstr,
-                                 scen->nonce, SIGNATURE_OPENSSL,
+                                 scen->nonce, scen->akpubkey, SIGNATURE_OPENSSL,
                                  scen->cacert);
 
 
@@ -325,7 +325,7 @@ int handle_measurement_contract(struct scenario *scen, appraise_fn *appraise, in
     /* sign contract with that cert */
     fingerprint_buf = get_fingerprint(scen->certfile, NULL);
     ret = sign_xml(doc, root, fingerprint_buf, scen->keyfile, scen->keypass,
-                   scen->nonce, scen->tpmpass, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+                   scen->nonce, scen->tpmpass, scen->akctx, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
 
     if(ret != 0) {
         dlog(0, "Failed to sign access contract\n");
@@ -372,7 +372,17 @@ bad_xml:
 int create_integrity_response(target_id_type_t target_typ, xmlChar *target,
                               xmlChar *resource, xmlChar *result,
                               GList *entries, char *certfile, char *keyfile,
-                              char *keypass, char *nonce, char *tpmpass, xmlChar **out,
+                              char *keypass, char *nonce, 
+#ifdef USE_TPM
+                              char *tpmpass,
+                              char *akctx,
+                              int sign_tpm,
+#else
+			                  char *tpmpass UNUSED,
+			                  char *akctx UNUSED,
+			                  int sign_tpm UNUSED,
+#endif
+                              xmlChar **out,
                               size_t *outsize)
 {
     xmlDoc *doc = NULL;
@@ -467,7 +477,11 @@ int create_integrity_response(target_id_type_t target_typ, xmlChar *target,
         }
 
         fprint = get_fingerprint(certfile, NULL);
-        ret = sign_xml(doc, root, fprint, keyfile, keypass, nonce, tpmpass, SIGNATURE_OPENSSL);
+#ifdef USE_TPM
+        ret = sign_xml(doc, root, fprint, keyfile, keypass, nonce, tpmpass, akctx, sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+#else
+        ret = sign_xml(doc, root, fprint, keyfile, keypass, NULL, NULL, NULL, SIGNATURE_OPENSSL);
+#endif
         free(fprint);
         if(ret != 0) {
             dlog(0, "Failed to sign integrity response contract\n");
@@ -636,7 +650,7 @@ unsigned char *generate_measurement_contract(struct scenario *scen,
             scratch = get_fingerprint(scen->certfile, NULL);
 
             ret = sign_xml(doc, subc, scratch, scen->keyfile, scen->keypass,
-                           scen->nonce, scen->tpmpass,
+                           scen->nonce, scen->tpmpass, scen->akctx,
                            scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
 
             if(ret != 0) {
@@ -710,7 +724,7 @@ int generate_and_send_back_measurement_contract(int chan, struct scenario *scen,
     return 0;
 }
 
-int receive_measurement_contract(int chan, struct scenario *scen, int32_t max_size_supported)
+int receive_measurement_contract(int chan, struct scenario *scen, uint32_t max_size_supported)
 {
 
     int ret = 0;
@@ -729,7 +743,9 @@ int receive_measurement_contract(int chan, struct scenario *scen, int32_t max_si
 
     free(scen->contract);
     scen->contract = NULL;
-    status = maat_read_sz_buf(chan, &scen->contract, &tmpsize,
+    /* Cast of scen->contract is justified because operations on the buffer do not regard the signedness of its
+     * contents */
+    status = maat_read_sz_buf(chan, (unsigned char **)&scen->contract, &tmpsize,
                               &bytes_read, &eof_encountered,
                               MAAT_APB_PEER_TIMEOUT, max_size_supported);
 

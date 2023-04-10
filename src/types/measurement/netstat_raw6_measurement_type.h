@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@
 typedef struct netstat_raw6_line {
     int32_t inode;
     int32_t uid;
-    char local_addr[49];
-    char rem_addr[49];
+    char local_addr[55];
+    char rem_addr[55];
     char State[17];
 } netstat_raw6_line;
 

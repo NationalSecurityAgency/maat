@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -228,8 +228,9 @@ int asp_measure(int argc, char *argv[])
     }
 
     /* read left and right inputs */
-    ret_val = maat_read_sz_buf(arg_set.fd_left, &buf_left, &bufsize_left,
-                               &bytes_read_left, &eof_enc, TIMEOUT, -1);
+    /* Cast is justified because the function does not regard the signedness of the function */
+    ret_val = maat_read_sz_buf(arg_set.fd_left, (unsigned char **) &buf_left, &bufsize_left,
+                               &bytes_read_left, &eof_enc, TIMEOUT, 0);
     if (ret_val == -EAGAIN) {
         dlog(2, "Warning: timeout occured before left channel read could complete\n");
     } else if(ret_val < 0) {
@@ -244,8 +245,9 @@ int asp_measure(int argc, char *argv[])
 
     dlog(4, "left buffer size: %zd, left bytes read: %zu buf: %s\n", bufsize_left, bytes_read_left, buf_left);
 
-    ret_val = maat_read_sz_buf(arg_set.fd_right, &buf_right, &bufsize_right,
-                               &bytes_read_right, &eof_enc, TIMEOUT, -1);
+    /* Cast is justified because the function does not regard the signedness of the function */
+    ret_val = maat_read_sz_buf(arg_set.fd_right, (unsigned char **)&buf_right, &bufsize_right,
+                               &bytes_read_right, &eof_enc, TIMEOUT, 0);
     if (ret_val == -EAGAIN) {
         dlog(2, "Warning: timeout occured before right channel read could complete\n");
     } else if(ret_val < 0) {

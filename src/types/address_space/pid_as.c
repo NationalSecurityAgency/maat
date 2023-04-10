@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ static address *pid_alloc_address()
     pa = (struct pid_address *)malloc(sizeof(struct pid_address));
     if (!pa)
         return NULL;
-    pa->pid = -1;
+    pa->pid = UINT32_MAX;
 
     return (address *)pa;
 }
@@ -146,7 +146,12 @@ static address *pid_from_ascii(const char *ascii_str)
         return NULL;
 
     pa->a.space = &pid_address_space;
-    pa->pid = strtoul(ascii_str, NULL, 10);
+
+    if(sscanf(ascii_str, "%"PRIu32"", &pa->pid) != 1) {
+        free(pa);
+        return NULL;
+    }
+
     return (address *)pa;
 }
 

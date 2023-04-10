@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ START_TEST(test_exampleam)
     struct scenario *attester_scen = malloc(sizeof(struct scenario));
     struct scenario *appraiser_scen = malloc(sizeof(struct scenario));
     xmlChar *request_contract;
-    int request_sz;
+    size_t request_sz;
 
     am = new_attestation_manager(ASP_DIR, SPEC_DIR, APB_DIR, "XML", SELECTOR_CFG,
                                  EXECCON_RESPECT_DESIRED, EXECCON_SET_UNIQUE_CATEGORIES);
@@ -98,7 +98,16 @@ START_TEST(test_exampleam)
                   CA_CERT,
                   ATTESTER_CERT,
                   ATTESTER_KEY,
-                  NULL, NULL, 0, ATTESTER);
+                  NULL,
+                  TPMPASS,
+                  AKCTX,
+                  AKPUB,
+                  1,
+                  1,
+                  NULL,
+                  NULL,
+                  0,
+                  ATTESTER);
 
     attester_scen->workdir		= WORKDIR_CLIENT;
     attester_scen->peer_chan            = maat_io_channel_new(the_pipe[1]);
@@ -108,6 +117,12 @@ START_TEST(test_exampleam)
                   CA_CERT,
                   APPRAISER_CERT,
                   APPRAISER_KEY,
+                  NULL,
+                  TPMPASS,
+                  AKCTX,
+                  AKPUB,
+                  1,
+                  1,
                   NULL,
                   (char*)request_contract,
                   (size_t)request_sz,

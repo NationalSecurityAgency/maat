@@ -1,5 +1,5 @@
 #
-# Copyright 2020 United States Government
+# Copyright 2023 United States Government
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ nobase_library_include_HEADERS = maat-basetypes.h \
 	address_space/package.h \
 	address_space/kernel_as.h \
 	address_space/file_region_address_space.h \
+        address_space/dynamic_measurement_request_address_space.h \
 	address_space/measurement_request_address_space.h \
 	address_space/time_delta_address_space.h \
 	address_space/unit_address_space.h \

@@ -1,5 +1,5 @@
 #
-# Copyright 2020 United States Government
+# Copyright 2023 United States Government
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,5 +24,5 @@ dist_selector_DATA = iot_selector.xml \
 	quiot-selector.xml \
 	complex-att-selector.xml\
 	passport-selector.xml\
-	passport-maker-selector.xml
-
+	passport-maker-selector.xml \
+	layered-selector.xml

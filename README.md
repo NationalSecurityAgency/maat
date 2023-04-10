@@ -1,7 +1,7 @@
 COPYRIGHT
 =========
 
-Copyright 2020 United States Government
+Copyright 2023 United States Government
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,13 +26,16 @@ Manager (the main program of the Maat Framework), as well as various Attestation
 Protocol Blocks (APBs) and Attestation Service Providers (ASPs) to demonstrate 
 measurement in different configurations. One of these demonstrations is an 
 implementation of Userspace Measurement, as described in "Runtime Detection of 
-Userspace Implants" (DOI not yet available). 
+Userspace Implants" (DOI: 10.1109/MILCOM47813.2019.9020783).
 
-Please see ROADMAP.md for an overview of our current status and listing of 
-items on our roadmap.
+Maat uses the Copland language, and supports many of the usecases, described in
+"Flexible Mechanisms for Remote Attestation" (DOI: 10.1145/3470535). Furthe
+documents on Copland and the design of measurement and attestation protocols can
+be found in "Orchestrating Layered Attestations" (DOI:
+10.1007/978-3-030-17138-4_9) and "Automated Trust Analysis of Copland
+Specifications for Layered Attestations" (DOI: 10.1145/3479394.3479418).
 
-Maat currently supports CentOS 7.7, and Ubuntu 18.04.4. Support for CentOS 8 is 
-in progress, please refer to ROADMAP.md for updates on this effort. 
+Maat currently supports RHEL 7 and 8, and Ubuntu 20.04 and 22.04.
 
 Documentation
 -------------
@@ -42,9 +45,6 @@ but can also be built using `make docs` in the Maat repository.  Additionally,
 there are:
 
 - README.md :  This file, which contains a high level overview of Maat
-
-- ROADMAP.md : Current status of Maat supported features, and items on our 
-  	       roadmap.
 
 - am-ui/maat-attestation-manager-ui-TUTORIAL.md: Tutorial for setting up the Attestation Manager User 
 						 Interface to step through a recent measurement.
@@ -61,6 +61,9 @@ there are:
   - multirealm_tutorial.txt: 	A series of tutorials to demonstate execution of 
     		      	     	Maat in a multi-realm attestation scenario. 
 		      	     	Introduces Copland and some more complex use cases.
+
+  - layered_tutorial.txt:   A tutorial of attetstation of a platform with multiple
+                            privilege levels, such as a hypervisor enabled machine.
 
 - management-ui/ui-TUTORIAL.md: Basic tutorials for Maat that use a prototype Maat
   		    	     	web interface in lieu of the command line to 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@
 #define ASP_NAME "send_asp"
 
 #define TIMEOUT 100
+#define READ_MAX INT_MAX
 
 /**
  * @peerchan is the peer's channel
@@ -53,7 +54,7 @@
  * @buf_size is the size of @buf
  * Returns 0 on success, < 0 on error
  */
-static int send(int peerchan, char *buf, size_t buf_size)
+static int send(int peerchan, unsigned char *buf, size_t buf_size)
 {
     gsize bytes_written = 0;
     int status;
@@ -94,7 +95,7 @@ int asp_measure(int argc, char *argv[])
 
     int fd_out   = -1;
     int fd_in      = -1;
-    char *buf      = NULL;
+    unsigned char *buf      = NULL;
     size_t bufsize    = 0;
 
     int ret_val    = 0;
@@ -110,15 +111,7 @@ int asp_measure(int argc, char *argv[])
         goto parse_args_failed;
     }
 
-    // read from chan in
-    fd_in = maat_io_channel_new(fd_in);
-    if(fd_in < 0) {
-        dlog(0, "Error: failed to make new io channel for fd_in\n");
-        ret_val = -1;
-        goto io_chan_in_failed;
-    }
-
-    ret_val = maat_read_sz_buf(fd_in, &buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, -1);
+    ret_val = maat_read_sz_buf(fd_in, &buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, READ_MAX);
     if(ret_val < 0 && ret_val != -EAGAIN) {
         dlog(0, "Error reading evidence from channel\n");
         ret_val = -1;
@@ -150,7 +143,6 @@ eof_enc:
     free(buf);
     bufsize = 0;
 read_failed:
-io_chan_in_failed:
     close(fd_in);
 parse_args_failed:
     return ret_val;

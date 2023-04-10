@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -232,7 +232,7 @@ int create_execute_contract(char *version, int sig_flags,
                             char *phrase, char *certfile,
                             char *keyfile, char *keyfilepass,
                             char *passed_nonce, char *tpmpass,
-                            xmlChar **out, size_t *csize)
+                            char *akctx, xmlChar **out, size_t *csize)
 {
     xmlDoc *doc          = NULL;
     xmlNode *root        = NULL;
@@ -283,7 +283,7 @@ int create_execute_contract(char *version, int sig_flags,
     xmlAddChild(root, cred_node);
 
     fprint = get_fingerprint(certfile, NULL);
-    ret = sign_xml(doc, root, fprint, keyfile, keyfilepass, nonce, tpmpass, sig_flags);
+    ret = sign_xml(doc, root, fprint, keyfile, keyfilepass, nonce, tpmpass, akctx, sig_flags);
     free(fprint);
     if(ret) {
         dlog(0, "Error signing XML\n");

@@ -3,7 +3,7 @@ Complex Attestation Maat Tutorial
 
 .. Copyright
 
-   Copyright 2020 United States Government
+   Copyright 2023 United States Government
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -324,7 +324,7 @@ and the appraiser can use this information about other AMs in order to carry out
 functionality within APBs. A simple CSV example file is provided with Maat,
 and can be placed where Maat will use it with the following command:
 
-    sudo mv demo/ancillary_files/places.csv /opt/maat/etc/maat
+    sudo cp demo/ancillary_files/places.csv /opt/maat/etc/maat
 
 To start the scenario, you must start AM_0 and AM_1. To do so, run
 

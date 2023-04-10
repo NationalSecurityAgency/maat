@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,6 @@ int asp_measure(int argc, char *argv[])
             ((node_id = node_id_of_str(argv[2])) == INVALID_NODE_ID) ||
             (map_measurement_graph(argv[1], &graph) != 0)) {
         asp_logerror("Usage: "ASP_NAME" <graph path> <node id>\n");
-        ret_val = -EINVAL;
         return -EINVAL;
     }
 
@@ -219,7 +218,8 @@ int asp_measure(int argc, char *argv[])
         do {
             dlog(5, "Found package: %s", line);
             if(add_package_node(graph, node_id, line) != 0) {
-                ret_val = -1;
+                /* FIXME: Use return value in some way rather than overriding it later */
+                //ret_val = -1;
             }
         } while(getline(&line, &len, fp) != -1);
     }

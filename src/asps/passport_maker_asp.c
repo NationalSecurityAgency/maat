@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,12 +162,14 @@ int asp_measure(int argc, char *argv[])
         return -1;
     }
 
-    snprintf(passport_buf, passport_sz, "%s,%s,%s,%s,%s,%s,%s",
+    // Cast is justified because the function does not regard the signedness of the input
+    snprintf((char *)passport_buf, passport_sz, "%s,%s,%s,%s,%s,%s,%s",
              target_type, target, resource, copland_phrase, result, startdate, period);
     passport_buf[passport_sz-1] = 0;
 
     //sign buf
-    passport_sz = strlen(passport_buf);
+    // Cast is justified because the function does not regard the signedness of the input
+    passport_sz = strlen((char *)passport_buf);
     size = (unsigned int)passport_sz;
 
     signature_buf = sign_buffer_openssl(passport_buf, &size, keyfile, keypass);
@@ -196,8 +198,9 @@ int asp_measure(int argc, char *argv[])
     }
     passport_buf = tmp;
 
-    strcat(passport_buf, ",");
-    strcat(passport_buf, (char*)b64sig);
+    //Casts are justified because the function does not regard the signedness of the input
+    strcat((char *)passport_buf, ",");
+    strcat((char *)passport_buf, (char*)b64sig);
     passport_buf[passport_sz-1] = 0;
     b64_free(b64sig);
 

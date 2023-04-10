@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,6 +114,7 @@ int serialize_pkg_details(measurement_data *d, char **serial_data, size_t *seria
 
     dlog(4, "packing %d file hashes\n", g_list_length(in->filehashs));
 
+    // Pack file hash information into TPL node
     for (iter = g_list_first(in->filehashs); iter != NULL;
             iter = g_list_next(iter)) {
         struct file_hash *fh = (struct file_hash *)iter->data;

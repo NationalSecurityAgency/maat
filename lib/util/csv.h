@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ int get_col_from_csv_line(const char *str, int val_col,
  *
  * Returns 0 on success and -1 otherwise.
  */
-int append_toks_to_csv(const char *filename, int num_strings, ...);
+int append_toks_to_csv(const char *filename, size_t num_strings, ...);
 
 /**
  * Append a set of values given to this function into a CSV
@@ -79,7 +79,7 @@ int append_toks_to_csv(const char *filename, int num_strings, ...);
  *
  * Returns 0 on success and -1 otherwise.
  */
-int append_tok_list_to_csv(const char *filename, int num_strings,
+int append_tok_list_to_csv(const char *filename, size_t num_strings,
                            const char *strs[]);
 
 #endif /* __CSV_H__ */

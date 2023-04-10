@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2023 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>send_execute_tcp_asp</name>
+	<uuid>014ec57b-567f-470b-81a8-99fc3a28052e</uuid>
+	<type>Process</type>
+	<description>Request a measurement from another AM</description>
+	<usage>send_execute_tcp_asp [in_fd] [out_fd] [targ_fd] [resource] [certfile] [keyfile] [keypass] [nonce] [tpmpass] [sign_tpm]</usage>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/send_execute_tcp_asp</aspfile>
+        <measurers>
+        </measurers>
+	<security_context>
+	  <selinux><type>send_execute_tcp_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+	</security_context>
+</asp>

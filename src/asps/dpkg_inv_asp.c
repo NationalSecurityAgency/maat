@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -323,7 +323,9 @@ int asp_measure(int argc, char *argv[])
 
     while(getline(&line, &len, fp) != -1) {
         if(add_package_node(graph, node_id, line) != 0) {
-            ret_val = -1;
+            /* FIXME: change handling of this failure case
+             * as is, the return value is not even used in any way */
+            // ret_val = -1;
         }
     }
 

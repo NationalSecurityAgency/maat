@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ size_t read_into(void *dest, uint64_t start_addr, size_t count)
                            count - total_bytes_read,
                            (off_t)(start_addr + total_bytes_read));
 
-        if (errno) {
+        if (errno || bytes_read < 0) {
             dlog(4, "Read call to pread in function read_into failed with error %s\n",
                  strerror(errno));
             return 0;
@@ -65,7 +65,8 @@ size_t read_into(void *dest, uint64_t start_addr, size_t count)
             break;
         }
 
-        total_bytes_read += bytes_read;
+        /* Cast is justified because of the previous bounds checks */
+        total_bytes_read += (size_t) bytes_read;
     }
 
     return total_bytes_read;

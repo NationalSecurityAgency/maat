@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags,
     const char* pUsername;
     int ret_val = 0;
     struct pam_message pam_msg;
-    int msglen = 0;
+    size_t msglen = 0;
     char *targ_portnum = NULL;
     char *targ_host_addr = NULL;
     char *targ_fingerprint =  NULL;
@@ -126,7 +126,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags,
     xmlChar *target_id;
     size_t data_count;
     xmlChar **data_idents, **data_entries;
-    char *result = NULL;
+    unsigned char *result = NULL;
     size_t resultsz = 0;
     int eof_encountered=0;
     int iostatus=0;
@@ -282,7 +282,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags,
     }
 
     iostatus = maat_read_sz_buf(appraiser_chan, &result, &resultsz,
-                                &bytes_read, &eof_encountered, 100000, -1);
+                                &bytes_read, &eof_encountered, 100000, 0);
     if(iostatus != 0) {
         dlog(1, "Error reading response. returned status is %d: %s\n",
              iostatus, strerror(iostatus < 0 ? -iostatus : iostatus));
@@ -296,7 +296,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags,
     }
 
     //dlog(0, "Result from Appraiser: %s\n", result);
-    parse_integrity_response(result, (int)resultsz, &target_typ,
+    parse_integrity_response(result, resultsz, &target_typ,
                              &target_id, &resource, &ret_val,
                              &data_count, &data_idents, &data_entries);
     dlog(0, "parse_integrity_response returned %d", ret_val);

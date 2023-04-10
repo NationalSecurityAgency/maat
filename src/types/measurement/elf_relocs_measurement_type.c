@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,6 @@ int serialize_elf_relocs_data(measurement_data *d, char **serial_data,
     char *tmptag = NULL;
     char *tmpsymbol = NULL;
     uint64_t tmpoff, tmpval;
-    struct elf_relocs_data *relocs = NULL;
 
     if(!d) {
         dlog(0, "Error: passed data is NULL\n");
@@ -83,6 +82,7 @@ int serialize_elf_relocs_data(measurement_data *d, char **serial_data,
 
     for (iter = g_list_first(in->relocs); iter != NULL;
             iter = g_list_next(iter)) {
+        /* Pack extracted data into TPL node */
         struct elf_reloc *er = (struct elf_reloc *)iter->data;
         tmpoff    = er->offset;
         tmpval    = er->value;
@@ -128,7 +128,6 @@ int unserialize_elf_relocs_data(char *serialized, size_t serialized_sz,
     void *tplbuf     = NULL;
     tpl_node *tn     = NULL;
     size_t tplsize   = 0;
-    tpl_bin tb;
     char *tmptag = NULL;
     char *tmpsymbol = NULL;
     uint64_t tmpoff, tmpval;

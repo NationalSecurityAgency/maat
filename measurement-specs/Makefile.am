@@ -1,5 +1,5 @@
 #
-# Copyright 2020 United States Government
+# Copyright 2023 United States Government
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,4 +33,5 @@ dist_spec_DATA=hashdir_mspec.xml \
 	quiot_tlm_tmin.xml \
 	userspace_packages_mspec.xml \
 	got_measure_mspec.xml \
-	passport_mspec.xml
+	passport_mspec.xml \
+	layered_measurement_mspec.xml

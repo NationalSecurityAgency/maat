@@ -1,0 +1,64 @@
+<!--
+# Copyright 2023 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<!--Selector Policy to demonstrate the complex attestation usecase. For
+    more information on this usecase, consult
+    <maat directory>/documentation/complex_attestation_tutorial.txt
+-->
+<selector_policy>
+    <!--Inital Phase and Appraiser Role.
+	Check Identity of Client, and offer copland phrase(s)-->
+    <rule role="appraiser" phase="initial">
+      <action selector_action="accept">
+	      <condition name="Complete-Userspace-Measurement"                 apb_phrase="((USM full) -> SIG)"/>
+	      <condition name="Partial-Userspace-Measurement"                 apb_phrase="((USM pkginv) -> SIG)"/>
+	</action>
+    </rule>
+
+    <!--Modify Phase and Attester Role.
+	Possible down-select on copland phrase(s)-->
+    <rule role="attester" phase="modify">
+      <action selector_action="accept">
+	      <condition name="Complete-Userspace-Measurement"                 apb_phrase="((USM full) -> SIG)"/>
+	      <condition name="Partial-Userspace-Measurement"                 apb_phrase="((USM pkginv) -> SIG)"/>
+    	</action>
+    </rule>
+
+    <!--Execute Phase and Appraiser Role.
+	Choose copland phrase for Attester to execute, depending on
+	whether peer certificate is known or not -->
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="partner_fingerprint" operator="is"
+		       value="A5:2C:D0:4E:1A:75:1F:7D:60:9F:2B:A6:D1:7D:EA:53:BD:42:B7:FD"/>
+        <action selector_action="accept">
+	      <condition name="Partial-Userspace-Measurement"                 apb_phrase="((USM pkginv) -> SIG)"/>
+	</action>
+    </rule>
+    
+    <rule role="appraiser" phase="execute">
+        <action selector_action="accept">
+	      <condition name="Complete-Userspace-Measurement"                 apb_phrase="((USM full) -> SIG)"/>
+	</action>
+    </rule>
+
+    <!--Spawn Phase and Appraiser Role.
+	Spawn Appraiser apb/mspec to appraise attester output-->
+    <rule role="appraiser" phase="spawn">
+      <action selector_action="accept">
+        	<condition name="userspace_appraiser"  apb_phrase="(USM app)"/>
+      </action>
+    </rule>
+
+</selector_policy>

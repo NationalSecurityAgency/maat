@@ -3,7 +3,7 @@ Quick Start: Preparing Environment, Building & Configuration
 
 .. Copyright
 
-   Copyright 2020 United States Government
+   Copyright 2023 United States Government
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -36,15 +36,22 @@ need to prepare a system for Maat, build the Maat software, and run a
 simplified demo with test client, attester, and appraiser platforms.
 
 The intended audience for this section is a system administrator who wants to
-get Maat up and running to integrate into their network. 
+get Maat up and running to integrate into their network.
+
+Supported Operating System Distributions and Releases
+=====================================================
+
+Maat is tested and supported for Red Hat Enterprise Linux 7 and 8 and Ubuntu
+20.04 (focal) and 22.04 (jammy). Other distributions/releases (such as
+equivalent CentOS or earlier Ubuntu versions) may also work but are not
+officially supported.
 
 Dependencies
 ============
 This document describes how to build and install Maat from source.
 Maat can also produce binary DEB and RPM packages.
 
-For Fedora and CentOS machines, you may need to enable the CentOS Plus and EPEL
-repos.
+For RHEL machines, you may need to enable the EPEL repo.
 
 Maat is a system daemon written in C, with runtime requirements on the GLib 
 library and libxml2. However, some optional parts of Maat require other 
@@ -57,21 +64,21 @@ For Ubuntu Machines:
 
    sudo apt install build-essential autoconf automake libtool check    \
         libglib2.0-dev libxml2-dev libssl-dev uuid-dev libcap-dev make \
-        libelf-dev libjson-c-dev 
+        libelf-dev libjson-c-dev libtss2-dev tpm2-tools
 
-For CentOS Machines: 
+For RHEL Machines: 
 
 .. code-block:: bash
    
    sudo yum install autoconf automake libtool check-devel glib2-devel   \
         libxml2-devel openssl-devel libuuid-devel libcap-devel make     \
         elfutils-devel json-c-devel selinux-policy-devel \
-        libselinux-devel 
+        libselinux-devel tpm2-tss, tpm2-tss-devel, tpm2-tools
 
 
 
 +----------------------------+----------------------------+
-|  Ubuntu                    | Fedora/CentOS              |
+|  Ubuntu                    | RHEL                       |
 +============================+============================+
 | autoconf                   | autoconf                   |
 +----------------------------+----------------------------+
@@ -101,6 +108,12 @@ For CentOS Machines:
 +----------------------------+----------------------------+
 |                            | libselinux-devel           |
 +----------------------------+----------------------------+
+| libtss2-dev                | tpm2-tss-devel             |
++----------------------------+----------------------------+
+|                            | tpm2-tss                   |
++----------------------------+----------------------------+
+| tpm2-tools                 | tpm2-tools                 |
++----------------------------+----------------------------+
 
 
 To support building the docs (the `make docs` target), you should also install
@@ -115,10 +128,10 @@ For Ubuntu Machines:
    sudo apt install latexmk python3-cloud-sptheme python3-breathe \
         python3-sphinx texlive-latex-extra python3-recommonmark
 
-For CentOS Machines: as of this writing the python3 versions of the 
+For RHEL Machines: as of this writing the python3 versions of the 
 cloud-sptheme, breathe, and sphinx packages available from the python3 package
 manager, pip3, provide a more stable build of the Maat documentation compared to
-the versions present in the CentOS repositories. Follow the instructions below to
+the versions present in the RHEL repositories. Follow the instructions below to
 install the pip3 package manager and remove any versions of these packages that 
 may already be on your system, then install all documentation dependencies.
 
@@ -157,6 +170,10 @@ in the commands below.
    Please refer to the :ref:`security model description<security_model>`
    for more information on the added security
    provided to Maat by SELinux access controls.
+
+The default compilation of the Maat framework includes use of TPM2.0. If you 
+are using a system without TPM2.0, you can disable compilation of the 
+TPM2.0 commands by compiling with `--disable-tpm`. 
 
 The following instructions install the Maat framework into the '/opt/maat' 
 directory. You can choose a different install prefix if you wish via the 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ netstat_udp6_line *chunk_line_data(char *raw_line)
     memset(ret, 0, sizeof(netstat_udp6_line));
     char *tmp;
     char addr[INET6_ADDRSTRLEN];
-    int port;
+    long int port;
     char p[15];
     struct in6_addr ip;
 
@@ -81,7 +81,8 @@ netstat_udp6_line *chunk_line_data(char *raw_line)
     }
     tmp = strtok(NULL, " "); //tmp = local_address port
     port = strtol(tmp, NULL, 16);
-    snprintf(ret->local_addr, 48, "[%s]:%d", addr, port);
+    // Cast is justified because the value of a port can be contained in a short
+    snprintf(ret->local_addr, 52, "[%s]:%d", addr, (int) port);
 
     tmp = strtok(NULL, " :"); //tmp = rem_address
     if(strcmp(tmp, "00000000000000000000000000000000") == 0)
@@ -92,7 +93,8 @@ netstat_udp6_line *chunk_line_data(char *raw_line)
     }
     tmp = strtok(NULL, " "); //tmp = rem_address port
     port = strtol(tmp, NULL, 16);
-    snprintf(ret->rem_addr, 48, "[%s]:%d", addr, port);
+    // Cast is justified because the value of a port can be contained in a short
+    snprintf(ret->rem_addr, 52, "[%s]:%d", addr, (int) port);
 
     tmp = strtok(NULL, " "); //tmp = state
     strncpy(ret->State, tmp, 15);
@@ -142,9 +144,16 @@ int asp_measure(int argc, char *argv[])
         unmap_measurement_graph(graph);
         return -1;
     }
+
+    if(file_stats.st_size < 0 || (uintmax_t) file_stats.st_size > SIZE_MAX) {
+        asp_logerror("File state size cannot be represented in measurement variables\n");
+        return -1;
+    }
+
     file_address->device_major = major(file_stats.st_dev);
     file_address->device_minor = minor(file_stats.st_dev);
-    file_address->file_size = file_stats.st_size;
+    // Cast is safe due to previous bounds check
+    file_address->file_size = (size_t) file_stats.st_size;
     file_address->node = file_stats.st_ino;
     file_address->fullpath_file_name = strdup("/proc/net/udp6");
     if(file_address->fullpath_file_name == NULL) {

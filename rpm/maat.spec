@@ -1,5 +1,5 @@
 #
-# Copyright 2020 United States Government
+# Copyright 2023 United States Government
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,18 +15,18 @@
 #
 
 Name:           maat
-Version:        1.3
+Version:        1.4
 Release:        1%{?dist}
 Summary:        Maat Measurement & Attestation Framework
 Group:          Administration/Monitoring
 License:        Apache License, Version 2.0
 Source:         %{name}-%{version}.tar.gz
 
-BuildRequires: autoconf, automake, libtool, glib2-devel, libxml2-devel
+BuildRequires: autoconf, automake, libtool, glib2-devel, libxml2-devel, 
 BuildRequires: openssl-devel, libuuid-devel, make, python3-devel
 BuildRequires: selinux-policy-devel, libselinux
 BuildRequires: elfutils-devel, libcap-devel, json-c-devel
-BuildRequires: mongo-c-driver
+BuildRequires: mongo-c-driver, tpm2-tss, tpm2-tss-devel, tpm2-tools
 Requires:       libcap, json-c, mongo-c-driver-devel, libbson
 %{?el7:Requires: systemd}
 Provides:       maat
@@ -66,7 +66,7 @@ and base set of APBs and ASPs.
 %build
 %configure --disable-static --enable-web-ui \
 	   --with-asp-install-dir=%{_libexecdir}/maat/asps --with-apb-install-dir=%{_libexecdir}/maat/apbs \
-	   --disable-selinux-libdir-mapping
+	   --disable-selinux-libdir-mapping --disable-tpm
 
 # see https://fedoraproject.org/wiki/Packaging:Guidelines#Beware_of_Rpath
 sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool
@@ -146,14 +146,17 @@ if [ ! "$(getenforce)" = "Disabled" ]; then
     fi
 
     # Set the default attestmgr port to the correct type
-    semanage port -a -t attestmgr_port_t -p tcp 2342
+    semanage port --list | grep -q -e "attestmgr_port_t[[:space:]]*tcp.*2342"
+    if [ $? -ne 0 ]; then
+	semanage port -a -t attestmgr_port_t -p tcp 2342
+    fi
 fi
 
 # pre uninstall
 
 %preun selinux
 if [ ! "$(getenforce)" = "Disabled" ]; then
-    if semanage port --list | grep -q "attestmgr_port_t[[:space:]]*tcp[[:space:]]*2342"; then
+    if semanage port --list | grep -q "attestmgr_port_t[[:space:]]*tcp.*2342"; then
 	semanage port -d -t attestmgr_port_t -p tcp 2342
 
     fi
@@ -207,6 +210,8 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/apbs/userspace_apb
 %{_libexecdir}/maat/apbs/userspace_appraiser_apb
 %{_libexecdir}/maat/apbs/complex_att_apb
+%{_libexecdir}/maat/apbs/layered_att_apb
+%{_libexecdir}/maat/apbs/layered_appraiser_apb
 %{_libexecdir}/maat/apbs/forwarding_apb
 %{_libexecdir}/maat/apbs/no_op_apb
 %{_libexecdir}/maat/apbs/request_passport_apb
@@ -219,6 +224,7 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/asps/dpkg_inv_asp
 %{_libexecdir}/maat/asps/dummy_appraisal
 %{_libexecdir}/maat/asps/elf_reader
+%{_libexecdir}/maat/asps/send_execute_tcp_asp
 %{_libexecdir}/maat/asps/send_request_asp
 %{_libexecdir}/maat/asps/hashfileserviceasp
 %{_libexecdir}/maat/asps/hashserviceasp
@@ -254,8 +260,12 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/asps/serialize_graph_asp
 %{_libexecdir}/maat/asps/compress_asp
 %{_libexecdir}/maat/asps/encrypt_asp
-%{_libexecdir}/maat/asps/create_contract_asp
+%{_libexecdir}/maat/asps/create_measurement_contract_asp
 %{_libexecdir}/maat/asps/send_asp
+%{_libexecdir}/maat/asps/decompress_asp
+%{_libexecdir}/maat/asps/decrypt_asp
+%{_libexecdir}/maat/asps/verify_measurement_contract_asp
+%{_libexecdir}/maat/asps/receive_asp
 %{_libexecdir}/maat/asps/passport_maker_asp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/proc_namespaces_asp
 %{_libexecdir}/maat/asps/kernel_msmt_asp

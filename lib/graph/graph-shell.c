@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,6 +134,8 @@ measurement_data *alloc_dummy_measurement_data()
     if(d) {
         d->d.type = &dummy_measurement_type;
         d->x = 0;
+    } else {
+        return NULL;
     }
     return &d->d;
 }
@@ -189,8 +191,11 @@ int unserialize_dummy_measurement_data(char *sd, size_t sd_size UNUSED,
 address *alloc_simple_address()
 {
     simple_address *a = malloc(sizeof(simple_address));
-    if(a)
+    if(a) {
         a->a.space = &simple_address_space;
+    } else {
+        return NULL;
+    }
     return &a->a;
 }
 

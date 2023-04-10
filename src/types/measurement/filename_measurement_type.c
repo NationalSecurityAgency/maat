@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ int filename_serialize_data(measurement_data *d, char **serial_data, size_t *ser
     size_t tplsize;
     //int i;
     char *b64;
-    uint64_t temp;
+    size_t temp;
     tpl_bin tb;
 
     if(!d) {
@@ -98,12 +98,17 @@ int filename_serialize_data(measurement_data *d, char **serial_data, size_t *ser
         temp	= strlen(fmd->contents);
     }
 
+    if (UINT32_MAX > SIZE_MAX && temp >= UINT32_MAX) {
+        goto err;
+    }
+
     tn	= tpl_map("uUB", &fmd->meas_data.type->magic, &temp, &tb);
     if(tn == NULL) {
         goto err;
     }
 
-    tb.sz   = temp+1;
+    // Cast is justified because of the previous bounds check
+    tb.sz   = (uint32_t)temp+1;
     tb.addr = fmd->contents;
     tpl_pack(tn, 0);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 START_TEST(test_create_request)
 {
     xmlChar *buf;
-    int size;
+    size_t size;
     fail_if(create_integrity_request(TARGET_TYPE_HOST_PORT,
                                      (xmlChar*)"localhost",
                                      (xmlChar*)"1234",
@@ -49,7 +49,7 @@ START_TEST(test_parse_response_pass)
                         "\t<data identifier=\"d1\">value 1</data>\n"
                         "\t<data identifier=\"d2\">value 2</data>\n"
                         "</contract>\n";
-    int msg_size = (int)strlen(response_msg);
+    size_t msg_size = strlen(response_msg);
 
     target_id_type_t target_typ;
     xmlChar *target_id;

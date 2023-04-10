@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ int create_integrity_request(target_id_type_t target_typ,
                              xmlChar *cert_fingerprint,
                              xmlChar *info,
                              xmlChar **out,
-                             int *outsize);
+                             size_t *outsize);
 
 /**
  * Parse an integrity response contract. @input should be a serialized
@@ -136,7 +136,7 @@ int create_integrity_request(target_id_type_t target_typ,
  * TARGET_TYPE_UNKNOWN (for target_typ), and -1 is returned.
  */
 /* TODO Look at types of this function as compared to the ones in the create function */
-int parse_integrity_response(const char *input, int input_size,
+int parse_integrity_response(const char *input, size_t input_size,
                              target_id_type_t *target_typ,
                              xmlChar **target_id,
                              xmlChar **resource,

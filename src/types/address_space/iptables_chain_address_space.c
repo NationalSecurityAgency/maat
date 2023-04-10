@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,7 +174,6 @@ static char *iptables_chain_addr_to_ascii(const address *a)
 {
     char *ascii_table = NULL;
     char *out = NULL;
-    int ret = 0;
 
     const iptables_chain_addr *ia = container_of(a, const iptables_chain_addr, addr);
 
@@ -255,7 +254,10 @@ uint32_t do_hash(char *string)
     //XXX: Should be replaced with a chosen library to do this.
     uint32_t ret = 0, counter;
     for (counter = 0; string[counter] != '\0'; counter++) {
-        ret = string[counter] + (ret << 6) + (ret << 16) - ret;
+        if (string[counter] >= 0) {
+            // Cast is justified because of the previous bounds check
+            ret = (uint32_t)string[counter] + (ret << 6) + (ret << 16) - ret;
+        }
     }
     return ret;
 }

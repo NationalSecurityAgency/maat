@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ int appraiser(struct scenario *scen, int peerchan)
     int failed;
     int ret;
     dlog(2, "Appraiser APB checking in!\n");
-    receive_measurement_contract(peerchan, scen, -1);
+    receive_measurement_contract(peerchan, scen, 0);
     dlog(6, "Got measurement contract\n");
     ret = handle_measurement_contract(scen, appraise, &failed);
     if (ret != 0) {

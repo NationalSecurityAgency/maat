@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@
 
 #define TIMEOUT 1000
 #define COMPRESSION_LEVEL 9
+#define READ_SZ INT_MAX
 
 int asp_init(int argc UNUSED, char *argv[] UNUSED)
 {
@@ -70,7 +71,7 @@ int asp_measure(int argc, char *argv[])
 {
     dlog(6, "IN compress ASP MEASURE\n");
 
-    char *buf       = NULL;
+    unsigned char *buf       = NULL;
     size_t bufsize  = 0;
     void *compbuf   = NULL;
     size_t compsize = 0;
@@ -93,14 +94,7 @@ int asp_measure(int argc, char *argv[])
     }
 
     // read from chan in
-    fd_in = maat_io_channel_new(fd_in);
-    if(fd_in < 0) {
-        dlog(0, "Error: failed to make new io channel for fd_in\n");
-        ret_val = -1;
-        goto io_chan_in_failed;
-    }
-
-    ret_val = maat_read_sz_buf(fd_in, &buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, -1);
+    ret_val = maat_read_sz_buf(fd_in, &buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, READ_SZ);
     if(ret_val < 0 && ret_val != -EAGAIN) {
         dlog(0, "Error reading evidence from channel\n");
         ret_val = -1;
@@ -124,13 +118,6 @@ int asp_measure(int argc, char *argv[])
     }
 
     // Output to chan out
-    fd_out = maat_io_channel_new(fd_out);
-    if(fd_out < 0) {
-        dlog(0, "Error: failed to make new io channel for fd_out\n");
-        ret_val = -1;
-        goto io_chan_out_failed;
-    }
-
     ret_val = maat_write_sz_buf(fd_out, compbuf, compsize, &bytes_written, TIMEOUT);
     if(ret_val < 0 && ret_val != -EAGAIN) {
         dlog(0, "Error writing compressed evidence to channel\n");
@@ -139,13 +126,12 @@ int asp_measure(int argc, char *argv[])
     } else if (ret_val == -EAGAIN) {
         dlog(0, "Warning: timeout occured before write could complete\n");
     }
-    dlog(0, "buffer size: %zu, bytes_written: %zu\n", compsize, bytes_written);
+    dlog(6, "buffer size: %zu, bytes_written: %zu\n", compsize, bytes_written);
 
     ret_val = ASP_APB_SUCCESS;
     asp_loginfo("compress ASP returning with success\n");
 
 write_failed:
-io_chan_out_failed:
     free(compbuf);
     compsize = 0;
 compression_failed:
@@ -153,7 +139,6 @@ eof_enc:
     free(buf);
     bufsize = 0;
 read_failed:
-io_chan_in_failed:
     close(fd_in);
     close(fd_out);
 parse_args_failed:

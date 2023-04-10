@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -385,6 +385,8 @@ int run_apb_async(struct apb *apb,
               "--sign-tpm",         scen->sign_tpm     ? "yes" : "no",
               "--verify-tpm",       scen->verify_tpm   ? "yes" : "no",
               "--tpm-pass",         scen->tpmpass      ? scen->tpmpass : "",
+              "--akctx",            scen->akctx        ? scen->akctx : "",
+              "--akpubkey",         scen->akpubkey     ? scen->akpubkey : "",
               "--target",     		target      	   ? target : "",
               "--target_type",     	target_typ         ? target_typ : "",
               "--resource",     	resource           ? resource : "",

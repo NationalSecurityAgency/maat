@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@
 #include <address_space/time_delta_address_space.h>
 #include <address_space/unit_address_space.h>
 #include <address_space/measurement_request_address_space.h>
+#include <address_space/dynamic_measurement_request_address_space.h>
 #include <address_space/inode_address_space.h>
 
 static inline int register_address_spaces(void)
@@ -70,6 +71,9 @@ static inline int register_address_spaces(void)
         return ret_val;
     }
     if((ret_val = register_address_space(&measurement_request_address_space)) != 0) {
+        return ret_val;
+    }
+    if((ret_val = register_address_space(&dynamic_measurement_request_address_space)) != 0) {
         return ret_val;
     }
     if((ret_val = register_address_space(&inode_address_space)) != 0) {

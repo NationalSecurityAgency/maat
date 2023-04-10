@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,14 @@ void *file_contents_type_read_instance(target_type *type, address *a,
         return NULL;
     }
 
-    *size = s.st_size;
+    if (s.st_size < 0 || (uintmax_t) s.st_size > SIZE_MAX) {
+        return NULL;
+    }
 
-    return sfa->a.space->read_bytes((address *)sfa, s.st_size);
+    // Cast justified because of the previous bounds check
+    *size = (size_t) s.st_size;
+
+    return sfa->a.space->read_bytes((address *)sfa, (size_t) s.st_size);
 }
 
 struct target_type file_contents_target_type = {

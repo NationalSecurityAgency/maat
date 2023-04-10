@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +140,7 @@ static int measure_variable(void *ctxt, measurement_variable *var, measurement_t
     node_id_t n = INVALID_NODE_ID;
     node_id_str nstr;
 
-    int rc = -1;
+    int rc;
 
     char *addr_str = address_human_readable(var->address);
     dlog(6, "Measuring variable (%s *) %s with mtype %s\n",

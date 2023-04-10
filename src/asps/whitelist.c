@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,9 +49,11 @@
 
 #define MOD_WHITELIST_FN "modules.whitelist"
 #define PROC_WHITELIST_FN "process.whitelist"
+#define PKG_WHITELIST_FN "packages.whitelist"
 
 GList *mod_whitelist = NULL;
 GList *proc_whitelist = NULL;
+GList *pkg_whitelist = NULL;
 
 static char *get_aspinfo_dir(void)
 {
@@ -76,7 +78,7 @@ static GList *read_whitelist(GList *orig, const char *filename)
 
     full_filename = g_strdup_printf("%s/%s", get_aspinfo_dir(), filename);
     if (!full_filename) {
-        asp_logerror("Failed to allocate memory for blacklist filename: %s",
+        asp_logerror("Failed to allocate memory for whitelist filename: %s",
                      strerror(errno));
         return ret;
     }
@@ -92,7 +94,7 @@ static GList *read_whitelist(GList *orig, const char *filename)
     char line[1000];
     while (!feof(fp)) {
         char *err = fgets(line, sizeof(line), fp);
-        if (err != NULL) {
+        if (err == NULL) {
             break;
         }
         if(line[0] == '#') {
@@ -118,6 +120,7 @@ int asp_init(int argc, char *argv[])
 
     mod_whitelist = read_whitelist(mod_whitelist, MOD_WHITELIST_FN);
     proc_whitelist = read_whitelist(proc_whitelist, PROC_WHITELIST_FN);
+    pkg_whitelist = read_whitelist(pkg_whitelist, PKG_WHITELIST_FN);
 
     return ASP_APB_SUCCESS;
 }
@@ -128,6 +131,7 @@ int asp_exit(int status)
 
     g_list_free_full(mod_whitelist, free);
     g_list_free_full(proc_whitelist, free);
+    g_list_free_full(pkg_whitelist, free);
 
     return ASP_APB_SUCCESS;
 }
@@ -140,7 +144,6 @@ int asp_measure(int argc, char *argv[])
     measurement_data *data;
     magic_t data_type;
     int found = 0;
-    char *ptr;
     char scratch[256];
     char *msg;
     int ret;
@@ -156,7 +159,8 @@ int asp_measure(int argc, char *argv[])
     }
 
     if (data_type != KMOD_MEASUREMENT_TYPE_MAGIC &&
-            data_type != PROCESSMETADATA_TYPE_MAGIC) {
+            data_type != PROCESSMETADATA_TYPE_MAGIC &&
+            data_type != PKG_DETAILS_TYPE_MAGIC) {
         destroy_measurement_graph(graph);
         return -EINVAL;
     }
@@ -199,10 +203,30 @@ int asp_measure(int argc, char *argv[])
         free_measurement_data(&pmd->d);
     }
 
+    if (data_type == PKG_DETAILS_TYPE_MAGIC) {
+        address *addr;
+        package_address *pkgaddr;
+
+        addr = measurement_node_get_address(graph, node_id);
+        if (addr == NULL) {
+            destroy_measurement_graph(graph);
+            return -1;
+        }
+        pkgaddr = container_of(addr, package_address, a);
+
+        dlog(6, "Checking package %s against whitelist\n", pkgaddr->name);
+        strncpy(scratch, pkgaddr->name, 255);
+        if (g_list_find_custom(pkg_whitelist, scratch,
+                               (GCompareFunc)strcmp)) {
+            found = 1;
+        }
+        free_address(&pkgaddr->a);
+    }
     if (found) {
         rmd = report_data_with_text(strdup("OK"), strlen("OK")+1);
     } else {
         msg = g_strdup_printf("%s not found in whitelist", scratch);
+        dlog(6, "%s\n", msg);
         if (msg == NULL) {
             dperror("Error allocating msg string");
             destroy_measurement_graph(graph);

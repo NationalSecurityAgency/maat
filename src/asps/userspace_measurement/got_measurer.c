@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -672,13 +672,15 @@ static int parse_vdso_dynamic(
     GElf_Dyn dyn;
     dyn.d_tag = DT_NULL;
 
-    unsigned int i;
-    unsigned int n_dyn = phdr->p_memsz / sizeof(ElfW(Dyn));
+    uint64_t i;
+    // Cast should be justified because there would not be an ELF type
+    // that would be large enough such that its size would overflow
+    // a uint64_t
+    uint64_t n_dyn = phdr->p_memsz / (uint64_t)sizeof(ElfW(Dyn));
     for (i = 0; i < n_dyn; ++i) {
-        /* i is converted to an unsigned value in the library code,
-         * so this conversion is okay  */
-        if (gelf_getdyn(data, (int)i, &dyn) != &dyn) {
-            dlog(4,"Error getting DYNAMIC entry %d for %s: %s",
+        /* Cast justified because of the previous bounds check */
+        if ((UINT64_MAX > INT_MAX && i > INT_MAX) || gelf_getdyn(data, (int)i, &dyn) != &dyn) {
+            dlog(4,"Error getting DYNAMIC entry %"PRIu64" for %s: %s",
                  i, ctx->path, elf_errmsg(elf_errno()));
             return -1;
         }
@@ -933,15 +935,19 @@ static int parse_dynamic(
     uint64_t versym_addr = 0;
     uint64_t verdef_addr = 0;
     size_t verdef_num = 0;
-    unsigned int pltrel = 0;
+    uint64_t pltrel = 0;
 
     GElf_Dyn dyn = {0};
-    unsigned int i;
-    unsigned int n_dyn = phdr->p_memsz / sizeof(ElfW(Dyn));
+
+    uint64_t i;
+    // Cast should be justified because there would not be an ELF type
+    // that would be large enough such that its size would overflow
+    // a uint64_t
+    uint64_t n_dyn = phdr->p_memsz / (uint64_t)sizeof(ElfW(Dyn));
     for (i = 0; i < n_dyn; ++i) {
-        //The index is just converted to an unsigned int anyways in that function
-        if (gelf_getdyn(data, (int)i, &dyn) != &dyn) {
-            dlog(4,"Error getting DYNAMIC entry %d for %s: %s",
+        //The cast is justified because of the bounds checking
+        if ((UINT64_MAX > INT_MAX && i > INT_MAX) || gelf_getdyn(data, (int)i, &dyn) != &dyn) {
+            dlog(4,"Error getting DYNAMIC entry %lu for %s: %s",
                  i, ctx->path, elf_errmsg(elf_errno()));
             return -1;
         }
@@ -986,9 +992,9 @@ static int parse_dynamic(
             jmprel_sz = dyn.d_un.d_val;
             break;
         case DT_PLTREL:
-            pltrel = dyn.d_un.d_val;
+            pltrel = (uint64_t) dyn.d_un.d_val;
             if (pltrel != DT_RELA) {
-                dlog(4,"Unrecognized PLTREL relocation type: %d",
+                dlog(4,"Unrecognized PLTREL relocation type: %"PRIu64"",
                      pltrel);
                 return -1;
             }
@@ -1279,13 +1285,13 @@ static int parse_dynamic(
         read_verdef(ctx, verdef_addr, verdef_num);
     }
     if (versym_addr && symtab_sz && syment_sz) {
-        unsigned int num_symbols = symtab_sz / syment_sz;
+        size_t num_symbols = symtab_sz / syment_sz;
         // VERSYM entries are the same size for 32 and 64 bit
         ctx->versym_sz = num_symbols * sizeof(Elf64_Versym);
         ctx->versym = (Elf64_Versym *) (ctx->buf + versym_addr -
                                         ctx->base_address);
 #if DEBUG >= 2
-        unsigned int i = 0;
+        size_t i = 0;
         printf("VERSYM Table");
         for (i = 0; i < num_symbols; ++i) {
             if ((i & 3) == 0) {
@@ -2118,7 +2124,7 @@ static char *get_executable_path(const char *pid)
                        "process was deleted: '%s'", buff);
         /* Returns NULL on failure */
         return strdup(buff);
-    } else if (!exe_path || errno) {
+    } else if (!exe_path) {
         int backup = errno;
         dlog(4, "Error resolving executable path %s: %s\n",
              path, strerror(errno));
@@ -3543,6 +3549,7 @@ static void scan_process(pid_t pid)
     char *cmdline = get_cmdline(pid_string);
     if (!cmdline) {
         report_anomaly("Unable to access command line information of process");
+        free(pid_string);
         return;
     }
 
@@ -3553,11 +3560,13 @@ static void scan_process(pid_t pid)
     if (elf_version(EV_CURRENT) == EV_NONE) {
         report_anomaly(" ELF library initialization "
                        " failed : %s ", elf_errmsg(elf_errno()));
+        free(pid_string);
         return;
     }
 
     if(open_mem_fd(pid_string) < 0) {
         report_anomaly("Unable to open memory of process for reading\n");
+        free(pid_string);
         return;
     }
 
@@ -3577,6 +3586,7 @@ static void scan_process(pid_t pid)
         get_executable_base_load_address(pid_string);
     if (!exe_base_load_addr || move_exe_context_to_front(&elf_contexts, exe_base_load_addr) < 0) {
         report_anomaly("Could not find the ELF context for the executable");
+        free(pid_string);
         return;
     }
 
@@ -3595,6 +3605,7 @@ static void scan_process(pid_t pid)
 
         if (linkmap_list == NULL) {
             report_anomaly("Unable to retrieve link map based on address\n");
+            free(pid_string);
             return;
         }
 
@@ -3714,7 +3725,7 @@ int measure_got(const uint32_t pid_u)
      * Converting to a pid_t is useful because several functions used further ahead take a
      * pid_t
      */
-    pid = pid_u;
+    pid = (pid_t) pid_u;
 
     errno = 0;
     uid = getuid();

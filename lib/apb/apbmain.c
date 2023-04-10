@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ int apb_execute(struct apb *, struct scenario *scen, uuid_t meas_spec,
                 int peerchan, int resultchan, char *target,
                 char *target_type, char *resource, struct key_value **arg_list, int argc);
 
-static const char *short_options = "t:a:f:k:K:s:v:T:g:y:e:c:n:p:r:m:x:dl:w:u:i:hX:Z:";
+static const char *short_options = "t:a:f:k:K:s:v:T:C:P:g:y:e:c:n:p:r:m:x:dl:w:u:i:hX:Z:";
 static const struct option long_options[] = {
     {
         .name		= "cacert",
@@ -157,6 +157,18 @@ static const struct option long_options[] = {
         .has_arg        = 1,
         .flag           = NULL,
         .val            = 'T'
+    },
+    {
+        .name           = "akctx",
+        .has_arg        = 1,
+        .flag           = NULL,
+        .val            = 'C'
+    },
+    {
+        .name           = "akpubkey",
+        .has_arg        = 1,
+        .flag           = NULL,
+        .val            = 'P'
     },
     {
         .name		= "target",
@@ -273,7 +285,7 @@ void print_usage(char *progname)
 {
     fprintf(stderr, "Usage: %s [--debug] [--cacert <path>] [--certfile <path>]\n\t"
             "[--keyfile <path>] [--keypass <password>] [--partner-cert <path>] [--sign-tpm <yes|no>]\n\t"
-            "[--verify-tpm <yes|no>] [--tpm-pass <password>] [--target <target>]\n\t"
+            "[--verify-tpm <yes|no>] [--tpm-pass <password>] [--akctx <path>] [--akpubkey <path>] [--target <target>]\n\t"
             "[--target_type <target_type>] [--resource <resource>] [--contract <string>] [--nonce <string>]\n\t"
             "[--peerfd <fd>] [--resultfd <fd>] [--measurement-spec <uuid>]\n\t"
             "[--workdir <dir>] [--contract-file <file>] [--sockfile <path>]\n\t"
@@ -299,6 +311,8 @@ void print_help(char *progname)
             "\t--sign-tpm <yes|no>:            Use the TPM for signature generation.\n"
             "\t--verify-tpm <yes|no>:          Use the TPM for signature verification.\n"
             "\t--tpm-pass <string>:            The password to interact with the TPM.\n"
+            "\t--akctx <string>:               Load an AK context from the given path.\n"
+            "\t--akpubkey <string>:            Load an AK public key from the given path.\n"
             "\t--target <string>:     	       Specify the target that was originally set in \n"
             "\t				       request contract. *Only necessary for appraiser apbs.*\n"
             "\t--target_type <string>:         Specify the target type as defined in /client/maat-client.h\n"
@@ -442,6 +456,17 @@ int main(int argc, char *argv[])
             if(*optarg != '\0') {
                 scen.tpmpass = optarg;
             }
+            break;
+        case 'C':
+            if(*optarg != '\0') {
+                scen.akctx = optarg;
+            }
+            break;
+        case 'P':
+            if(*optarg != '\0') {
+                scen.akpubkey = optarg;
+            }
+            break;
         case 'g':
             if(*optarg != '\0') {
                 target = optarg;

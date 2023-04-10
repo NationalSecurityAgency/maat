@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,8 @@ char *certfile = NULL;
 char *keyfile  = NULL;
 char *keypass = NULL;
 char *tpmpass = NULL;
+char *akctx = NULL;
+char *sign_tpm_str = NULL;
 char *nonce = NULL;
 
 char *passport_buffer = NULL;
@@ -156,7 +158,7 @@ static int measure_variable(void *ctxt, measurement_variable *var,
     }
 
     length = strlen(passport_buffer)+1;
-    if (length == 1 || length < 1) {
+    if (length <= 1 || (SIZE_MAX > UINT32_MAX && length > UINT32_MAX)) {
         rc = -1;
         goto error;
     }
@@ -179,12 +181,14 @@ static int measure_variable(void *ctxt, measurement_variable *var,
     if (passport_buffer[length-1] != '\0')
         passport_buffer[length-1] = '\0';
     memcpy(blob->buffer, passport_buffer, length);
-    blob->size = length;
+    // Cast is justified because of previous bounds checkon the value of length
+    blob->size = (uint32_t)length;
 
     //serialize measurement
     md = marshall_measurement_data(&blob->d);
     if (md == NULL) {
         dlog(3, "could not serialize data\n");
+        free(blob->buffer);
         goto error;
     }
 
@@ -215,9 +219,12 @@ static int extract_passport(char *result_buf)
     const char *open_tag = "<result>";
     const char *end_tag = "</result>";
     char *start, *end;
+    size_t result_sz;
 
     unsigned char *encoded_passport = NULL;
     size_t encoded_sz;
+
+    uintptr_t diff;
 
     start = strstr((const char*)result_buf, open_tag);
     if(start == NULL) {
@@ -229,18 +236,28 @@ static int extract_passport(char *result_buf)
         if (end == NULL) {
             return -1;
         } else {
-            encoded_passport = (unsigned char*)malloc(end-start+1);
+            diff = (uintptr_t)end - (uintptr_t)start;
+
+            if (UINTPTR_MAX > SIZE_MAX && diff > SIZE_MAX - 1) {
+                return -1;
+            }
+
+            // This cast is justified because of the previous bounds check
+            result_sz = (size_t) diff;
+
+            encoded_passport = (unsigned char*)malloc(result_sz+1);
             if(encoded_passport == NULL) {
                 dlog(4, "Failed to allocate memory to passport\n");
                 return -1;
             }
-            memcpy(encoded_passport, start, end-start);
+            memcpy(encoded_passport, start, result_sz);
             encoded_passport[end-start] = '\0';
         }
 
     }
 
-    passport_buffer = b64_decode(encoded_passport, &encoded_sz);
+    /* The operations performed on this buffer do not depend on its signedness */
+    passport_buffer = (char *)b64_decode((char *)encoded_passport, &encoded_sz);
     free(encoded_passport);
 
     if (passport_buffer) {
@@ -287,7 +304,7 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
     char *req_args[6];
     char *serialize_args[1];
     char *encrypt_args[1];
-    char *create_con_args[8];
+    char *create_con_args[10];
 
     if( !scen->workdir || ((workdir = strdup(scen->workdir)) == NULL) ) {
         dlog(3, "Error: failed to copy workdir\n");
@@ -319,7 +336,7 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
         goto find_asp_error;
     }
 
-    create_con = find_asp(apb_asps, "create_contract_asp");
+    create_con = find_asp(apb_asps, "create_execute_contract_asp");
     if(create_con == NULL) {
         dlog(3, "Error: unable to retrieve create contract ASP\n");
         goto find_asp_error;
@@ -347,7 +364,8 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
     } else if(ret_val == 0) {
 
         //read in userspace measurement result contract as passport
-        ret_val = maat_read_sz_buf(usm_fd, &result_buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, -1);
+        /* Cast is justified because the function does not regard the signedness of the argument */
+        ret_val = maat_read_sz_buf(usm_fd, (unsigned char **)&result_buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, 0);
         if(ret_val < 0 && ret_val != -EAGAIN) {
             dlog(3, "Error reading evidence from channel\n");
             goto data_error;
@@ -410,7 +428,7 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
                 if(scen->partner_cert && ((partner_cert = strdup(scen->partner_cert)) != NULL)) {
                     encrypt_args[0] = partner_cert;
 
-                    create_con_args[7] = "1";
+                    create_con_args[9] = "1";
 
                     ret_val = fork_and_buffer_async_asp(encrypt, 1, encrypt_args, fb_fd, &fb_fd);
                     if(ret_val == -2) {
@@ -424,7 +442,7 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
                         exit(0);
                     }
                 } else {
-                    create_con_args[7] = "0";
+                    create_con_args[9] = "0";
                 }
 
                 create_con_args[0] = workdir;
@@ -432,8 +450,10 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
                 create_con_args[2] = keyfile;
                 create_con_args[3] = keypass;
                 create_con_args[4] = tpmpass;
-                create_con_args[5] = "1";
-                create_con_args[6] = "1";
+                create_con_args[5] = akctx;
+                create_con_args[6] = sign_tpm_str;
+                create_con_args[7] = "1";
+                create_con_args[8] = "1";
 
                 //create con
                 ret_val = fork_and_buffer_async_asp(create_con, 8, create_con_args, fb_fd, &fb_fd);
@@ -562,6 +582,16 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid UN
         tpmpass = strdup(scen->tpmpass);
     } else {
         tpmpass = "";
+    }
+
+    if(scen->akctx) {
+        akctx = strdup(scen->akctx);
+    } else {
+        akctx = "";
+    }
+
+    if((sign_tpm_str = (char *)g_strdup_printf("%d", scen->sign_tpm)) == NULL) {
+        sign_tpm_str = "";
     }
 
     ret_val = execute_measurement_and_asp_pipeline(graph, mspec, arg_list[1]->value, arg_list[2]->value,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,12 @@
 #define SELECTOR_PATH SRCDIR "/../test/xml/am-selector/userspace-selector-test.xml"
 
 #define SEL_TYPE "COPLAND"
+
+#ifdef USE_TPM
+#define TPMPASS "maatpass"
+#define AKCTX SRCDIR "/credentials/ak.ctx"
+#define AKPUB SRCDIR "/credentials/akpub.pem"
+#endif
 
 int apb_execute(struct apb *apb UNUSED, struct scenario *scen UNUSED,
                 uuid_t meas_spec UNUSED, int peerchan UNUSED,
@@ -110,6 +116,14 @@ int setup_scenario(char *contract, struct scenario **scenario)
     scen->cacert = strdup(CA_CERT);
     scen->keyfile = strdup(PRIV_KEY);
     scen->certfile = strdup(CERT_FILE);
+
+#ifdef USE_TPM
+    scen->sign_tpm = 1;
+    scen->verify_tpm = 1;
+    scen->tpmpass = strdup(TPMPASS);
+    scen->akctx = strdup(AKCTX);
+    scen->akpubkey = strdup(AKPUB);
+#endif
 
     *scenario = scen;
     return 0;

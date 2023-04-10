@@ -1,5 +1,5 @@
 #
-# Copyright 2020 United States Government
+# Copyright 2023 United States Government
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ def maat_read_sz_buf(fd, max_sz):
                 return (0,"")
         size = struct.unpack("!i", tsz)[0]
 
-        if max_sz < 0:
+        if max_sz == 0:
                 max_sz = 1000000
 
         if size > max_sz:

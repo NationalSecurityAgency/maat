@@ -1,5 +1,5 @@
 #
-# Copyright 2020 United States Government
+# Copyright 2023 United States Government
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 TESTS = $(check_PROGRAMS) 
 
-AM_CPPFLAGS = -I$(top_srcdir)/src/include -I$(srcdir) -I$(top_srcdir)/src \
+AM_CPPFLAGS = -g -I$(top_srcdir)/src/include -I$(srcdir) -I$(top_srcdir)/src \
 	-I$(top_srcdir)/src/types -I$(top_srcdir)/lib \
 	$(LIBMAAT_CFLAGS) $(GLIB_CFLAGS) $(XML2_CFLAGS) \
 	-DSELECTOR_PATH="\"$(abs_top_srcdir)/selector-configs/selector.xml\"" \
@@ -182,6 +182,28 @@ if BUILD_split_ASP
 check_PROGRAMS += test_split_asp
 test_split_asp_SOURCES = test_split.c
 test_split_asp_LDADD = $(LDADD_APB)
+endif
+
+if BUILD_encrypt_ASP
+if BUILD_decrypt_ASP
+check_PROGRAMS += test_encrypt_decrypt
+test_encrypt_decrypt_SOURCES = test_encrypt_decrypt.c
+test_encrypt_decrypt_LDADD = $(LDADD_APB)
+endif
+endif
+
+if BUILD_verify_measurement_contract_ASP
+if BUILD_create_measurement_contract_ASP
+check_PROGRAMS += test_create_verify_measurement_contract
+test_create_verify_measurement_contract_SOURCES = test_create_verify_measurement_contract.c
+test_create_verify_measurement_contract_LDADD = $(LDADD_APB)
+endif
+endif
+
+if BUILD_send_execute_tcp_ASP
+check_PROGRAMS += test_send_execute_tcp
+test_send_execute_tcp_SOURCES = test_send_execute_tcp.c
+test_send_execute_tcp_LDADD = $(LDADD_APB)
 endif
 
 if BUILD_send_request_ASP

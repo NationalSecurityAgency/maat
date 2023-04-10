@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,8 +68,6 @@ static void free_kmod_data(measurement_data *d)
 static int serialize_kmod_data(measurement_data *d, char **serial_data, size_t *serial_data_size)
 {
     kmod_data *dd = (kmod_data *)d;
-    char *tmp;
-    GList *iter;
     tpl_node *tn;
     void *tplbuf;
     size_t tplsize;
@@ -105,7 +103,6 @@ static int serialize_kmod_data(measurement_data *d, char **serial_data, size_t *
 static int unserialize_kmod_data(char *sd, size_t sd_size, measurement_data **d)
 {
     kmod_data *res;
-    char *tmp;
     tpl_node *tn;
     void *tplbuf;
     size_t tplsize;

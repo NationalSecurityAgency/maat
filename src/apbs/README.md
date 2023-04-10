@@ -1,5 +1,5 @@
 <!--
-Copyright 2020 United States Government
+Copyright 2023 United States Government
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ Copland phrases are specified in the file as follows, with the ellipses filled i
   <phrase copland="...">...</phrase>
   <spec uuid="...">...</spec>
   <args>...</args>
+  <places>...</places>
 </copland>
 ```
 
@@ -67,15 +68,39 @@ prior XML. If a Copland phrase supports no arguments, then the args section can 
 argument sections are laid out as follows, with the ellipses filled in as appropriate:
 
 ```
-<args>
-    <argument name = "...">
+<arguments>
+    <arg name = "...">
         <type> ... </type>
-    </argument>
+    </arg>
     ...
-</args>
+</arguments>
 ```
 
-Currently Copland supports integer and string arguments.
+Currently Copland supports integer, string, and place arguments.
+
+If at least one argument with a place type is specified, then a places section is required. The places section
+is layed out as follows:
+
+```
+<places>
+    <place id="@_1">
+        <info>host</info>
+        <info>port</info>
+	...
+    </place>
+    ...
+</places>
+```
+
+For each place argument specified in the arguments section, there must be a corresponding place subsection
+of the places section. The id MUST correspond to the name provided in the arg section for the argument.
+Within the place section, there are info sections which specify what information the APB should have
+knowledge pertaining the specified place. The following pieces of information are currently supported:
+
+1. host - the IP address of the place's attestation manager
+2. port - the port on which the place's attestation manager listens
+3. kernel - the version of the kernel running at the place
+4. domain - the Xen domain ID of a place (if it is running in a domain)
 
 An example of a complete Copland section is as follows:
 
@@ -83,22 +108,34 @@ An example of a complete Copland section is as follows:
 <copland>
     <phrase copland="(USM hash file iterations)">hash file measurement</phrase>
     <spec uuid="d427cbfa-252f-4b81-9129-8f436d9172f8">hash spec</spec>
-    <args>
-        <argument name = "file">
+    <arguments>
+        <arg name = "file">
             <type>string</type>
-        </argument>
-        <argument name = "iterations">
+        </arg>
+        <arg name = "iterations">
             <type>integer</type>
-        </argument>
-    </args>
+        </arg>
+        <arg name = "@_1">
+            <type>place</type>
+        </arg>
+    </arguments>
+    <places>
+        <place id="@_1">
+            <info>host</info>
+            <info>port</info>
+        </place>
+    </places>
 </copland>
 ```
 
-This example Copland section specifies a Copland phrase (USM hash file iterations) that takes two 
-arguments - one is named "file" and is of the string type, and the other is named "iterations" and has an
-integer type. The measurement specification with the specified UUID will be used when invoking the APB 
-with this phrase. Note that the text within the `spec` section is not used by Maat, and can be thought of
-as an annotation for the identity of the measurement specification.
+This example Copland section specifies a Copland phrase (USM hash file iterations) that takes three
+arguments - one is named "file" and is of the string type, another is named "iterations" and has an
+integer type, and the third is named "@_1" and corresponds to a Copland place of which the executing
+attestation manager may have information regarding. Based on the places section which appears after the
+arguments section, the host IP and port number of the "@_1" place will be made available to the APB.
+The measurement specification with the specified UUID will be used when invoking the APB with this
+phrase. Note that the text within the `spec` section is not used by Maat, and can be thought of as an
+annotation for the identity of the measurement specification.
 
 In order to be used in negotiation by an attestation manager, the `apb_phrase` field in the relevant 
 `condition` field in the selector policy should match the contents of the `phrase` XML section. For more 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,6 @@
  */
 #define DEBUG_MAAT_IO_LEVEL 7
 
-
-
-
 /**
  * Wrapper around g_io_channel_unix_new for setting up a g_io_channel
  * from a file descriptor. Sets all the flags assumed by other
@@ -71,7 +68,7 @@ int maat_wait_on_channel(int chan, int read, time_t timeout_secs);
  * occurs or if the timezone changes while trying to read. Returns 0
  * if the @bufsize bytes were read successfully.
  */
-int maat_read(int chan, char *buf,
+int maat_read(int chan, unsigned char *buf,
               size_t bufsize, size_t *bytes_read,
               int *eof_encountered,
               time_t timeout_secs);
@@ -101,10 +98,10 @@ int maat_read(int chan, char *buf,
  *
  * This call is dual to maat_write_sz_buf() below.
  */
-int maat_read_sz_buf(int chan, char **buf,
+int maat_read_sz_buf(int chan, unsigned char **buf,
                      size_t *bufsize, size_t *bytes_read,
                      int *eof_encountered,
-                     time_t timeout_secs, int32_t max_size);
+                     time_t timeout_secs, size_t max_size);
 
 /**
  * Attempt to write @bufsize bytes from @buf into @chan. Writes the
@@ -132,7 +129,7 @@ int maat_write_sz_buf(int chan, const unsigned char *buf,
                       time_t timeout_secs);
 /**
  * This function is used by the Attestation Manager UI. It iterates
- * through the options in a scenario object and prints them out to 
+ * through the options in a scenario object and prints them out to
  * the UI.
  */
 void print_options_string_from_scenario(GList *current_options);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@
 #include <common/asp_info.h>
 #include <common/asp.h>
 #include <measurement_spec/find_types.h>
+#include <config.h>
 #include <util/util.h>
 #include <common/apb_info.h>
 #include <am/selector.h>
@@ -145,6 +146,13 @@ START_TEST(test_appraiser_apb)
                         "-a", CREDS_DIR"/ca.pem",
                         "-f", CREDS_DIR"/client.pem",
                         "-k", CREDS_DIR"/client.key",
+#ifdef USE_TPM
+                        "-T", "yes",
+                        "-v", "yes",
+                        "-P", "maatpass",
+                        "-x", CREDS_DIR"/ak.ctx",
+                        "-A", CREDS_DIR"/akpub.pem",
+#endif
                         "-u", "/tmp/att.sock"
                       };
     int attargc = sizeof(attargv)/sizeof(attargv[0]);
@@ -167,6 +175,13 @@ START_TEST(test_appraiser_apb)
                         "-a", CREDS_DIR"/ca.pem",
                         "-f", CREDS_DIR"/server.pem",
                         "-k", CREDS_DIR"/server.key",
+#ifdef USE_TPM
+                        "-T", "yes",
+                        "-v", "yes",
+                        "-P", "maatpass",
+                        "-x", CREDS_DIR"/ak.ctx",
+                        "-A", CREDS_DIR"/akpub.pem",
+#endif
                         "-u", "/tmp/app.sock"
                       };
     int appargc = sizeof(appargv)/sizeof(appargv[0]);
@@ -197,7 +212,7 @@ START_TEST(test_appraiser_apb)
     fail_if(appraiser_chan < 0, "Failed to connect to appraiser with error: %d", -appraiser_chan);
 
     // send request
-    int msglen;
+    size_t msglen;
     //need to fill in the target_id
     create_integrity_request(TARGET_TYPE_HOST_PORT, host, att_port, resource,
                              NULL, NULL, NULL, NULL, (xmlChar **)&request_contract, &msglen);
@@ -226,13 +241,13 @@ START_TEST(test_appraiser_apb)
     status = maat_read_sz_buf(appraiser_chan, &resp_contract,
                               &resp_contract_sz, &bytes_read,
                               &eof_encountered,
-                              6666660, -1);
+                              6666660, 0);
     close(appraiser_chan);
     dlog(6, "Received response from appraiser\n");
     fail_if(status != 0, "Reading from appraiser returned unexpected status: "
             "%d (expected %d)", status, 0);
     dlog(6, "Parsing response from appraiser\n");
-    ret = parse_integrity_response(resp_contract, (int)resp_contract_sz, &target_type,
+    ret = parse_integrity_response(resp_contract, resp_contract_sz, &target_type,
                                    (xmlChar **)&target_id, (xmlChar **)&resource,
                                    &result, &data_count, (xmlChar ***)&data_idents,
                                    (xmlChar ***)&data_entries);

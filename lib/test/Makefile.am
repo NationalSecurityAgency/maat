@@ -1,5 +1,5 @@
 #
-# Copyright 2020 United States Government
+# Copyright 2023 United States Government
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ AM_CFLAGS       = -std=gnu99 -g -Wall
 LDADD           = ../common/libcommon.la \
 		  ../util/libmaat_util-@PACKAGE_VERSION@.la \
 		  @CHECK_LIBS@ $(SELINUX_LIBS) \
-		  $(XML_LIBS) $(GLIB_LIBS) $(OPENSSL_LIBS) $(TPM_LIBS) \
+		  $(XML_LIBS) $(GLIB_LIBS) $(OPENSSL_LIBS) \
 		  -luuid -ldl -lz
 
 if BUILD_COVERAGE

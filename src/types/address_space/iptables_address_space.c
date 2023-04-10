@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,7 +173,10 @@ uint32_t do_string_hash(char *string)
     //XXX: Should be replaced with a chosen library to do this.
     uint32_t ret = 0, counter;
     for (counter = 0; string[counter] != '\0'; counter++) {
-        ret = string[counter] + (ret << 6) + (ret << 16) - ret;
+        if (string[counter] >= 0) {
+            // Cast justified due to bounds check
+            ret = (uint32_t)string[counter] + (ret << 6) + (ret << 16) - ret;
+        }
     }
     return ret;
 }

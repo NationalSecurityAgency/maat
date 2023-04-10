@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,6 +99,7 @@ int ima_serialize_data(measurement_data *d, char **serial_data,
         goto out_err;
 
     tpl_pack(tn, 0);
+    //Pack IMA measurements
     for(iter = imd->msmts; iter && iter->data; iter = g_list_next(iter)) {
         tmp = (char *)iter->data;
         tpl_pack(tn, 1);

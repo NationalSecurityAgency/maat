@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -271,13 +271,164 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
 }
 
 /*
+ * This function invokes run_asp but uses a user supplied buffer input source and output destination
+ * instead of file descriptors. This is more ergonomic in certain use-cases that utilizing file descriptors.
+ * This function returns the following:
+ * -5: Error in creating pipes to communicate with the ASP's process
+ * -4: Error in running the ASP
+ * -3: Error in writing the input buffer to the ASP
+ * -2: Error in reading the output buffer from the ASP
+ * -1: Error in wating on the ASP
+ * 0: Successful execution
+ */
+int run_asp_buffers(struct asp *asp, const unsigned char *buf_in,
+                    size_t buf_in_len, unsigned char **out_buf,
+                    size_t *buf_out_len, int asp_argc,
+                    char *asp_argv[], int timeout,
+                    ...)
+{
+    int ret            = -5;
+    int rc;
+    int eof_enc        = -1;
+    size_t written     = 0;
+    size_t tmp_len     = 0;
+    size_t bytes_read  = 0;
+    unsigned char *tmp = NULL;
+    int data_in[2]     = {0};
+    int data_out[2]    = {0};
+
+    if (buf_in != NULL) {
+        rc = pipe(data_in);
+        if (rc < 0) {
+            dlog(0, "Failure to create pipe for providing data to ASP\n");
+            goto in_pipe_err;
+        }
+
+        rc = maat_io_channel_new(data_in[0]);
+        if (rc < 0) {
+            dlog(0, "Failure to initialize pipe read end\n");
+            goto in_read_err;
+        }
+
+        rc = maat_io_channel_new(data_in[1]);
+        if (rc < 0) {
+            dlog(0, "Failure to initialize pipe write end\n");
+            goto in_write_err;
+        }
+    }
+
+    rc = pipe(data_out);
+    if (rc < 0) {
+        dlog(0, "Failure to create pipe for providing data to ASP\n");
+        goto out_pipe_err;
+    }
+
+    rc = maat_io_channel_new(data_out[0]);
+    if (rc < 0) {
+        dlog(0, "Failure to initialize pipe read end\n");
+        goto out_read_err;
+    }
+
+    rc = maat_io_channel_new(data_out[1]);
+    if (rc < 0) {
+        dlog(0, "Failure to initialize pipe write end\n");
+        goto out_write_err;
+    }
+
+    ret = -4;
+    if (buf_in != NULL) {
+        rc = run_asp(asp, data_in[0], data_out[1], true, asp_argc,
+                     asp_argv, data_in[1], data_out[0], -1);
+        close(data_in[0]);
+    } else {
+        rc = run_asp(asp, STDIN_FILENO, data_out[1], true, asp_argc,
+                     asp_argv, data_in[1], data_out[0], -1);
+    }
+
+    if(rc < 0) {
+        dlog(0, "Failed to execute fork and buffer for %s ASP\n",
+             asp->name);
+        goto run_asp_err;
+    }
+
+    close(data_out[1]);
+
+    ret = -3;
+    if (buf_in != NULL) {
+        rc = maat_write_sz_buf(data_in[1], buf_in, buf_in_len,
+                               &written, timeout);
+        if(rc < 0) {
+            dlog(0, "Error writing input to channel\n");
+            stop_asp(asp);
+            goto write_failed;
+        }
+
+        close(data_in[1]);
+    }
+
+    ret = -2;
+    rc = maat_read_sz_buf(data_out[0], &tmp, &tmp_len,
+                          &bytes_read, &eof_enc,
+                          timeout, UINT32_MAX);
+    if(rc < 0 && rc != -EAGAIN) {
+        dlog(0, "Error reading output from channel\n");
+        goto read_failed;
+    } else if (eof_enc != 0) {
+        dlog(0, "Error: EOF encountered before complete buffer read\n");
+        goto eof_enc;
+    }
+
+    close(data_out[0]);
+
+    ret = -1;
+    rc = wait_asp(asp);
+    if (rc < 0) {
+        goto wait_err;
+    } else {
+        ret = 0;
+    }
+
+    *out_buf = tmp;
+    *buf_out_len = tmp_len;
+
+wait_err:
+    return ret;
+
+write_failed:
+    if (buf_in != NULL) {
+        close(data_in[1]);
+    }
+read_failed:
+eof_enc:
+    if (buf_in != NULL) {
+        close(data_in[0]);
+    }
+    return ret;
+
+run_asp_err:
+out_write_err:
+out_read_err:
+    close(data_out[0]);
+    close(data_out[1]);
+out_pipe_err:
+in_write_err:
+in_read_err:
+    if (buf_in != NULL) {
+        close(data_in[0]);
+        close(data_in[1]);
+    }
+in_pipe_err:
+    return ret;
+}
+
+/*
  * Read all of the data on a file descriptor until an EOF is reached or an error occurs
  * The buffer is not pre-allocated by the caller - instead, the buffer starts at
  * INITIAL_BUFFER_SIZE and is expanded in size by BUFFER_INCREMENT as needed, until
  * a hard limit of MAX_BUFFER_SIZE is reached. Returns 0 if an EOF is reached and
  * a negative number otherwise.
  */
-static int maat_read_all(int infd, char **bufout, size_t *szout)
+static int maat_read_all(int infd, unsigned char **bufout, size_t *szout)
 {
     char *buf;
     size_t tmpsize = INITIAL_BUFFER_SIZE;
@@ -289,7 +440,8 @@ static int maat_read_all(int infd, char **bufout, size_t *szout)
     while(tmpsize < MAX_BUFFER_SIZE) {
         ssize_t nread = read(infd, buf + offset, tmpsize -  offset);
         if(nread == 0) { /* EOF reached */
-            *bufout = buf;
+            /* Cast is permissible because character buffers can be used either way */
+            *bufout = (unsigned char *)buf;
             *szout  = offset;
             return 0;
         }
@@ -323,11 +475,13 @@ fail:
  * Writes sz amount of data in the buffer to outfd. Return a negative number on error
  * and a zero on success
  */
-static int maat_write_all(int outfd, char *buf, size_t sz)
+static int maat_write_all(int outfd, unsigned char *buf, size_t sz)
 {
     size_t total_written = 0;
     while(total_written < sz) {
-        ssize_t tmp_written = write(outfd, buf + total_written, sz - total_written);
+        /* Cast is justified because the signedness of the buffer does not impact the
+         * operation of write() */
+        ssize_t tmp_written = write(outfd, (char *)buf + total_written, sz - total_written);
         if(tmp_written < 0) {
             if(errno != EAGAIN && errno != EWOULDBLOCK) {
                 return -1;
@@ -342,7 +496,7 @@ static int maat_write_all(int outfd, char *buf, size_t sz)
  * The purpose of this function is to fork a child process and for the child to read from infd
  * unil it is no longer able to do so, at which point the child forks off a grandchild which returns
  * while the child writes the data recieved from the parent to a pipe shared by the child and grandchild
- * and then waits until the grandchild dies at which point it exists. If infd is blocking, then this can
+ * and then waits until the grandchild dies at which point it exits. If infd is blocking, then this can
  * function as a form of control/data flow - the grandchild will not start execution until the parent is
  * completely finished writing to infd.
  *
@@ -355,7 +509,7 @@ static int maat_write_all(int outfd, char *buf, size_t sz)
  * used to send output from the parent to the grancchild. The remaining arguments are file descriptors that
  * should be closed in the grandchild.
  *
- * The function returns the pid of the child process on success in the parent, 0 in the grand-child, and -1
+ * The function returns the pid of the child process on success in the parent, 0 in the grandchild, and -1
  * otherwise
  */
 int fork_and_buffer(pid_t *pidout, int *pipe_read_out, int infd, ...)
@@ -389,8 +543,7 @@ int fork_and_buffer(pid_t *pidout, int *pipe_read_out, int infd, ...)
      * error rather than `return -1. We don't want the child to
      * attempt ot handle the error and continue execution.
      */
-
-    char *buf;
+    unsigned char *buf;
     size_t sz;
     rc = maat_read_all(infd, &buf, &sz);
     if(rc < 0) {
@@ -451,7 +604,7 @@ int fork_and_buffer(pid_t *pidout, int *pipe_read_out, int infd, ...)
     return 0;
 }
 
-/*
+/**
  * This function asynchronously executes an ASP and executes a fork_and_buffer call where the parent waits
  * on the ASP and the child to terminate execution while the child returns immediately after the fork_and_buffer call
  * with the read end of the pipe stored in the address pointed to by outfd. This can enable you to chain the

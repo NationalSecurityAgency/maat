@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-# Copyright 2020 United States Government
+# Copyright 2023 United States Government
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,35 +15,33 @@
 # limitations under the License. 
 -->
 <asp>
-	<name>create_contract_asp</name>
-	<uuid>cd82c9f7-760d-4535-5197-74daadaa3f41</uuid>
-	<type>Creating contract</type>
-	<description>Create result contract with Blob from fd_in, send contract to fd_out</description>
-	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/create_contract_asp</aspfile>
+	<name>verify_measurement_contract_asp</name>
+	<uuid>96158eee-bcf4-11ec-9d64-0242ac120002</uuid>
+	<type>Contract verification</type>
+	<description>Check signatures and some structure of a measurement contract</description>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/verify_measurement_contract_asp</aspfile>
 	<measurers>
 	</measurers>
 	<security_context>
-	  <selinux><type>create_contract_asp_t</type></selinux>
+	  <selinux><type>verify_measurement_contract_asp_t</type></selinux>
 	  <user>${MAAT_USER}</user>
 	  <group>${MAAT_GROUP}</group>
   	</security_context>
 	<usage>
-          create_contract_asp fd_in fd_out workdir certfile keyfile tpmpass sign_tpm compressed encrypted
+          verify_measurement_contract_asp fd_in fd_out workdir nonce cacert verify_tpm
 	</usage>
         <inputdescription>
 	  fd_in is a file descriptor that this ASP will read a blob from
-	  fd_out is a file descriptor where this ASP will write the resulting
-	  result contract
+	  fd_out is a file descriptor where this ASP will write the verification
+	  result to
 	  workdir is a path to the working directory, where the ASP will find
 	  the execute contract for this attestation
-	  certfile is a path to the certificate to use to sign the contract
-	  keyfile is a path to the key corresponding to the certfile
-	  sign_tpm is a flag for whether the contract should be signed with a
-	  TPM
-	  compressed is a flag for whether the measurement is compressed or not
-	  encrypted is a flag for whether the measurement is encrypted or not
+	  nonce is the nonce used for this scenario
+	  cacert is the certificate that can verify the signatures in the contract
+	  verify_tpm is a boolean, 1 if the signatures in the contract must be verified
+	  by the TPM, and 0 otherwise
 	</inputdescription>
         <outputdescription>
-	  This ASP writes a completed result contract to fd_out
+	  This ASP writes "PASS" if the verification succeeded and "FAIL" otherwise
 	</outputdescription>
 </asp>

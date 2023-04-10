@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,7 +205,8 @@ START_TEST(test_merge)
         goto wait_fail;
     }
 
-    ret_val = maat_read_sz_buf(o_pipe[0], &res, &buf_sz, &transferred, &eof_enc, TIMEOUT, -1);
+    /* Cast is justified because this function does not regard signedness */
+    ret_val = maat_read_sz_buf(o_pipe[0], (unsigned char **)&res, &buf_sz, &transferred, &eof_enc, TIMEOUT, 0);
 
     if (ret_val == -EAGAIN) {
         dlog(1, "Warning: timeout occured before read could complete\n");

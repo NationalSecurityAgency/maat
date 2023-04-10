@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -179,7 +179,8 @@ int asp_measure(int argc, char *argv[])
         }
 
         marshalled_data *md = NULL;
-        ret = measurement_node_get_data(graph, n, &ima_measurement_type, &md);
+        /* FIXME: handle return value of measurement_node_get_data */
+        measurement_node_get_data(graph, n, &ima_measurement_type, &md);
         if (md != NULL) {
             measurement_data *data = unmarshall_measurement_data(md);
             free_measurement_data(&md->meas_data);

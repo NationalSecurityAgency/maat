@@ -1,5 +1,5 @@
 #
-# Copyright 2020 United States Government
+# Copyright 2023 United States Government
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -109,19 +109,39 @@ asp_PROGRAMS    += compress_asp
 compress_asp_SOURCES = compress_asp.c
 endif
 
+if BUILD_decompress_ASP
+asp_PROGRAMS    += decompress_asp
+decompress_asp_SOURCES = decompress_asp.c
+endif
+
 if BUILD_encrypt_ASP
 asp_PROGRAMS    += encrypt_asp
 encrypt_asp_SOURCES = encrypt_asp.c
 endif
 
-if BUILD_create_contract_ASP
-asp_PROGRAMS    += create_contract_asp
-create_contract_asp_SOURCES = create_contract_asp.c
+if BUILD_decrypt_ASP
+asp_PROGRAMS    += decrypt_asp
+decrypt_asp_SOURCES = decrypt_asp.c
+endif
+
+if BUILD_create_measurement_contract_ASP
+asp_PROGRAMS    += create_measurement_contract_asp
+create_measurement_contract_asp_SOURCES = create_measurement_contract_asp.c
+endif
+
+if BUILD_verify_measurement_contract_ASP
+asp_PROGRAMS    += verify_measurement_contract_asp
+verify_measurement_contract_asp_SOURCES = verify_measurement_contract_asp.c
 endif
 
 if BUILD_send_ASP
 asp_PROGRAMS    += send_asp
 send_asp_SOURCES = send_asp.c
+endif
+
+if BUILD_receive_ASP
+asp_PROGRAMS    += receive_asp
+receive_asp_SOURCES = receive_asp.c
 endif
 
 if BUILD_sign_send_ASP
@@ -221,6 +241,12 @@ send_execute_asp_SOURCES = send_execute_asp.c
 send_execute_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS)
 endif
 
+if BUILD_send_execute_tcp_ASP
+asp_PROGRAMS += send_execute_tcp_asp
+send_execute_tcp_asp_SOURCES = send_execute_tcp_asp.c
+send_execute_tcp_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS)
+endif
+
 if BUILD_tlm_ret_ASP
 asp_PROGRAMS += tlm_ret_asp
 tlm_ret_asp_SOURCES = tlm_ret_asp.c
@@ -251,6 +277,7 @@ endif
 if BUILD_whitelist_ASP
 asp_PROGRAMS    += whitelist
 aspinfo_DATA    += datafiles/modules.whitelist \
+                   datafiles/packages.whitelist \
                    datafiles/process.whitelist
 whitelist_SOURCES = whitelist.c
 endif

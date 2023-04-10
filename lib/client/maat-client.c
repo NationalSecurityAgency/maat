@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,11 @@ int create_integrity_request(target_id_type_t target_typ,
                              xmlChar *cert_fingerprint,
                              xmlChar *info,
                              xmlChar **out,
-                             int *outsize)
+                             size_t *outsize)
 {
     xmlDoc *doc	= NULL;
     int ret	= -1;
+    int size;
     xmlNode *root = NULL;
     xmlNode *node;
 
@@ -142,13 +143,23 @@ int create_integrity_request(target_id_type_t target_typ,
     xmlDocSetRootElement(doc, root);
     root = NULL;
 
-    xmlDocDumpMemory(doc, out, outsize);
+    xmlDocDumpMemory(doc, out, &size);
 
-    if(*out != NULL) {
-        ret = 0;
-    } else {
+    if(*out == NULL) {
         fprintf(stderr, "Failed to serialize integrity request.\n");
+        goto out;
     }
+
+    /* Cast is justified because of the previous bounds check */
+    if (size < 0 || (INT_MAX > SIZE_MAX && (unsigned int) size > SIZE_MAX)) {
+        fprintf(stderr, "Size of XML buffer %d not between 0 and %zu\n", size, SIZE_MAX);
+        xmlFree(out);
+        goto out;
+    }
+
+    /* Because of the previous bounds checking, this cast is justified */
+    *outsize = (size_t)size;
+    ret = 0;
 
 out:
     xmlFreeNode(root);
@@ -195,7 +206,7 @@ target_id_type_t parse_target_id_type(unsigned char *typname)
     return TARGET_TYPE_UNKNOWN;
 }
 
-int parse_integrity_response(const char *input, int input_size,
+int parse_integrity_response(const char *input, size_t input_size,
                              target_id_type_t *target_typ,
                              xmlChar **target_id,
                              xmlChar **resource,
@@ -215,7 +226,13 @@ int parse_integrity_response(const char *input, int input_size,
     *data_idents = NULL;
     *data_entries= NULL;
 
-    doc = xmlParseMemory(input, input_size);
+    if (SIZE_MAX > INT_MAX && input_size > INT_MAX) {
+        fprintf(stderr, "Size parameter %zu too large to represent XML document size\n", input_size);
+        goto error;
+    }
+
+    /* Cast is justified because of the previous bounds check */
+    doc = xmlParseMemory(input, (int)input_size);
     if(doc == NULL) {
         fprintf(stderr, "Failed to parse integrity response document\n");
         goto error;

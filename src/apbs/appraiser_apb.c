@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,13 +208,6 @@ static int appraise(struct scenario *scen, GList *values,
         dlog(0,"Error parsing measurement graph.\n");
         goto cleanup;
     }
-    /*Load meas specs*/
-    char *mspec_dir = getenv(ENV_MAAT_MEAS_SPEC_DIR);
-    if(mspec_dir == NULL) {
-        dlog(1, "Warning: environment variable " ENV_MAAT_MEAS_SPEC_DIR
-             " not set. Using default path " DEFAULT_MEAS_SPEC_DIR);
-        mspec_dir = DEFAULT_MEAS_SPEC_DIR;
-    }
 
     ret = 0;
 
@@ -285,7 +278,11 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     uuid_copy(appraisal_policy_spec_uuid, meas_spec_uuid);
 
     /* Receive measurement contract from attester APB. */
-    err = receive_measurement_contract(peerchan, scen, -1);
+    err = receive_measurement_contract(peerchan, scen, 0);
+    if (err < 0) {
+        return err;
+    }
+
     dlog(6, "Received Measurement Contract in appraiser APB\n");
 
     if(scen->contract == NULL) {
@@ -307,7 +304,8 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     err = create_integrity_response(parse_target_id_type((xmlChar*)target_type), (xmlChar*)target,
                                     (xmlChar*)resource, evaluation, report_data_list,
                                     scen->certfile, scen->keyfile, scen->keypass, NULL,
-                                    scen->tpmpass, (xmlChar **)&response_buf, &sz);
+                                    scen->tpmpass, scen->akctx, scen->sign_tpm, 
+                                    (xmlChar **)&response_buf, &sz);
 
     if(err < 0) {
         dlog(0, "Error: created_intergrity_response returned %d\n", err);

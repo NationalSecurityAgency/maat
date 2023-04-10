@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,8 @@
 #include <grp.h>
 #include <arpa/inet.h>
 
-int am_config_add_inet_iface(char *addr, uint16_t port, am_config *cfg)
+int am_config_add_inet_iface(char *addr, uint16_t port, int skip_negotiation,
+                             am_config *cfg)
 {
     struct sockaddr_in serv;
     serv.sin_family = AF_INET;
@@ -45,7 +46,7 @@ int am_config_add_inet_iface(char *addr, uint16_t port, am_config *cfg)
     iface->type			= INET;
     iface->port			= (uint16_t)port;
     iface->address		= strdup(addr);
-    iface->skip_negotiation	= 0;
+    iface->skip_negotiation	= skip_negotiation;
 
     if(iface->address == NULL) {
         dlog(0, "Failed to set listener address to %s\n", addr);
@@ -89,8 +90,10 @@ error:
 
 int load_inet_iface_config(unsigned int xml_version UNUSED, xmlNode *iface, am_config *cfg)
 {
+    int skip_neg                = 0;
+    char *skipstr               = NULL;
     char *port_str		= NULL;
-    unsigned long port_ul	= ULONG_MAX;
+    unsigned long port_ul;
     char *endptr                = NULL;
     char *addr			= NULL;
     port_str = xmlGetPropASCII(iface, "port");
@@ -118,7 +121,13 @@ int load_inet_iface_config(unsigned int xml_version UNUSED, xmlNode *iface, am_c
         return -1;
     }
 
-    int rc = am_config_add_inet_iface(addr, (uint16_t)port_ul, cfg);
+    skipstr = xmlGetPropASCII(iface, "skip-negotiation");
+    if(skipstr != NULL && (strcasecmp(skipstr, "true") == 0 ||
+                           strcasecmp(skipstr, "1") == 0)) {
+        skip_neg = 1;
+    }
+
+    int rc = am_config_add_inet_iface(addr, (uint16_t)port_ul, skip_neg, cfg);
     xmlFree(addr);
     return rc;
 }
@@ -186,6 +195,9 @@ int load_credentials_config(unsigned int xml_version UNUSED, xmlNode *credential
     int set_cert = 0;
     int set_cacert = 0;
     int set_tpm = 0;
+    int set_akctx = 0;
+    int set_akpubkey = 0;
+
     for(node = credentials->children; node != NULL; node = node->next) {
         char *node_name = validate_cstring_ascii(node->name, SIZE_MAX);
         if(node-> type != XML_ELEMENT_NODE || node_name == NULL) {
@@ -234,8 +246,8 @@ int load_credentials_config(unsigned int xml_version UNUSED, xmlNode *credential
                 set_cacert = 1;
             }
         } else if(strcasecmp(node_name, "tpm-password") == 0) {
-            if(cfg->tpm_pass == NULL) {
-                cfg->tpm_pass = contents;
+            if(cfg->tpmpass == NULL) {
+                cfg->tpmpass = contents;
                 set_tpm = 1;
             } else if (set_tpm) {
                 dlog(2, "Warning: multiple \"%s\" nodes not yet supported, "
@@ -244,6 +256,30 @@ int load_credentials_config(unsigned int xml_version UNUSED, xmlNode *credential
             } else {
                 dlog(2, "Warning: %s in the configuration file was overridden\n", node_name);
                 set_tpm = 1;
+            }
+        } else if(strcasecmp(node_name, "akctx") == 0) {
+            if(cfg->akctx == NULL) {
+                cfg->akctx = contents;
+                set_akctx = 1;
+            } else if (set_akctx) {
+                dlog(2, "Warning: multiple \"%s\" nodes not yet supported, "
+                     "ignoring extras\n", node_name);
+                xmlFree(contents);
+            } else {
+                dlog(2, "Warning: %s in the configuration file was overridden\n", node_name);
+                set_akctx = 1;
+            }
+        } else if(strcasecmp(node_name, "akpubkey") == 0) {
+            if(cfg->akpubkey == NULL) {
+                cfg->akpubkey = contents;
+                set_akpubkey = 1;
+            } else if (set_akpubkey) {
+                dlog(2, "Warning: multiple \"%s\" nodes not yet supported, "
+                     "ignoring extras\n", node_name);
+                xmlFree(contents);
+            } else {
+                dlog(2, "Warning: %s in the configuration file was overridden\n", node_name);
+                set_akpubkey = 1;
             }
         } else {
             dlog(1, "Error: unexpected credential node \"%s\"\n", node_name);
@@ -263,8 +299,12 @@ cleanup:
     cfg->cert_file = NULL;
     xmlFree(cfg->cacert_file);
     cfg->cacert_file = NULL;
-    xmlFree(cfg->tpm_pass);
-    cfg->tpm_pass = NULL;
+    xmlFree(cfg->tpmpass);
+    cfg->tpmpass = NULL;
+    xmlFree(cfg->akctx);
+    cfg->akctx = NULL;
+    xmlFree(cfg->akpubkey);
+    cfg->akpubkey = NULL;
     return -1;
 }
 

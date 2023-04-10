@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,13 @@
 
 static address *inode_alloc_address()
 {
-    address *a = malloc(sizeof(inode_address));
+    inode_address *a = malloc(sizeof(inode_address));
     if (a == NULL) {
         return NULL;
     }
-    inode_address *ia = container_of(a, inode_address, a);
-    ia->inum = 0; /* 0 can't be a valid inode number right? */
+    a->inum = 0; /* 0 can't be a valid inode number right? */
 
-    return a;
+    return (address *)a;
 }
 
 static void inode_free_address(address *a)
@@ -110,7 +109,7 @@ static gboolean inode_address_equal(const address *a, const address *b)
 static guint inode_address_hash(const address *a)
 {
     const inode_address *ia = container_of(a, const inode_address, a);
-    return ia->inum;
+    return (guint) ia->inum;
 }
 
 static void *inode_read_bytes(address *a, size_t size)

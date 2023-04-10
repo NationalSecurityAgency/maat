@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,8 +98,8 @@ static char *find_phrase(char *resource)
 
 static int send_to_attester_listen_for_result(char *attester_path, char *resource,
         char *certfile, char *keyfile, char *keypass,
-        char *nonce, char *tpmpass, int sign_tpm, char **out,
-        size_t *out_size)
+        char *nonce, char *tpmpass, char *akctx, int sign_tpm, 
+        char **out, size_t *out_size)
 {
     int attester_chan = -1;
     xmlChar *exe_contract;
@@ -127,7 +127,7 @@ static int send_to_attester_listen_for_result(char *attester_path, char *resourc
     ret_val = create_execute_contract(MAAT_CONTRACT_VERSION,
                                       sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL,
                                       phrase, certfile, keyfile, keypass, nonce, tpmpass,
-                                      &exe_contract, &csize);
+                                      akctx, &exe_contract, &csize);
     if(ret_val != 0 || exe_contract == NULL) {
         dlog(0, "create_execute_contract failed: %d\n", ret_val);
         ret_val = -1;
@@ -135,7 +135,9 @@ static int send_to_attester_listen_for_result(char *attester_path, char *resourc
     }
 
     dlog(3, "sending request: %s\n", exe_contract);
-    iostatus = maat_write_sz_buf(attester_chan, exe_contract, csize, NULL, 2);
+
+    /* Cast is justified because the function does not regard the signedness of the parameter */
+    iostatus = maat_write_sz_buf(attester_chan, (unsigned char *) exe_contract, csize, NULL, 2);
     xmlFree(exe_contract);
     if(iostatus != 0) {
         dlog(0, "Error sending request. returned status is %d: %s\n", iostatus,
@@ -149,8 +151,9 @@ static int send_to_attester_listen_for_result(char *attester_path, char *resourc
     size_t resultsz = 0;
     int eof_encountered=0;
 
-    iostatus = maat_read_sz_buf(attester_chan, &result, &resultsz,
-                                &bytes_read, &eof_encountered, RASP_AM_COMM_TIMEOUT, -1);
+    /* Cast is justified because the function does not regard the signedness of the parameter */
+    iostatus = maat_read_sz_buf(attester_chan, (unsigned char **)&result, &resultsz,
+                                &bytes_read, &eof_encountered, RASP_AM_COMM_TIMEOUT, 0);
     if(iostatus != 0) {
         dlog(1, "Error reading response. returned status is %d: %s\n", iostatus,
              strerror(iostatus < 0 ? -iostatus : iostatus));
@@ -189,7 +192,8 @@ open_client_error:
  *
  * Returns 0 on success, < 0 on error
  */
-static int get_measurement_request_addr_from_node(measurement_graph *graph, node_id_t nid, measurement_request_address **vout)
+static int get_measurement_request_addr_from_node(measurement_graph *graph, node_id_t nid,
+                                                  measurement_request_address **vout)
 {
     address *address         = NULL;
     measurement_request_address *va = NULL;
@@ -229,6 +233,7 @@ int asp_measure(int argc, char *argv[])
     char *keypass       = NULL;
     char *nonce         = NULL;
     char *tpmpass       = NULL;
+    char *akctx         = NULL;
     int  sign_tpm       = 0;
 
     char *result        = NULL;
@@ -240,10 +245,10 @@ int asp_measure(int argc, char *argv[])
     int ret_val = 0;
 
     // Parse args
-    if((argc < 9) ||
+    if((argc < 10) ||
             ((node_id = node_id_of_str(argv[2])) == INVALID_NODE_ID) ||
             (map_measurement_graph(argv[1], &graph) != 0)) {
-        asp_logerror("Usage: "ASP_NAME" <graph path> <node id> <certfile> <keyfile> <keypass> <nonce> <tpmpass> <sign_tpm>\n");
+        asp_logerror("Usage: "ASP_NAME" <graph path> <node id> <certfile> <keyfile> <keypass> <nonce> <tpmpass> <akctx> <sign_tpm>\n");
         return -EINVAL;
     }
     certfile = argv[3];
@@ -251,7 +256,8 @@ int asp_measure(int argc, char *argv[])
     keypass  = argv[5];
     nonce    = argv[6];
     tpmpass  = argv[7];
-    sign_tpm   = atoi(argv[8]);
+    akctx    = argv[8];
+    sign_tpm   = atoi(argv[9]);
 
     asp_logdebug("measurement_request: nodeid "ID_FMT"\n", node_id);
 
@@ -261,12 +267,16 @@ int asp_measure(int argc, char *argv[])
         goto error;
     }
 
-    dlog(0, "Attempting send to %s\n", va->attester);
+    dlog(4, "Send execute contract to %s\n", va->attester);
     ret_val = send_to_attester_listen_for_result(va->attester, va->resource, certfile, keyfile,
-              keypass, nonce, tpmpass, sign_tpm, &result, &rsize);
+              keypass, nonce, tpmpass, akctx, sign_tpm, &result, &rsize);
 
     free_address(&va->a);
     if(ret_val < 0) {
+        goto error;
+    } else if(rsize > UINT32_MAX) {
+        dlog(0, "Result too large to be represented in blob measurement type\n");
+        ret_val = -1;
         goto error;
     }
 
@@ -279,9 +289,11 @@ int asp_measure(int argc, char *argv[])
     }
 
     blob = container_of(data, blob_data, d);
-    blob->buffer = result;
+    /* Cast is justified because interactions with the blob measurement type do not regard the signedness of the buffer */
+    blob->buffer = (unsigned char *)result;
     result       = NULL;
-    blob->size   = rsize;
+    // Cast is justified by previous bounds check
+    blob->size   = (uint32_t)rsize;
 
     if(measurement_node_add_rawdata(graph, node_id, data) < 0) {
         asp_logerror("Failed to add blob data to node\n");

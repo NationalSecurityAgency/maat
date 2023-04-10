@@ -1,5 +1,5 @@
 #
-# Copyright 2020 United States Government
+# Copyright 2023 United States Government
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         #print(s.send(struct.pack("!i",len(request))))
         #print(s.send(struct.pack("%ds" % (len(request)+1), request)))
         print('Waiting on response.')
-        respsz, resp = maatclient.maat_read_sz_buf(s, -1)
+        respsz, resp = maatclient.maat_read_sz_buf(s, 0)
         print(resp)
 
         # the response contract is likely to be null terminated.

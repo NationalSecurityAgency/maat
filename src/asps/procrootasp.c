@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,12 +87,6 @@ int asp_measure(int argc, char *argv[])
     char root_path[PATH_MAX+1] = {0};
     char rootname[PATH_MAX+1] = {0};
     ssize_t rootname_len;
-
-    // graph stuff
-    node_id_t new_node = INVALID_NODE_ID;
-    measurement_variable *var;
-    file_addr *file_address;
-    edge_id_t new_edge = INVALID_EDGE_ID;
 
     if((argc < 3) ||
             ((node_id = node_id_of_str(argv[2])) == INVALID_NODE_ID) ||

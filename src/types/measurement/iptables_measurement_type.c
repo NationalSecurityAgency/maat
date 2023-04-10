@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,9 @@ static int iptables_serialize_data(measurement_data *d, char **serial_data,
     tpl_free(tn);
 
     /* Now, convert this to a string... base64 encode it */
-    *serial_data = b64_encode(buf, sz);
+    // Cast is justified because the decode operation does not affect or regard
+    // the signedness of the buffer
+    *serial_data = (char *) b64_encode((unsigned char *)buf, sz);
     free(buf);
     if(*serial_data == NULL) {
         dlog(0, "Error while b64 encoding buffer, returned NULL.\n");
@@ -86,7 +88,7 @@ static int iptables_unserialize_data(char *sd, size_t sd_size,
                                      measurement_data **d)
 {
     measurement_data *data = NULL;
-    iptables_data *i_data  = NULL;
+    iptables_data *i_data;
 
     tpl_node *tn   = NULL;
     void *tplbuf   = NULL;

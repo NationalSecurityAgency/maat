@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,6 @@ int serialize_proc_relocs_data(measurement_data *d, char **serial_data,
     size_t tplsize = 0;
     uint64_t tmpoff, tmpval, tmppid, tmpsize;
     char *tmpname;
-    struct proc_relocs_data *relocs = NULL;
 
     if(!d) {
         dlog(0, "Error: passed data is NULL\n");
@@ -80,6 +79,7 @@ int serialize_proc_relocs_data(measurement_data *d, char **serial_data,
 
     dlog(4, "packing %d relocations\n", g_list_length(in->relocs));
 
+    //Serializing relocation data into TPL node
     for (iter = g_list_first(in->relocs); iter != NULL;
             iter = g_list_next(iter)) {
         struct proc_reloc *er = (struct proc_reloc *)iter->data;
@@ -128,7 +128,6 @@ int unserialize_proc_relocs_data(char *serialized, size_t serialized_sz,
     void *tplbuf     = NULL;
     tpl_node *tn     = NULL;
     size_t tplsize   = 0;
-    tpl_bin tb;
     uint64_t tmpoff, tmpval, tmpsize, tmppid;
     char *tmpname;
 

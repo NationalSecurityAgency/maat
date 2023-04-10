@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@
  * Usage: "ASP_NAME" <fd_in> <fd_out> <partner_cert>
  */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,6 +43,7 @@
 #define ASP_NAME "encrypt_asp"
 
 #define TIMEOUT 1000
+#define READ_MAX INT_MAX
 
 /**
  * Returns 0 on success, < 0 on error
@@ -141,9 +141,9 @@ int asp_exit(int status)
 
 int asp_measure(int argc, char *argv[])
 {
-    dlog(0, "IN encrypt ASP MEASURE\n");
+    dlog(4, "IN encrypt ASP MEASURE\n");
 
-    char *buf       = NULL;
+    unsigned char *buf       = NULL;
     size_t bufsize  = 0;
     size_t bytes_read;
     size_t bytes_written;
@@ -171,14 +171,7 @@ int asp_measure(int argc, char *argv[])
     }
 
     // read from chan in
-    fd_in = maat_io_channel_new(fd_in);
-    if(fd_in < 0) {
-        dlog(0, "Error: failed to make new io channel for fd_in\n");
-        ret_val = -1;
-        goto io_chan_in_failed;
-    }
-
-    ret_val = maat_read_sz_buf(fd_in, &buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, -1);
+    ret_val = maat_read_sz_buf(fd_in, &buf, &bufsize, &bytes_read, &eof_enc, TIMEOUT, READ_MAX);
     if(ret_val < 0 && ret_val != -EAGAIN) {
         dlog(0, "Error reading evidence from channel\n");
         ret_val = -1;
@@ -202,13 +195,6 @@ int asp_measure(int argc, char *argv[])
     }
 
     // Output to chan out
-    fd_out = maat_io_channel_new(fd_out);
-    if(fd_out < 0) {
-        dlog(0, "Error: failed to make new io channel for fd_out\n");
-        ret_val = -1;
-        goto io_chan_out_failed;
-    }
-
     ret_val = maat_write_sz_buf(fd_out, encbuf, encsize, &bytes_written, TIMEOUT);
     if(ret_val < 0) {
         dlog(0, "Error writing encrypted buffer to channel\n");
@@ -234,7 +220,6 @@ int asp_measure(int argc, char *argv[])
 
 write_key_failed:
 write_failed:
-io_chan_out_failed:
     free(keybuf);
     keysize = 0;
     free(encbuf);
@@ -244,7 +229,6 @@ eof_enc:
     free(buf);
     bufsize = 0;
 read_failed:
-io_chan_in_failed:
     close(fd_in);
     close(fd_out);
 parse_args_failed:

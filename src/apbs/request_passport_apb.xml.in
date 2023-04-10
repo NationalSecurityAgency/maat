@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-# Copyright 2020 United States Government
+# Copyright 2023 United States Government
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
 	  <asp uuid="5b2ec00a-ca8a-4215-8a5f-4782599c6df0">send_request_asp</asp>
 	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa1f41">compress</asp>
 	  <asp uuid="19e44fd6-b752-431a-94d9-6f1a88495a68">encrypt</asp>
-	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa3f41">create_contract</asp>
+	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa3f41">create_measurement_contract</asp>
 	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa4f41">send</asp>
       	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa1f40">serialize</asp>
 	</asps>

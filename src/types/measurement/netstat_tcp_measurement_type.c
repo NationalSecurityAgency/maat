@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,7 @@ int netstat_tcp_serialize_data(measurement_data *d, char **serial_data, size_t *
     tn = tpl_map("A(S(iiccc))", &tmp.data);
     if(!tn)
         goto out_err;
+    //Pack netstat data into a TPL node
     for(i = list; i != NULL && i->data != NULL; i = g_list_next(i)) {
         tmp = *i;
         tpl_pack(tn, 1);

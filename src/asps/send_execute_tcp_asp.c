@@ -92,7 +92,7 @@ static char *find_phrase(char *resource)
 static int send_to_attester_listen_for_result(int attester_chan, char *resource,
         char *certfile, char *keyfile,
         char *keypass, char *nonce,
-        char *tpmpass, int sign_tpm,
+        char *tpmpass, char *akctx, int sign_tpm,
         char **out, size_t *out_size)
 {
     int ret_val           = 0;
@@ -115,14 +115,15 @@ static int send_to_attester_listen_for_result(int attester_chan, char *resource,
     ret_val = create_execute_contract(MAAT_CONTRACT_VERSION,
                                       sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL,
                                       phrase, certfile, keyfile, keypass, nonce, tpmpass,
-                                      &exe_contract, &csize);
+                                      akctx, &exe_contract, &csize);
     if(ret_val != 0 || exe_contract == NULL) {
         dlog(0, "create_execute_contract failed: %d\n", ret_val);
         ret_val = -1;
         goto contract_error;
     }
 
-    ret_val = maat_write_sz_buf(attester_chan, exe_contract, csize, NULL, 2);
+    //Cast is justified because the function does not regard the signedness of the argument
+    ret_val = maat_write_sz_buf(attester_chan, (unsigned char *)exe_contract, csize, NULL, 2);
     xmlFree(exe_contract);
     if(ret_val != 0) {
         dlog(0, "Error sending request. returned status is %d: %s\n", ret_val,
@@ -132,8 +133,9 @@ static int send_to_attester_listen_for_result(int attester_chan, char *resource,
     }
 
     //Receieve response from the attester
-    ret_val = maat_read_sz_buf(attester_chan, &result, &resultsz,
-                               &bytes_read, &eof_enc, RASP_AM_COMM_TIMEOUT, -1);
+    //Cast is justified because the function does not regard the signedness of the argument
+    ret_val = maat_read_sz_buf(attester_chan, (unsigned char **) &result, &resultsz,
+                               &bytes_read, &eof_enc, RASP_AM_COMM_TIMEOUT, 0);
     if(ret_val != 0) {
         dlog(0, "Error reading response. returned status is %d: %s\n", ret_val,
              strerror(ret_val < 0 ? -ret_val : ret_val));
@@ -157,9 +159,9 @@ phrase_error:
     return ret_val;
 }
 
-static int create_channel(char *addr, long portnum)
+static int create_channel(char *addr, uint16_t portnum)
 {
-    int chan                  = -1;
+    int chan;
     char *host_addr           = NULL;
     struct hostent *targ_host = NULL;
 
@@ -184,17 +186,23 @@ static int create_channel(char *addr, long portnum)
 int asp_measure(int argc, char *argv[])
 {
     dlog(4, "In send_execute_tcp ASP\n");
+    uint16_t port;
+
     int out_fd                      = -1;
     int targ_chan                   = -1;
 
+    long parse_port;
+    long parse_out_fd;
+    long parse_sign_tpm;
+
     char *addr                      = NULL;
-    long port                       = -1;
     char *resource                  = NULL;
     char *certfile                  = NULL;
     char *keyfile                   = NULL;
     char *keypass                   = NULL;
     char *nonce                     = NULL;
     char *tpmpass                   = NULL;
+    char *akctx                     = NULL;
     int  sign_tpm                   = 0;
 
     char *result                    = NULL;
@@ -204,13 +212,35 @@ int asp_measure(int argc, char *argv[])
 
     // Parse args
     errno = 0;
-    if((argc != 12) ||
-            (((out_fd = strtol(argv[2], NULL, 10)) < 0) || errno != 0) ||
-            (((port = strtol(argv[4], NULL, 10)) < 0) || errno != 0)   ||
-            (((sign_tpm = strtol(argv[11], NULL, 10)) < 0) || errno != 0)) {
-        asp_logerror("Usage: "ASP_NAME" <in_fd [unused]> <out_fd> <addr> <port> <resource> <certfile> <keyfile> <keypass> <nonce> <tpmpass> <sign_tpm>\n");
+    if((argc != 13) ||
+            (((parse_out_fd = strtol(argv[2], NULL, 10)) < 0) || errno != 0) ||
+            (((parse_port = strtol(argv[4], NULL, 10)) < 0) || errno != 0)   ||
+            (((parse_sign_tpm = strtol(argv[12], NULL, 10)) < 0) || errno != 0)) {
+        asp_logerror("Usage: "ASP_NAME" <in_fd [unused]> <out_fd> <addr> <port> <resource> <certfile> <keyfile> <keypass> <nonce> <tpmpass> <akctx> <sign_tpm>\n");
         return -EINVAL;
     }
+
+    if(parse_port > UINT16_MAX || parse_port < 0) {
+        asp_logerror("Port value %ld too large for bounds of type\n", parse_port);
+        return -EINVAL;
+    }
+
+    port = (uint16_t)parse_port;
+
+    if(parse_out_fd > INT_MAX || parse_out_fd < INT_MIN) {
+        asp_logerror("Output file descriptor value %ld too large for bounds of type\n", parse_out_fd);
+        return -EINVAL;
+    }
+
+    out_fd = (int)parse_out_fd;
+
+    if(parse_sign_tpm > INT_MAX || parse_sign_tpm < INT_MIN) {
+        asp_logerror("Sign TPM value %ld too large for bounds of type\n", parse_sign_tpm);
+        return -EINVAL;
+    }
+
+    sign_tpm = (int)parse_sign_tpm;
+
 
     addr     = argv[3];
     resource = argv[5];
@@ -219,6 +249,7 @@ int asp_measure(int argc, char *argv[])
     keypass  = argv[8];
     nonce    = argv[9];
     tpmpass  = argv[10];
+    akctx    = argv[11];
 
     errno = 0;
     targ_chan = create_channel(addr, port);
@@ -229,14 +260,15 @@ int asp_measure(int argc, char *argv[])
     }
 
     ret_val = send_to_attester_listen_for_result(targ_chan, resource, certfile, keyfile,
-              keypass, nonce, tpmpass, sign_tpm, &result, &rsize);
+              keypass, nonce, tpmpass, akctx, sign_tpm, &result, &rsize);
     if(ret_val < 0) {
         dlog(0, "Unable to send execute contract to attester or get a result\n");
         goto error;
     }
 
     // Write the result back to the invoking APB
-    ret_val = maat_write_sz_buf(out_fd, result, rsize, NULL, 2);
+    // Cast is justified because the function does not regard the signedness of the buffer
+    ret_val = maat_write_sz_buf(out_fd, (unsigned char *)result, rsize, NULL, 2);
     if(ret_val != 0) {
         dlog(0, "Error sending request. returned status is %d: %s\n", ret_val,
              strerror(-ret_val));

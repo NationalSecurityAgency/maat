@@ -205,7 +205,7 @@ int main(int argc, char **argv)
                                        (xmlChar*)targ_fingerprint,
                                        NULL,
                                        (xmlChar **)&tmp,
-                                       (int *)&msglen);
+                                       &msglen);
     if(ret_val != 0 || tmp == NULL) {
         dlog(0, "create_integrity_request failed: %d\n", ret_val);
         free(targ_host_addr);
@@ -228,8 +228,11 @@ int main(int argc, char **argv)
     size_t resultsz = 0;
     int eof_encountered=0;
     size_t i;
-    iostatus = maat_read_sz_buf(appraiser_chan, &result, &resultsz,
-                                &bytes_read, &eof_encountered, 10000, -1);
+
+    /* Cast is justified because of the function doe snot regard the signedness of the
+     * parameter */
+    iostatus = maat_read_sz_buf(appraiser_chan, (unsigned char **)&result, &resultsz,
+                                &bytes_read, &eof_encountered, 10000, 0);
     if(iostatus != 0) {
         dlog(1, "Error reading response. returned status is %d: %s\n", iostatus,
              strerror(iostatus < 0 ? -iostatus : iostatus));
@@ -245,7 +248,7 @@ int main(int argc, char **argv)
     }
 
     printf("Result from Appraiser: %s\n", result);
-    parse_integrity_response(result, (int)resultsz, &target_typ, &target_id,
+    parse_integrity_response(result, resultsz, &target_typ, &target_id,
                              &resource, &ret_val, &data_count, &data_idents, &data_entries);
     for (i=0; i<data_count; i++) {
         if (data_idents && data_idents[i]) {

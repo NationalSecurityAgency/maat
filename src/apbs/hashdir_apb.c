@@ -63,8 +63,7 @@ static int measure_variable(void *ctxt, measurement_variable *var, measurement_t
 {
     measurement_graph *g = (measurement_graph*)ctxt;
     node_id_t n  = measurement_graph_get_node(g, var);
-    marshalled_data *m;
-    int rc = -1;
+    int rc;
     node_id_str n_str;
 
     if(n == INVALID_NODE_ID) {

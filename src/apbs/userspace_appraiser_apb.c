@@ -82,10 +82,10 @@ int apb_execute(struct apb *apb, struct scenario *scen,
                 char *target, char *target_type, char *resource,
                 struct key_value **arg_list UNUSED, int argc UNUSED)
 {
-    int ret                     = -1;
+    int ret;
     int failed                  = 0;
     size_t sz                   = 0;
-    size_t msmt_sz              = -1;
+    size_t msmt_sz              = SIZE_MAX;
     xmlDoc *doc                 = NULL;
     xmlChar *evaluation         = NULL;
     char *msmt                  = NULL;
@@ -187,7 +187,8 @@ int apb_execute(struct apb *apb, struct scenario *scen,
               (xmlChar*)target,
               (xmlChar*)resource, evaluation, report_data_list,
               scen->certfile, scen->keyfile, scen->keypass, NULL,
-              scen->tpmpass, (xmlChar **)&response_buf, &sz);
+              scen->tpmpass, scen->akctx, scen->sign_tpm, 
+              (xmlChar **)&response_buf, &sz);
 
     if(ret < 0 || response_buf == NULL) {
         dlog(0, "Error: created_intergrity_response returned %d\n", ret);

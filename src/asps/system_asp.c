@@ -63,7 +63,6 @@ int asp_measure(int argc, char *argv[])
     measurement_data *data    = NULL;
     system_data *s_data       = NULL;
     measurement_graph *graph  = NULL;
-    measurement_variable *var = NULL;
     node_id_t node_id  = INVALID_NODE_ID;
 
     FILE *fp    = NULL;

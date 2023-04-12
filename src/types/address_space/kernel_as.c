@@ -191,7 +191,7 @@ static gboolean kernel_address_equal(const address *a, const address *b)
 static guint kernel_address_hash(const address *a)
 {
     struct kernel_address *ka = (struct kernel_address *)a;
-    return ka->kaddr;
+    return (guint) ka->kaddr;
 }
 
 static void *kernel_read_bytes(address *a, size_t size)

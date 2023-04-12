@@ -51,7 +51,6 @@ static int decrypt(void *encbuf, size_t encsize, char *eph_key,
     unsigned char key[ENC_KEY_SIZE];
     unsigned char iv[ENC_IV_SIZE];
     void *tmpbuf       = NULL;
-    void *tmp_keybuf   = NULL;
     void *key_iv_buf   = NULL;
     size_t unc_key_size = 0;
     size_t tmpsize     = 0;
@@ -70,6 +69,7 @@ static int decrypt(void *encbuf, size_t encsize, char *eph_key,
     b64_free(unc_eph_key);
     if (ret < 0 || tmp_keysize != (ENC_KEY_SIZE + ENC_IV_SIZE)) {
         dlog(0, "Unable to decrypt encryption key\n");
+        free(key_iv_buf);
         goto decrypt_key_err;
     }
 
@@ -116,7 +116,7 @@ int asp_measure(int argc, char *argv[])
 {
     dlog(4, "IN decrypt ASP MEASURE\n");
 
-    char *buf       = NULL;
+    unsigned char *buf = NULL;
     size_t bufsize  = 0;
     size_t bytes_read;
     size_t bytes_written;

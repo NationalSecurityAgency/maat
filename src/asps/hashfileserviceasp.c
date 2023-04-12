@@ -89,8 +89,8 @@ int asp_measure(int argc, char *argv[])
     sha1hash_measurement_data *sha1hash_data = NULL;
 
     int ret_val	= 0;
-    int filelen = 0;
-
+    size_t filelen = 0;
+    ssize_t result = 0;
 
     if((argc < 3) ||
             ((node_id = node_id_of_str(argv[2])) == INVALID_NODE_ID) ||
@@ -150,7 +150,14 @@ int asp_measure(int argc, char *argv[])
         goto error;
     }
 
-    filelen = st.st_size;
+    if (st.st_size < 0 || (UINTMAX_MAX > SIZE_MAX && (uintmax_t)st.st_size > SIZE_MAX)) {
+        ret_val = -EINVAL;
+        asp_logerror("File size %ld cannot be represented to hash library\n", st.st_size);
+        goto error;
+    }
+
+    //Cast is justified because of the previous bounds check
+    filelen = (size_t)st.st_size;
 
     //Allocate memory
     buffer=(char *)malloc(filelen);
@@ -160,9 +167,10 @@ int asp_measure(int argc, char *argv[])
         goto error;
     }
 
-    asp_logdebug("Alloced buffer of size %d\n", filelen);
+    asp_logdebug("Alloced buffer of size %zu\n", filelen);
     //Read file contents into buffer
-    if(read(fd, buffer, filelen) < filelen) {
+    result = read(fd, buffer, filelen);
+    if(result < 0 || (size_t)result != filelen) {
         ret_val = -errno;
         asp_logerror("Failed to read file %s\n", path);
         goto error;
@@ -179,7 +187,6 @@ int asp_measure(int argc, char *argv[])
         ret_val = -ENOMEM;
         goto error;
     }
-
 
     // Hash the buffer
     SHA1((unsigned char*)buffer, filelen, sha1hash_data->sha1_hash);

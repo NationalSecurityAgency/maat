@@ -63,7 +63,7 @@ int appraiser(struct scenario *scen, int peerchan)
     int failed;
     int ret;
     dlog(2, "Appraiser APB checking in!\n");
-    receive_measurement_contract(peerchan, scen, -1);
+    receive_measurement_contract(peerchan, scen, 0);
     dlog(6, "Got measurement contract\n");
     ret = handle_measurement_contract(scen, appraise, &failed);
     if (ret != 0) {

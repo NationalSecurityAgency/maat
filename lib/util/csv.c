@@ -51,6 +51,12 @@ int read_line_csv(const char *filename, const char *key,
         return -1;
     }
 
+    if (SIZE_MAX > INT_MAX && max_line_len > INT_MAX) {
+        dlog(0, "Given size %zu which would overflow int buffer of max value %d\n",
+             max_line_len, INT_MAX);
+        return -1;
+    }
+
     csv_line = calloc(max_line_len, 1);
     if (csv_line == NULL) {
         dlog(0,
@@ -66,7 +72,9 @@ int read_line_csv(const char *filename, const char *key,
     }
 
     while(1) {
-        out = fgets(csv_line, max_line_len, fp);
+        /* The previous bounds checking should ensure max_line_len can be
+         * represented as an int */
+        out = fgets(csv_line, (int) max_line_len, fp);
         if (out == NULL) {
             break;
         } else {
@@ -220,12 +228,12 @@ static int append_line_to_file(const char *filename, const char *line)
     }
 
     ret = fprintf(fp, "%s\n", line);
+    fclose(fp);
     if (ret < 0) {
         dlog(1, "Unable to write to file %s\n", filename);
         return -1;
     }
 
-    fclose(fp);
     return 0;
 }
 
@@ -237,12 +245,12 @@ static int append_line_to_file(const char *filename, const char *line)
  *
  * Returns 0 on a successful write and -1 otherwise.
  */
-int append_toks_to_csv(const char *filename, int num_strings, ...)
+int append_toks_to_csv(const char *filename, size_t num_strings, ...)
 {
-    int i;
-    int j;
     int ret;
     size_t len;
+    size_t i;
+    size_t j;
     char *str;
     char **strs;
     va_list args;
@@ -303,10 +311,10 @@ err:
  *
  * Returns 0 on success and -1 otherwise.
  */
-int append_tok_list_to_csv(const char *filename, int num_strings,
+int append_tok_list_to_csv(const char *filename, size_t num_strings,
                            const char *strs[])
 {
-    int i;
+    size_t i;
     int ret;
     size_t size = 0;
     char *tmp;
@@ -339,7 +347,6 @@ int append_tok_list_to_csv(const char *filename, int num_strings,
         } else {
             csv_line[size] = ',';
         }
- 
 	size += 1;
     }
 

@@ -25,7 +25,13 @@
 
 static measurement_data *alloc_reloc_list()
 {
-    return calloc(1, sizeof(reloc_list));
+    reloc_list *ret;
+    ret = (reloc_list *)calloc(1, sizeof(*ret));
+    if (!ret) {
+        return NULL;
+    }
+
+    return (measurement_data *)ret;
 }
 
 static measurement_data *copy_reloc_list(measurement_data *d)

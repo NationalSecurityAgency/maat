@@ -32,7 +32,7 @@ libmaat_apb_@PACKAGE_VERSION@_la_SOURCES = apbmain.c apb.c contracts.c
 
 AM_CFLAGS += -DLIBMAAT_LIBEXECDIR=\"$(libexecdir)\"
 
-libmaat_apb_@PACKAGE_VERSION@_la_LIBADD=$(GLIB_LIBS) $(XML_LIBS) $(OPENSSL_LIBS) $(TPM_LIBS) \
+libmaat_apb_@PACKAGE_VERSION@_la_LIBADD=$(GLIB_LIBS) $(XML_LIBS) $(OPENSSL_LIBS) \
 			 $(SELINUX_LIBS) \
                          -luuid -L../util -L../common -lcommon \
 			 -L../measurement_spec -lmeasurement_spec \

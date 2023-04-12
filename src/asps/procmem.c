@@ -115,7 +115,6 @@ static int ptrace_attach_and_wait(pid_t traced_process)
 
     if (ptrace(PTRACE_ATTACH,traced_process,NULL,NULL) != 0) {
         asp_logerror("PTRACE %s\n", strerror(errno));
-        ret_val = ASP_APB_ERROR_GENERIC;
         goto ptraceAttachedFailed;
     } else {
         asp_loginfo("attatched!\n");
@@ -123,7 +122,6 @@ static int ptrace_attach_and_wait(pid_t traced_process)
 
     if (waitpid(traced_process, NULL, 0) < 0) {
         asp_logerror("WaitPID %s\n", strerror(errno));
-        ret_val = ASP_APB_ERROR_GENERIC;
         goto ptraceWaitPIDFailed;
     }
 
@@ -135,7 +133,7 @@ ptraceAttachedFailed:
 }
 
 // helper to read process memory (/proc/pid/mem)
-static int read_process_memory(char * filename, char * buffer, uint64_t offset, uint64_t length)
+static int read_process_memory(char * filename, unsigned char * buffer, uint64_t offset, uint64_t length)
 {
 
     int ret_val = 0;
@@ -143,13 +141,14 @@ static int read_process_memory(char * filename, char * buffer, uint64_t offset, 
 
     if (file < 0) {
         asp_logerror("failed to open file %s for hashing : %s\n", filename, strerror(errno));
-        ret_val = ASP_APB_ERROR_GENERIC;
         goto openFileFailed;
     }
     asp_loginfo("Open File Descriptor = %d\n", file);
 
     // seek to base address
-    if (lseek(file, offset, SEEK_SET) == -1) {
+    // No maximum value is defined for off_t, so the best that we can do is hope the offset value fits
+    // into an off_t
+    if (lseek(file, (off_t)offset, SEEK_SET) == -1) {
         asp_logerror("lseek %s\n", strerror(errno));
         goto seekFileFailed;
     }
@@ -158,7 +157,6 @@ static int read_process_memory(char * filename, char * buffer, uint64_t offset, 
     if (read(file, buffer, length) < 1 ) {
         asp_logerror("Failed to read file %s (offset=%016lx, size=%016lx) error %s\n", filename,
                      offset, length, strerror(errno));
-        ret_val = ASP_APB_ERROR_GENERIC;
         goto readFileFailed;
     }
 
@@ -198,7 +196,7 @@ alloc_error:
     return NULL;
 }
 
-static int attachAndReadProcessMemory(measurement_graph * graph, node_id_t node_id, char ** buffer)
+static uint64_t attachAndReadProcessMemory(measurement_graph * graph, node_id_t node_id, unsigned char ** buffer)
 {
 
     char filename[PATH_MAX + 1] =       {0};
@@ -245,7 +243,7 @@ proc_pid_path_error:
     return 0;
 }
 
-static int performHash(char * buffer, uint64_t length, sha256_measurement_data * hashdata)
+static int performHash(unsigned char * buffer, uint64_t length, sha256_measurement_data * hashdata)
 {
 
     gchar *hbuf = NULL;
@@ -298,7 +296,7 @@ int asp_measure(int argc, char *argv[])
     int ret_val				= 0;
     sha256_measurement_data *hashdata	= NULL;
     blob_data *blob    = NULL;
-    char * buffer			= NULL;
+    unsigned char * buffer			= NULL;
     uint64_t length			= 0;
     int nohash                          = 0;
     marshalled_data *md                 = NULL;
@@ -327,6 +325,11 @@ int asp_measure(int argc, char *argv[])
     if (nohash) {
         measurement_data *data =            NULL;
 
+        if (length > UINT32_MAX) {
+            asp_logerror("Length of memory too great to represent in blob measurement type\n");
+            goto err;
+        }
+
         data = alloc_measurement_data(&blob_measurement_type);
         if (data == NULL) {
             asp_logerror("Failed to allocated blob data\n");
@@ -340,7 +343,8 @@ int asp_measure(int argc, char *argv[])
             goto err;
         }
         memcpy(blob->buffer, buffer, length);
-        blob->size = length;
+        // This cast is justified due to the previous bounds check
+        blob->size = (uint32_t)length;
 
         md = marshall_measurement_data(&blob->d);
     } else {

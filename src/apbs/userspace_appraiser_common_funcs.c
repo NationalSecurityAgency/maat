@@ -87,7 +87,7 @@
 static int parse_contract_transformations(void *cont_buf, size_t cont_size)
 {
     int ret              = -1;
-    int i                = -1;
+    int i;
     int is_encrypted     = 0;
     int is_compressed    = 0;
     char *encrypted      = NULL;
@@ -96,7 +96,12 @@ static int parse_contract_transformations(void *cont_buf, size_t cont_size)
     xmlXPathObject *obj  = NULL;
     xmlNode *tmp         = NULL;
 
-    doc = xmlReadMemory(cont_buf, cont_size, NULL, NULL, 0);
+    if (SIZE_MAX > INT_MAX && cont_size > INT_MAX) {
+        dlog(0, "Given contract size greater than XML library can represent\n");
+        goto xml_err;
+    }
+
+    doc = xmlReadMemory(cont_buf, (int)cont_size, NULL, NULL, 0);
     if (doc == NULL) {
         dlog(0, "Failed to parse contract XML.\n");
         goto xml_err;
@@ -162,12 +167,12 @@ xml_err:
  */
 static int verify_contract(GList *apb_asps, struct scenario *scen)
 {
-    int ret                         = -1;
-    size_t read                     = -1;
+    int ret;
+    size_t read                     = SIZE_MAX;
     char *verify_res                = NULL;
     struct asp *verify_contract_asp = NULL;
     char verify_tpm_str[33]         = {0};
-    char *verify_args[4]            = {0};
+    char *verify_args[5]            = {0};
 
     /* Load all ASPs */
     verify_contract_asp = find_asp(apb_asps, "verify_measurement_contract_asp");
@@ -185,10 +190,11 @@ static int verify_contract(GList *apb_asps, struct scenario *scen)
     verify_args[0] = scen->workdir;
     verify_args[1] = scen->nonce;
     verify_args[2] = scen->cacert;
-    verify_args[3] = verify_tpm_str;
+    verify_args[3] = scen->akpubkey;
+    verify_args[4] = verify_tpm_str;
 
     ret = run_asp_buffers(verify_contract_asp, scen->contract, scen->size,
-                          &verify_res, &read, 4, verify_args, TIMEOUT, -1);
+                          &verify_res, &read, 5, verify_args, TIMEOUT, -1);
     if(ret < 0) {
         dlog(0, "Failed to run %s ASP\n", verify_contract_asp->name);
         goto run_asp_err;
@@ -219,13 +225,19 @@ find_asp_err:
 static int extract_key(struct scenario *scen, char **key)
 {
     int ret              = -1;
-    int i                = -1;
+    int i;
     char *enc            = NULL;
     xmlDoc *doc          = NULL;
     xmlXPathObject *obj  = NULL;
     xmlNode *tmp         = NULL;
 
-    doc = xmlReadMemory(scen->contract, scen->size, NULL, NULL,
+    if (SIZE_MAX > INT_MAX && scen->size > INT_MAX) {
+        dlog(0, "Contract size greater than XML library can represent\n");
+        goto xml_err;
+    }
+
+    //Previous bounds check ensures this cast is safe
+    doc = xmlReadMemory(scen->contract, (int)scen->size, NULL, NULL,
                         0);
     if (doc == NULL) {
         dlog(0, "Failed to parse contract XML.\n");
@@ -277,18 +289,27 @@ xml_err:
 static int extract_measurement(struct scenario *scen, void **msmt,
                                size_t *msmtsize)
 {
-    int ret       = -1;
-    size_t dec_sz = -1;
-    char *enc     = NULL;
-    char *dec     = NULL;
-    xmlDoc *doc   = NULL;
+    int ret            = -1;
+    size_t dec_sz      = SIZE_MAX;
+    char *enc          = NULL;
+    unsigned char *dec = NULL;
+    xmlDoc *doc        = NULL;
 
     if (scen == NULL || msmt == NULL || msmtsize == NULL) {
         dlog(0, "Given null parameters\n");
         goto arg_err;
     }
 
-    doc = xmlReadMemory(scen->contract, scen->size, NULL, NULL, 0);
+    if (SIZE_MAX > INT_MAX && scen->size > INT_MAX) {
+        dlog(0, "Size given in scenario structure for measurement contract size %zu cannot be represented to XML API\n",
+             scen->size);
+        goto xml_err;
+    }
+
+    // Cast is justified because of the prior bounds check
+    // TODO: we may want to change the secnario struct to use an int size
+    // in order to be compatible with libxml2
+    doc = xmlReadMemory(scen->contract, (int)scen->size, NULL, NULL, 0);
     if (doc == NULL) {
         dlog(1, "Failed to parse contract XML.\n");
         goto xml_err;
@@ -328,16 +349,13 @@ arg_err:
 int process_contract(GList *apb_asps, struct scenario *scen,
                      void **msmt, size_t *msmtsize)
 {
-    int ret                    = -1;
-    int meas_trans             = -1;
-    int fb_fd                  = -1;
-    size_t unenc_meas_size     = -1;
-    size_t untrans_meas_size   = -1;
-    size_t tmp_size            = -1;
+    int ret;
+    int meas_trans;
+    size_t unenc_meas_size;
+    size_t untrans_meas_size;
     void *unenc_meas           = NULL;
     void *untrans_meas         = NULL;
     char *key                  = NULL;
-    char *tmp                  = NULL;
     struct asp *decompress_asp = NULL;
     struct asp *decrypt_asp    = NULL;
     char *decrypt_args[3]      = {0};
@@ -399,7 +417,7 @@ int process_contract(GList *apb_asps, struct scenario *scen,
 
         ret = run_asp_buffers(decrypt_asp, unenc_meas,
                               unenc_meas_size,
-                              (char **)&untrans_meas,
+                              (unsigned char **)&untrans_meas,
                               &untrans_meas_size,
                               3, decrypt_args, TIMEOUT, -1);
         b64_free(unenc_meas);
@@ -419,7 +437,7 @@ int process_contract(GList *apb_asps, struct scenario *scen,
     if (meas_trans & CONTR_MEAS_COMPR_ONLY) {
         ret = run_asp_buffers(decompress_asp, unenc_meas,
                               unenc_meas_size,
-                              (char **)&untrans_meas,
+                              (unsigned char **)&untrans_meas,
                               &untrans_meas_size,
                               0, NULL, TIMEOUT, -1);
         b64_free(unenc_meas);
@@ -434,12 +452,10 @@ int process_contract(GList *apb_asps, struct scenario *scen,
 
     return 0;
 
-meas_decode_err:
 asp_err:
 key_err:
 msmt_err:
 trans_err:
-parse_err:
 verif_err:
 find_asp_err:
 arg_err:
@@ -452,7 +468,7 @@ arg_err:
  */
 int adjust_measurement_contract_to_access_contract(struct scenario *scen)
 {
-    int ret               = -1;
+    int ret;
     int respsize          = -1;
     char *fingerprint_buf = NULL;
     xmlDoc *doc           = NULL;
@@ -484,7 +500,7 @@ int adjust_measurement_contract_to_access_contract(struct scenario *scen)
     /* sign contract with that cert */
     fingerprint_buf = get_fingerprint(scen->certfile, NULL);
     ret = sign_xml(doc, root, fingerprint_buf, scen->keyfile, scen->keypass,
-                   scen->nonce, scen->tpmpass, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+                   scen->nonce, scen->tpmpass, scen->akctx, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
     free(fingerprint_buf);
     fingerprint_buf = NULL;
     if(ret != 0) {
@@ -540,7 +556,7 @@ int receive_measurement_contract_asp(GList *apb_asps, int chan,
     if (ret < 0) {
         ret = -1;
         dlog(0, "Unable to create pipe to receive output from receive ASP\n");
-        goto pipe_err;
+        return ret;
     }
 
     /* Load ASP */
@@ -563,8 +579,10 @@ int receive_measurement_contract_asp(GList *apb_asps, int chan,
 
     close(pipe_fds[1]);
 
-    ret = maat_read_sz_buf(pipe_fds[0], &scen->contract, &scen->size,
-                           &bytes_read, &eof_enc, TIMEOUT, INT_MAX);
+    /* Cast is justified because the function does not regard the signedness of the buffer
+     * argument */
+    ret = maat_read_sz_buf(pipe_fds[0], (unsigned char **)&scen->contract, &scen->size,
+                           &bytes_read, &eof_enc, TIMEOUT, UINT32_MAX);
     if(ret < 0 && ret != -EAGAIN) {
         dlog(0, "Error reading evidence from channel\n");
         ret = -1;
@@ -584,7 +602,6 @@ exe_err:
 find_asp_err:
     close(pipe_fds[0]);
     close(pipe_fds[1]);
-pipe_err:
 chan_err:
     return -1;
 }
@@ -788,7 +805,7 @@ int run_apb_with_blob(struct apb *apb, uuid_t spec_uuid, struct scenario *scen, 
     }
 
     //send contract to apb
-    int iostatus = -1;
+    int iostatus;
     size_t bytes_written = 0;
     iostatus = maat_write_sz_buf(send_fd, blob->buffer, blob->size, &bytes_written, 5);
     if(iostatus != 0) {
@@ -805,7 +822,11 @@ int run_apb_with_blob(struct apb *apb, uuid_t spec_uuid, struct scenario *scen, 
     size_t resultsz   = 0;
     size_t bytes_read = 0;
     int eof_encountered = 0;
-    iostatus = maat_read_sz_buf(rec_fd, &result, &resultsz, &bytes_read, &eof_encountered, 10000, -1);
+
+    /* Cast is justified because the function does not regard the signedness of the buffer
+     * argument */
+    iostatus = maat_read_sz_buf(rec_fd, (unsigned char **)&result, &resultsz, &bytes_read,
+                                &eof_encountered, 10000, 0);
     if(iostatus != 0) {
         dlog(0, "Error reading result status is %d: %s\n", iostatus, strerror(iostatus < 0 ? -iostatus : iostatus));
         ret = -1;
@@ -958,8 +979,7 @@ int pass_to_subordinate_apb(struct measurement_graph *mg, struct scenario *scen,
         goto pass_error;
     }
 
-    /* Cast is alright, although this does raise questions about the API */
-    if(parse_integrity_response(rcontract, (int)rsize,
+    if(parse_integrity_response(rcontract, rsize,
                                 &target_typ, &target_id,
                                 &resource, &result,
                                 &data_count, &data_idents,
@@ -1050,6 +1070,36 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
                 */
                 ret = run_asp(appraiser_asp, -1, -1, false, 3, asp_argv,-1);
                 dlog(5, "Result from appraiser ASP %d\n", ret);
+            }
+        }
+        if(ret != 0) {
+            appraisal_stat++;
+        }
+        /* also run whitelist asp if datatype is process or package */
+        struct asp *whitelist_appraiser_asp = NULL;
+        ret = 0;
+        /* add  `|| PROCESSMETADATA_TYPE_MAGIC` for process whitelist appraisal */
+        if (data_type == PKG_DETAILS_TYPE_MAGIC) {
+            whitelist_appraiser_asp = find_asp(apb_asps, "whitelist");
+            if(!whitelist_appraiser_asp) {
+                dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", type_str);
+                ret = 0;
+                //ret = -1; // not a failure at this point - don't have sub ASPs for all yet
+            } else {
+                dlog(4, "appraiser_asp == %p (%p %d)\n", whitelist_appraiser_asp, apb_asps,
+                     g_list_length(apb_asps));
+
+                char *asp_argv[] = {graph_path,
+                                    node_str,
+                                    type_str
+                                   };
+                /*
+                  FIXME: This is just using the ASP's exit value to
+                  determine pass/fail status. We'd like to separate
+                  out errors of execution from failures of appraisal.
+                */
+                ret = run_asp(whitelist_appraiser_asp, -1, -1, false, 3, asp_argv,-1);
+                dlog(5, "Result from whitelist appraiser ASP %d\n", ret);
             }
         }
         if(ret != 0) {

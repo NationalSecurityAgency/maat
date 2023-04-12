@@ -263,7 +263,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
         return ret;
 
     /* Receive measurement contract from attester APB. */
-    receive_measurement_contract(peerchan, scen, -1);
+    receive_measurement_contract(peerchan, scen, 0);
     dlog(0, "Received Measurement Contract in appraiser APB\n");
 
     if(scen->contract == NULL) {
@@ -287,7 +287,8 @@ int apb_execute(struct apb *apb, struct scenario *scen,
               (xmlChar*)target,
               (xmlChar*)resource, evaluation, NULL,
               scen->certfile, scen->keyfile, scen->keypass, NULL,
-              scen->tpmpass, (xmlChar **)&response_buf, &sz);    //check the NULL on report_data_list
+              scen->tpmpass, scen->akctx, scen->sign_tpm,
+              (xmlChar **)&response_buf, &sz);    //check the NULL on report_data_list
 
     dlog(0, "error is: %d\n", err);
 

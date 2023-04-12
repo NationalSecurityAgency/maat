@@ -97,7 +97,8 @@ static char *simple_file_serialize_address(const address *a)
     /* tpl_free(tn); */
     /* return b64; */
 
-    return b64_encode(sfa->filename, strlen(sfa->filename)+1);
+    // Cast is justified because the signedness of the ouput is not relevant to how it's used
+    return (char *)b64_encode((unsigned char *)sfa->filename, strlen(sfa->filename)+1);
 }
 
 static address *simple_file_parse_address(const char *a, size_t len)
@@ -116,7 +117,8 @@ static address *simple_file_parse_address(const char *a, size_t len)
     if(!sfa)
         return NULL;
 
-    sfa->filename = b64_decode(a, &namelen);
+    // Cast is justified because the signedness of the output isn't relavant to how it's used
+    sfa->filename = (char *)b64_decode(a, &namelen);
     if(sfa->filename == NULL || sfa->filename[namelen-1] != '\0') {
         g_free(sfa->filename);
         free(sfa);
@@ -160,7 +162,7 @@ static gboolean simple_file_address_equal(const address *a, const address *b)
 static guint simple_file_address_hash(const address *a)
 {
     struct simple_file_address *sfa = (struct simple_file_address *)a;
-    return strlen(sfa->filename);
+    return (guint)strlen(sfa->filename);
 }
 
 static void *simple_file_read_bytes(address *a, size_t size)
@@ -168,7 +170,7 @@ static void *simple_file_read_bytes(address *a, size_t size)
     struct simple_file_address *sfa = (struct simple_file_address *)a;
     int fd;
     unsigned char *buf;
-    int ret;
+    ssize_t ret;
 
     fd = open(sfa->filename, O_RDONLY);
     if (fd < 0)

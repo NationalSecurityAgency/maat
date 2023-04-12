@@ -50,7 +50,6 @@ int serialize_inv_data(measurement_data *d, char **serial_data, size_t *serial_d
     tpl_node *tn = NULL;
     void *tplbuf = NULL;
     char *b64    = NULL;
-    GList *iter  = NULL;
     size_t tplsize = 0;
 
     if(!d) {
@@ -100,11 +99,10 @@ error_tpl_map:
 int unserialize_inv_data(char *serialized, size_t serialized_sz, measurement_data **d)
 {
     measurement_data *data = NULL;
-    inv_data *r_data       = NULL;
+    inv_data *r_data;
     void *tplbuf     = NULL;
     tpl_node *tn     = NULL;
     size_t tplsize   = 0;
-    tpl_bin tb;
     uint32_t as_magic;
 
     int ret_val = 0;
@@ -123,6 +121,7 @@ int unserialize_inv_data(char *serialized, size_t serialized_sz, measurement_dat
         goto error_alloc;
     }
 
+    // Unload package inventory data from TPL node
     r_data = container_of(data, inv_data, meas_data);
 
     tn = tpl_map("u", &as_magic);

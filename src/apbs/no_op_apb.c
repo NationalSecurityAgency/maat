@@ -48,18 +48,17 @@ int apb_execute(struct apb *apb UNUSED, struct scenario *scen UNUSED,
                 int argc UNUSED)
 {
     dlog(4, "Hello from the No-Op APB\n");
-    int ret_val = 0, err = 0, eof_encountered;
+    int ret_val = 0, eof_encountered;
     size_t msg_len, bytes_read, bytes_written;
-    char *msg;
+    unsigned char *msg;
     unsigned char *response_buf;
     size_t sz = 0;
     struct key_value *kv;
 
-
     //Rather than using "PASS" or "FAIL", we use a new evaluation value to represent that no appraisal has been done.
     xmlChar *evaluation = (xmlChar*)"UNKN";
 
-    ret_val = maat_read_sz_buf(peerchan, &msg, &msg_len, &bytes_read, &eof_encountered, 10000, -1);
+    ret_val = maat_read_sz_buf(peerchan, &msg, &msg_len, &bytes_read, &eof_encountered, 10000, 0);
     if(ret_val != 0) {
         dlog(1, "Error reading response. Returned status is %d: %s\n", ret_val,
              strerror(ret_val < 0 ? -ret_val : ret_val));
@@ -94,7 +93,8 @@ int apb_execute(struct apb *apb UNUSED, struct scenario *scen UNUSED,
                                         (xmlChar*)target,
                                         (xmlChar*)resource, evaluation, report_data_list,
                                         scen->certfile, scen->keyfile, scen->keypass, NULL,
-                                        scen->tpmpass, (xmlChar **)&response_buf, &sz);
+                                        scen->tpmpass, scen->akctx, scen->sign_tpm,
+                                        (xmlChar **)&response_buf, &sz);
 
     if(ret_val < 0 || response_buf == NULL) {
         dlog(0, "Error: created_intergrity_response returned %d\n", ret_val);

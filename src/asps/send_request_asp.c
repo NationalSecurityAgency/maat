@@ -56,8 +56,9 @@ int asp_measure(int argc, char *argv[])
     dlog(4, "In send request ASP\n");
 
     int ret_val = 0;
-    int att_portnum, app_portnum, appr_chan, eof_encountered, out_fd, msg_len;
-    size_t bytes_read, bytes_written;
+    int appr_chan, eof_encountered, out_fd;
+    long int att_portnum, app_portnum;
+    size_t msg_len, bytes_read, bytes_written;
     char *msg, *app_host_addr = NULL, *att_host_addr = NULL;
     struct hostent *app_host = NULL, *att_host = NULL;
 
@@ -84,13 +85,17 @@ int asp_measure(int argc, char *argv[])
 
     /* Get attester port */
     att_portnum = strtol(argv[6], NULL, 10);
-    if(att_portnum == 0) {
+    if(att_portnum <= 0) {
         dlog(0, "Unable to parse the attester port\n");
         ret_val = -1;
-        goto app_port_err;
+        goto att_port_err;
+    } else if((unsigned long int) att_portnum > UINT16_MAX) {
+        dlog(0, "Attester port value %lu not within the range which represents a port\n", att_portnum);
+        ret_val = -1;
+        goto att_port_err;
     }
 
-    dlog(4, "Measuring attester: %s : %d\n", att_host->h_name, att_portnum);
+    dlog(4, "Measuring attester: %s : %lu\n", att_host->h_name, att_portnum);
 
     /* Get address for appraiser */
     app_host = gethostbyname(argv[3]);
@@ -113,11 +118,16 @@ int asp_measure(int argc, char *argv[])
         dlog(0, "Unable to parse the appraiser port\n");
         ret_val = -1;
         goto app_port_err;
+    } else if(app_portnum > UINT16_MAX || app_portnum < 0) {
+        dlog(0, "Appraiser port value %lu not within the range to represent a port\n", app_portnum);
+        ret_val = -1;
+        goto app_port_err;
     }
 
-    dlog(4, "Connecting to appraiser: %s : %d\n", app_host->h_name, app_portnum);
+    dlog(4, "Connecting to appraiser: %s : %lu\n", app_host->h_name, app_portnum);
 
-    appr_chan = connect_to_server(app_host_addr, app_portnum);
+    /* Cast is justified because of the previous bounds checking */
+    appr_chan = connect_to_server(app_host_addr, (uint16_t) app_portnum);
     if(appr_chan < 0) {
         dlog(0, "Unable to connect to appraiser\n");
         ret_val = -1;
@@ -134,7 +144,8 @@ int asp_measure(int argc, char *argv[])
         goto int_err;
     }
 
-    ret_val = write_request_contract(appr_chan, msg, (size_t)msg_len, &bytes_written, 20);
+    /* Cast is justified because the function does not regard the signedness of the parameter */
+    ret_val = write_request_contract(appr_chan, (unsigned char *)msg, msg_len, &bytes_written, 20);
     if(ret_val < 0) {
         dlog(0, "Unable to write to appraiser, error: %d\n", ret_val);
         ret_val = -1;
@@ -144,7 +155,8 @@ int asp_measure(int argc, char *argv[])
     msg = NULL;
 
     /* Read the result of the measurement and write to the outfd */
-    ret_val = maat_read_sz_buf(appr_chan, &msg, &msg_len, &bytes_read, &eof_encountered, 10000, -1);
+    /* Cast is justified because the function does not regard the signedness of the parameter */
+    ret_val = maat_read_sz_buf(appr_chan, (unsigned char **)&msg, &msg_len, &bytes_read, &eof_encountered, 10000, 0);
     if(ret_val != 0) {
         dlog(0, "Error reading response. Returned status is %d: %s\n", ret_val,
              strerror(ret_val < 0 ? -ret_val : ret_val));
@@ -159,7 +171,8 @@ int asp_measure(int argc, char *argv[])
         goto read_err;
     }
 
-    ret_val = maat_write_sz_buf(out_fd, msg, msg_len, &bytes_written, 5);
+    /* Cast is justified because the function does not regard the signedness of the parameter */
+    ret_val = maat_write_sz_buf(out_fd, (unsigned char *)msg, msg_len, &bytes_written, 5);
     if(ret_val < 0) {
         dlog(0, "Error writing the results to the out file descriptor\n");
         goto out_err;
@@ -178,6 +191,7 @@ app_port_err:
     free(app_host_addr);
 app_str_err:
 app_addr_err:
+att_port_err:
     free(att_host_addr);
 att_str_err:
 att_addr_err:

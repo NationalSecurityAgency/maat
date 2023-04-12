@@ -97,7 +97,6 @@ int kerneldata_serialize_data(measurement_data *d, char **serial_data, size_t *s
 
 int kerneldata_unserialize_data(char *sd, size_t sd_size, measurement_data **d)
 {
-    size_t bufsize;
     kernel_measurement_data *kmd;
     tpl_node *tn;
     void *tplbuf;

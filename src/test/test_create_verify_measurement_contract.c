@@ -39,7 +39,11 @@
 #define CA_CERT SRCDIR "/credentials/ca.pem"
 #define PRIV_KEY SRCDIR "/credentials/client.key"
 #define CERT_FILE SRCDIR "/credentials/client.pem"
-
+#ifdef USE_TPM
+#define TPMPASS "maatpass"
+#define AKCTX SRCDIR "/credentials/ak.ctx"
+#define AKPUBKEY SRCDIR "/credentials/akpub.pem"
+#endif
 #define CORR_NONCE "dd586e37ecc7a9fecd5cc00152031d7c18866aea"
 
 #define ASP_DIR       SRCDIR "/xml/asp-info"
@@ -101,8 +105,8 @@ START_TEST (test_measurement_contract_asps)
     char *result;
     int create_in_fd[2];
     int create_out_fd[2];
-    char *create_argv[8];
-    char *verify_argv[4];
+    char *create_argv[9];
+    char *verify_argv[5];
 
     /* If setup fails, this will be NULL */
     fail_unless(g_createasp != NULL, "CREATE CONTRACT ASP NOT FOUND");
@@ -141,12 +145,19 @@ START_TEST (test_measurement_contract_asps)
     create_argv[1] = CERT_FILE;
     create_argv[2] = PRIV_KEY;
     create_argv[3] = ""; //keypass
-    create_argv[4] = ""; //tpmpass
-    create_argv[5] = "0";
+#ifdef USE_TPM
+    create_argv[4] = TPMPASS;
+    create_argv[5] = AKCTX;
     create_argv[6] = "1";
+#else
+    create_argv[4] = "";
+    create_argv[5] = "";
+    create_argv[6] = "0";
+#endif
     create_argv[7] = "1";
+    create_argv[8] = "1";
 
-    rc = run_asp(g_createasp, create_in_fd[0], create_out_fd[1], true, 8, create_argv,
+    rc = run_asp(g_createasp, create_in_fd[0], create_out_fd[1], true, 9, create_argv,
                  create_in_fd[1], create_out_fd[0], -1);
     fail_if(rc < 0, "Error creating the contract");
     close(create_in_fd[0]);
@@ -161,10 +172,15 @@ START_TEST (test_measurement_contract_asps)
     verify_argv[0] = WORK_DIR;
     verify_argv[1] = CORR_NONCE;
     verify_argv[2] = CA_CERT;
-    verify_argv[3] = "0";
-
+#ifdef USE_TPM
+    verify_argv[3] = AKPUBKEY;
+    verify_argv[4] = "1";
+#else
+    verify_argv[3] = "";
+    verify_argv[4] = "0";
+#endif
     rc = run_asp_buffers(g_verifyasp, contract, contract_len, &result, &result_len,
-                         4, verify_argv, ASP_TO, -1);
+                         5, verify_argv, ASP_TO, -1);
     free(contract);
     fail_if(rc < 0, "Unable to verify contract");
 
@@ -181,12 +197,12 @@ START_TEST (fail_test_measurement_contract_asps)
     size_t bytes_proc;
     size_t contract_len;
     size_t result_len;
-    char *contract;
+    unsigned char *contract;
     char *result;
     int create_in_fd[2];
     int create_out_fd[2];
-    char *create_argv[8];
-    char *verify_argv[4];
+    char *create_argv[9];
+    char *verify_argv[5];
 
     /* If setup fails, this will be NULL */
     fail_unless(g_createasp != NULL, "CREATE CONTRACT ASP NOT FOUND");
@@ -225,12 +241,19 @@ START_TEST (fail_test_measurement_contract_asps)
     create_argv[1] = CERT_FILE;
     create_argv[2] = PRIV_KEY;
     create_argv[3] = ""; //keypass
-    create_argv[4] = ""; //tpmpass
-    create_argv[5] = "0";
+#ifdef USE_TPM
+    create_argv[4] = TPMPASS;
+    create_argv[5] = AKCTX;
     create_argv[6] = "1";
+#else
+    create_argv[4] = "";
+    create_argv[5] = "";
+    create_argv[6] = "0";
+#endif
     create_argv[7] = "1";
+    create_argv[8] = "1";
 
-    rc = run_asp(g_createasp, create_in_fd[0], create_out_fd[1], true, 8, create_argv,
+    rc = run_asp(g_createasp, create_in_fd[0], create_out_fd[1], true, 9, create_argv,
                  create_in_fd[1], create_out_fd[0], -1);
     fail_if(rc < 0, "Error creating the contract");
     close(create_in_fd[0]);
@@ -247,10 +270,15 @@ START_TEST (fail_test_measurement_contract_asps)
     verify_argv[0] = WORK_DIR;
     verify_argv[1] = CORR_NONCE;
     verify_argv[2] = CA_CERT;
-    verify_argv[3] = "0";
-
-    rc = run_asp_buffers(g_verifyasp, contract, contract_len, &result, &result_len,
-                         4, verify_argv, ASP_TO, -1);
+#ifdef USE_TPM
+    verify_argv[3] = AKPUBKEY;
+    verify_argv[4] = "1";
+#else
+    verify_argv[3] = "";
+    verify_argv[4] = "0";
+#endif
+    rc = run_asp_buffers(g_verifyasp, contract, contract_len, (unsigned char **)&result, &result_len,
+                         5, verify_argv, ASP_TO, -1);
     free(contract);
     fail_if(rc < 0, "Unable to verify contract");
 

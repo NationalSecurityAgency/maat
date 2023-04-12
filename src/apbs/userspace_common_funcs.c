@@ -174,7 +174,7 @@ err:
  */
 static void get_distribution(measurement_graph *g, char **dist)
 {
-    node_id_t sys_id = INVALID_NODE_ID;
+    node_id_t sys_id;
     measurement_data *data = NULL;
     char *distribution = NULL;
     char *tmp = NULL;
@@ -326,12 +326,12 @@ struct asp *select_asp(measurement_graph *g, measurement_type *mtype,
 int measure_variable_internal(void *ctxt, measurement_variable *var,
                               measurement_type *mtype, char *certfile,
                               char *keyfile, char *keypass, char *nonce,
-                              char *tpmpass, char *sign_tpm_str,
+                              char *tpmpass, char *akctx, char *sign_tpm_str,
                               int *mcount_ptr, GList *apb_asps)
 {
     measurement_graph *g = (measurement_graph*)ctxt;
     char *asp_argv[2];
-    char *rq_asp_argv[8];
+    char *rq_asp_argv[9];
     char *pmreloc_argv[3];
     char *graph_path = measurement_graph_get_path(g);
     node_id_t n = INVALID_NODE_ID;
@@ -378,8 +378,9 @@ int measure_variable_internal(void *ctxt, measurement_variable *var,
         rq_asp_argv[4] = keypass;
         rq_asp_argv[5] = nonce;
         rq_asp_argv[6] = tpmpass;
-        rq_asp_argv[7] = sign_tpm_str;
-        rc = run_asp(asp, -1, -1, false, 8, rq_asp_argv, -1);
+        rq_asp_argv[7] = akctx;
+        rq_asp_argv[8] = sign_tpm_str;
+        rc = run_asp(asp, -1, -1, false, 9, rq_asp_argv, -1);
         // TODO: here, could check for appraiser named in address space. Right now
         // just passing all measurements to peer, but could envision other architectures
         // where the current AM acts as appraiser for some data.

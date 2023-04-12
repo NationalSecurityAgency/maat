@@ -447,11 +447,12 @@ void execute_scenario(struct am_config *config,
     while(state != IDLE && state != AM_ERROR) {
         size_t csize;
         int eof_encountered;
+        /* Cast is justified because the function does not regard the signedness of the argument */
         res = maat_read_sz_buf(scenario_get_peerchan(scen),
-                               &scen->contract,
+                               (unsigned char **) &scen->contract,
                                &csize, NULL,
                                &eof_encountered,
-                               config->am_comm_timeout, -1);
+                               config->am_comm_timeout, 0);
         if(check_receive_result(scen, res) < 0) {
             state = AM_ERROR;
             continue;
@@ -484,11 +485,11 @@ static int handle_connection(am_config *config, int clientfd, int may_skip_negot
 {
     /* child process should handle this client */
     char workdir[PATH_MAX];
-    int clientchan = -1;
+    int clientchan;
     int res;
     int rc = 0;
-    char    *contract = NULL;
-    size_t  contract_size;
+    char *contract = NULL;
+    size_t contract_size;
     am_contract_type ctype = -1;
     struct scenario *scenario = calloc(1, sizeof(struct scenario));
     int eof_encountered = 0;
@@ -525,9 +526,10 @@ static int handle_connection(am_config *config, int clientfd, int may_skip_negot
     }
     clientfd = -1;
 
-    res = maat_read_sz_buf(clientchan, &contract, &contract_size, NULL,
+    /* Cast is justified because the signedness of the argument is not regarded */
+    res = maat_read_sz_buf(clientchan, (unsigned char **) &contract, &contract_size, NULL,
                            &eof_encountered,
-                           config->am_comm_timeout, -1);
+                           config->am_comm_timeout, 0);
     if(check_receive_result(NULL, res) < 0 || eof_encountered != 0) {
         dlog(1, "Failed to receive contract from peer\n");
         rc = -1;
@@ -549,7 +551,8 @@ static int handle_connection(am_config *config, int clientfd, int may_skip_negot
         dlog(5, "PRESENTATION MODE (in): Attester receives initial contract\n");
         dlog(3, "Received INITIAL contract...I must be an attester\n");
         init_scenario(scenario, config->cacert_file, config->cert_file,
-                      config->privkey_file, config->privkey_pass, config->tpm_pass,
+                      config->privkey_file, config->privkey_pass, config->tpmpass,
+                      config->akctx, config->akpubkey, config->sign_tpm, config->verify_tpm,
                       config->place_file, contract, contract_size, ATTESTER);
         scenario->workdir      	= workdir;
         scenario->peer_chan	= clientchan;
@@ -562,7 +565,8 @@ static int handle_connection(am_config *config, int clientfd, int may_skip_negot
     } else if(ctype == AM_CONTRACT_REQUEST) {
         dlog(3, "Received REQUEST...I must be an appraiser\n");
         init_scenario(scenario, config->cacert_file, config->cert_file,
-                      config->privkey_file, config->privkey_pass, config->tpm_pass,
+                      config->privkey_file, config->privkey_pass, config->tpmpass,
+                      config->akctx, config->akpubkey, config->sign_tpm, config->verify_tpm,
                       config->place_file, contract, contract_size, APPRAISER);
         scenario->workdir          = workdir;
         scenario->requester_chan   = clientchan;
@@ -576,7 +580,8 @@ static int handle_connection(am_config *config, int clientfd, int may_skip_negot
     } else if(may_skip_negotiation && ctype == AM_CONTRACT_EXECUTE) {
         dlog(3, "Received skip-negotiation EXECUTE contract...off to the races\n");
         init_scenario(scenario, config->cacert_file, config->cert_file,
-                      config->privkey_file, config->privkey_pass, config->tpm_pass,
+                      config->privkey_file, config->privkey_pass, config->tpmpass,
+                      config->akctx, config->akpubkey, config->sign_tpm, config->verify_tpm,
                       config->place_file, contract, contract_size, ATTESTER);
         scenario->state	       	= IDLE;
         scenario->workdir      	= workdir;

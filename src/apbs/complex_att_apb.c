@@ -58,7 +58,7 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
 {
     return measure_variable_internal(ctxt, var, mtype, certfile,
                                      keyfile, NULL, NULL,
-                                     NULL, NULL, &mcount,
+                                     NULL, NULL, NULL, &mcount,
                                      apb_asps);
 }
 
@@ -97,7 +97,7 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
     char *req_args[6];
     char *serialize_args[1];
     char *encrypt_args[1];
-    char *create_con_args[8];
+    char *create_con_args[10];
     char *merge_args[2];
     struct asp *send_request_asp = NULL;
     struct asp *serialize        = NULL;
@@ -246,7 +246,7 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
                     if(scen->partner_cert && ((partner_cert = strdup(scen->partner_cert)) != NULL)) {
                         encrypt_args[0] = partner_cert;
 
-                        create_con_args[7] = "1";
+                        create_con_args[9] = "1";
 
                         ret_val = fork_and_buffer_async_asp(encrypt, 1, encrypt_args, fb_fd, &fb_fd);
                         if(ret_val == -2) {
@@ -260,7 +260,7 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
                             exit(0);
                         }
                     } else {
-                        create_con_args[7] = "0";
+                        create_con_args[9] = "0";
                     }
 
                     create_con_args[0] = workdir;
@@ -269,11 +269,13 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
                     /* TODO: Provide TPM functionality once it comes available */
                     create_con_args[3] = scen->keypass == NULL ? "" : scen->keypass;
                     create_con_args[4] = scen->tpmpass == NULL ? "" : scen->tpmpass;
-                    create_con_args[5] = "1";
-                    create_con_args[6] = "1";
+                    create_con_args[5] = scen->akctx == NULL ? "" : scen->akctx;
+                    create_con_args[6] = scen->sign_tpm == 0 ? "0" : "1";
+                    create_con_args[7] = "1";
+                    create_con_args[8] = "1";
                     //The last argument is already set depending on the use of encryption
 
-                    ret_val = fork_and_buffer_async_asp(create_con, 8, create_con_args, fb_fd, &fb_fd);
+                    ret_val = fork_and_buffer_async_asp(create_con, 10, create_con_args, fb_fd, &fb_fd);
                     if(ret_val == -2) {
                         dlog(0, "Failed to execute fork and buffer for %s ASP\n", create_con->name);
                         exit(-1);
@@ -299,7 +301,6 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
         }// End of serialize child
     }// End of send_request child
 
-fb_req_err:
 find_asp_err:
 keyfile_error:
 certfile_error:

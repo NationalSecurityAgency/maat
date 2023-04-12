@@ -90,8 +90,8 @@ int asp_measure(int argc, char *argv[])
     md5hash_measurement_data *md5hash_data = NULL;
 
     int ret_val	= 0;
-    int filelen = 0;
-
+    size_t filelen = 0;
+    ssize_t result = 0;
 
     if((argc < 3) ||
             ((node_id = node_id_of_str(argv[2])) == INVALID_NODE_ID) ||
@@ -151,7 +151,14 @@ int asp_measure(int argc, char *argv[])
         goto error;
     }
 
-    filelen = st.st_size;
+    if(st.st_size < 0 || (uintmax_t)st.st_size > SIZE_MAX) {
+        ret_val = -EINVAL;
+        asp_logwarn("Invalid file size value %"PRIdMAX"\n", (intmax_t)st.st_size);
+        goto error;
+    }
+
+    // Cast is justified because of the previous conditional
+    filelen = (size_t)st.st_size;
 
     //Allocate memory
     buffer=(char *)malloc(filelen);
@@ -161,9 +168,10 @@ int asp_measure(int argc, char *argv[])
         goto error;
     }
 
-    asp_logdebug("Alloced buffer of size %d\n", filelen);
+    asp_logdebug("Allocated buffer of size %zu\n", filelen);
     //Read file contents into buffer
-    if(read(fd, buffer, filelen) < filelen) {
+    result = read(fd, buffer, filelen);
+    if(result < 0 || (size_t)result != filelen) {
         ret_val = -errno;
         asp_logerror("Failed to read file %s : %s\n", path, strerror(errno));
         goto error;

@@ -67,11 +67,7 @@ netstat_raw6_line *chunk_line_data(char *raw_line)
     memset(ret, 0, sizeof(netstat_raw6_line));
     char *tmp;
     char addr[INET6_ADDRSTRLEN];
-    int port;
-    char *ob = "[";
-    char *cb = "]";
-    char *s = ":";
-    char p[15];
+    long int port;
     struct in6_addr *ip = (struct in6_addr *)malloc(16);
 
     tmp = strtok(raw_line, ":"); //tmp = sl
@@ -84,8 +80,7 @@ netstat_raw6_line *chunk_line_data(char *raw_line)
     }
     tmp = strtok(NULL, " "); //tmp = local_address port
     port = strtol(tmp, NULL, 16);
-    snprintf(ret->local_addr, 49, "[%s]:%d", addr, port);
-
+    snprintf(ret->local_addr, 52, "[%s]:%d", addr, (short) port);
 
     tmp = strtok(NULL, " :"); //tmp = rem_address
     if(strcmp(tmp, "00000000000000000000000000000000") == 0)
@@ -96,7 +91,7 @@ netstat_raw6_line *chunk_line_data(char *raw_line)
     }
     tmp = strtok(NULL, " "); //tmp = rem_address port
     port = strtol(tmp, NULL, 16);
-    snprintf(ret->rem_addr, 49, "[%s]:%d", addr, port);
+    snprintf(ret->rem_addr, 52, "[%s]:%d", addr, (short) port);
 
     tmp = strtok(NULL, " "); //tmp = state
     strncpy(ret->State, tmp, 16);
@@ -144,9 +139,17 @@ int asp_measure(int argc, char *argv[])
         unmap_measurement_graph(graph);
         return -1;
     }
+
+    if(file_stats.st_size < 0 || (uintmax_t)file_stats.st_size > SIZE_MAX) {
+        asp_logerror("File stat size cannot be represented in measurement variable\n");
+        unmap_measurement_graph(graph);
+        return -1;
+    }
+
     file_address->device_major = major(file_stats.st_dev);
     file_address->device_minor = minor(file_stats.st_dev);
-    file_address->file_size = file_stats.st_size;
+    // Cast is safe due to previous bounds check
+    file_address->file_size = (size_t)file_stats.st_size;
     file_address->node = file_stats.st_ino;
     file_address->fullpath_file_name = strdup("/proc/net/raw6");
     if(file_address->fullpath_file_name == NULL) {

@@ -290,7 +290,11 @@ static int run_apb_with_blob(struct apb *apb, uuid_t spec_uuid, struct scenario 
     size_t resultsz   = 0;
     size_t bytes_read = 0;
     int eof_encountered = 0;
-    iostatus = maat_read_sz_buf(rec_fd, &result, &resultsz, &bytes_read, &eof_encountered, 10000, -1);
+
+    /* Cast is justified because the function does not regard the signedness of the buffer
+     * parameter */
+    iostatus = maat_read_sz_buf(rec_fd, (unsigned char **) &result, &resultsz, &bytes_read,
+                                &eof_encountered, 10000, 0);
     if(iostatus != 0) {
         dlog(3, "Error reading result status is %d: %s\n", iostatus, strerror(iostatus < 0 ? -iostatus : iostatus));
         ret = -1;
@@ -432,8 +436,7 @@ int pass_to_subordinate_apb(struct measurement_graph *mg, struct scenario *scen,
         goto pass_error;
     }
 
-    /* Cast is alright, although this does raise questions about the API */
-    if(parse_integrity_response(rcontract, (int)rsize,
+    if(parse_integrity_response(rcontract, rsize,
                                 &target_typ, &target_id,
                                 &resource, &result,
                                 &data_count, &data_idents,
@@ -700,7 +703,10 @@ int apb_execute(struct apb *apb, struct scenario *scen,
         dlog(3, "error in passport_maker_asp or child process\n");
         return ret;
     } else if (ret == 0) {
-        ret = maat_read_sz_buf(pm_fd, &passport_buf, &passport_buf_sz, &bytes_read, &eof_enc, 100, -1);
+        /* Cast is justified because the function does not regard the type of the buffer
+         * argument */
+        ret = maat_read_sz_buf(pm_fd, (unsigned char **) &passport_buf, &passport_buf_sz,
+                               &bytes_read, &eof_enc, 100, 0);
         if (ret != 0 || passport_buf == NULL ) {
             dlog(3, "failed to read in passport\n");
             return -1;
@@ -712,7 +718,8 @@ int apb_execute(struct apb *apb, struct scenario *scen,
                   (xmlChar*)target,
                   (xmlChar*)resource, (xmlChar*)passport_buf, NULL,
                   scen->certfile, scen->keyfile, scen->keypass, NULL,
-                  scen->tpmpass, (xmlChar **)&response_buf, &sz);
+                  scen->tpmpass, scen->akctx, scen->sign_tpm,
+                  (xmlChar **)&response_buf, &sz);
 
         if(ret < 0 || response_buf == NULL) {
             dlog(3, "Error: created_intergrity_response returned %d\n", ret);

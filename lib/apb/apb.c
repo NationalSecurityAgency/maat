@@ -282,20 +282,20 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
  * 0: Successful execution
  */
 int run_asp_buffers(struct asp *asp, const unsigned char *buf_in,
-                    size_t buf_in_len, char **out_buf,
+                    size_t buf_in_len, unsigned char **out_buf,
                     size_t *buf_out_len, int asp_argc,
                     char *asp_argv[], int timeout,
                     ...)
 {
-    int ret           = -5;
-    int rc            = -1;
-    int eof_enc       = -1;
-    size_t written    = -1;
-    size_t tmp_len    = 0;
-    size_t bytes_read = 0;
-    char *tmp         = NULL;
-    int data_in[2]    = {0};
-    int data_out[2]   = {0};
+    int ret            = -5;
+    int rc;
+    int eof_enc        = -1;
+    size_t written     = 0;
+    size_t tmp_len     = 0;
+    size_t bytes_read  = 0;
+    unsigned char *tmp = NULL;
+    int data_in[2]     = {0};
+    int data_out[2]    = {0};
 
     if (buf_in != NULL) {
         rc = pipe(data_in);
@@ -369,7 +369,7 @@ int run_asp_buffers(struct asp *asp, const unsigned char *buf_in,
     ret = -2;
     rc = maat_read_sz_buf(data_out[0], &tmp, &tmp_len,
                           &bytes_read, &eof_enc,
-                          timeout, INT_MAX);
+                          timeout, UINT32_MAX);
     if(rc < 0 && rc != -EAGAIN) {
         dlog(0, "Error reading output from channel\n");
         goto read_failed;
@@ -428,7 +428,7 @@ in_pipe_err:
  * a hard limit of MAX_BUFFER_SIZE is reached. Returns 0 if an EOF is reached and
  * a negative number otherwise.
  */
-static int maat_read_all(int infd, char **bufout, size_t *szout)
+static int maat_read_all(int infd, unsigned char **bufout, size_t *szout)
 {
     char *buf;
     size_t tmpsize = INITIAL_BUFFER_SIZE;
@@ -440,7 +440,8 @@ static int maat_read_all(int infd, char **bufout, size_t *szout)
     while(tmpsize < MAX_BUFFER_SIZE) {
         ssize_t nread = read(infd, buf + offset, tmpsize -  offset);
         if(nread == 0) { /* EOF reached */
-            *bufout = buf;
+            /* Cast is permissible because character buffers can be used either way */
+            *bufout = (unsigned char *)buf;
             *szout  = offset;
             return 0;
         }
@@ -474,11 +475,13 @@ fail:
  * Writes sz amount of data in the buffer to outfd. Return a negative number on error
  * and a zero on success
  */
-static int maat_write_all(int outfd, char *buf, size_t sz)
+static int maat_write_all(int outfd, unsigned char *buf, size_t sz)
 {
     size_t total_written = 0;
     while(total_written < sz) {
-        ssize_t tmp_written = write(outfd, buf + total_written, sz - total_written);
+        /* Cast is justified because the signedness of the buffer does not impact the
+         * operation of write() */
+        ssize_t tmp_written = write(outfd, (char *)buf + total_written, sz - total_written);
         if(tmp_written < 0) {
             if(errno != EAGAIN && errno != EWOULDBLOCK) {
                 return -1;
@@ -540,8 +543,7 @@ int fork_and_buffer(pid_t *pidout, int *pipe_read_out, int infd, ...)
      * error rather than `return -1. We don't want the child to
      * attempt ot handle the error and continue execution.
      */
-
-    char *buf;
+    unsigned char *buf;
     size_t sz;
     rc = maat_read_all(infd, &buf, &sz);
     if(rc < 0) {

@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <check.h>
 
+#include <config.h>
 #include <graph/graph-core.h>
 #include <common/asp_info.h>
 #include <common/asp.h>
@@ -44,6 +45,11 @@
 
 #define TIMEOUT 1000
 
+#ifdef USE_TPM
+#define NONCE "dd586e37ecc7a9fecd5cc00152031d7c18866aea"
+#define TPMPASS "maatpass"
+#endif
+
 GList *asps = NULL;
 struct asp *mtab_asp; //not a least priv ASP itself, used to create a graph to push through pipe
 struct asp *serialize_graph_asp;
@@ -57,6 +63,7 @@ node_id_t path_node;
 
 char *workdir           = SRCDIR "/workdirs/workdir-test-leastpriv-asps";
 char *nonce;
+char *akctx_filename;
 char *partner_cert;
 char *partner_key;
 char *cacert_filename;
@@ -134,12 +141,21 @@ void setup(void)
     fail_unless(partner_key != NULL, "Failed to strdup partner key filename (CREDS_DIR=%s)\n", CREDS_DIR);
 
     cacert_filename = (char *) g_strdup_printf("%s/ca.pem", CREDS_DIR);
-    fail_unless(partner_key != NULL, "Failed to strdup cacert filename (CREDS_DIR=%s)\n", CREDS_DIR);
+    fail_unless(cacert_filename != NULL, "Failed to strdup cacert filename (CREDS_DIR=%s)\n", CREDS_DIR);
 
     /* Finally create it */
+#ifdef USE_TPM
+    akctx_filename = (char *) g_strdup_printf("%s/ak.ctx", CREDS_DIR);
+    fail_unless(akctx_filename != NULL, "Failed to strdup akctx filename (CREDS_DIR=%s)\n", CREDS_DIR);
+
+    rc = create_execute_contract(MAAT_CONTRACT_VERSION, SIGNATURE_TPM, phrase,
+                                 partner_cert, partner_key, NULL, NONCE, TPMPASS,
+                                 akctx_filename, &exe_contract_str, &csize);
+#else
     rc = create_execute_contract(MAAT_CONTRACT_VERSION, SIGNATURE_OPENSSL, phrase,
                                  partner_cert, partner_key, NULL, NULL, NULL,
-                                 &exe_contract_str, &csize);
+                                 NULL, &exe_contract_str, &csize);
+#endif
     fail_if(rc != 0 || exe_contract_str == NULL, "Failed to create execute contract\n");
 
     /* Save off the nonce for later */
@@ -225,7 +241,9 @@ START_TEST(test_serialize_graph_asp)
         fail_if(waitpid(childpid, &status, 0) < 0, "Run ASP returned error status\n");
         fail_unless(WEXITSTATUS(status) == 0, "ASP exit value != 0\n");
 
-        rc = maat_read_sz_buf(fd_out[0], &serial_blob, &sblob_size, &bytes_read, &eof_enc, TIMEOUT, -1);
+        /* Cast is justified because the function does not regard the signedness of the argument */
+        rc = maat_read_sz_buf(fd_out[0], (unsigned char **) &serial_blob, &sblob_size,
+                              &bytes_read, &eof_enc, TIMEOUT, 0);
 
         fail_if(rc < 0, "Error reading serialize graph result from chan\n");
         fail_if(eof_enc, "EOF encountered before complete buffer read\n");
@@ -251,7 +269,7 @@ START_TEST(test_compress_asp)
     size_t bytes_written;
     int eof_enc;
 
-    char *compress_blob;
+    unsigned char *compress_blob;
     size_t cblob_size;
 
     /* Fork a child process for the ASP */
@@ -283,7 +301,7 @@ START_TEST(test_compress_asp)
         fail_unless(WEXITSTATUS(status) == 0, "ASP exit value != 0\n");
 
         /* Read the result from the ASP */
-        rc = maat_read_sz_buf(fd_out[0], &compress_blob, &cblob_size, &bytes_read, &eof_enc, TIMEOUT, -1);
+        rc = maat_read_sz_buf(fd_out[0], &compress_blob, &cblob_size, &bytes_read, &eof_enc, TIMEOUT, 0);
 
         fail_if(rc < 0, "Error reading compress result from chan\n");
         fail_if(eof_enc, "EOF encountered before complete buffer read\n");
@@ -343,8 +361,9 @@ START_TEST(test_encrypt_asp)
         fail_unless(WEXITSTATUS(status) == 0, "ASP exit value != 0\n");
 
         /* Read the result from the ASP */
-        rc = maat_read_sz_buf(fd_out[0], &encrypt_blob, &eblob_size, &bytes_read, &eof_enc, TIMEOUT, -1);
-
+        /* Cast is justified because the function does not regard the signedness of the argument */
+        rc = maat_read_sz_buf(fd_out[0], (unsigned char **)&encrypt_blob, &eblob_size, &bytes_read, &eof_enc,
+                              TIMEOUT, 0);
         fail_if(rc < 0, "Error reading encrypt result from chan\n");
         fail_if(eof_enc, "EOF encountered before complete buffer read\n");
 
@@ -352,8 +371,9 @@ START_TEST(test_encrypt_asp)
         fail_if(strcmp(exe_contract_str, encrypt_blob) == 0, "Encrypted buffer is equal to original\n");
 
         /* Also expecting encrypted key from the ASP */
-        rc = maat_read_sz_buf(fd_out[0], &key_blob, &kblob_size, &bytes_read, &eof_enc, TIMEOUT, -1);
-
+        /* Cast is justified because the function does not regard the signedness of the argument */
+        rc = maat_read_sz_buf(fd_out[0], (unsigned char **)&key_blob, &kblob_size, &bytes_read, &eof_enc,
+                              TIMEOUT, 0);
         fail_if(rc < 0, "Error reading key from chan\n");
         fail_if(eof_enc, "EOF encountered before complete buffer read\n");
 
@@ -375,11 +395,18 @@ START_TEST(test_create_contract_asp)
     size_t bytes_written;
     int eof_enc;
 
-    char *contract_blob;
+    unsigned char *contract_blob;
     size_t cblob_size;
 
-    char *sign_tpm = "0";
+#ifdef USE_TPM
+    char *sign_tpm = "1";
     char *tpm_pass = "maatpass";
+    char *akctx = akctx_filename;
+#else    
+    char *sign_tpm = "0";
+    char *tpm_pass = "";
+    char *akctx = "";
+#endif
 
     char *compressed = "0";
     char *encrypted = "0";
@@ -397,9 +424,9 @@ START_TEST(test_create_contract_asp)
         close(fd_out[0]);
 
         /* The keypass argument is given as an empty string because no password is needed for the demo certificates */
-        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, sign_tpm, compressed, encrypted};
+        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, akctx, sign_tpm, compressed, encrypted};
 
-        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 8, asp_argv, -1);
+        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 9, asp_argv, -1);
 
         close(fd_in[0]);
         close(fd_out[1]);
@@ -410,7 +437,7 @@ START_TEST(test_create_contract_asp)
         close(fd_out[1]);
 
         /* Send it a blob to put into contract 	 */
-        char *msmt = "measurement";
+        unsigned char *msmt = "measurement";
         rc = maat_write_sz_buf(fd_in[1], msmt, sizeof(msmt), &bytes_written, TIMEOUT);
         fail_if(rc < 0, "Error writing measurement blob to create_contract asp\n");
 
@@ -419,7 +446,7 @@ START_TEST(test_create_contract_asp)
         fail_unless(WEXITSTATUS(status) == 0, "ASP exit value != 0\n");
 
         /* Read the result from the ASP */
-        rc = maat_read_sz_buf(fd_out[0], &contract_blob, &cblob_size, &bytes_read, &eof_enc, TIMEOUT, -1);
+        rc = maat_read_sz_buf(fd_out[0], &contract_blob, &cblob_size, &bytes_read, &eof_enc, TIMEOUT, 0);
 
         fail_if(rc < 0, "Error reading encrypt result from chan\n");
         fail_if(eof_enc, "EOF encountered before complete buffer read\n");
@@ -440,11 +467,18 @@ START_TEST(test_create_contract_asp_encrypted)
     size_t bytes_written;
     int eof_enc;
 
-    char *contract_blob;
+    unsigned char *contract_blob;
     size_t cblob_size;
 
-    char *sign_tpm = "0";
+#ifdef USE_TPM
+    char *sign_tpm = "1";
     char *tpm_pass = "maatpass";
+    char *akctx = akctx_filename;
+#else    
+    char *sign_tpm = "0";
+    char *tpm_pass = "";
+    char *akctx = "";
+#endif
 
     char *compressed = "0";
     char *encrypted = "1";
@@ -462,9 +496,9 @@ START_TEST(test_create_contract_asp_encrypted)
         close(fd_out[0]);
 
         /* The keypass argument is given as an empty string because no password is needed for the demo certificates */
-        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, sign_tpm, compressed, encrypted};
+        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, akctx, sign_tpm, compressed, encrypted};
 
-        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 8, asp_argv, -1);
+        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 9, asp_argv, -1);
 
         close(fd_in[0]);
         close(fd_out[1]);
@@ -475,7 +509,7 @@ START_TEST(test_create_contract_asp_encrypted)
         close(fd_out[1]);
 
         /* Send it a blob to put into contract 	 */
-        char *msmt = "measurement";
+        unsigned char *msmt = "measurement";
         rc = maat_write_sz_buf(fd_in[1], msmt, sizeof(msmt), &bytes_written, TIMEOUT);
         fail_if(rc < 0, "Error writing measurement blob to create_contract asp\n");
 
@@ -488,7 +522,7 @@ START_TEST(test_create_contract_asp_encrypted)
         fail_unless(WEXITSTATUS(status) == 0, "ASP exit value != 0\n");
 
         /* Read the result from the ASP */
-        rc = maat_read_sz_buf(fd_out[0], &contract_blob, &cblob_size, &bytes_read, &eof_enc, TIMEOUT, -1);
+        rc = maat_read_sz_buf(fd_out[0], &contract_blob, &cblob_size, &bytes_read, &eof_enc, TIMEOUT, 0);
 
         fail_if(rc < 0, "Error reading encrypt result from chan\n");
         fail_if(eof_enc, "EOF encountered before complete buffer read\n");
@@ -509,11 +543,18 @@ START_TEST(test_create_contract_asp_compressed)
     size_t bytes_written;
     int eof_enc;
 
-    char *contract_blob;
+    unsigned char *contract_blob;
     size_t cblob_size;
 
-    char *sign_tpm = "0";
+#ifdef USE_TPM
+    char *sign_tpm = "1";
     char *tpm_pass = "maatpass";
+    char *akctx = akctx_filename;
+#else    
+    char *sign_tpm = "0";
+    char *tpm_pass = "";
+    char *akctx = "";
+#endif
 
     char *compressed = "1";
     char *encrypted = "0";
@@ -530,9 +571,9 @@ START_TEST(test_create_contract_asp_compressed)
         close(fd_in[1]);
         close(fd_out[0]);
 
-        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, sign_tpm, compressed, encrypted};
+        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, akctx, sign_tpm, compressed, encrypted};
 
-        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 8, asp_argv, -1);
+        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 9, asp_argv, -1);
 
         close(fd_in[0]);
         close(fd_out[1]);
@@ -543,7 +584,7 @@ START_TEST(test_create_contract_asp_compressed)
         close(fd_out[1]);
 
         /* Send it a blob to put into contract 	 */
-        char *msmt = "measurement";
+        unsigned char *msmt = "measurement";
         rc = maat_write_sz_buf(fd_in[1], msmt, sizeof(msmt), &bytes_written, TIMEOUT);
         fail_if(rc < 0, "Error writing measurement blob to create_contract asp\n");
 
@@ -552,7 +593,7 @@ START_TEST(test_create_contract_asp_compressed)
         fail_unless(WEXITSTATUS(status) == 0, "ASP exit value != 0\n");
 
         /* Read the result from the ASP */
-        rc = maat_read_sz_buf(fd_out[0], &contract_blob, &cblob_size, &bytes_read, &eof_enc, TIMEOUT, -1);
+        rc = maat_read_sz_buf(fd_out[0], &contract_blob, &cblob_size, &bytes_read, &eof_enc, TIMEOUT, 0);
 
         fail_if(rc < 0, "Error reading encrypt result from chan\n");
         fail_if(eof_enc, "EOF encountered before complete buffer read\n");
@@ -573,11 +614,18 @@ START_TEST(test_create_contract_asp_compressed_encrypted)
     size_t bytes_written;
     int eof_enc;
 
-    char *contract_blob;
+    unsigned char *contract_blob;
     size_t cblob_size;
 
-    char *sign_tpm = "0";
+#ifdef USE_TPM
+    char *sign_tpm = "1";
     char *tpm_pass = "maatpass";
+    char *akctx = akctx_filename;
+#else    
+    char *sign_tpm = "0";
+    char *tpm_pass = "";
+    char *akctx = "";
+#endif
 
     char *compressed = "1";
     char *encrypted = "1";
@@ -594,9 +642,9 @@ START_TEST(test_create_contract_asp_compressed_encrypted)
         close(fd_in[1]);
         close(fd_out[0]);
 
-        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, sign_tpm, compressed, encrypted};
+        char *asp_argv[] = {workdir, certfile, keyfile, keypass, tpm_pass, akctx, sign_tpm, compressed, encrypted};
 
-        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 8, asp_argv, -1);
+        rc = run_asp(create_contract_asp, fd_in[0], fd_out[1], false, 9, asp_argv, -1);
 
         close(fd_in[0]);
         close(fd_out[1]);
@@ -607,7 +655,7 @@ START_TEST(test_create_contract_asp_compressed_encrypted)
         close(fd_out[1]);
 
         /* Send it a blob to put into contract 	 */
-        char *msmt = "measurement";
+        unsigned char *msmt = "measurement";
         rc = maat_write_sz_buf(fd_in[1], msmt, sizeof(msmt), &bytes_written, TIMEOUT);
         fail_if(rc < 0, "Error writing measurement blob to create_contract asp\n");
 
@@ -620,7 +668,7 @@ START_TEST(test_create_contract_asp_compressed_encrypted)
         fail_unless(WEXITSTATUS(status) == 0, "ASP exit value != 0\n");
 
         /* Read the result from the ASP */
-        rc = maat_read_sz_buf(fd_out[0], &contract_blob, &cblob_size, &bytes_read, &eof_enc, TIMEOUT, -1);
+        rc = maat_read_sz_buf(fd_out[0], &contract_blob, &cblob_size, &bytes_read, &eof_enc, TIMEOUT, 0);
 
         fail_if(rc < 0, "Error reading encrypt result from chan\n");
         fail_if(eof_enc, "EOF encountered before complete buffer read\n");
@@ -668,7 +716,8 @@ START_TEST(test_send_asp)
         /* Send it a blob to compress (using the exe contract made in setup just because it's a
          * medium-sized non-random str)
          */
-        rc = maat_write_sz_buf(fd_in[1], exe_contract_str, csize, &bytes_written, TIMEOUT);
+        /* Cast is justified because the function does not regard the signedness of the argument */
+        rc = maat_write_sz_buf(fd_in[1], (unsigned char *) exe_contract_str, csize, &bytes_written, TIMEOUT);
         fail_if(rc < 0, "Error writing incremental blob to compress asp\n");
 
         /* Check the actual return value of the child process */
@@ -676,7 +725,9 @@ START_TEST(test_send_asp)
         fail_unless(WEXITSTATUS(status) == 0, "ASP exit value != 0\n");
 
         /* Read the result from the ASP */
-        rc = maat_read_sz_buf(fd_out[0], &sent_blob, &sblob_size, &bytes_read, &eof_enc, TIMEOUT, -1);
+        /* Cast is justified because the function does not regard the signedness of the argument */
+        rc = maat_read_sz_buf(fd_out[0], (unsigned char **) &sent_blob, &sblob_size, &bytes_read, &eof_enc,
+                              TIMEOUT, 0);
 
         fail_if(rc < 0, "Error reading compress result from chan\n");
         fail_if(eof_enc, "EOF encountered before complete buffer read\n");

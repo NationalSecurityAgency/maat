@@ -15,18 +15,18 @@
 #
 
 Name:           maat
-Version:        1.3
+Version:        1.4
 Release:        1%{?dist}
 Summary:        Maat Measurement & Attestation Framework
 Group:          Administration/Monitoring
 License:        Apache License, Version 2.0
 Source:         %{name}-%{version}.tar.gz
 
-BuildRequires: autoconf, automake, libtool, glib2-devel, libxml2-devel
+BuildRequires: autoconf, automake, libtool, glib2-devel, libxml2-devel, 
 BuildRequires: openssl-devel, libuuid-devel, make, python3-devel
 BuildRequires: selinux-policy-devel, libselinux
 BuildRequires: elfutils-devel, libcap-devel, json-c-devel
-BuildRequires: mongo-c-driver
+BuildRequires: mongo-c-driver, tpm2-tss, tpm2-tss-devel, tpm2-tools
 Requires:       libcap, json-c, mongo-c-driver-devel, libbson
 %{?el7:Requires: systemd}
 Provides:       maat
@@ -66,7 +66,7 @@ and base set of APBs and ASPs.
 %build
 %configure --disable-static --enable-web-ui \
 	   --with-asp-install-dir=%{_libexecdir}/maat/asps --with-apb-install-dir=%{_libexecdir}/maat/apbs \
-	   --disable-selinux-libdir-mapping
+	   --disable-selinux-libdir-mapping --disable-tpm
 
 # see https://fedoraproject.org/wiki/Packaging:Guidelines#Beware_of_Rpath
 sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool

@@ -24,6 +24,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
+#include <config.h>
 #include <common/asp.h>
 #include <common/apb_info.h>
 #include <am/contracts.h>
@@ -32,7 +33,7 @@
 #include <apb/apb.h>
 
 #define LISTEN_BACK 1
-#define ASP_ARG_NO 9
+#define ASP_ARG_NO 10
 #define ATT_PORT "6666"
 #define ATT_ADDR "127.0.0.1"
 #define RESOURCE "userspace"
@@ -44,6 +45,10 @@
 
 #define CA_CERT SRCDIR "/credentials/ca.pem"
 #define CERT_FILE SRCDIR "/credentials/client.key"
+#ifdef USE_TPM
+#define AKCTX SRCDIR "/credentials/ak.ctx"
+#define TPMPASS "maatpass"
+#endif
 
 /* Global variables  */
 GList *g_asps = NULL;
@@ -145,7 +150,8 @@ START_TEST(test_sendexecutetcp)
     struct sockaddr_in sin;
     socklen_t len = sizeof(sin);
     char port_buf[6] = {0};
-    char *msg, *asp_argv[ASP_ARG_NO];
+    char *msg;
+    char *asp_argv[ASP_ARG_NO];
 
     /* If setup fails, this will be NULL */
     fail_unless(g_sendexecutetcpasp != NULL, "ASP NOT FOUND");
@@ -173,9 +179,15 @@ START_TEST(test_sendexecutetcp)
     asp_argv[4] = CERT_FILE;
     asp_argv[5] = strdup(""); //keypass
     asp_argv[6] = NONCE;
-    asp_argv[7] = strdup(""); //tpmpass
-    asp_argv[8] = strdup("0");
-
+#ifdef USE_TPM
+    asp_argv[7] = TPMPASS;
+    asp_argv[8] = AKCTX;
+    asp_argv[9] = strdup("1");
+#else
+    asp_argv[7] = ""; 
+    asp_argv[8] = "";
+    asp_argv[9] = strdup("0");
+#endif
     fail_if(asp_argv[0] == NULL || asp_argv[2] == NULL || rc < 0,
             "Unable to convert address or port ASP arguments");
 
@@ -190,7 +202,8 @@ START_TEST(test_sendexecutetcp)
     acc_sock = accept(sock, NULL, NULL);
     fail_if(acc_sock < 0, "Unable to accept connection on socket");
 
-    rc = maat_read_sz_buf(acc_sock, &msg, &msg_len, &bytes_read, &eof_encountered, READ_TO, -1);
+    /* Cast is justified because function does not regard signedness of the buffer  */
+    rc = maat_read_sz_buf(acc_sock, (unsigned char **)&msg, &msg_len, &bytes_read, &eof_encountered, READ_TO, 0);
     if(rc != 0) {
         stop_asp(g_sendexecutetcpasp);
         fail_if(true, "Error reading from the child");

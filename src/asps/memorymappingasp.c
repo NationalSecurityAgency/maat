@@ -217,6 +217,7 @@ static int add_file_region_node(measurement_graph *graph, node_id_t process_node
     int rc = 0;
     GChecksum *csum = NULL;
     size_t csum_size;
+    ssize_t result;
 
     var.type = &file_target_type;
     var.address = alloc_address(&file_region_address_space);
@@ -229,6 +230,11 @@ static int add_file_region_node(measurement_graph *graph, node_id_t process_node
     fr_addr->path	= strndup(entry->path, entry->pathlen);
     fr_addr->offset	= entry->offset;
     fr_addr->sz		= entry->va_end - entry->va_start;
+
+    if (fr_addr->sz > SSIZE_MAX) {
+        asp_logwarn("File region size %zu too large to use with checksum library\n", fr_addr->sz);
+        goto out;
+    }
 
     if((rc = measurement_graph_add_node(graph, &var, NULL, &tmpnode)) < 0) {
         asp_logwarn("Failed to add file_region node process node: %d\n", rc);
@@ -270,8 +276,9 @@ static int add_file_region_node(measurement_graph *graph, node_id_t process_node
             goto out;
         }
 
-        if (lseek(fd, fr_addr->offset, SEEK_SET) < 0) {
-            dlog(0, "Failed to seek in %s to offset %ld\n", fr_addr->path,
+        // Cannot check bounds of off_t because no MIN or MAX macros for off_t are defined
+        if (lseek(fd, (off_t)fr_addr->offset, SEEK_SET) < 0) {
+            dlog(0, "Failed to seek in %s to offset %lu\n", fr_addr->path,
                  fr_addr->offset);
             close(fd);
             goto out;
@@ -279,15 +286,16 @@ static int add_file_region_node(measurement_graph *graph, node_id_t process_node
 
         buf = malloc(fr_addr->sz);
         if (!buf) {
-            dlog(0, "Failed to allocate buffer of size %ld\n", fr_addr->sz);
+            dlog(0, "Failed to allocate buffer of size %lu\n", fr_addr->sz);
             close(fd);
             goto out;
         }
 
-        rc = read(fd, buf, fr_addr->sz);
-        if (rc != fr_addr->sz) {
-            dlog(0, "Failed to read all of file into buffer: rc = %d, sz = %ld\n",
-                 rc, fr_addr->sz);
+        result = read(fd, buf, fr_addr->sz);
+        // Cast is justified because of previous bounds check
+        if (result < 0 || (size_t)result != fr_addr->sz) {
+            dlog(0, "Failed to read all of file into buffer: rc = %zd, sz = %lu\n",
+                 result, fr_addr->sz);
             free(buf);
             close(fd);
             goto out;
@@ -303,7 +311,8 @@ static int add_file_region_node(measurement_graph *graph, node_id_t process_node
         sha_data = container_of(data, sha256_measurement_data, meas_data);
 
         csum = g_checksum_new(G_CHECKSUM_SHA256);
-        g_checksum_update(csum, (unsigned char *)buf, fr_addr->sz);
+        // Cast is justified because of previous bounds check
+        g_checksum_update(csum, (unsigned char *)buf, (ssize_t)fr_addr->sz);
         g_checksum_get_digest(csum, sha_data->sha256_hash, &csum_size);
         g_checksum_free(csum);
 
@@ -419,7 +428,7 @@ int asp_measure(int argc, char *argv[])
         ret_val =  ASP_APB_ERROR_ADDRESSSPACEORTYPE;
         goto error;
     }
-    if (pa->pid == -1) {
+    if (pa->pid == UINT32_MAX) {
         dlog(0, "Invalid pid\n");
         goto error;
     }
@@ -434,7 +443,6 @@ int asp_measure(int argc, char *argv[])
         goto error;
     }
 
-    ret_val = 0;
     while(getline(&line, &len, fp ) != -1) {
         entry = chunk_mapping_line_data(line);
         if (!entry) {

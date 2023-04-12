@@ -151,7 +151,6 @@ err:
 int copland_args_to_string(const phrase_arg **args, const int num_args, char **str)
 {
     int int_val, i;
-    unsigned int dig;
     size_t loc = 0, name_sz, arg_sz;
     char *tmp = NULL, *arg_val = NULL;
     char *scratch = NULL;
@@ -732,7 +731,8 @@ static int parse_phrase_arg(const phrase_arg *template,
             goto bounds_err;
         }
 
-        *val = store;
+        /* This cast is acceptable because of the bounds checking above */
+        *val = (int)store;
 
         tmp->data = (void *)val;
         tmp->type = INTEGER;
@@ -1729,6 +1729,7 @@ int place_perm_to_str(place_perm_t perm, char **str)
     if (ret < 0) {
         dlog(1,
              "Unable to convert place perm %"PRIu32" to str\n", perm);
+        free(tmp);
         return -1;
     }
 
@@ -1738,22 +1739,24 @@ int place_perm_to_str(place_perm_t perm, char **str)
 
 int str_to_place_perm(const char *str, place_perm_t *perm)
 {
-    unsigned long tmp;
-    char *ptr;
+    int res;
+    uint32_t tmp;
 
     if (str == NULL || perm == NULL) {
         return -1;
     }
 
     errno = 0;
-    tmp = strtoul(str, &ptr, 10);
-    if (errno) {
+    res = sscanf(str, "%"SCNu32"", &tmp);
+    if (res < 0 || errno) {
         dlog(1, "Unable to convert %s to place perm: error %s\n",
              str, strerror(errno));
         return -1;
     }
 
-    *perm = tmp;
+    /* The place perms are just a typedef to uint32_t */
+    *perm = (place_perm_t) tmp;
+
     return 0;
 }
 
@@ -1825,24 +1828,38 @@ static size_t handle_csv_perm_db_line(const char *read_line, size_t len,
         }
     } else {
         //Place null content to keep columns
-        ele = NULL_CONT;
+        ele = malloc(2);
+
+        if (ele == NULL) {
+            dlog(0, "Unable to allocate memory for string\n");
+            return 0;
+        }
+
+        if(strcpy(ele, NULL_CONT) == NULL) {
+            dlog(1, "Unable to copy string\n");
+            free(ele);
+            return 0;
+        }
     }
 
     ele_len = strlen(ele);
-    if (len + ele_len + 2 <= len ||
-    len + ele_len + 2 >= COPLAND_CSV_LINE_MAX_LEN) {
+    if (len + ele_len + 2 <= len
+        || len + ele_len + 2 >= COPLAND_CSV_LINE_MAX_LEN) {
         dlog(1, "CSV line would be too long to write out\n");
-        ret = -1;
+        free(ele);
         return 0;
     }
     tmp = realloc(*out, len + ele_len + 2);
     if (tmp == NULL) {
         dlog(0, "Unable to allocate buffer for CSV line\n");
+        free(ele);
         return 0;
     }
 
     tmp[len - 1] = ',';
     strcpy(tmp + len, ele);
+    free(ele);
+
     tmp[len + ele_len] = '\n';
     tmp[len + ele_len + 1] = '\0';
 
@@ -1876,8 +1893,6 @@ static int query_place_info_csv(const struct apb *apb,
     size_t perm_len;
     char *read_line;
     char *perm;
-    char *ele;
-    FILE *fp;
 
     if (apb == NULL || id == NULL || out_buf == NULL) {
         dlog(1, "Given null argument(s) in one parameter that must be dereferenced\n");
@@ -1905,6 +1920,7 @@ static int query_place_info_csv(const struct apb *apb,
     if(len + perm_len >= COPLAND_CSV_LINE_MAX_LEN) {
         dlog(1,
              "ID and perms longer than allowed line length\n");
+        free(perm);
         return -1;
     }
 
@@ -1913,12 +1929,14 @@ static int query_place_info_csv(const struct apb *apb,
     if (tmp == NULL) {
         dlog(0,
              "Unable to allocate buffer to hold result line\n");
+        free(perm);
         return -1;
     }
 
     memcpy(tmp, id, len);
     tmp[len] = ',';
     memcpy(tmp + len + 1, perm, perm_len);
+    free(perm);
     tmp[len + 1 + perm_len] = '\n';
     /*
      * len in this function is a bit tricky, but in general it will not count
@@ -1927,7 +1945,6 @@ static int query_place_info_csv(const struct apb *apb,
      * isn't included, but for string length that's normal
      */
     len += (perm_len + 2);
-    free(perm);
 
     ret = read_line_csv(filename, id,
                         COPLAND_DB_PLACE_ID_INDX,
@@ -1935,9 +1952,10 @@ static int query_place_info_csv(const struct apb *apb,
 
     if (ret == 1) {
         dlog(1, "Unable to find place in the CSV file\n");
-        return 2;
+        ret = 2;
+        goto err;
     } else if (ret < 0) {
-        return ret;
+        goto err;
     }
 
     tmp_len = handle_csv_perm_db_line(read_line, len, perms,
@@ -1985,8 +2003,6 @@ static int query_place_info_csv(const struct apb *apb,
     } else if (tmp_len > len + strlen(NULL_CONT) + 1) {
         parse_flag = 1;
     }
-
-    len = tmp_len;
 
     if (parse_flag == 0) {
         ret = 1;
@@ -2045,6 +2061,7 @@ int query_place_information(const struct apb *apb,
 {
     int i;
     int ret = 0;
+    ssize_t out_buf_len;
     ssize_t written;
     char *place_label = NULL;
     char *out_buf = NULL;
@@ -2053,7 +2070,6 @@ int query_place_information(const struct apb *apb,
     place_perms *place = NULL;
     GList *place_perm_list = apb->place_permissions;
     GList *perm = NULL;
-    struct phrase_meas_spec_pair *pair;
 
     if (apb == NULL || scen == NULL || phrase == NULL) {
         dlog(1, "Given NULL pointer parameter\n");
@@ -2102,10 +2118,22 @@ int query_place_information(const struct apb *apb,
                         break;
                     } else {
                         dlog(4, "Writing out data %s\n", out_buf);
+                        /*
+                         * The case of out_buf is justified because the signedness of
+                         * the buffer is not relevant for the operations performed
+                         * on it in this function.
+                         */
                         written = append_buffer_to_file(file_name,
-                                                        out_buf,
+                                                        (unsigned char *)out_buf,
                                                         strlen(out_buf));
-                        if (written != strlen(out_buf)) {
+                        /*
+                         * append_buffer_to_file would return an error if
+                         * the length of out_buf would overflow the maximum
+                         * value that the return value ssize_t can hold. Therefore,
+                         * the length of out_buf WILL be representable as a ssize_t
+                         */
+                        out_buf_len = (ssize_t)strlen(out_buf);
+                        if (written < 0 || written != out_buf_len) {
                             free(out_buf);
                             ret = -1;
                             dlog(0, "Unable to append place information to CSV file\n");

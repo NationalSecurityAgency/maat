@@ -53,14 +53,20 @@ int enumeration_data_add_entry(enumeration_data *data, char *entry)
 
 int enumeration_data_add_entries(enumeration_data *data, GList *entries)
 {
-    int len = g_list_length(entries);
+    guint len = g_list_length(entries);
+
+    if (G_MAXUINT > UINT64_MAX && len > UINT64_MAX) {
+        return -1;
+    }
+
     GList *tmp_list = g_list_concat(data->entries, entries);
     if(tmp_list == NULL) {
         return -1;
     }
 
     data->entries = tmp_list;
-    data->num_entries = data->num_entries + len;
+    // Cast is justified because of the previous bounds check
+    data->num_entries = data->num_entries + (uint64_t)len;
     return 0;
 }
 
@@ -142,7 +148,6 @@ int unserialize_enumeration_data(char *serialized, size_t serialized_sz, measure
     void *tplbuf     = NULL;
     tpl_node *tn     = NULL;
     size_t tplsize   = 0;
-    tpl_bin tb;
     uint32_t as_magic;
     GList *tmp = NULL;
 
@@ -249,13 +254,10 @@ static int enumeration_get_feature(measurement_data *d, char *feature, GList **o
     }
 
     char *avalue;
-    size_t data_sz = 64;
-    int ret;
 
     if(attr == AENTRIES) {
         for(iter = g_list_first(data->entries); iter != NULL; iter = g_list_next(iter)) {
             char *entry = (char*) iter->data;
-            ret = 1;
 
             avalue = strdup(entry);
             if(avalue == NULL) {

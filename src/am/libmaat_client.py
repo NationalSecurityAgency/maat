@@ -38,7 +38,7 @@ def maat_read_sz_buf(fd, max_sz):
                 return (0,"")
         size = struct.unpack("!i", tsz)[0]
 
-        if max_sz < 0:
+        if max_sz == 0:
                 max_sz = 1000000
 
         if size > max_sz:

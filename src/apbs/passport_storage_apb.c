@@ -128,7 +128,8 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
     dlog(0, "Wrote %zd bytes to asp\n", bytes_written);
 
     //read result from asp
-    ret = maat_read_sz_buf(rec_fd, &result, &result_sz, &bytes_read, &eof_encountered, TIMEOUT, -1);
+    /* Cast is acceptable because the function does not regard the signedness of the argument */
+    ret = maat_read_sz_buf(rec_fd, (unsigned char **)&result, &result_sz, &bytes_read, &eof_encountered, TIMEOUT, 0);
     if (ret != 0 || eof_encountered != 0) {
         dlog(3, "Error reading the result status from storer_asp\n");
         goto error_read;
@@ -245,7 +246,8 @@ int apb_execute(struct apb *apb, struct scenario *scen,
                   (xmlChar*)target,
                   (xmlChar*)resource, evaluation, NULL,
                   scen->certfile, scen->keyfile, scen->keypass, NULL,
-                  scen->tpmpass, (xmlChar **)&response_buf, &sz);
+                  scen->tpmpass, scen->akctx, scen->sign_tpm,
+                  (xmlChar **)&response_buf, &sz);
 
     if(ret_val < 0 || response_buf == NULL) {
         dlog(3, "Error: created_intergrity_response returned %d\n", ret_val);

@@ -1,0 +1,8 @@
+# 
+# Package whitelist file
+#
+# Package names appearing in this file (one per line) are the only
+# packages allowed on the system.  Any packages found not on this
+# list will trigger an attestation failure
+# 
+

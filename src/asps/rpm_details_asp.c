@@ -81,7 +81,6 @@ static size_t check_attr(char **attr)
 
 static int get_pkg_details(char *rawline, measurement_data **out)
 {
-    char *none = "(none)";
     char *name  = NULL;
     pkg_details *pkg_data  = NULL;
     measurement_data *data = alloc_measurement_data(&pkg_details_measurement_type);
@@ -140,7 +139,6 @@ int asp_measure(int argc, char *argv[])
     package_address *paddr   = NULL;
     char *format             = NULL;
     node_id_t node_id = INVALID_NODE_ID;
-    size_t len = 0;
     char *sout;
     char *serr;
 

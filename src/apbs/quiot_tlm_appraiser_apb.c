@@ -258,7 +258,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
         return ret_val;
     }
 
-    ret_val = receive_measurement_contract(peerchan, scen, -1);
+    ret_val = receive_measurement_contract(peerchan, scen, 0);
     dlog(6, "Received Measurement Contract in quiot tlm appraiser APB\n");
 
     if(scen->contract == NULL) {
@@ -282,7 +282,8 @@ int apb_execute(struct apb *apb, struct scenario *scen,
               (xmlChar*)target,
               (xmlChar*)resource, evaluation, report_data_list,
               scen->certfile, scen->keyfile, scen->keypass, NULL,
-              scen->tpmpass, (xmlChar **)&response_buf, &sz);
+              scen->tpmpass, scen->akctx, scen->sign_tpm,
+              (xmlChar **)&response_buf, &sz);
 
     if(err < 0 || response_buf == NULL) {
         dlog(0, "Error: created_intergrity_response returned %d\n", err);

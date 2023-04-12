@@ -193,7 +193,7 @@ static int initcon_new_xml(struct scenario *scen, xmlDoc *doc,
 
     fprint = get_fingerprint(scen->certfile, NULL);
     ret = sign_xml(doc, root, fprint, scen->keyfile, scen->keypass, *nonce,
-                   scen->tpmpass, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+                   scen->tpmpass, scen->akctx, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
     free(fprint);
     if (ret) {
         dperror("Error signing XML file");
@@ -539,7 +539,7 @@ int handle_initial_contract(struct attestation_manager *manager,
         /*
          * verify signature
          */
-        ret = verify_xml(doc, root, creddir, scen->nonce,
+        ret = verify_xml(doc, root, creddir, scen->nonce, scen->akpubkey,
                          scen->verify_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL,
                          scen->cacert);
         if(ret != 1) {
@@ -658,7 +658,7 @@ int handle_initial_contract(struct attestation_manager *manager,
      */
     fprint = get_fingerprint(scen->certfile, NULL);
     ret = sign_xml(doc, root, fprint, scen->keyfile, scen->keypass, scen->nonce,
-                   scen->tpmpass, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+                   scen->tpmpass, scen->akctx, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
     free(fprint);
     if(ret != 0) {
         dlog(0, "Failed to sign XML contract\n");
@@ -717,7 +717,7 @@ int handle_modified_contract(struct attestation_manager *manager,
     xmlNode *root, *subc, *optnode, *next_optnode;
     copland_phrase *selected, *parsed_option;
     char *fingerprint = NULL, *contract_type = NULL, *opt;
-    int rc = AM_OK, pid = -1, respsize;
+    int rc = AM_OK, pid, respsize;
     GList *options = NULL;
 
     /* Check that we have a valid XML contract of type "initial" */
@@ -778,7 +778,7 @@ int handle_modified_contract(struct attestation_manager *manager,
             goto out;
         }
 
-        rc = verify_xml(doc, root, creddir, scen->nonce,
+        rc = verify_xml(doc, root, creddir, scen->nonce, scen->akpubkey,
                         scen->verify_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL,
                         scen->cacert);
         if (rc != 1) {
@@ -838,7 +838,7 @@ int handle_modified_contract(struct attestation_manager *manager,
     /* sign contract with that cert */
     fingerprint = get_fingerprint(scen->certfile, NULL);
     rc = sign_xml(doc, root, fingerprint, scen->keyfile, scen->keypass, scen->nonce,
-                  scen->tpmpass, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+                  scen->tpmpass, scen->akctx, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
 
     if(rc != 0) {
         rc = -8;
@@ -1037,7 +1037,7 @@ int handle_execute_contract(struct attestation_manager *manager,
         char creddir[201];
         snprintf(creddir, 200, "%s/cred", scen->workdir);
 
-        ret = verify_xml(doc, root, creddir, scen->nonce,
+        ret = verify_xml(doc, root, creddir, scen->nonce, scen->akpubkey,
                          scen->verify_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL,
                          scen->cacert);
         if (ret != 1) { /* 1 == good signature */
@@ -1198,7 +1198,7 @@ int create_error_response(struct scenario *scen)
 
         fprint = get_fingerprint(certfile, NULL);
         ret = sign_xml(doc, root, fprint, keyfile, scen->keypass, nonce, scen->tpmpass,
-                       scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+                       scen->akctx, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
         free(fprint);
         if(ret != 0) {
             dlog(0, "Failed to sign integrity response contract\n");

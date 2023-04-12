@@ -62,7 +62,8 @@ char *g_keyfile    = NULL;
 char *g_keypass    = NULL;
 char *g_nonce      = NULL;
 char *g_tpmpass    = NULL;
-char *g_verify_tpm = NULL;
+char *g_akctx      = NULL;
+char *g_sign_tpm   = NULL;
 
 struct scenario *g_scen = NULL;
 
@@ -126,10 +127,10 @@ static int invoke_send_execute_tcp(struct asp *execute_asp, char *addr,
                                    char *port, char *resource,
                                    char **msmt_con, size_t *con_len)
 {
-    int rc                 = -1;
-    size_t buf_len         = -1;
+    int rc;
+    size_t buf_len         = 0;
     char *buf              = NULL;
-    char *send_execute_args[9] = {0};
+    char *send_execute_args[10] = {0};
 
     send_execute_args[0] = addr;
     send_execute_args[1] = port;
@@ -139,10 +140,11 @@ static int invoke_send_execute_tcp(struct asp *execute_asp, char *addr,
     send_execute_args[5] = g_keypass;
     send_execute_args[6] = g_nonce;
     send_execute_args[7] = g_tpmpass;
-    send_execute_args[8] = g_verify_tpm;
+    send_execute_args[8] = g_akctx;
+    send_execute_args[9] = g_sign_tpm;
 
     rc = run_asp_buffers(execute_asp, NULL, 0, &buf, &buf_len,
-                         9, send_execute_args, TIMEOUT, -1);
+                         10, send_execute_args, TIMEOUT, -1);
 
     if (rc == 0) {
         *msmt_con = buf;
@@ -169,8 +171,8 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
                                  measurement_type *mtype)
 {
     int rc                                  = 0;
-    size_t con_len                          = -1;
-    size_t tmp_con_len                      = -1;
+    size_t con_len                          = 0;
+    size_t tmp_con_len                      = 0;
     char *graph_path                        = NULL;
     char *contract                          = NULL;
     char *tmp_contract                      = NULL;
@@ -196,7 +198,7 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
     if(asp == NULL) {
         dlog(0, "Failed to find satisfactory ASP\n");
         rc = -ENOENT;
-        goto error;
+        return rc;
     }
 
     if (strcmp(asp->name, "kernel_msmt_asp") == 0) {
@@ -307,7 +309,7 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
         // Delegate to the standard userspace measure_variable function
         return measure_variable_internal(ctxt, var, mtype, g_certfile,
                                          g_keyfile, NULL, NULL,
-                                         NULL, NULL, &mcount,
+                                         NULL, NULL, NULL, &mcount,
                                          apb_asps);
     }
 
@@ -410,7 +412,7 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
             if(scen->partner_cert && ((partner_cert = strdup(scen->partner_cert)) != NULL)) {
                 encrypt_args[0] = partner_cert;
 
-                create_con_args[7] = "1";
+                create_con_args[9] = "1";
 
                 ret_val = fork_and_buffer_async_asp(encrypt, 1, encrypt_args, fb_fd, &fb_fd);
                 if(ret_val == -2) {
@@ -424,7 +426,7 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
                     exit(0);
                 }
             } else {
-                create_con_args[7] = "0";
+                create_con_args[9] = "0";
             }
 
             create_con_args[0] = workdir;
@@ -433,11 +435,13 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
             /* TODO: Provide TPM functionality once it comes available */
             create_con_args[3] = g_keypass;
             create_con_args[4] = g_tpmpass;
-            create_con_args[5] = "1";
-            create_con_args[6] = "1";
+            create_con_args[5] = g_akctx;
+            create_con_args[6] = g_sign_tpm;
+            create_con_args[7] = "1";
+            create_con_args[8] = "1";
             //The last argument is already set depending on the use of encryption
 
-            ret_val = fork_and_buffer_async_asp(create_con, 8, create_con_args, fb_fd, &fb_fd);
+            ret_val = fork_and_buffer_async_asp(create_con, 10, create_con_args, fb_fd, &fb_fd);
             if(ret_val == -2) {
                 dlog(0, "Failed to execute fork and buffer for %s ASP\n", create_con->name);
                 exit(-1);
@@ -463,10 +467,7 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
 
     free(graph_path);
 graph_path_err:
-fb_req_err:
 find_asp_err:
-keyfile_error:
-certfile_error:
     free(workdir);
 workdir_error:
     return ret_val;
@@ -576,14 +577,21 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
         g_tpmpass = strdup("");
     }
 
-    if(scen->verify_tpm) {
-        g_verify_tpm = strdup("1");
+    if(scen->akctx) {
+        g_akctx = strdup(scen->akctx);
     } else {
-        g_verify_tpm = strdup("0");
+        g_akctx = strdup("");
+    }
+
+    if(scen->sign_tpm) {
+        g_sign_tpm = strdup("1");
+    } else {
+        g_sign_tpm = strdup("0");
     }
 
     if (g_certfile == NULL || g_keyfile == NULL || g_keypass == NULL ||
-            g_nonce == NULL || g_verify_tpm == NULL || g_tpmpass == NULL) {
+            g_nonce == NULL || g_sign_tpm == NULL || g_tpmpass == NULL
+            || g_akctx == NULL) {
         dlog(0, "Unable to allocate buffer(s) for scenario information\n");
         goto str_alloc_err;
     }
@@ -604,7 +612,8 @@ str_alloc_err:
     free(g_keypass);
     free(g_nonce);
     free(g_tpmpass);
-    free(g_verify_tpm);
+    free(g_akctx);
+    free(g_sign_tpm);
     destroy_measurement_graph(graph);
     graph = NULL;
 

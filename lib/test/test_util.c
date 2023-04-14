@@ -554,8 +554,7 @@ START_TEST(test_sign_openssl_small)
                                     keyfile, NULL);
     fail_if(!signature, "signing failed");
 
-    ret = verify_buffer_openssl((unsigned char *)test_string,
-                                strlen(test_string)+1,
+    ret = verify_buffer_openssl((unsigned char *)test_string, &size,
                                 signature, size, certfile, cacertfile);
     fail_if(ret != 1, "verification failed");
     free(signature);

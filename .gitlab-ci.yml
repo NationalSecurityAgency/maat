@@ -98,7 +98,7 @@ default:
 
 # Create RPM repo for ${release} and ${arch}
 .rpm_repo: &rpm_repo
-  - ../configure --prefix=/usr --disable-selinux-libdir-mapping --disable-tpm
+  - ../configure --prefix=/usr --disable-tpm --disable-selinux-libdir-mapping
   - make dist
   - "[ -d SOURCES ] || mkdir SOURCES"
   - cp maat-*.tar.gz SOURCES/
@@ -115,8 +115,27 @@ default:
   - cp -v  /var/lib/mock/${distro}-${release}-${arch}/result/maat-*.rpm staging/epel/${release}/${arch}/
   - cd staging/epel/${release}/${arch}
   - createrepo -p -d -v .
-  - cd ../../../
-  - scp -r epel $ARCHIVE_USER@$ARCHIVE_HOST:/var/www/data/rpm/$CI_COMMIT_SHORT_SHA/
+  - cd ../../
+  - ssh $ARCHIVE_USER@$ARCHIVE_HOST "mkdir -p /var/www/data/rpm/$CI_COMMIT_SHORT_SHA/"
+  - scp -r ${release} $ARCHIVE_USER@$ARCHIVE_HOST:/var/www/data/rpm/$CI_COMMIT_SHORT_SHA/
+
+# System test on RHEL with selinux enabled
+.rhel_selinux_system_test: &rhel_selinux_system_test
+  - echo "baseurl=http://$ARCHIVE_HOST/rpm/$CI_COMMIT_SHORT_SHA/${release}/x86_64" >> ci/maat.repo
+  - sudo cp ci/maat.repo /etc/yum.repos.d
+  - sudo yum clean all
+  - sudo yum install maat maat-selinux -y
+  - sudo semanage port -a -t attestmgr_port_t -p tcp 2343
+  - sudo cp demo/credentials/client.* /etc/maat/credentials/
+  - sudo rpm -qa --qf "%{NAME}\n" | sudo tee -a /usr/share/maat/asps/packages.whitelist
+  - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
+  - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
+  - sleep 10
+  - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r userspace | tee test_client.log || true"
+  - "kill %2 || true"
+  - "kill %1 || true"
+  - sudo rm -f /etc/maat/credentials/client.*
+  - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
 
 ## sara-kickoff
 
@@ -174,8 +193,6 @@ build-rhel7-selinux:
     - rhel7
   script:
     - *build_with_selinux_no_tpm
-  after_script:
-    - sudo semodule -r maat
 
 # build without selinux for rhel8
 build-rhel8-no-selinux:
@@ -192,8 +209,6 @@ build-rhel8-selinux:
     - rhel8
   script:
     - *build_with_selinux_no_tpm
-  after_script:
-    - sudo semodule -r maat
 
 # build without selinux for rhel9
 build-rhel9-no-selinux:
@@ -210,8 +225,6 @@ build-rhel9-selinux:
     - rhel9
   script:
     - *build_with_selinux_no_tpm
-  after_script:
-    - sudo semodule -r maat
   allow_failure: true # for now this is allowed because of an issue with flask header
 
 ## docs
@@ -228,20 +241,6 @@ docs-ubuntu:
       - maat-docs
     expire_in: 2 weeks
     when: on_success
-
-# build docs on rhel7
-docs-rhel:
-  stage: docs
-  tags:
-    - rhel7
-  script:
-    - *build_docs
-  artifacts:
-    paths:
-      - maat-docs
-    expire_in: 2 weeks
-    when: on_success
-  allow_failure: true # fails due to missing style
 
 ## test
 
@@ -348,7 +347,6 @@ test-rhel7-asan:
       - build/src/test/*.log
     expire_in: 2 weeks
     when: always
-  allow_failure: true # for now fails due to configure saying C compiler not working
 
 # make check tests without selinux on rhel8
 test-rhel8-basic-no-selinux:
@@ -375,7 +373,6 @@ test-rhel8-asan:
       - build/src/test/*.log
     expire_in: 2 weeks
     when: always
-  allow_failure: true # for now fails due to configure saying C compiler not working
 
 # make check tests without selinux on rhel9
 test-rhel9-basic-no-selinux:
@@ -470,7 +467,6 @@ package-rhel8-x86_64-rpm:
     paths:
       - build/staging
     expire_in: 2 weeks
-  allow_failure: True # fails due to underlying mock image not including systemd
 
 # package rhel9 rpm
 package-rhel9-x86_64-rpm:
@@ -537,6 +533,8 @@ system-test-selinux-rhel7:
   inherit:
     default: false
   dependencies: []
+  variables:
+    release: 7
   timeout: 2 hours
   before_script:
     - "sudo killall -15 attestmgr || true"
@@ -544,22 +542,30 @@ system-test-selinux-rhel7:
     - sudo semanage port -d -t attestmgr_port_t -p tcp 2343 || true
     - sudo yum remove maat maat-selinux -y || true
   script:
-    - echo "baseurl=http://$ARCHIVE_HOST/rpm/$CI_COMMIT_SHORT_SHA/7/x86_64" >> ci/maat.repo
-    - sudo cp ci/maat.repo /etc/yum.repos.d
-    - sudo yum clean all
-    - sudo yum install maat maat-selinux -y
-    - sudo semanage port -a -t attestmgr_port_t -p tcp 2343
-    - sudo cp demo/credentials/client.* /etc/maat/credentials/
-    - sudo rpm -qa --qf "%{NAME}\n" | sudo tee -a /usr/share/maat/asps/packages.whitelist
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
-    - sleep 10
-    - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r userspace | tee test_client.log || true"
-    - "kill %2 || true"
-    - "kill %1 || true"
-    - sudo rm -f /etc/maat/credentials/client.*
-    - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
-    - cat test_client.log
+    *rhel_selinux_system_test
+  artifacts:
+    paths:
+      - test_client.log
+    expire_in: 2 weeks
+
+# system test with selinux on rhel8
+system-test-selinux-rhel8:
+  stage: systemtest
+  tags:
+    - rhel8
+  inherit:
+    default: false
+  dependencies: []
+  variables:
+    release: 8
+  timeout: 2 hours
+  before_script:
+    - "sudo killall -15 attestmgr || true"
+    - "sudo killall -9 attestmgr || true"
+    - sudo semanage port -d -t attestmgr_port_t -p tcp 2343 || true
+    - sudo yum remove maat maat-selinux -y || true
+  script:
+    *rhel_selinux_system_test
   artifacts:
     paths:
       - test_client.log

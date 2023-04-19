@@ -64,7 +64,7 @@ and base set of APBs and ASPs.
 %setup -q
 
 %build
-%configure --disable-static --enable-web-ui \
+%configure --disable-static --enable-web-ui --with-systemdsystemunitdir=/usr/lib/systemd/system \
 	   --with-asp-install-dir=%{_libexecdir}/maat/asps --with-apb-install-dir=%{_libexecdir}/maat/apbs \
 	   --disable-selinux-libdir-mapping --disable-tpm
 

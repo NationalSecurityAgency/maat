@@ -13,22 +13,22 @@ static bool pcr_on_arg(const unsigned char *buf, int buf_size) {
   bool res;
   UINT16 digest_size;
   
-  pcr_ctx.digest_spec = malloc(sizeof(*pcr_ctx.digest_spec));
+  pcr_ctx.digest_spec = calloc(1, sizeof(*pcr_ctx.digest_spec));
   if (!pcr_ctx.digest_spec) {
     dlog(3, "oom\n");
     return false;
   }
   
-  res = openssl_check(buf, buf_size, (BYTE *) &pcr_ctx.digest_spec->digests.digests[0].digest, &digest_size);   
+  res = openssl_check(buf, buf_size, (BYTE *) &pcr_ctx.digest_spec[0].digests.digests[0].digest, &digest_size);   
   if (!res) {
     dlog(3, "Failed to create pcr digest\n");
     return false;
   }
   
   ESYS_TR pcr_index = 16;
-  pcr_ctx.digest_spec->pcr_index = pcr_index;
-  pcr_ctx.digest_spec->digests.digests[0].hashAlg = TPM2_ALG_SHA256;
-  pcr_ctx.digest_spec->digests.count = 1;
+  pcr_ctx.digest_spec[0].pcr_index = pcr_index;
+  pcr_ctx.digest_spec[0].digests.digests[0].hashAlg = TPM2_ALG_SHA256;
+  pcr_ctx.digest_spec[0].digests.count = 1;
 
   return true;
 }
@@ -44,9 +44,9 @@ static tool_rc pcr_onrun(ESYS_CONTEXT *ectx) {
     return tool_rc_from_tpm(rval);
   }
 
-  rval = Esys_PCR_Extend(ectx, pcr_ctx.digest_spec->pcr_index,
+  rval = Esys_PCR_Extend(ectx, pcr_ctx.digest_spec[0].pcr_index,
 			 ESYS_TR_PASSWORD, ESYS_TR_NONE, ESYS_TR_NONE,
-			 &pcr_ctx.digest_spec->digests);
+			 &pcr_ctx.digest_spec[0].digests);
   if (rval != TSS2_RC_SUCCESS) {
     dlog(3, "Could not extend pcr index\n");
     dlog(3, "%s(0x%X) - %s", "Esys_PCR_Extend\n", rval, Tss2_RC_Decode(rval));
@@ -56,7 +56,7 @@ static tool_rc pcr_onrun(ESYS_CONTEXT *ectx) {
   return tool_rc_success;
 }
 
-static void pcr_onexit(void) {
+static void pcr_onstop(void) {
 
   free(pcr_ctx.digest_spec);
 }
@@ -71,7 +71,7 @@ static tpm_quote_ctx q_ctx = {
 
 static tpm_sig_quote sig_quote;
 
-static bool write_output_files(TPM2B_ATTEST *quoted, TPMT_SIGNATURE *signature) {
+static bool write_output(TPM2B_ATTEST *quoted, TPMT_SIGNATURE *signature) {
   bool res = true;
   size_t offset = 0; 
   UINT8 buffer[sizeof(*signature)];
@@ -314,7 +314,7 @@ static tool_rc quote_onrun(ESYS_CONTEXT *ectx) {
   }
       
   // Write everything out
-  bool ret = write_output_files(quoted, signature);
+  bool ret = write_output(quoted, signature);
   free(quoted);
   free(signature);
   return ret ? tool_rc_success : tool_rc_general_error;
@@ -382,7 +382,6 @@ struct tpm_sig_quote *tpm2_sign(const unsigned char *buf, int buf_size, const ch
   q_ctx.pcr_selections.pcrSelections[0].pcrSelect[2] = 1;
   
   atexit(main_onexit);
-  atexit(pcr_onexit);
 
   if (ctx_path != NULL) {
     q_ctx.ctx_path = strdup(ctx_path);
@@ -429,6 +428,7 @@ struct tpm_sig_quote *tpm2_sign(const unsigned char *buf, int buf_size, const ch
   }
 
   ret = pcr_onrun(ctx.ectx);
+  pcr_onstop();
   if (ret != tool_rc_success) {
     goto out;
   }

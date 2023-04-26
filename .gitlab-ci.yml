@@ -47,26 +47,26 @@ default:
 
 # run check tests without selinux
 .test_no_selinux: &test_no_selinux
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests CFLAGS='--coverage'
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --enable-coverage
   - make check
   - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
 
 # run check tests without selinux adn without TPM
 .test_no_selinux_no_tpm: &test_no_selinux_no_tpm
-  - ../configure  --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --disable-tpm CFLAGS='--coverage'
+  - ../configure  --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --disable-tpm --enable-coverage
   - make check
   - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
 
 # Run check tests with gcc address sanitizer enabled
 .test_asan: &test_asan
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests CFLAGS='-fsanitize=address -g -O0 --coverage'
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --enable-coverage CFLAGS='-fsanitize=address -g -O0'
   # There are actual ODR violations but ignore for now
   - ASAN_OPTIONS='detect_leaks=0 detect_odr_violation=0' make check
   - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
 
 # Run check tests with gcc address sanitizer enabled without TPM
 .test_asan_no_tpm: &test_asan_no_tpm
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --disable-tpm --enable-tests CFLAGS='-fsanitize=address -g -O0 --coverage'
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --disable-tpm --enable-tests --enable-coverage CFLAGS='-fsanitize=address -g -O0'
   # There are actual ODR violations but ignore for now
   - ASAN_OPTIONS='detect_leaks=0 detect_odr_violation=0' make check
   - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}

@@ -27,6 +27,6 @@ libmaat_client_@PACKAGE_VERSION@_la_LIBADD = -luuid $(XML_LIBS)
 libmaat_client_@PACKAGE_VERSION@_la_LDFLAGS = -version-info $(CLIENT_LIBTOOL_VERSION)
 
 if BUILD_COVERAGE
-AM_CFLAGS += -fprofile-arcs -ftest-coverage
+AM_CFLAGS += --coverage
 libmaat_client_@PACKAGE_VERSION@_la_LDFLAGS += -fprofile-arcs -ftest-coverage
 endif

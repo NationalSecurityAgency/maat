@@ -39,7 +39,7 @@ AM_CPPFLAGS += -DLIBMAAT_LIBEXECDIR=\"$(libexecdir)\"
 libmaat_asp_@PACKAGE_VERSION@_la_SOURCES = aspmain.c
 
 if BUILD_COVERAGE
-AM_CFLAGS += -fprofile-arcs -ftest-coverage
+AM_CFLAGS += --coverage
 libmaat_asp_@PACKAGE_VERSION@_la_LDFLAGS += -fprofile-arcs -ftest-coverage
 endif
 

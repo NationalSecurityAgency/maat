@@ -47,25 +47,29 @@ default:
 
 # run check tests without selinux
 .test_no_selinux: &test_no_selinux
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --enable-coverage
   - make check
+  - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
 
 # run check tests without selinux adn without TPM
 .test_no_selinux_no_tpm: &test_no_selinux_no_tpm
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --disable-tpm
+  - ../configure  --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --disable-tpm --enable-coverage
   - make check
+  - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
 
 # Run check tests with gcc address sanitizer enabled
 .test_asan: &test_asan
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests CFLAGS='-fsanitize=address -g -O0'
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --enable-coverage CFLAGS='-fsanitize=address -g -O0'
   # There are actual ODR violations but ignore for now
   - ASAN_OPTIONS='detect_leaks=0 detect_odr_violation=0' make check
+  - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
 
 # Run check tests with gcc address sanitizer enabled without TPM
 .test_asan_no_tpm: &test_asan_no_tpm
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --disable-tpm --enable-tests CFLAGS='-fsanitize=address -g -O0'
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --disable-tpm --enable-tests --enable-coverage CFLAGS='-fsanitize=address -g -O0'
   # There are actual ODR violations but ignore for now
   - ASAN_OPTIONS='detect_leaks=0 detect_odr_violation=0' make check
+  - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
 
 # Build debian packages for ${release} and ${arch}
 .deb_build: &deb_build
@@ -251,10 +255,15 @@ test-ubuntu20-basic:
     - ubuntu20
   script:
     - *test_no_selinux_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # regular make check tests on ubuntu20 with TPM
@@ -264,10 +273,15 @@ test-ubuntu20-basic-tpm:
     - maat-swtpm
   script:
     - *test_no_selinux
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # make check tests with address sanitizer on ubuntu20
@@ -277,10 +291,15 @@ test-ubuntu20-asan:
     - ubuntu20
   script:
     - *test_asan_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # make check tests with address sanitizer on ubuntu20
@@ -290,10 +309,15 @@ test-ubuntu20-asan-tpm:
     - maat-swtpm
   script:
     - *test_asan
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # regular make check tests on ubuntu22
@@ -303,10 +327,15 @@ test-ubuntu22-basic:
     - ubuntu22
   script:
     - *test_no_selinux_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # make check tests with address sanitizer on ubuntu22
@@ -316,10 +345,15 @@ test-ubuntu22-asan:
     - ubuntu22
   script:
     - *test_asan_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # regular make check tests without selinux on rhel7
@@ -329,10 +363,15 @@ test-rhel7-basic-no-selinux:
     - rhel7
   script:
     - *test_no_selinux_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # make check tests with address sanitizer on rhel7
@@ -342,10 +381,15 @@ test-rhel7-asan:
     - rhel7
   script:
     - *test_asan_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # make check tests without selinux on rhel8
@@ -355,10 +399,15 @@ test-rhel8-basic-no-selinux:
     - rhel8
   script:
     - *test_no_selinux_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # make check tests with address sanitizer on rhel8
@@ -368,10 +417,15 @@ test-rhel8-asan:
     - rhel8
   script:
     - *test_asan_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # make check tests without selinux on rhel9
@@ -381,10 +435,15 @@ test-rhel9-basic-no-selinux:
     - rhel9
   script:
     - *test_no_selinux_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
   allow_failure: true # fails due to using sha1 digest which is disabled by default
 
@@ -395,10 +454,15 @@ test-rhel9-asan:
     - rhel9
   script:
     - *test_asan_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
   allow_failure: true # for now fails due to configure saying C compiler not working
 

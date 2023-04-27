@@ -41,7 +41,7 @@ LDADD           = ../common/libcommon.la \
 if BUILD_COVERAGE
 AM_LDFLAGS     = -fprofile-arcs -ftest-coverage
 LDADD         += -lgcov
-AM_CFLAGS     += -fprofile-arcs -ftest-coverage
+AM_CFLAGS     += --coverage
 else
 AM_LDFLAGS     = 
 endif

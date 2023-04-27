@@ -41,7 +41,7 @@ libmaat_apb_@PACKAGE_VERSION@_la_LIBADD=$(GLIB_LIBS) $(XML_LIBS) $(OPENSSL_LIBS)
 libmaat_apb_@PACKAGE_VERSION@_la_LDFLAGS = -version-info $(APB_LIBTOOL_VERSION)
 
 if BUILD_COVERAGE
-AM_CFLAGS += -fprofile-arcs -ftest-coverage
+AM_CFLAGS += --coverage
 libmaat_apb_@PACKAGE_VERSION@_la_LDFLAGS += -fprofile-arcs -ftest-coverage
 endif
 

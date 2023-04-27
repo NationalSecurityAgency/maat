@@ -57,7 +57,7 @@ AM_LIBADD = ../types/libmaat_basetypes.la \
 APB_COMMON_SOURCES = apb-common.h apb-common.c
 
 if BUILD_COVERAGE
-AM_CPPFLAGS += -fprofile-arcs -ftest-coverage
+AM_CPPFLAGS += --coverage
 AM_LIBADD += -lgcov
 endif
 

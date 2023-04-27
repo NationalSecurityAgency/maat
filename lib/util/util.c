@@ -120,22 +120,35 @@ int chase_links(const char *in, char *out, size_t sz)
     struct stat st;
     size_t insz = strlen(in);
     int rc;
+    char *tmp;
+
     if(insz > SIZE_MAX - 1 || insz+1 > sz) {
         return -ENAMETOOLONG;
     }
+
+    tmp = malloc(sz);
+    if (tmp == NULL) {
+        return -1;
+    }
+
     memmove(out, in, insz+1);
 
     while((rc = lstat(out, &st)) == 0 && S_ISLNK(st.st_mode)) {
-        ssize_t read = readlink(out, out, sz);
+        ssize_t read = readlink(out, tmp, sz);
         if(read < 0) {
+            free(tmp);
             return -1;
         }
         if((size_t)read >= sz) {
+            free(tmp);
             return -ENAMETOOLONG;
         }
-        out[read] = '\0';
+        tmp[read] = '\0';
+
+        memmove(out, tmp, read + 1);
     }
 
+    free(tmp);
     return rc;
 }
 

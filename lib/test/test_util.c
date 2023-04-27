@@ -198,7 +198,8 @@ START_TEST(test_io_read_timeout)
     fail_if(rc != (ssize_t)strlen(test_str)+1,
             "Failed to write test string to pipe.");
 
-    int res = maat_read(r, buf, bufsize, &bytes_read, &eof_encountered, 1);
+    // Cast is justified because the function does not regard the signedness of the buffer
+    int res = maat_read(r, (unsigned char *)buf, bufsize, &bytes_read, &eof_encountered, 1);
     fail_if(eof_encountered, "EOF encountered");
     fail_if(res != -EAGAIN,
             "Read with timeout returned: %d (expected %d)",

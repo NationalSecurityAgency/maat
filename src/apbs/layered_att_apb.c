@@ -125,11 +125,12 @@ static int get_target_channel_info(dynamic_measurement_request_address *va,
 
 static int invoke_send_execute_tcp(struct asp *execute_asp, char *addr,
                                    char *port, char *resource,
-                                   char **msmt_con, size_t *con_len)
+                                   unsigned char **msmt_con,
+                                   size_t *con_len)
 {
     int rc;
     size_t buf_len         = 0;
-    char *buf              = NULL;
+    unsigned char *buf     = NULL;
     char *send_execute_args[10] = {0};
 
     send_execute_args[0] = addr;
@@ -258,8 +259,10 @@ static int measure_variable_shim(void *ctxt, measurement_variable *var,
              va->resource, va->attester);
 
         /* Send execute contract for the specified resource to the host */
+        /* Cast is justified because the function does not regard the signedness
+         * of the buffer */
         rc = invoke_send_execute_tcp(asp, addr, port, va->resource,
-                                     &contract, &con_len);
+                                     (unsigned char **)&contract, &con_len);
         if (rc < 0) {
             dlog(0, "Failed to invoke \"%s\" for attester \"%s\"\n",
                  va->resource, va->attester);

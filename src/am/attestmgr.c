@@ -400,7 +400,9 @@ static void handle_attester(struct am_config *config, struct scenario *scen)
          *
          * See: https://developers.redhat.com/blog/2017/03/10/wimplicit-fallthrough-in-gcc-7/
          */
+#if __GNUC__ > 7
         __attribute__ ((fallthrough));
+#endif
     case MODIFIED_SENT:
         if(ctype != AM_CONTRACT_EXECUTE) {
             dlog(0, "Attester: Expected EXECUTE contract but got %s\n",

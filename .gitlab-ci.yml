@@ -132,10 +132,10 @@ default:
   - sudo semanage port -a -t attestmgr_port_t -p tcp 2343
   - sudo cp demo/credentials/client.* /etc/maat/credentials/
   - sudo rpm -qa --qf "%{NAME}\n" | sudo tee -a /usr/share/maat/asps/packages.whitelist
-  - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
-  - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
+  - "LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml 2>&1 | tee app.log &"
+  - "LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml 2>&1 | tee att.log &"
   - sleep 10
-  - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r userspace | tee test_client.log || true"
+  - "valgrind /usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r userspace 2>&1 | tee test_client.log || true"
   - "kill %2 || true"
   - "kill %1 || true"
   - sudo rm -f /etc/maat/credentials/client.*
@@ -609,7 +609,7 @@ system-test-selinux-rhel7:
     *rhel_selinux_system_test
   artifacts:
     paths:
-      - test_client.log
+      - "*.log"
     expire_in: 2 weeks
 
 # system test with selinux on rhel8
@@ -632,11 +632,11 @@ system-test-selinux-rhel8:
     *rhel_selinux_system_test
   artifacts:
     paths:
-      - test_client.log
+      - "*.log"
     expire_in: 2 weeks
 
-# system test on ubuntu20
-system-test-ubuntu20:
+# system test on ubuntu20 with valgrind
+system-test-ubuntu20-valgrind:
   stage: systemtest
   tags:
     - ubuntu20
@@ -655,16 +655,18 @@ system-test-ubuntu20:
     - sudo apt-get --allow-unauthenticated update
     - sudo apt-get --allow-unauthenticated -y --reinstall install maat
     - sudo cp demo/credentials/client.* /etc/maat/credentials/
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
+    - LIBMAAT_LOG_SYSLOG=0 valgrind --show-leak-kinds=definite --leak-check=full /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml 2>&1 | tee app.log &
+    - LIBMAAT_LOG_SYSLOG=0 valgrind --show-leak-kinds=definite --leak-check=full /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml 2>&1 | tee att.log &
     - sleep 10
-    - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r processes | tee test_client.log || true"
+    - "valgrind --show-leak-kinds=definite --leak-check=full /usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r processes 2>&1 | tee test_client.log || true"
     - "kill %2 || true"
     - "kill %1 || true"
     - sudo rm -f /etc/maat/credentials/client.*
     - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
   artifacts:
     paths:
+      - app.log
+      - att.log
       - test_client.log
     expire_in: 2 weeks
 

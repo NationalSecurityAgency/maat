@@ -279,6 +279,7 @@ latex_appendices = [
     'basic_tutorial',
     'setup_multirealms',
     'multirealm_tutorial',
+    'complex_attestation_tutorial',
     'layered_tutorial',
     'passport_creation_tutorial',
     'passport_use_tutorial',

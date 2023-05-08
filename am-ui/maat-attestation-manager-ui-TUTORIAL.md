@@ -24,24 +24,30 @@ Attestation Manager UI feature of Maat.
 Setup
 -----
 
-Please follow the steps in `documentation/source/quick_start.txt` to build 
+Please follow the steps in `documentation/source/quick_start.txt` to build
 Maat.  Then, run through the demos in `documentation/source/basic_tutoral.txt`
-to ensure that your certificates and ports are configured correctly. 
+to ensure that your certificates and ports are configured correctly.
 
-The tutorials that follow assume Maat is installed in `/opt/maat`. If you 
+The tutorials that follow assume Maat is installed in `/opt/maat`. If you
 installed in a different directory, please modify accordingly.
 
 Install these dependencies:
 
 Ubuntu:
 
+.. code-block:: bash
+
     sudo apt install python3-pip curl
 
 CentOS:
 
+.. code-block:: bash
+
     sudo yum install python3-pip curl
 
 Run the following commands:
+
+.. code-block:: bash
 
     pip3 install --user flask
 
@@ -61,25 +67,35 @@ as both the "Attester" and "Appraiser".
 
 In the terminal, run
 
+.. code-block:: bash
+
     sudo LIBMAAT_LOG_SYSLOG=1 LIBMAAT_DEBUG_LEVEL=5 /opt/maat/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/app.sock \
          -C /opt/maat/etc/maat/minimal-am-config.xml
 
 Now, we open another terminal and start the webserver for the user interface.
 To do so, run the following commands:
-    
+
+.. code-block:: bash
+
     cd maat/am-ui
     python3 app.py
 
 Open another terminal and start the daemon to listen for syslog messages:
+
+.. code-block:: bash
 
     cd maat/am-ui
     ./syslog_daemon.sh
 
 Open a web browser and navigate to the UI webpage by entering the following URL:
 
+.. code-block:: none
+
     http://127.0.0.1:5000/steps
 
 At this time, open another terminal as the "Test Client".  Run the following command:
+
+.. code-block:: bash
 
     /opt/maat/bin/test_client -l localhost -a 2343 -t localhost -p 2343 \
          -r mtab

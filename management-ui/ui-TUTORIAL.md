@@ -26,12 +26,12 @@ Setup
 -----
 
 Please follow the steps in `documentation/source/quick_start.txt` to build Maat,
-with one modification: when compiling Maat, pass the `--enable-web-ui` flag to 
+with one modification: when compiling Maat, pass the `--enable-web-ui` flag to
 ensure that the Maat web UI and its associated scripts are compiled. Then, run
-through the demos in `documentation/source/basic_tutoral.txt` to ensure that 
-your certificates and ports are configured correctly. 
+through the demos in `documentation/source/basic_tutoral.txt` to ensure that
+your certificates and ports are configured correctly.
 
-The tutorials that follow assume Maat is installed in `/opt/maat`. If you 
+The tutorials that follow assume Maat is installed in `/opt/maat`. If you
 installed in a different directory, please modify accordingly.
 
 DEMO 1: SIMPLE ATTESTATION
@@ -39,11 +39,15 @@ DEMO 1: SIMPLE ATTESTATION
 
 Set the following variables:
 
+.. code-block:: bash
+
     APP_ARGS="-i 127.0.0.1:2342 -m COPLAND -u /tmp/app.sock \
       -C /opt/maat/etc/maat/minimal-am-config.xml \
       -f /opt/maat/etc/maat/credentials/server.pem \
       -k /opt/maat/etc/maat/credentials/server.key \
       -s /opt/maat/share/maat/selector-configurations/selector.xml"
+
+.. code-block:: bash
 
     ATT_ARGS="-i 127.0.0.1:2343 -m COPLAND -u /tmp/att.sock \
       -C /opt/maat/etc/maat/minimal-am-config.xml \
@@ -53,6 +57,8 @@ Set the following variables:
 
 Then run each of these commands in a separate terminal:
 
+.. code-block:: bash
+
     sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr $APP_ARGS
 
     sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr $ATT_ARGS
@@ -60,6 +66,8 @@ Then run each of these commands in a separate terminal:
     /opt/maat/bin/test_client $TC_ARGS
 
 The output from the test_client should resemble:
+
+.. code-block:: none
 
     measuring target: localhost : 127.0.0.1
     connecting to appraiser: 127.0.0.1 : 2342
@@ -70,7 +78,6 @@ The output from the test_client should resemble:
     Result from Appraiser: <?xml version="1.0"?>
     <contract version="1.0" type="response"><target type="host-port">127.0.0.1</target><resource>debug resource</resource><result>PASS</result>...</contract>
 
-
 Where the <result>PASS</result> indicates successful measurement and
 appraisal (whereas <result>FAIL</result> would indicate failure).
 
@@ -78,13 +85,17 @@ DEMO 2: ATTESTATION WITH SINGLE AM
 ----------------------------------
 
 This demonstration illustrates how a single AM can be used as both the Attester
-and the Appraiser, even within a single measurement request. 
+and the Appraiser, even within a single measurement request.
 
 Create a new test client variable to use only one port:
+
+.. code-block:: bash
 
     SINGLE_TC_ARGS="-l localhost -t localhost -p 2342 -a 2342"
 
 Run each of these commands in a separate terminal:
+
+.. code-block:: bash
 
     sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr $APP_ARGS
 
@@ -100,15 +111,19 @@ cause it to choose a different ASP.
 
 Copy selector.xml to a new file called got_selector.xml:
 
+.. code-block:: bash
+
     sudo cp /opt/maat/share/maat/selector-configurations/selector.xml \
             /opt/maat/share/maat/selector-configurations/got_selector.xml
 
 In got_selector.xml, change every instance of:
     `"((USM procopenfiles) -> SIG)"`
-   To:
+To:
     `"((USM got) -> SIG)"`
 
 For example:
+
+.. code-block:: bash
 
     sudo sed -i -e 's/\"((USM procopenfiles) -> SIG)\"/\"((USM got) -> SIG)\"/g' /opt/maat/share/maat/selector-configurations/got_selector.xml
 
@@ -117,6 +132,8 @@ userspace_apb.xml
 
 Set a variable to use the new policy:
 
+.. code-block:: bash
+
     GOT_ARGS="-i 127.0.0.1:2342 -m COPLAND -u /tmp/app.sock \
       -C /opt/maat/etc/maat/minimal-am-config.xml \
       -f /opt/maat/etc/maat/credentials/server.pem \
@@ -124,6 +141,8 @@ Set a variable to use the new policy:
       -s /opt/maat/share/maat/selector-configurations/got_selector.xml"
 
 Run each of these commands in a separate terminal:
+
+.. code-block:: bash
 
     sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr $GOT_ARGS
 
@@ -138,9 +157,13 @@ Install these dependencies:
 
 Ubuntu:
 
+.. code-block:: bash
+
     sudo apt-get install python3-pika mongodb python3-pymongo rabbitmq-server
 
 Fedora/CentOS:
+
+.. code-block:: bash
 
     sudo yum install python36-pika mongodb mongodb-server python36-pymongo \
     	       	     rabbitmq-server
@@ -148,10 +171,14 @@ Fedora/CentOS:
 
 On Fedora/CentOS you must manually start the rabbitmq and mongodb servers:
 
+.. code-block:: bash
+
     sudo systemctl start rabbitmq-server
     sudo systemctl start mongod
 
 Run the following commands, each in a separate terminal:
+
+.. code-block:: bash
 
     /opt/maat/bin/attestmgr $APP_ARGS
 
@@ -160,6 +187,8 @@ Run the following commands, each in a separate terminal:
     python3 ~/maat/src/am/mq_test_driver.py
 
 The output from mq_test_driver should be similar to:
+
+.. code-block:: none
 
     {"appraiser_address": "localhost", "resource": "MQ test driver", "target_address": "localhost", "target_port": 2342, "request_id": "4fb1be8a-fe91-4262-8a4b-85d763ba167b", "appraiser_port": 2342}
     Received result of : {"time": 1415898475.778756, "result": true, "request_id": "4fb1be8a-fe91-4262-8a4b-85d763ba167b"}
@@ -176,7 +205,7 @@ Install the dependency:
 + lighttpd
 
 edit `/etc/lighttpd/lighttpd.conf`:
-     
+
 + set server.document-root = "/opt/maat/web"
 + add ".py" to the list of static-file.exclude-extensions
 
@@ -188,6 +217,8 @@ edit `/etc/lighttpd/conf-available/10-cgi.conf`:
 + Change `".py"  => "/usr/bin/python"` to `".py"  => "/usr/bin/python3"`
 
 To start web server, run:
+
+.. code-block:: bash
 
     sudo lighty-enable-mod cgi
     sudo /etc/init.d/lighttpd restart
@@ -205,6 +236,8 @@ edit `/etc/lighttpd/conf.d/cgi.conf`:
 
 To start the web server, run:
 
+.. code-block:: bash
+
     sudo systemctl start lighttpd
 
 The Web-UI's CGI scripts need to be able to connect to the mongodb
@@ -212,11 +245,15 @@ database and activemq message queues via TCP, this is not allowed
 under the default SELinux policy but can be enabled with the following
 command:
 
+.. code-block:: bash
+
     sudo setsebool -P httpd_can_network_connect=on
 
 ### Running the Demo
 
 Run the following commands in separate terminals:
+
+.. code-block:: bash
 
     /opt/maat/bin/attestmgr $APP_ARGS
 
@@ -228,9 +265,13 @@ Next, add a resource and machine definitions to the database.
 
   Add a resource definition to the database
 
+.. code-block:: bash
+
       python3 ~/maat/ui/addResourceToDatabase.py default
 
   Add a machine definition for localhost to the database
+
+.. code-block:: bash
 
       python3 ~/maat/ui/addMachineToDatabase.py localhost \
         D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34 \
@@ -238,8 +279,9 @@ Next, add a resource and machine definitions to the database.
 
 - Or through the user interface:
 
-  Open browser, go to localhost. Click the `+ Machine` button and fill out the 
+  Open browser, go to localhost. Click the `+ Machine` button and fill out the
   information as follows:
+
   - Machine Name : localhost
   - Fingerprint  : D6:79:C4:82:6A:DE:F4:D0:97:9B:CC:0C:15:9C:37:68:BF:7E:33:34
   - IP Address   : 127.0.0.1

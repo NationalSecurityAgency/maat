@@ -16,7 +16,7 @@ Multirealm Maat Tutorial
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
 .. currentmodule:: maat
 
 .. _multirealm_tutorial:
@@ -28,7 +28,7 @@ These instructions give you the steps to set up and perform an example
 multi-realm demonstration, with one VM requesting kernel and userspace
 measurements of a second VM.
 
-The explanation that follows assumes a basic understanding of the Copland 
+The explanation that follows assumes a basic understanding of the Copland
 language for specifying attestation scenarios.
 
 
@@ -37,26 +37,26 @@ References
 
 |  Orchestrating Layered Attestations
 |     https://link.springer.com/chapter/10.1007%2F978-3-030-17138-4_9
- 
+
 
 Setup
 ======
 
-Follow the instructions in :ref:`basic tutorial <basic_tutorial>` to get the 
-basic userspace demos up and running. 
+Follow the instructions in :ref:`basic tutorial <basic_tutorial>` to get the
+basic userspace demos up and running.
 
 Kernel Runtime Measurement Demo
 -------------------------------
 
 The kernel runtime measurement included in the Maat source code is primarily a
-placeholder for a more complete kernel integrity measurement, whose 
-implementation is out of scope for the Maat project. 
+placeholder for a more complete kernel integrity measurement, whose
+implementation is out of scope for the Maat project.
 
 The only necessary modification to the basic tutorials to enable 'kernel runtime
-measurement' is a change of selection policy. To test this measurement, try 
-running the same commands as in the :ref:`basic tutorial<basic_tutorial>`, but 
-using the `verified-us-selector.xml` selection policy (passing a different 
-selection policy via the command line overwrites the one included in the 
+measurement' is a change of selection policy. To test this measurement, try
+running the same commands as in the :ref:`basic tutorial<basic_tutorial>`, but
+using the `verified-us-selector.xml` selection policy (passing a different
+selection policy via the command line overwrites the one included in the
 attestation manager configuration file).
 
 In the Appraiser Terminal, run:
@@ -88,19 +88,19 @@ This means the appraisal passed.
 Difference in Selection Policies between Demonstrations
 -------------------------------------------------------
 
-The `verified-us-selector.xml` selection policy adds two possible options that 
-are not included in the basic `userspace-selector.xml` policy: 
+The `verified-us-selector.xml` selection policy adds two possible options that
+are not included in the basic `userspace-selector.xml` policy:
 
 +--------------------+--------------------------------------------------------+
-| Resource           | Copland phrase                                         | 
+| Resource           | Copland phrase                                         |
 +====================+========================================================+
-| runtime_meas       | (KIM runtime_meas)                                     | 
-+--------------------+--------------------------------------------------------+ 
+| runtime_meas       | (KIM runtime_meas)                                     |
++--------------------+--------------------------------------------------------+
 | verified-pkginv    | ((KIM runtime_meas) -~- @_1((USM pkginv)->SIG) -> SIG) |
-+--------------------+--------------------------------------------------------+ 
++--------------------+--------------------------------------------------------+
 
-The following sections will walk through the Copland phrase offered in the 
-`verfied-pkginv` entry. Note: KIM expands to 'kernel integrity measurement', 
+The following sections will walk through the Copland phrase offered in the
+`verfied-pkginv` entry. Note: KIM expands to 'kernel integrity measurement',
 while USM stands for 'userspace integrity measurement'. pkginv is short for
 'package inventory'.
 
@@ -125,158 +125,80 @@ same 'realm'.
 
 Here's what will happen in the demo:
 
-.. code-block:: none
+1. AM_0 on the 'Appraiser' machine is triggered to get a 'verified-pkginv' measurement of AM_1, which is represented by the Copland phrase:
 
-   1. AM_0 on the 'Appraiser' machine is triggered to get a 'verified-pkginv'
-      measurement of AM_1
+        .. code-block:: none
 
-   2. AM_0 contacts AM_2 on the 'Attester' machine and negotiates this 
-      measurement
+          ((KIM runtime_meas) -~- @_1((USM pkginv) -> SIG) -> SIG)
 
-      ((KIM runtime_meas) -~- @_1((USM pkginv) -> SIG) -> SIG)
-       ________________         ____________________
-      |                |       |                    |
-      |   Appraiser    |       |      Attester      |
-      |         ____   |       |   ____       ____  |
-      | R(1)-->|    |<-|--(2)--|->|    |     |    | |
-      |        |AM_0|  |       |  |AM_2|     |AM_1| |
-      |        |____|  |       |  |____|     |____| |
-      |________________|       |____________________|
+2. AM_0 contacts AM_2 on the 'Attester' machine and negotiates the following Copland phrase:
 
-   3. Advised by result of negotiation, AM_2 kicks off the userspace APB, which 
-      uses the send-execute ASP to request (KIM runtime_meas) from its own AM. 
+        .. image:: images/multirealm_am0_nego_am2.png
+           :scale:  30
+           :align:  center
 
-      AM_0 uses its policy to select and launch the appropriate APB for 
-      appraisal of evidence resulting from 
-      ((KIM runtime_meas) -~- @_1((USM pkginv) -> SIG) -> SIG)
-       ________________         ____________________
-      |                |       |                    |
-      |    Appraiser   |       |      Attester      |
-      |         ____   |       |   ____       ____  |
-      |  R     |    |  |       |  |    |<-.  |    | |
-      |        |AM_0|  |       |  |AM_2|  |  |AM_1| |
-      |        |____|  |       |  |____|  |  |____| |
-      |       (3)|     |       |(3)|      |         |
-      |       [USApp]  |       | [VUS]    |         |
-      |                |       |   |      |         |
-      |                |       |  [R]-----'         |
-      |________________|       |____________________|
+3. Advised by result of negotiation, AM_2 kicks off the userspace APB, which uses the send-execute ASP to request (KIM runtime_meas) from its own AM. AM_0 uses its policy to select and launch the appropriate APB for appraisal of evidence resulting from 'verified-pkginv' measurement.
 
-      Note: AM_2's APB uses an ASP to request the KIM runtime_meas from itself. 
-      	    It could alternatively just kick off the KIM runtime measurement 
-	    itself (bypassing the request ASP). We see this as an implementation
-	    detail, but future versions of this demonstration may take the 
-	    alternative approach. A more accurate Copland phrase for this 
-	    demonstration may be: 
-	    (@_2(KIM runtime_meas) -~- @_1((USM pkginv) -> SIG) -> SIG), but so 
-	    far we have assumed that when an identity is not specified in the 
-	    Copland phrase it can be assumed to be the local AM. 
+       .. image:: images/multirealm_am0_nego_am2.png
+          :scale:  30
+          :align:  center
 
-   4. AM_2 performs kernel runtime measurement
+       .. note:: AM_2's APB uses an ASP to request the KIM runtime_meas from itself. It could alternatively just kick off the KIM runtime measurement itself (bypassing the request ASP). We see this as an implementation detail, but future versions of this demonstration may take the alternative approach. A more accurate Copland phrase for this demonstration may be the following: `(@_2(KIM runtime_meas) -~- @_1((USM pkginv) -> SIG) -> SIG)` but so far we have assumed that when an identity is not specified in the Copland phrase it can be assumed to be the local AM.
 
-      Note: this part is (KIM runtime_meas)
-      ________________         ____________________
-     |                |       |                    |
-     |    Appraiser   |       |      Attester      |
-     |         ____   |       |   ____       ____  |
-     |  R     |    |  |       |  |    |     |    | |
-     |        |AM_0|  |       |  |AM_2|     |AM_1| |
-     |        |____|  |       |  |____|     |____| |
-     |          |     |       |   |   |            |
-     |       [USApp]  |       | [VUS][KIM]         |
-     |                |       |   |    |           |
-     |                |       |  [R] [runtime_meas]|
-     |________________|       |____________________|
+4. AM_2 performs kernel runtime measurement
 
+       .. image:: images/multirealm_am2_runmeas.png
+           :scale:  30
+           :align:  center
 
-   5. AM_2 runtime_meas ASP sends measurement to AM_2 send request ASP
-      ________________         ______________________
-     |                |       |                      |
-     |    Appraiser   |       |      Attester        |
-     |         ____   |       |   ____       ____    |
-     |  R     |    |  |       |  |    |     |    |   |
-     |        |AM_0|  |       |  |AM_2|     |AM_1|   |
-     |        |____|  |       |  |____|     |____|   |
-     |          |     |       |  |    |              |
-     |       [USApp]  |       |[VUS][KIM]            |
-     |          |     |       |  |      |            |
-     |       [ASPs]   |       | [R]<(5)[runtime_meas]|
-     |________________|       |______________________|
+       .. note:: This part is equivalent to the portion of the 'verified-pkginv' reprented by the Copland phrase: `(KIM runtime_meas)`
 
-   6. Upon receiving the KIM runtime measurement, AM_2 requests a USM 
-      measurement of AM_1
+5. AM_2 runtime_meas ASP sends measurement to AM_2 send request ASP
 
-      Note: the current implementation of the APB used for this measurement
-            relies on the measurement specification library to instruct the APB
-	    what to measure. As the measurement specification does not strictly
-	    enforce order, there is currently no guarantee that the KIM runtime
-	    measurement will take place before the USM measurement. Hence, the 
-	    usage of the parallel branching operator (-~-) in the Copland 
-	    phrase. This can easily be fixed by not using the measurement 
-	    specification library and refraining from requesting USM until after
-	    KIM has finished. The Copland phrase used in this alternative
-	    implementatation would then more similar to: 
-	    ((KIM runtime_meas) -<- @_1((USM pkginv) -> SIG) -> SIG)
-	    specifying branching *sequential* measurement. A demonstration of 
-	    this alternative implementation is in progress. 
-	    
-   7. AM_1 performs the USM measurement
+        .. image:: images/multirealm_am2_runmeas_to_request.png
+           :scale:  30
+           :align:  center
 
-      Note: this part is @_1((USM pkginv) -> SIG)
+6. Upon receiving the KIM runtime measurement, AM_2 requests a USM measurement of AM_1 specifying branching *sequential* measurement. A demonstration of this alternative implementation is in progress.
 
-       ________________         ____________________
-      |                |       |                    |
-      |    Appraiser   |       |      Attester      |
-      |         ____   |       |   ____       ____  |
-      |  R     |    |  |       |  |    | .-->|    | |
-      |        |AM_0|  |       |  |AM_2| |   |AM_1| |
-      |        |____|  |       |  |____| |   |____| |
-      |          |     |       |    | (6)|   (7)|   |
-      |       [USApp]  |       |  [VUS]  |    [USM] |
-      |                |       |    |    |      |   |
-      |                |       |   [R]---'    [PKG] |
-      |________________|       |____________________|
-      
-   8.  AM_1 signs and sends the USM measurement to AM_2's send request ASP
-   9.  AM_2's measurement agents bundle the USM measurement with the KIM 
-       measurement and send it to AM_0 for appraisal
-   10. AM_0 appraises the measurement
-   11. AM_0 gives the result to the send request ASP
-       ________________         ____________________
-      |                |       |                    |
-      |    Appraiser   |       |      Attester      |
-      |         ____   |       |   ____       ____  |
-      |  R<-.  |    |  |       |  |    |     |    | |
-      |     |  |AM_0|  |       |  |AM_2|     |AM_1| |
-      | (11)|  |____|  |       |  |____|     |____| |
-      |     |    |     |       |    |           |   |
-      |     '-[USApp]<-|--(9)--|--[VUS]       [USM] |
-      |      (10)|     |       |    |           |   |
-      |       [ASPs]   |       |   [R]<-(8)---[PKG] |
-      |________________|       |____________________|
+        .. note:: The current implementation of the APB used for this measurement relies on the measurement specification library to instruct the APB what to measure. As the measurement specification does not strictly enforce order, there is currently no guarantee that the KIM runtime measurement will take place before the USM measurement. Hence, the usage of the parallel branching operator (-~-) in the Copland phrase. This can easily be fixed by not using the measurement specification library and refraining from requesting USM until after KIM has finished. The Copland phrase used in this alternative implementatation would then more similar to the following Copland phrase: `((KIM runtime_meas) -<- @_1((USM pkginv) -> SIG) -> SIG)`
 
+7. AM_1 performs the USM measurement
 
-As mentioned previously, what was demonstrated here is similar to: 
+       .. image:: images/multirealm_am1_usm.png
+          :scale:  30
+          :align:  center
 
-.. code-block:: none
+       .. note:: The measurement taken at AM_1 represents the following Copland phrase: `@_1((USM pkginv) -> SIG)`
 
-   ((KIM runtime_meas) -~- @_1((USM pkginv) -> SIG) -> SIG)
+8.  AM_1 signs and sends the USM measurement to AM_2's send request ASP
+9.  AM_2's measurement agents bundle the USM measurement with the KIM measurement and send it to AM_0 for appraisal
+10. AM_0 appraises the measurement
+11. AM_0 gives the result to the send request ASP
 
+       .. image:: images/multirealm_am0_appraisal.png
+          :scale:  30
+          :align:  center
 
-The identity of @_2 is implicit in the request. In an improved demonstration, 
-AM_1 and AM_2 would be running on separate VMs, and AM_2 would be able to take 
-an introspective kernel runtime measurement of AM_1. In an improved 
+As mentioned previously, what was demonstrated here is similar to:
+
+       .. code-block:: none
+
+           ((KIM runtime_meas) -~- @_1((USM pkginv) -> SIG) -> SIG)
+
+The identity of @_2 is implicit in the request. In an improved demonstration,
+AM_1 and AM_2 would be running on separate VMs, and AM_2 would be able to take
+an introspective kernel runtime measurement of AM_1. In an improved
 implementation, the kernel measurement would also be guaranteed to finish before
-the userspace measurement is taken. With these modifications, the result would 
+the userspace measurement is taken. With these modifications, the result would
 be more similar to:
 
-.. code-block:: none
+       .. code-block:: none
 
-   ((KIM 1 runtime_meas) -<- @_1((USM pkginv) -> SIG) -> SIG)
-
+           ((KIM 1 runtime_meas) -<- @_1((USM pkginv) -> SIG) -> SIG)
 
 With the identity of @_2 again implicit in the request. A demonstration of this
-and other compelling use cases is in progress. 
+and other compelling use cases is in progress.
 
 Demonstration
 -------------
@@ -284,18 +206,9 @@ Demonstration
 This demonstration uses three AM instances running on two separate VMs.
 Test_client and AM_0 will be running on VM_0, while AM_2 and AM_1 are on VM_1:
 
-.. code-block:: none
-
-    ______________________      _______________________
-   |                      |    |                       |
-   |   VM_0 (appraiser)   |    |    VM_1 (attester)    |
-   |              ______  |    |  ______       ______  |
-   | test_client |      | |    | |      |     | AM_1 | |
-   | (requestor) | AM_0 | |    | | AM_2 |     |(usm  | |
-   |             | (app)| |    | | (att)|     |  att)| |
-   |             |______| |    | |______|     |______| |
-   |______________________|    |_______________________|
-
+       .. image:: images/multirealm_demo_setup.png
+          :scale:  30
+          :align:  center
 
 Directions to set up the VMs are located in the :ref:`Setup Multirealms Guide <setup_multirealms>`.
 
@@ -320,9 +233,9 @@ VM_0: AM_0
 
 VM_1: AM_2
 
-- comment out the user and group fields of 
+- comment out the user and group fields of
   `/opt/maat/etc/maat/attestmgr-config.xml`
-  
+
 .. code-block:: bash
 
     sudo /opt/maat/bin/attestmgr \
@@ -354,4 +267,3 @@ please continue to the
 For a demonstration for the passport use case in Maat,
 please continue to the
 :ref:`Passport Creation Tutorial<passport_creation_tutorial>`.
-

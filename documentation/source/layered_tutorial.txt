@@ -78,10 +78,10 @@ Layered Appraisal Demonstration
 ================================
 
 This demo involves four AMs:
-- AM_1 : Measurement Domain (DomM)
-- AM_2 : Management Domain (Dom0)
-- AM_3 : Target Domain (DomT)
-- AM_4 : Appraisal Platform
+    - AM_1 : Measurement Domain (DomM)
+    - AM_2 : Management Domain (Dom0)
+    - AM_3 : Target Domain (DomT)
+    - AM_4 : Appraisal Platform
 
 In order to exercise this use-case in its most truest sense, AM_1, AM_2, and
 AM_3 would all be operating in various domains on the same hypervisor enabled
@@ -99,518 +99,185 @@ separate platform P_2 that can communicate with P_1.
 
 Explanation of Demo
 -------------------
+The demo represents the execution of the following Copland phrase:
+
+           .. code-block:: none
+
+                @_md(@_0(runtime_meas_sign)-<-@_0(USM full)-<-KIM runtime_meas_sign-<-USM full-<-@_t(runtime_meas_sign)-<-@_t(USM full))
+
 Here's what will happen in the demo:
 
-.. code-block:: none
+1. The requester sends a request to AM_4 running on P_1 to appraise an attestation of the 'layered-attestation' resource. The Copland phrase that the client will request is the following:
 
-        1. The requester sends a request to AM_4 running on P_1 to appraise an
-        attestation of the resource 'layered-attestation'
+           .. image:: images/layered_am4_request.png
+               :scale:  30
+               :align:  center
 
-           The Copland phrase that the client will request is the following:
-           * @_md(@_0(runtime_meas_sign)-<-@_0(USM full)-<-KIM runtime_meas_sign-<-USM full-<-@_t(runtime_meas_sign)-<-@_t(USM full))
-                 _______________
-                |      P_1      |
-                |   (1) ______  |
-               R------>|      | |
-                |      | AM_4 | |
-                |      |______| |
-                |_______________|
+2. AM_4 triggers a negotiation with AM_1 in order to determine if it is willing and able to take the measurement represented by the phrase.
 
-        2. AM_4 triggers a negotiation with AM_1 in order to determine if it is
-           willing and able to take the measurement represented by the phrase.
-                                               ________________________
-                                              |          P_2           |
-                _______________               |         ______         |
-               |      P_1      |              |        |      |        |
-               |      ______   |              |        | AM_2 |        |
-               |     |      |  |     (2)      |        |______|        |
-               |     | AM_4 |<--------'       |   ______      ______   |
-               |     |______|  |      |       |  |      |    |      |  |
-               |_______________|      '--------->| AM_1 |    | AM_3 |  |
-                                              |  |______|    |______|  |
-                                              |________________________|
+           .. image:: images/layered_am4_am1_nego.png
+              :scale:  30
+              :align:  center
 
-        3. After deciding that the phrase is satisfactory, AM_1 forks the Layered
-           Attestation APB to take the measurement while AM_4 forks the APB which
-           will appraise the measurement.
-                                               ________________________
-                                              |          P_2           |
-                _______________               |         ______         |
-               |      P_1      |              |        |      |        |
-               |     ______    |              |        | AM_2 |        |
-               |    |      |   |              |        |______|        |
-               |    | AM_4 |   |              |   ______      ______   |
-               |    |______|   |              |  |      |    |      |  |
-               |       |       |              |  | AM_1 |    | AM_3 |  |
-               |       | (3)   |              |  |______|    |______|  |
-               |     [APP]     |              |     |                  |
-               |_______________|              |     | (3)              |
-                                              |  [LAYER]               |
-                                              |________________________|
+3. After deciding that the phrase is satisfactory, AM_1 forks the Layered Attestation APB to take the measurement while AM_4 forks the APB which will appraise the measurement.
 
-        4. Given the ordering within the Copland phrase, the Layered Attestation APB
-           spawns the Send Execute TCP ASP to send an execute contract to AM_2 for
-           the phrase (KIM runtime_meas_sign), which takes a runtime measurement of
-           the kernel.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |   ______  ^   ______   |
-               |  |      | |  |      |  |
-               |  | AM_1 | |  | AM_3 |  |
-               |  |______| |  |______|  |
-               |     |     |            |
-               |  [LAYER]  |            |
-               |     | (4) |            |
-               |  [s_exe]--'            |
-               |________________________|
+           .. image:: images/layered_apb_start.png
+              :scale:  30
+              :align:  center
 
-        5. AM_2 spawns the KIM APB, which in turn, spawns the KIM ASP, in order to take
-           a runtime integrity measurement of the kernel of Dom0.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |           |            |
-               |         [KIM]          |
-               |           | (5)        |
-               |         [kim]          |
-               |   ______      ______   |
-               |  |      |    |      |  |
-               |  | AM_1 |    | AM_3 |  |
-               |  |______|    |______|  |
-               |     |                  |
-               |  [LAYER]               |
-               |     |                  |
-               |  [s_exe]               |
-               |________________________|
+4. Given the ordering within the Copland phrase, the Layered Attestation APB spawns the Send Execute TCP ASP to send an execute contract to AM_2 for the phrase (KIM runtime_meas_sign), which takes a runtime measurement of the kernel.
 
-        6. The results of the KIM measurement are sent from the KIM APB in AM_2 to the
-           Send Execute TCP ASP forked from the Layered Attestation APB in AM_1. This
-           involves a set of ASPs we will call the sign-send pipeline. The relevant ASPs include the:
-               * Serialize ASP - serialize a measurement graph into a buffer
-               * Compress ASP - compresses the serialized measurement buffer
-               * Create Contract ASP - creates the measurement contract which holds the
-                                       measurement
-               * Encrypt ASP - encrypts the measurement and contract
-               * Send ASP - sends the encrypted buffer to the intended recipient
-           For the sake of brevity, we will refer to these ASPs in aggregate as the
-           sign-send pipeline in future.
+           .. image:: images/layered_am1_send_execute_am2.png
+              :scale:  30
+              :align:  center
 
-        7. The Send Execute TCP ASP in AM_1 receives the measurement contract from AM_2.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |           |            |
-               |         [KIM]          |
-               |          ^ |   (6)     |
-               |          | '------'    |
-               |      {sign-send}<-'    |
-               |   ______  |    ______  |
-               |  |      | |   |      | |
-               |  | AM_1 | |   | AM_3 | |
-               |  |______| |   |______| |
-               |     |     |            |
-               |  [LAYER]  |            |
-               |     |  (7)|            |
-               |  [s_exe]<-'            |
-               |________________________|
+5. AM_2 spawns the KIM APB, which in turn, spawns the KIM ASP, in order to take a runtime integrity measurement of the kernel of Dom0.
 
-        8. The Layered Attestation APB extracts the measurement from the measurement contract received
-           from AM_2 using a set of ASPs we will collectively refer to as the execute-receive pipeline.
-           The relevant ASPs include the:
-               * Verify Contract ASP - verifies that the measurement contract is cryptographically
-                                       signed, if that is required for this interaction, and well
-                                       formed. Unlike the other ASPs, this does not process the
-                                       contract and write out the transformation of this processing,
-                                       but rather writes a boolean response as to whether the contract
-                                       was successfully verified
-               * Decrypt ASP - Decrypts the contents of the measurement contract
-               * Decompress ASP - Decompresses the serialized measurement buffer
-           For the sake of brevity, we will refer to these ASPs in aggregate as the
-           receive-verify pipeline in future.
+           .. image:: images/layered_am2_kim.png
+              :scale:  30
+              :align:  center
 
-        9. The measurement is extracted from the measurement contract and is placed into the measurement
-           graph being developed in AM_1.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |   ______       ______  |
-               |  |      |     |      | |
-               |  | AM_1 |     | AM_3 | |
-               |  |______|     |______| |
-               |     | (9)              |
-               |  [LAYER]--'            |
-               |     ^     |            |
-               |     |  (8)|            |
-               | {exe-rec}<'            |
-               |________________________|
+6. The results of the KIM measurement are sent from the KIM APB in AM_2 to the Send Execute TCP ASP forked from the Layered Attestation APB in AM_1. This involves a set of ASPs we will call the sign-send pipeline. The relevant ASPs include the:
+    * Serialize ASP - serialize a measurement graph into a buffer
+    * Compress ASP - compresses the serialized measurement buffer
+    * Create Contract ASP - creates the measurement contract which holds the measurement
+    * Encrypt ASP - encrypts the measurement and contract
+    * Send ASP - sends the encrypted buffer to the intended recipient
+   For the sake of brevity, we will refer to these ASPs in aggregate as the sign-send pipeline in future.
 
-        10. Given the ordering within the Copland phrase, the Layered Attestation APB
-            spawns the Send Execute TCP ASP to send an execute contract to AM_2 for
-            the phrase (USM full), which orchestrates measurements of the userspace
-            environment of Dom0.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |   ______  ^   ______   |
-               |  |      | |  |      |  |
-               |  | AM_1 | |  | AM_3 |  |
-               |  |______| |  |______|  |
-               |     |     |            |
-               |  [LAYER]  |            |
-               |     | (10)|            |
-               |  [s_exe]--'            |
-               |________________________|
+7. The Send Execute TCP ASP in AM_1 receives the measurement contract from AM_2.
 
-        11. AM_2 spawns the USM APB, which in turn, spawns a set of ASPs which collect
-            measurements of the userspace environment of Dom0.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |           |            |
-               |         [USM]          |
-               |           | (11)       |
-               |         [asps]         |
-               |   ______      ______   |
-               |  |      |    |      |  |
-               |  | AM_1 |    | AM_3 |  |
-               |  |______|    |______|  |
-               |     |                  |
-               |  [LAYER]               |
-               |     |                  |
-               |  [s_exe]               |
-               |________________________|
+           .. image:: images/layered_am2_sign_send_am1.png
+              :scale:  30
+              :align:  center
 
-        12. The results of the USM measurement are sent from the USM APB in AM_2 to the
-            Send Execute TCP ASP forked from the Layered Attestation APB in AM_1. This is
-            done using the sign-send pipeline of ASPs.
+8. The Layered Attestation APB extracts the measurement from the measurement contract received from AM_2 using a set of ASPs we will collectively refer to as the execute-receive pipeline. The relevant ASPs include the:
+    * Verify Contract ASP - verifies that the measurement contract is cryptographically signed, if that is required for this interaction, and well formed. Unlike the other ASPs, this does not process the contract and write out the transformation of this processing, but rather writes a boolean response as to whether the contract was successfully verified
+    * Decreypt ASP - Decrypts the contents of the measurement contract
+    * Decompress ASP - Decompresses the serialized measurement buffer
+   For the sake of brevity, we will refer to these ASPs in aggregate as the receive-verify pipeline in future.
 
-        13. The Send Execute TCP ASP in AM_1 receives the measurement contract from AM_2.
-            At this point, AM_2 plays no further role in this scenario.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |           |            |
-               |         [ASPs]         |
-               |          ^ |   (12)    |
-               |          | '------'    |
-               |      {sign-send}<-'    |
-               |   ______  |    ______  |
-               |  |      | |   |      | |
-               |  | AM_1 | |   | AM_3 | |
-               |  |______| |   |______| |
-               |     |     |            |
-               |  [LAYER]  |            |
-               |     | (13)|            |
-               |  [s_exe]<-'            |
-               |________________________|
 
-        14. The Layered Attestation APB in AM_1 extracts the measurement from
-            the measurement contract received from AM_2 using the
-            execute-receive pipeline and places it into the measurement graph.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |   ______       ______  |
-               |  |      |     |      | |
-               |  | AM_1 |     | AM_3 | |
-               |  |______|     |______| |
-               |     |                  |
-               |     |                  |
-               |  [LAYER]--'            |
-               |     ^     |            |
-               |     | (14)|            |
-               | {exe-rec}<'            |
-               |________________________|
+9. The measurement is extracted from the measurement contract and is placed into the measurement
+   graph being developed in AM_1.
 
-        15. Given the ordering of the Copland phrase, the Layered Attestation
-            APB in AM_1 collects a measurement corresponding to the phrase (KIM
-            runtime_meas_sign) by launching the KIM ASP and placing the result
-            into the measurement graph.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |   ______       ______  |
-               |  |      |     |      | |
-               |  | AM_1 |     | AM_3 | |
-               |  |______|     |______| |
-               |     |                  |
-               |     |                  |
-               |  [LAYER]               |
-               |     | (15)             |
-               |   [kim]                |
-               |________________________|
+            .. image:: images/layered_am1_receive_am2.png
+               :scale:  30
+               :align:  center
 
-         16. Given the ordering of the Copland phrase, the Layered Attestation
-             APB in AM_1 collects a measurement corresponding to the phrase (USM
-             full) by launching a series of ASPs which take measurements of the
-             userspace of DomM and place them onto the measurement graph being
-             created by AM_1.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |   ______       ______  |
-               |  |      |     |      | |
-               |  | AM_1 |     | AM_3 | |
-               |  |______|     |______| |
-               |     |                  |
-               |     |                  |
-               |  [LAYER]               |
-               |     | (16)             |
-               |  [asps]                |
-               |________________________|
 
-        17. Given the ordering within the Copland phrase, the Layered Attestation APB
-            spawns the Send Execute TCP ASP to send an execute contract to AM_3 for
-            the phrase (KIM runtime_meas_sign), which takes a runtime measurement of
-            the kernel.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |   ______      ______   |
-               |  |      |    |      |  |
-               |  | AM_1 |    | AM_3 |  |
-               |  |______|    |______|  |
-               |     |           ^      |
-               |  [LAYER]        |      |
-               |     | (17)      |      |
-               |  [s_exe]--------'      |
-               |________________________|
+10. Given the ordering within the Copland phrase, the Layered Attestation APB spawns the Send Execute TCP ASP to send an execute contract to AM_2 for the phrase (USM full), which orchestrates measurements of the userspace environment of Dom0.
 
-        18. AM_3 spawns the KIM APB, which in turn, spawns the KIM ASP, in order to take
-            a runtime integrity measurement of the kernel in DomT.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |   ______      ______   |
-               |  |      |    |      |  |
-               |  | AM_1 |    | AM_3 |  |
-               |  |______|    |______|  |
-               |     |           |      |
-               |  [LAYER]      [KIM]    |
-               |     |           | (18) |
-               |  [s_exe]      [kim]    |
-               |________________________|
+            .. image:: images/layered_am1_send_execute_usm_am2.png
+               :scale:  30
+               :align:  center
 
-        19. The results of the KIM measurement are sent from the KIM APB in AM_3 to the
-            Send Execute TCP ASP forked from the Layered Attestation APB in AM_1 using
-            the sign-send pipeline.
+11. AM_2 spawns the USM APB, which in turn, spawns a set of ASPs which collect measurements of the userspace environment of Dom0.
 
-        20. The Send Execute TCP ASP in AM_1 receives the measurement contract from AM_3.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |   ______       ______  |
-               |  |      |     |      | |
-               |  | AM_1 |     | AM_3 | |
-               |  |______|     |______| |
-               |     |            | (19)|
-               |  [LAYER]    '->[KIM]-' |
-               |     |  (20) |        | |
-               |  [s_exe]<{sign-send}-' |
-               |________________________|
+            .. image:: images/layered_am2_usm.png
+               :scale:  30
+               :align:  center
 
-        21. The Layered Attestation APB in AM_1 extracts the measurement from
-            the measurement contract received from AM_3 using the
-            execute-receive pipeline and places it into the measurement graph.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |   ______       ______  |
-               |  |      |     |      | |
-               |  | AM_1 |     | AM_3 | |
-               |  |______|     |______| |
-               |     |                  |
-               |  [LAYER]--'            |
-               |     ^     |            |
-               |     | (21)|            |
-               | {exe-rec}<'            |
-               |________________________|
+12. The results of the USM measurement are sent from the USM APB in AM_2 to the Send Execute TCP ASP forked from the Layered Attestation APB in AM_1. This is done using the sign-send pipeline of ASPs.
 
-        22. Given the ordering within the Copland phrase, the Layered
-            Attestation APB spawns the Send Execute TCP ASP to send an execute
-            contract to AM_3 for the phrase (USM full), which orchestrates
-            measurements of the userspace environment of DomT.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |   ______      ______   |
-               |  |      |    |      |  |
-               |  | AM_1 |    | AM_3 |  |
-               |  |______|    |______|  |
-               |     |           ^      |
-               |  [LAYER]        |      |
-               |     | (22)      |      |
-               |  [s_exe]--------'      |
-               |________________________|
+13. The Send Execute TCP ASP in AM_1 receives the measurement contract from AM_2. At this point, AM_2 plays no further role in this scenario.
 
-        23. AM_3 spawns the USM APB, which in turn, spawns a set of ASPs which
-            collect measurements of the userspace environment of DomT.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |   ______      ______   |
-               |  |      |    |      |  |
-               |  | AM_1 |    | AM_3 |  |
-               |  |______|    |______|  |
-               |     |           |      |
-               |  [LAYER]      [USM]    |
-               |     |           | (23) |
-               |  [s_exe]      [asps]   |
-               |________________________|
+            .. image:: images/layered_am1_receive_usm_am2.png
+               :scale:  30
+               :align:  center
 
-        24. The results of the USM measurement, encapsulated in a measurement
-            contract, are sent from the USM APB in AM_3 to the Send Execute TCP
-            ASP forked from the Layered Attestation APB in AM_1. This is done
-            using the sign-send pipeline of ASPs.
+14. The Layered Attestation APB in AM_1 extracts the measurement from the measurement contract received from AM_2 using the execute-receive pipeline and places it into the measurement graph.
 
-        25. The Send Execute TCP ASP in AM_1 receives the measurement contract
-            from AM_3.  AM_3 does not play a further role in this scenario.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |   ______       ______  |
-               |  |      |     |      | |
-               |  | AM_1 |     | AM_3 | |
-               |  |______|     |______| |
-               |     |            | (24)|
-               |  [LAYER]    '->[USM]-' |
-               |     |  (25) |        | |
-               |  [s_exe]<{sign-send}-' |
-               |________________________|
+            .. image:: images/layered_am1_extract_usm_am2.png
+               :scale:  30
+               :align:  center
 
-        26. The Layered Attestation APB extracts the measurement from the
-            measurement contract received from AM_3 using the execute-receive
-            pipeline and places it into the measurement graph that is being
-            created in AM_1. At this point, all the components of the
-            measurement have been collected from the disparate domains of P_2.
-                ________________________
-               |          P_2           |
-               |         ______         |
-               |        |      |        |
-               |        | AM_2 |        |
-               |        |______|        |
-               |   ______       ______  |
-               |  |      |     |      | |
-               |  | AM_1 |     | AM_3 | |
-               |  |______|     |______| |
-               |     |                  |
-               |  [LAYER]--'            |
-               |     ^     |            |
-               |     | (26)|            |
-               | {exe-rec}<'            |
-               |________________________|
+15. Given the ordering of the Copland phrase, the Layered Attestation APB in AM_1 collects a measurement corresponding to the phrase (KIM runtime_meas_sign) by launching the KIM ASP and placing the result into the measurement graph.
 
-        27. The now completed measurement graph in AM_1 is placed into a
-            measurement contract and sent to AM_4 for appraisal. This is done
-            using the sign-send pipeline of ASPs. At this point AM_1, and by
-            extension, P_2, no longer plays a role in this scenario.
+            .. image:: images/layered_am1_kim.png
+               :scale:  30
+               :align:  center
 
-        28. At this point, the Layered Attestation Appraisal APB in AM_4
-            receives the measurement contract from AM_1 using a set of ASPs
-            that include some of the same ASPs as the execute-receive pipeline,
-            but also includes other. The ASPs used are as follows:
-                * Receive ASP - receives a buffer from a socket
-                * Verify Contract ASP - verifies that the measurement contract is cryptographically
-                                        signed, if that is required for this interaction, and well
-                                        formed. Unlike the other ASPs, this does not process the
-                                        contract and write out the transformation of this processing,
-                                        but rather writes a boolean response as to whether the contract
-                                        was successfully verified
-                * Decrypt ASP - Decrypts the contents of the measurement contract
-                * Decompress ASP - Decompresses the serialized measurement buffer
-                * Deserialize ASP - Deserialize the measurement graph from the measurement buffer
-            For the sake of brevity, we will refer to this as the receive-graph pipeline.
-                                               ________________________
-                                              |          P_2           |
-                _______________               |         ______         |
-               |      P_1      |              |        |      |        |
-               |     ______    |              |        | AM_2 |        |
-               |    |      |   |              |        |______|        |
-               |    | AM_4 |   |              |   ______      ______   |
-               |    |______|   |              |  |      |    |      |  |
-               |       |       |              |  | AM_1 |    | AM_3 |  |
-               |       |(28)   |              |  |______|    |______|  |
-               |'--->[APP]----'|              |     |                  |
-               ||             ||              |     |                  |
-               |'{recv-graph}<'-------'       |     |                  |
-               |_______________|      |       |     | (27)             |
-                                      |       |'>[LAYER]----'          |
-                                      |       ||            |          |
-                                      '--------'{sign-send}<'          |
-                                              |________________________|
+16. Given the ordering of the Copland phrase, the Layered Attestation APB in AM_1 collects a measurement corresponding to the phrase (USM full) by launching a series of ASPs which take measurements of the userspace of DomM and place them onto the measurement graph being created by AM_1.
 
-        29. The Layered Appraisal APB in AM_4 launches a set of ASPs in order to
-            appraise the measurement graph from AM_1 and from those appraisals
-            determines an overall appraisal result.
+            .. image:: images/layered_am1_usm.png
+               :scale:  30
+               :align:  center
 
-        30. The Layered Appraisal APB in AM_4 sends a response contract to the
-            requester which includes the overall appraisal result. At this
-            point, the scenario is complete.
-                 _______________
-                |      P_1      |
-                |  (30) ______  |
-               R<---'  |      | |
-                |   |  | AM_4 | |
-                |   |  |______| |
-                |   |     |     |
-                |   |     |     |
-                |   '----[APP]  |
-                |         | (29)|
-                |       [asps]  |
-                |_______________|
+17. Given the ordering within the Copland phrase, the Layered Attestation APB spawns the Send Execute TCP ASP to send an execute contract to AM_3 for the phrase (KIM runtime_meas_sign), which takes a runtime measurement of the kernel.
 
+            .. image:: images/layered_am1_send_execute_kim_am3.png
+               :scale:  30
+               :align:  center
+
+18. AM_3 spawns the KIM APB, which in turn, spawns the KIM ASP, in order to take a runtime integrity measurement of the kernel in DomT.
+
+            .. image:: images/layered_am3_kim.png
+               :scale:  30
+               :align:  center
+
+19. The results of the KIM measurement are sent from the KIM APB in AM_3 to the Send Execute TCP ASP forked from the Layered Attestation APB in AM_1 using the sign-send pipeline.
+
+20. The Send Execute TCP ASP in AM_1 receives the measurement contract from AM_3.
+
+            .. image:: images/layered_am1_receive_kim_am3.png
+               :scale:  30
+               :align:  center
+
+21. The Layered Attestation APB in AM_1 extracts the measurement from the measurement contract received from AM_3 using the execute-receive pipeline and places it into the measurement graph.
+
+            .. image:: images/layered_am1_extract_kim_am3.png
+               :scale:  30
+               :align:  center
+
+22. Given the ordering within the Copland phrase, the Layered Attestation APB spawns the Send Execute TCP ASP to send an execute contract to AM_3 for the phrase (USM full), which orchestrates measurements of the userspace environment of DomT.
+
+            .. image:: images/layered_am1_send_execute_usm_am3.png
+               :scale:  30
+               :align:  center
+
+23. AM_3 spawns the USM APB, which in turn, spawns a set of ASPs which collect measurements of the userspace environment of DomT.
+
+            .. image:: images/layered_am1_am3_usm.png
+               :scale:  30
+               :align:  center
+
+24. The results of the USM measurement, encapsulated in a measurement contract, are sent from the USM APB in AM_3 to the Send Execute TCP ASP forked from the Layered Attestation APB in AM_1. This is done using the sign-send pipeline of ASPs.
+
+
+25. The Send Execute TCP ASP in AM_1 receives the measurement contract from AM_3.  AM_3 does not play a further role in this scenario.
+
+            .. image:: images/layered_am1_receive_usm_am3.png
+               :scale:  30
+               :align:  center
+
+26. The Layered Attestation APB extracts the measurement from the measurement contract received from AM_3 using the execute-receive pipeline and places it into the measurement graph that is being created in AM_1. At this point, all the components of the measurement have been collected from the disparate domains of P_2.
+
+            .. image:: images/layered_am1_full_contract.png
+               :scale:  30
+               :align:  center
+
+27. The now completed measurement graph in AM_1 is placed into a measurement contract and sent to AM_4 for appraisal. This is done using the sign-send pipeline of ASPs. At this point AM_1, and by extension, P_2, no longer plays a role in this scenario.
+
+28. At this point, the Layered Attestation Appraisal APB in AM_4 receives the measurement contract from AM_1 using a set of ASPs that include some of the same ASPs as the execute-receive pipeline, but also includes other. The ASPs used are as follows:
+     * Receive ASP - receives a buffer from a socket
+     * Verify Contract ASP - verifies that the measurement contract is cryptographically signed, if that is required for this interaction, and well formed. Unlike the other ASPs, this does not process the contract and write out the transformation of this processing, but rather writes a boolean response as to whether the contract was successfully verified
+     * Decrypt ASP - Decrypts the contents of the measurement contract
+     * Decompress ASP - Decompresses the serialized measurement buffer
+     * Deserialize ASP - Deserialize the measurement graph from the measurement buffer
+    For the sake of brevity, we will refer to this as the receive-graph pipeline.
+
+            .. image:: images/layered_am4_receive_measurement_graph_am1.png
+               :scale:  30
+               :align:  center
+
+29. The Layered Appraisal APB in AM_4 launches a set of ASPs in order to appraise the measurement graph from AM_1 and from those appraisals determines an overall appraisal result.
+
+30. The Layered Appraisal APB in AM_4 sends a response contract to the requester which includes the overall appraisal result. At this point, the scenario is complete.
+
+            .. image:: images/layered_am4_appraisal.png
+               :scale:  30
+               :align:  center
 
 Process
 -------
@@ -639,21 +306,9 @@ scenarios outlined in the :ref:`Basic Tutorial <basic_tutorial>`.
 
 The demo setup will look as follows:
 
-.. code-block:: none
-
-                                        ________________________
-                                       |          P_2           |
-         ______________                |         ______         |
-        |     P_1      |               |        |      |        |
-        |    ______    |               |        | Dom0 |        |
-        |   |      |   |               |        |______|        |
-        |   | VM_1 |   |               |   ______      ______   |
-        |   |______|   |               |  |      |    |      |  |
-        |______________|               |  | DomM |    | DomT |  |
-                                       |  |______|    |______|  |
-                                       |________________________|
-
-
+            .. image:: images/layered_demo_setup.png
+               :scale:  30
+               :align:  center
 
 P_1 is the appraising platform and P_2 is the platform being measured. The test
 client requesting the measurement will be launched on VM_1.

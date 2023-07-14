@@ -2,20 +2,6 @@
 
 #include "tpm2.h"
 #include "tool_rc.h"
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <string.h>
-#include <ctype.h>
-#include <openssl/pem.h>
-#include <openssl/rsa.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <tss2/tss2_esys.h>
-#include <tss2/tss2_mu.h>
-#include <tss2/tss2_tctildr.h>
-#include <sys/stat.h>
 
 bool is_big_endian(void) {
 
@@ -80,38 +66,47 @@ bool read8(FILE *f, UINT8 *data, size_t size) {
     return true;
 }
 
-unsigned long get_file_size(FILE *f) {
+static size_t readx(FILE *f, UINT8 *data, size_t size) {
 
-    unsigned long file_size;
+    size_t bread = 0;
+    do {
+        bread += fread(&data[bread], 1, size-bread, f);
+    } while (bread < size && !feof(f) && errno == EINTR);
+
+    return bread;
+}
+
+static bool get_file_size(FILE *f, unsigned long *file_size) {
+
+    long current = ftell(f);
+    if (current < 0) {
+      dlog(3, "Error getting current file offset for file: %s\n", strerror(errno));
+      return false;
+    }
 
     int rc = fseek(f, 0, SEEK_END);
     if (rc < 0) {
         dlog(3, "Error seeking to end of file error: %s\n", strerror(errno));
-        return 0;
+        return false;
     }
 
     long s = ftell(f);
     if (s < 0) {
         dlog(3, "ftell on file failed: %s\n", strerror(errno));
-        return 0;
+        return false;
     }
 
-    rc = fseek(f, 0, SEEK_SET);
+    rc = fseek(f, current, SEEK_SET);
     if (rc < 0) {
         dlog(3,
 	        "Could not restore initial stream position for file"
 	        "failed: %s\n", strerror(errno));
-        return 0;
+        return false;
     }
 
-    file_size = (unsigned long) s;
+    *file_size = (unsigned long) s;
 
-    if (!file_size){
-        dlog(3, "The msg file is empty\n");
-        return 0;
-    }
-
-    return file_size;
+    return true;
   }
 
 
@@ -121,21 +116,27 @@ unsigned long get_file_size(FILE *f) {
         UINT8 buffer[sizeof(*name)]; \
         UINT16 size = sizeof(buffer); \
         if (!path) { \
-            return false; \
+          return false; \
         } \
         FILE *f = fopen(path, "rb"); \
         if (!f) { \
-            dlog(3, "Could not open file \"%s\" error %s", path, strerror(errno)); \
-            return false; \
+          dlog(3, "Could not open file \"%s\" error %s", path, strerror(errno)); \
+          return false; \
         } \
-        bool result = false; \
-        unsigned long file_size = get_file_size(f); \
-        if (file_size > size || file_size == 0) { \
+        unsigned long file_size; \
+        bool result = get_file_size(f, &file_size); \
+        if (!result ) { \
             goto out; \
         } \
-        size = read8(f, buffer, size); \
+        if (file_size > size) { \
+          dlog(3,"File size is larger than buffer, got %lu expected less than or equal to %u\n", file_size, size); \
+          result = false; \
+          goto out; \
+        } \
+        size = readx(f, buffer, size); \
         if (size < file_size) { \
-            goto out; \
+          result = false; \
+          goto out; \
         } \
         result = true; \
     out: \

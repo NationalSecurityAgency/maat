@@ -22,14 +22,14 @@ Making a New ASP
 
 To write and integrate an ASP you need to create and modify several files.
 
-1. Follow `asp_skeleton.c` to develop the core functionality of your ASP.
-   1. Add this file to `maat/src/asps/Makefile.am`
-   1. Add the ASP's name to the `maat/configure.ac` file
-1. Follow `asp_skeleton.xml.in` to describe the operation of your ASP and provide
-   it with a unique uuid.
-1. Add appropriate documentation for your ASP in `maat/documentation/`
-1. Specify the selinux policy for your ASP in `maat/selinux/maat.te` and
-   `maat/selinux/maat.fc.in`
+    1. Follow `asp_skeleton.c` to develop the core functionality of your ASP.
+        a. Add this file to `maat/src/asps/Makefile.am`
+        b. Add the ASP's name to the `maat/configure.ac` file
+    1. Follow `asp_skeleton.xml.in` to describe the operation of your ASP and provide
+       it with a unique uuid.
+        a. Add appropriate documentation for your ASP in `maat/documentation/`
+    1. Specify the selinux policy for your ASP in `maat/selinux/maat.te` and
+       `maat/selinux/maat.fc.in`
 
 Packaging
 ---------

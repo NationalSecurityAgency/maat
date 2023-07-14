@@ -101,7 +101,7 @@ START_TEST (test_measurement_contract_asps)
     size_t bytes_proc;
     size_t contract_len;
     size_t result_len;
-    char *contract;
+    unsigned char *contract;
     char *result;
     int create_in_fd[2];
     int create_out_fd[2];
@@ -179,7 +179,8 @@ START_TEST (test_measurement_contract_asps)
     verify_argv[3] = "";
     verify_argv[4] = "0";
 #endif
-    rc = run_asp_buffers(g_verifyasp, contract, contract_len, &result, &result_len,
+    /* Cast is justified because the function does not regard the signedness of the buffer */
+    rc = run_asp_buffers(g_verifyasp, contract, contract_len, (unsigned char **)&result, &result_len,
                          5, verify_argv, ASP_TO, -1);
     free(contract);
     fail_if(rc < 0, "Unable to verify contract");

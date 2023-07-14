@@ -47,25 +47,29 @@ default:
 
 # run check tests without selinux
 .test_no_selinux: &test_no_selinux
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --enable-coverage
   - make check
+  - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
 
 # run check tests without selinux adn without TPM
 .test_no_selinux_no_tpm: &test_no_selinux_no_tpm
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --disable-tpm
+  - ../configure  --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --disable-tpm --enable-coverage
   - make check
+  - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
 
 # Run check tests with gcc address sanitizer enabled
 .test_asan: &test_asan
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests CFLAGS='-fsanitize=address -g -O0'
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --enable-coverage CFLAGS='-fsanitize=address -g -O0'
   # There are actual ODR violations but ignore for now
   - ASAN_OPTIONS='detect_leaks=0 detect_odr_violation=0' make check
+  - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
 
 # Run check tests with gcc address sanitizer enabled without TPM
 .test_asan_no_tpm: &test_asan_no_tpm
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --disable-tpm --enable-tests CFLAGS='-fsanitize=address -g -O0'
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --disable-tpm --enable-tests --enable-coverage CFLAGS='-fsanitize=address -g -O0'
   # There are actual ODR violations but ignore for now
   - ASAN_OPTIONS='detect_leaks=0 detect_odr_violation=0' make check
+  - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
 
 # Build debian packages for ${release} and ${arch}
 .deb_build: &deb_build
@@ -98,7 +102,7 @@ default:
 
 # Create RPM repo for ${release} and ${arch}
 .rpm_repo: &rpm_repo
-  - ../configure --prefix=/usr --disable-selinux-libdir-mapping --disable-tpm
+  - ../configure --prefix=/usr --disable-tpm --disable-selinux-libdir-mapping
   - make dist
   - "[ -d SOURCES ] || mkdir SOURCES"
   - cp maat-*.tar.gz SOURCES/
@@ -115,8 +119,27 @@ default:
   - cp -v  /var/lib/mock/${distro}-${release}-${arch}/result/maat-*.rpm staging/epel/${release}/${arch}/
   - cd staging/epel/${release}/${arch}
   - createrepo -p -d -v .
-  - cd ../../../
-  - scp -r epel $ARCHIVE_USER@$ARCHIVE_HOST:/var/www/data/rpm/$CI_COMMIT_SHORT_SHA/
+  - cd ../../
+  - ssh $ARCHIVE_USER@$ARCHIVE_HOST "mkdir -p /var/www/data/rpm/$CI_COMMIT_SHORT_SHA/"
+  - scp -r ${release} $ARCHIVE_USER@$ARCHIVE_HOST:/var/www/data/rpm/$CI_COMMIT_SHORT_SHA/
+
+# System test on RHEL with selinux enabled
+.rhel_selinux_system_test: &rhel_selinux_system_test
+  - echo "baseurl=http://$ARCHIVE_HOST/rpm/$CI_COMMIT_SHORT_SHA/${release}/x86_64" >> ci/maat.repo
+  - sudo cp ci/maat.repo /etc/yum.repos.d
+  - sudo yum clean all
+  - sudo yum install maat maat-selinux -y
+  - sudo semanage port -a -t attestmgr_port_t -p tcp 2343
+  - sudo cp demo/credentials/client.* /etc/maat/credentials/
+  - sudo rpm -qa --qf "%{NAME}\n" | sudo tee -a /usr/share/maat/asps/packages.whitelist
+  - "LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml 2>&1 | tee app.log &"
+  - "LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml 2>&1 | tee att.log &"
+  - sleep 10
+  - "valgrind /usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r userspace 2>&1 | tee test_client.log || true"
+  - "kill %2 || true"
+  - "kill %1 || true"
+  - sudo rm -f /etc/maat/credentials/client.*
+  - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
 
 ## sara-kickoff
 
@@ -174,8 +197,6 @@ build-rhel7-selinux:
     - rhel7
   script:
     - *build_with_selinux_no_tpm
-  after_script:
-    - sudo semodule -r maat
 
 # build without selinux for rhel8
 build-rhel8-no-selinux:
@@ -192,8 +213,6 @@ build-rhel8-selinux:
     - rhel8
   script:
     - *build_with_selinux_no_tpm
-  after_script:
-    - sudo semodule -r maat
 
 # build without selinux for rhel9
 build-rhel9-no-selinux:
@@ -210,8 +229,6 @@ build-rhel9-selinux:
     - rhel9
   script:
     - *build_with_selinux_no_tpm
-  after_script:
-    - sudo semodule -r maat
   allow_failure: true # for now this is allowed because of an issue with flask header
 
 ## docs
@@ -229,20 +246,6 @@ docs-ubuntu:
     expire_in: 2 weeks
     when: on_success
 
-# build docs on rhel7
-docs-rhel:
-  stage: docs
-  tags:
-    - rhel7
-  script:
-    - *build_docs
-  artifacts:
-    paths:
-      - maat-docs
-    expire_in: 2 weeks
-    when: on_success
-  allow_failure: true # fails due to missing style
-
 ## test
 
 # regular make check tests on ubuntu20
@@ -252,10 +255,15 @@ test-ubuntu20-basic:
     - ubuntu20
   script:
     - *test_no_selinux_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # regular make check tests on ubuntu20 with TPM
@@ -265,10 +273,15 @@ test-ubuntu20-basic-tpm:
     - maat-swtpm
   script:
     - *test_no_selinux
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # make check tests with address sanitizer on ubuntu20
@@ -278,10 +291,15 @@ test-ubuntu20-asan:
     - ubuntu20
   script:
     - *test_asan_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # make check tests with address sanitizer on ubuntu20
@@ -291,10 +309,15 @@ test-ubuntu20-asan-tpm:
     - maat-swtpm
   script:
     - *test_asan
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # regular make check tests on ubuntu22
@@ -304,10 +327,15 @@ test-ubuntu22-basic:
     - ubuntu22
   script:
     - *test_no_selinux_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # make check tests with address sanitizer on ubuntu22
@@ -317,10 +345,15 @@ test-ubuntu22-asan:
     - ubuntu22
   script:
     - *test_asan_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # regular make check tests without selinux on rhel7
@@ -330,10 +363,15 @@ test-rhel7-basic-no-selinux:
     - rhel7
   script:
     - *test_no_selinux_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # make check tests with address sanitizer on rhel7
@@ -343,12 +381,16 @@ test-rhel7-asan:
     - rhel7
   script:
     - *test_asan_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
-  allow_failure: true # for now fails due to configure saying C compiler not working
 
 # make check tests without selinux on rhel8
 test-rhel8-basic-no-selinux:
@@ -357,10 +399,15 @@ test-rhel8-basic-no-selinux:
     - rhel8
   script:
     - *test_no_selinux_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
 
 # make check tests with address sanitizer on rhel8
@@ -370,12 +417,16 @@ test-rhel8-asan:
     - rhel8
   script:
     - *test_asan_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
-  allow_failure: true # for now fails due to configure saying C compiler not working
 
 # make check tests without selinux on rhel9
 test-rhel9-basic-no-selinux:
@@ -384,10 +435,15 @@ test-rhel9-basic-no-selinux:
     - rhel9
   script:
     - *test_no_selinux_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
   allow_failure: true # fails due to using sha1 digest which is disabled by default
 
@@ -398,10 +454,15 @@ test-rhel9-asan:
     - rhel9
   script:
     - *test_asan_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
     expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
     when: always
   allow_failure: true # for now fails due to configure saying C compiler not working
 
@@ -470,7 +531,6 @@ package-rhel8-x86_64-rpm:
     paths:
       - build/staging
     expire_in: 2 weeks
-  allow_failure: True # fails due to underlying mock image not including systemd
 
 # package rhel9 rpm
 package-rhel9-x86_64-rpm:
@@ -537,6 +597,8 @@ system-test-selinux-rhel7:
   inherit:
     default: false
   dependencies: []
+  variables:
+    release: 7
   timeout: 2 hours
   before_script:
     - "sudo killall -15 attestmgr || true"
@@ -544,29 +606,37 @@ system-test-selinux-rhel7:
     - sudo semanage port -d -t attestmgr_port_t -p tcp 2343 || true
     - sudo yum remove maat maat-selinux -y || true
   script:
-    - echo "baseurl=http://$ARCHIVE_HOST/rpm/$CI_COMMIT_SHORT_SHA/7/x86_64" >> ci/maat.repo
-    - sudo cp ci/maat.repo /etc/yum.repos.d
-    - sudo yum clean all
-    - sudo yum install maat maat-selinux -y
-    - sudo semanage port -a -t attestmgr_port_t -p tcp 2343
-    - sudo cp demo/credentials/client.* /etc/maat/credentials/
-    - sudo rpm -qa --qf "%{NAME}\n" | sudo tee -a /usr/share/maat/asps/packages.whitelist
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
-    - sleep 10
-    - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r userspace | tee test_client.log || true"
-    - "kill %2 || true"
-    - "kill %1 || true"
-    - sudo rm -f /etc/maat/credentials/client.*
-    - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
-    - cat test_client.log
+    *rhel_selinux_system_test
   artifacts:
     paths:
-      - test_client.log
+      - "*.log"
     expire_in: 2 weeks
 
-# system test on ubuntu20
-system-test-ubuntu20:
+# system test with selinux on rhel8
+system-test-selinux-rhel8:
+  stage: systemtest
+  tags:
+    - rhel8
+  inherit:
+    default: false
+  dependencies: []
+  variables:
+    release: 8
+  timeout: 2 hours
+  before_script:
+    - "sudo killall -15 attestmgr || true"
+    - "sudo killall -9 attestmgr || true"
+    - sudo semanage port -d -t attestmgr_port_t -p tcp 2343 || true
+    - sudo yum remove maat maat-selinux -y || true
+  script:
+    *rhel_selinux_system_test
+  artifacts:
+    paths:
+      - "*.log"
+    expire_in: 2 weeks
+
+# system test on ubuntu20 with valgrind
+system-test-ubuntu20-valgrind:
   stage: systemtest
   tags:
     - ubuntu20
@@ -585,16 +655,18 @@ system-test-ubuntu20:
     - sudo apt-get --allow-unauthenticated update
     - sudo apt-get --allow-unauthenticated -y --reinstall install maat
     - sudo cp demo/credentials/client.* /etc/maat/credentials/
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml &
-    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml &
+    - LIBMAAT_LOG_SYSLOG=0 valgrind --show-leak-kinds=definite --leak-check=full /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml 2>&1 | tee app.log &
+    - LIBMAAT_LOG_SYSLOG=0 valgrind --show-leak-kinds=definite --leak-check=full /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml 2>&1 | tee att.log &
     - sleep 10
-    - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r processes | tee test_client.log || true"
+    - "valgrind --show-leak-kinds=definite --leak-check=full /usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r processes 2>&1 | tee test_client.log || true"
     - "kill %2 || true"
     - "kill %1 || true"
     - sudo rm -f /etc/maat/credentials/client.*
     - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
   artifacts:
     paths:
+      - app.log
+      - att.log
       - test_client.log
     expire_in: 2 weeks
 

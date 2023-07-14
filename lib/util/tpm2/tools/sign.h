@@ -2,12 +2,6 @@
 
 #include "../lib/tpm2.h"
 
-#define QUOTE_SIG SRCDIR "/files/quote.sig"
-#define QUOTE_PCRS SRCDIR "/files/quote.pcrs"
-#define QUOTE_MSG SRCDIR "/files/quote.msg"
-#define AK_CTX SRCDIR "/files/ak.ctx"
-#define AKPUB_PEM SRCDIR "/files/akpub.pem"
-
 /*
   PCR RESET AND EXTEND
 */
@@ -41,8 +35,6 @@ struct tpm_sig_quote {
   int quote_size;
 };
 
-//tool_rc handle_sign_options(int argc, char **argv,TSS2_TCTI_CONTEXT **tcti);
-
 struct tpm_sig_quote *tpm2_sign(const unsigned char *buf, int buf_size, const char *pass, const char *nonce, const char *ctx_path);
 
 typedef struct tpm2_verifysig_ctx tpm2_verifysig_ctx;
@@ -54,7 +46,5 @@ struct tpm2_verifysig_ctx {
   TPM2B_MAX_BUFFER signature;
   const char *pubkey_file_path;
 };
-
-//tool_rc handle_checkquote_options(int argc, char **argv);
 
 int checkquote(const unsigned char *buf, int buf_size, unsigned char *sig, int sigsize, const char *nonce, const char *pubkey, unsigned char *quote, int quotesize);

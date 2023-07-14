@@ -31,7 +31,7 @@ AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/.. $(JSON_CFLAGS) $(GLIB_CFLAGS) \
 		$(XML_CPPFLAGS) $(OPENSSL_CFLAGS)
 
 if BUILD_COVERAGE
-AM_CFLAGS += -fprofile-arcs -ftest-coverage
+AM_CFLAGS += --coverage
 endif
 
 clean-local:

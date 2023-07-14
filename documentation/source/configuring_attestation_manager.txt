@@ -28,8 +28,8 @@ Configuring Attestation Manager (AM)
 Configuring
 ============
 
-The attestation manager configuration file provides necessary information to the attestation manager. 
-Much of this information can also be specified as command line arguments. 
+The attestation manager configuration file provides necessary information to the attestation manager.
+Much of this information can also be specified as command line arguments.
 Specifically the configuration file supports specifying:
 
 * Interfaces to listen on

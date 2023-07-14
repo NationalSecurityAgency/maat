@@ -193,8 +193,10 @@ static int verify_contract(GList *apb_asps, struct scenario *scen)
     verify_args[3] = scen->akpubkey;
     verify_args[4] = verify_tpm_str;
 
+    /* Cast is justified because function does not regard signedness of the buffer */
     ret = run_asp_buffers(verify_contract_asp, scen->contract, scen->size,
-                          &verify_res, &read, 5, verify_args, TIMEOUT, -1);
+                          (unsigned char **)&verify_res, &read, 5, verify_args,
+                          TIMEOUT, -1);
     if(ret < 0) {
         dlog(0, "Failed to run %s ASP\n", verify_contract_asp->name);
         goto run_asp_err;

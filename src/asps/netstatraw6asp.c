@@ -69,6 +69,10 @@ netstat_raw6_line *chunk_line_data(char *raw_line)
     char addr[INET6_ADDRSTRLEN];
     long int port;
     struct in6_addr *ip = (struct in6_addr *)malloc(16);
+    if (ip == NULL) {
+        free(ret);
+        return NULL;
+    }
 
     tmp = strtok(raw_line, ":"); //tmp = sl
     tmp = strtok(NULL, " :"); //tmp = local_address
@@ -80,7 +84,11 @@ netstat_raw6_line *chunk_line_data(char *raw_line)
     }
     tmp = strtok(NULL, " "); //tmp = local_address port
     port = strtol(tmp, NULL, 16);
-    snprintf(ret->local_addr, 52, "[%s]:%d", addr, (short) port);
+    if (port < 0 || (INT_MAX > USHRT_MAX && (unsigned long int) port > USHRT_MAX)) {
+        goto bad_port;
+    }
+
+    snprintf(ret->local_addr, 52, "[%s]:%hu", addr, (unsigned short) port);
 
     tmp = strtok(NULL, " :"); //tmp = rem_address
     if(strcmp(tmp, "00000000000000000000000000000000") == 0)
@@ -89,9 +97,14 @@ netstat_raw6_line *chunk_line_data(char *raw_line)
         sscanf(tmp, "%08X%08X%08X%08X", &ip->s6_addr32[0], &ip->s6_addr32[1], &ip->s6_addr32[2], &ip->s6_addr32[3]);
         inet_ntop(AF_INET6, ip, addr, 46);
     }
+
     tmp = strtok(NULL, " "); //tmp = rem_address port
     port = strtol(tmp, NULL, 16);
-    snprintf(ret->rem_addr, 52, "[%s]:%d", addr, (short) port);
+    if (port < 0 || (INT_MAX > USHRT_MAX && (unsigned long int) port > USHRT_MAX)) {
+        goto bad_port;
+    }
+
+    snprintf(ret->rem_addr, 52, "[%s]:%hu", addr, (unsigned short) port);
 
     tmp = strtok(NULL, " "); //tmp = state
     strncpy(ret->State, tmp, 16);
@@ -108,6 +121,11 @@ netstat_raw6_line *chunk_line_data(char *raw_line)
     ret->inode = atoi(tmp);
     free(ip);
     return ret;
+
+bad_port:
+    free(ip);
+    free(ret);
+    return NULL;
 }
 
 int asp_measure(int argc, char *argv[])

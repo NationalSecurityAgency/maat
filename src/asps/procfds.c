@@ -82,7 +82,7 @@ int asp_measure(int argc, char *argv[])
     // graph stuff
     node_id_t new_node = INVALID_NODE_ID;
     file_addr *file_address;
-    char link_label[15];  // XXX: validate length
+    char link_label[256];
     edge_id_t new_edge = INVALID_EDGE_ID;
 
     if((argc < 3) ||
@@ -176,7 +176,7 @@ int asp_measure(int argc, char *argv[])
                 free_address(&file_address->address);
                 continue;
             }
-            snprintf(link_label, 15, "fd:file");
+            snprintf(link_label, 256, "fd:file");
             if(measurement_graph_add_edge(graph, node_id, link_label, new_node, &new_edge) != 0) {
                 asp_logerror("failed to add edge from process node %d to node for file %s\n",
                              pa->pid, filename);
@@ -184,7 +184,7 @@ int asp_measure(int argc, char *argv[])
                 continue;
             }
         } else {
-            char inode_type[256];
+            char inode_type[252];
             edge_id_t edge;
 
             address *addr = alloc_address(&inode_address_space);
@@ -215,7 +215,7 @@ int asp_measure(int argc, char *argv[])
                 n = INVALID_NODE_ID;
                 continue;
             }
-            snprintf(link_label, 15, "fd:%s", inode_type);
+            snprintf(link_label, 256, "fd:%s", inode_type);
             if (measurement_graph_add_edge(graph, node_id, link_label, n, &edge) != 0) {
                 asp_logerror("error adding edge to inode\n");
             }

@@ -75,6 +75,9 @@ unsigned char *sign_buffer_openssl(const unsigned char *buf, unsigned int *size,
     int ret;
     int testsize = 256;
 
+    dlog(0, "I AM GOING TO SIGN THIS BUFFER: %s\n\n", buf);
+    dlog(0, "THIS BUFFER IS OF SIZE: %zd\n", strlen(buf));
+
     signature = NULL;
     keyfd = fopen(keyfile, "r");
     if (keyfd == NULL) {
@@ -97,7 +100,10 @@ unsigned char *sign_buffer_openssl(const unsigned char *buf, unsigned int *size,
         return signature;
     }
 
-#if OPENSSL_MAJOR_VERSION == 1
+    dlog(0, "OPENSSL VERSION ACTUAL %d\n", OPENSSL_VERSION_MAJOR);
+    dlog(0, "OPENSSL VERSION HEX %lx\n", OPENSSL_VERSION_NUMBER);
+
+#if OPENSSL_VERSION_MAJOR == 1
 	ctx = EVP_MD_CTX_create();
 
 	ret = EVP_SignInit(ctx, EVP_sha256());
@@ -127,7 +133,7 @@ unsigned char *sign_buffer_openssl(const unsigned char *buf, unsigned int *size,
 		EVP_PKEY_free(pkey);
 		return signature;
 	}
-#elif OPENSSL_MAJOR_VERSION == 3
+#elif OPENSSL_VERSION_MAJOR == 3
 	ctx = EVP_MD_CTX_new();
 	sha256 = EVP_MD_fetch(NULL, "SHA256", NULL);
 
@@ -266,7 +272,7 @@ int verify_sig(const unsigned char *buf, size_t size, const unsigned char *sig,
         goto out;
     }
 
-#if OPENSSL_MAJOR_VERSION == 1
+#if OPENSSL_VERSION_MAJOR == 1
 	ctx = EVP_MD_CTX_create();
 
 	if(ctx == NULL) {
@@ -293,7 +299,7 @@ int verify_sig(const unsigned char *buf, size_t size, const unsigned char *sig,
 	if (rc <= 0) {
 		ERR_print_errors_fp(stdout);
 	}
-#elif OPENSSL_MAJOR_VERSION == 3
+#elif OPENSSL_VERSION_MAJOR == 3
 
 	ctx = EVP_MD_CTX_new();
 
@@ -311,18 +317,18 @@ int verify_sig(const unsigned char *buf, size_t size, const unsigned char *sig,
 	}
 
 	sha256 = EVP_MD_fetch(NULL, "SHA256", NULL);
-	if(!EVP_DigestVerifyInit(ctx, &pctx, sha256, NULL, pkey)) {
+	if(EVP_DigestVerifyInit(ctx, &pctx, sha256, NULL, pkey) != 1) {
 		ERR_print_errors_fp(stderr);
 		rc = -1;
 		goto out_pkey;
 	}
-	if (!EVP_DigestVerifyUpdate(ctx, buf, size)) {
+	if (EVP_DigestVerifyUpdate(ctx, buf, size) != 1) {
 		ERR_print_errors_fp(stderr);
 		rc = -1;
 		goto out_pkey;
 	}
 	rc = EVP_DigestVerifyFinal(ctx, sig, (unsigned int) sigsize);
-	if (rc <= 0) {
+	if (rc != 1) {
 		ERR_print_errors_fp(stdout);
 	}
 #else
@@ -332,11 +338,11 @@ int verify_sig(const unsigned char *buf, size_t size, const unsigned char *sig,
 out_pkey:
     EVP_PKEY_free(pkey);
 out:
-#if OPENSSL_MAJOR_VERSION == 1
+#if OPENSSL_VERSION_MAJOR == 1
 	if(ctx) {
 		EVP_MD_CTX_destroy(ctx);
 	}
-#elif OPENSSL_MAJOR_VERSION == 3
+#elif OPENSSL_VERSION_MAJOR == 3
 	EVP_MD_CTX_free(ctx);
 	EVP_MD_free(sha256);
 #endif

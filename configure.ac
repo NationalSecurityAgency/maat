@@ -78,10 +78,6 @@ AC_PATH_PROG([GPERF], [gperf], [], [$PATH:/bin:/usr/bin:/usr/local/bin])
 AX_LIB_READLINE()
 
 AX_CHECK_OPENSSL([],[AC_MSG_ERROR([OpenSSL devel libs not installed])])
-XOPENSSL_MAJOR_VERSION=$(openssl version | awk '{print $2}' | awk -F'.' '{print $1}')
-AS_IF([test "x$OPENSSL_MAJOR_VERSION" = "x3"], 
-	[AC_DEFINE_UNQUOTED([OPENSSL_MAJOR_VERSION],[3],[The major version of openssl.])],
-	[AC_DEFINE_UNQUOTED([OPENSSL_MAJOR_VERSION],[1],[The major version of openssl.])])
 
 AC_SEARCH_LIBS([dlopen], [dl])
 

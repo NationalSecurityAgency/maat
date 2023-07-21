@@ -26,11 +26,12 @@
 #include <openssl/x509_vfy.h>
 #include <openssl/opensslv.h>
 
-#define OPENSSL_MAJOR ( OPENSSL_VERSION_NUMBER >> 28 )
-
 #ifndef __UTIL__SIGN_H__
 #define __UTIL__SIGN_H__
 
+#ifndef OPENSSL_VERSION_MAJOR
+#define OPENSSL_VERSION_MAJOR (OPENSSL_VERSION_NUMBER >> 28)
+#endif
 
 X509 *load_cert(const char* filename);
 int verify_cert(X509* cert, X509* cacert);

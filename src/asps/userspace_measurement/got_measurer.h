@@ -24,9 +24,9 @@
  * exposes the GOT measurements contained within the got_measurer.c
  * which check to make sure that the GOT and PLT have not been
  * subject to modification. Returns 0 if corruption is not detected
- * and -1 otherwise
- * TODO: differentiate between measurement failure and observation of
- * corruption?
+ * and -1 otherwise. The function also can return 1 if the target process
+ * cannot be measured due to permissions, memory problems, or other issues
+ * unrelated to the integrity of the measurement.
  */
 int measure_got(const uint32_t pid);
 

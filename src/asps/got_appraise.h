@@ -1,5 +1,3 @@
-#ifndef GOT_MEASURE_H
-#define GOT_MEASURE_H
 /*
  * Copyright 2023 United States Government
  *
@@ -18,14 +16,9 @@
  */
 
 /*! \file
- * ASP to find information about a process' GOT table and dynamic
- * linking data
+ * Appraise result from GOT measurer
  */
-
-#define ASP_NAME  "GOT Measure"
-
-#define GOT_PASS "PASS"
-#define GOT_FAIL "FAIL"
-#define GOT_UNC "UNKN"
-
+#ifdef ASP_NAME
+#undef ASP_NAME
+#define ASP_NAME        "got_appraise_asp"
 #endif

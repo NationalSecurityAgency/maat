@@ -316,6 +316,11 @@ got_measure_SOURCES = userspace_measurement/memory.c userspace_measurement/memor
 got_measure_LDADD = -lm
 endif
 
+if BUILD_got_appraise_ASP
+asp_PROGRAMS += got_appraise
+got_appraise_SOURCES = got_appraise.c got_appraise.h
+endif
+
 if BUILD_proc_namespaces_ASP
 suid_asp_PROGRAMS += proc_namespaces_asp
 proc_namespaces_asp_SOURCES = proc_namespaces_asp.c

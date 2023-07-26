@@ -66,7 +66,7 @@ int asp_exit(__attribute__((unused))int status)
 
 int asp_measure(int argc, char *argv[])
 {
-    int res = ASP_APB_SUCCESS;
+    int res = ASP_APB_SUCCESS, app_result;
     node_id_t node_id = 0;
     char *buf = "NONE";
     measurement_graph *graph = NULL;
@@ -76,6 +76,7 @@ int asp_measure(int argc, char *argv[])
     pid_address *pa = NULL;
 
     asp_loginfo("Measure GOT_Measure ASP\n");
+    dlog(0, "I am user: %lu with euid %lu and gid %lu\n", getuid(), geteuid(), getgid());
 
     if(argc != 3) {
         res = ASP_APB_ERROR_GENERIC;
@@ -103,11 +104,17 @@ int asp_measure(int argc, char *argv[])
 
     pa = (pid_address *)a;
 
-    if(measure_got(pa->pid)) {
-        buf = "FAIL";
+    app_result = measure_got(pa->pid);
+
+    if(app_result < 0) {
+        buf = GOT_FAIL;
+    } else if (app_result == 0) {
+        buf = GOT_PASS;
     } else {
-        buf = "PASS";
+        buf = GOT_UNC;
     }
+
+    dlog(4, "The result of measuring the GOT of process %"PRIu32" is %s\n", pa->pid, buf);
 
     if((data = alloc_measurement_data(&blob_measurement_type)) == NULL) {
         res = ASP_APB_ERROR_NOMEM;

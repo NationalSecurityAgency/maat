@@ -248,6 +248,7 @@ setsebool -P httpd_can_network_connect=off
 %attr(4755, -, -) %{_libexecdir}/maat/asps/procrootasp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/procopenfileasp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/got_measure
+%{_libexecdir}/maat/asps/got_appraise
 %attr(4755, -, -) %{_libexecdir}/maat/asps/split_asp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/merge_asp
 %{_libexecdir}/maat/asps/rpm_details_asp

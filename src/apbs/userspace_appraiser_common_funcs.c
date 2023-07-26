@@ -53,6 +53,7 @@
 #include <util/base64.h>
 #include <graph/graph-core.h>
 #include <common/asp.h>
+#include <common/asp-errno.h>
 
 #include "userspace_appraiser_common_funcs.h"
 
@@ -622,6 +623,9 @@ struct asp *select_appraisal_asp(node_id_t node UNUSED,
     if (measurement_type == MD5HASH_MAGIC) {
         return find_asp(apb_asps, "dpkg_check");
     }
+    if (measurement_type == BLOB_MEASUREMENT_TYPE_MAGIC) {
+        return find_asp(apb_asps, "got_appraise");
+    }
     return NULL;
 }
 
@@ -1017,10 +1021,13 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
 {
     node_id_str node_str;
     measurement_iterator *data_it;
+    struct address *addr;
 
     int appraisal_stat = 0;
 
     str_of_node_id(node, node_str);
+
+    addr = measurement_node_get_address(mg, node);
 
     // For every piece of data on the node
     for (data_it = measurement_node_iterate_data(mg, node);
@@ -1033,8 +1040,12 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
         sprintf(type_str, MAGIC_FMT, data_type);
         int ret = 0;
 
-        // Blob measurement type goes to subordinate APB
-        if(data_type == BLOB_MEASUREMENT_TYPE_MAGIC) {
+        // Blob measurement types that are embedded in a measurement request
+        // represent an embedded measurement subgraph that should be handled by
+        // a subordinate APB
+        if(data_type == BLOB_MEASUREMENT_TYPE_MAGIC &&
+            (addr->space == &measurement_request_address_space ||
+             addr->space == &dynamic_measurement_request_address_space)) {
 
             struct apb *sub_apb = NULL;
             uuid_t mspec;
@@ -1043,20 +1054,20 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
             if(ret != 0) {
                 dlog(2, "Warning: Failed to find subordinate APB for node\n");
                 ret = 0;
-                //ret = -1; // not a failure at this point - don't have sub APBs for all
+                //ret = -1; // not a failure at this point - don't have sub APBs for all measurements yet
             } else {
                 ret = pass_to_subordinate_apb(mg, scen, node, sub_apb, mspec);
                 dlog(4, "Result from subordinate APB %d\n", ret);
             }
 
-            // Everything else goes to an ASP
+        // Everything else goes to some ASP for appraisal
         } else {
             struct asp *appraiser_asp = NULL;
             appraiser_asp = select_appraisal_asp(node, data_type, apb_asps);
             if(!appraiser_asp) {
                 dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", type_str);
                 ret = 0;
-                //ret = -1; // not a failure at this point - don't have sub ASPs for all yet
+                //ret = -1; // not a failure at this point - don't have sub ASPs for all measurements yet
             } else {
                 dlog(4, "appraiser_asp == %p (%p %d)\n", appraiser_asp, apb_asps,
                      g_list_length(apb_asps));
@@ -1071,12 +1082,19 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
                   out errors of execution from failures of appraisal.
                 */
                 ret = run_asp(appraiser_asp, -1, -1, false, 3, asp_argv,-1);
-                dlog(5, "Result from appraiser ASP %d\n", ret);
+                dlog(0, "Result from appraiser ASP %d %d\n", ret, -1 * ret);
+            }
+
+            /*
+             * For now, we are treating undefined results as
+             * a 'non-failure' and appraisal ASP execution errors as failures.
+             * We may revisit this behavior in the future
+             */
+            if (ret != 0 && ret != ASP_APB_UNDEF_RESULT) {
+                appraisal_stat++;
             }
         }
-        if(ret != 0) {
-            appraisal_stat++;
-        }
+
         /* also run whitelist asp if datatype is process or package */
         struct asp *whitelist_appraiser_asp = NULL;
         ret = 0;
@@ -1103,11 +1121,13 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
                 ret = run_asp(whitelist_appraiser_asp, -1, -1, false, 3, asp_argv,-1);
                 dlog(5, "Result from whitelist appraiser ASP %d\n", ret);
             }
-        }
-        if(ret != 0) {
-            appraisal_stat++;
+
+            if(ret != 0) {
+                appraisal_stat++;
+            }
         }
     }
+
     return appraisal_stat;
 }
 

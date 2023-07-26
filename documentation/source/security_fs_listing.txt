@@ -714,6 +714,8 @@ state) should be installed with appropriate ownership, and their SUID or SGID bi
 +------------+------+-------+----------------------------------------------------------+----------------------------------------+
 |-rwsr-xr-x. |root  |root   |system_u:object_r:got_measure_asp_exe_t:s0                |got_measure                             |
 +------------+------+-------+----------------------------------------------------------+----------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:got_appraise_asp_exe_t:s0               |got_appraise                            |
++------------+------+-------+----------------------------------------------------------+----------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:hash_file_service_asp_exe_t:s0          |hashfileserviceasp                      |
 +------------+------+-------+----------------------------------------------------------+----------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:hash_service_asp_exe_t:s0               |hashserviceasp                          |
@@ -1006,6 +1008,8 @@ directory and its contents world readable (chmod 0755 for the directory, chmod 0
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |elf_reader.xml                          |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |got_measure.xml                         |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |got_appraise.xml                        |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |hashfileserviceasp.xml                  |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+

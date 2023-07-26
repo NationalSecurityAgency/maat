@@ -24,7 +24,7 @@
 	<inputdescription>
         This ASP takes as input a PID of some running process. The ASP will examine the GOT of the running process as well as other data associated with dynamic linking to determine if corrupution has occurred or if there have been modifications versus the on disk ELF information</inputdescription>
         <outputdescription>
-	This ASP produces a pass/fail output as to whether the GOT is free of corruption. The ASP writes either PASS or FAIL into a blob measurement space </outputdescription>
+	This ASP produces a pass/fail output as to whether the GOT is free of corruption. The ASP writes either PASS or FAIL into a blob measurement space. If the measurement cannot be taken, then the ASP writes an UNKN into the blob measurement space, to indicate an unsure outcome. </outputdescription>
         <seealso>
         http://man7.org/linux/man-pages/man5/elf.5.html</seealso>
 	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/got_measure</aspfile>
@@ -40,6 +40,6 @@
 	  <selinux><type>got_measure_asp_t</type></selinux>
 	  <user>${MAAT_USER}</user>
 	  <group>${MAAT_GROUP}</group>
-	  <capabilities>cap_sys_ptrace+ep cap_dac_override+ep</capabilities>
+      <capabilities>cap_sys_ptrace+ep cap_dac_override+ep</capabilities>
 	</security_context>
 </asp>

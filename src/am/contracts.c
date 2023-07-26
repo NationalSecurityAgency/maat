@@ -595,8 +595,11 @@ int handle_initial_contract(struct attestation_manager *manager,
                 opt = parse_option_node(obj->nodesetval->nodeTab[i]);
                 if(am_parse_copland(manager, opt, &parsed_option) < 0) {
                     dlog(1, "Unable to parse phrase \"%s\" from option into Copland phrase struct\n", opt);
+                    if (opt != NULL) free(opt);
                     continue;
                 }
+
+                if (opt != NULL) free(opt);
 
                 options = g_list_append(options, parsed_option);
                 xmlUnlinkNode(obj->nodesetval->nodeTab[i]);

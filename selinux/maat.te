@@ -851,6 +851,11 @@ domain_getattr_all_domains(got_measure_asp_t)
 domain_search_all_domains_state(got_measure_asp_t)
 domain_read_all_domains_state(got_measure_asp_t)
 
+# GOT Appraise ASP
+type got_appraise_asp_t;
+type got_appraise_asp_exe_t;
+define_asp(got_appraise_asp_t, got_appraise_asp_exe_t)
+
 # Passport Maker ASP
 type passport_maker_asp_t;
 type passport_maker_asp_exe_t;

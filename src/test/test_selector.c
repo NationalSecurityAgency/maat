@@ -538,7 +538,7 @@ START_TEST (test_attr_in)
     i = attr_in(condition, attrs, collections);
     fail_unless(i == 1, "Should find matching attr in coll");
 
-    free_collections(collections);
+    g_list_free_full(collections, &free_collection);
     free(condition);
     g_list_free_full(attrs, free);
 }

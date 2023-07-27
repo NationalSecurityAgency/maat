@@ -578,4 +578,7 @@ void free_am_config_data(am_config *cfg)
     xmlFree(cfg->apb_metadata_dir);
     xmlFree(cfg->mspec_dir);
     xmlFree(cfg->workdir);
+    xmlFree(cfg->tpmpass);
+    xmlFree(cfg->akctx);
+    xmlFree(cfg->akpubkey);
 }

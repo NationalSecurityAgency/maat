@@ -302,7 +302,7 @@ setsebool -P httpd_can_network_connect=off
 %{_datadir}/selinux/targeted/maat.pp
 
 %changelog
-* Mon Feb 28 2022 Maat Developers <APL_Maat_Developers@listserv.jhuapl.edu> 1.3-1
+* Mon Feb 28 2022 Maat Developers <APL-Maat-Developers@jhuapl.edu> 1.3-1
 - Carry nonce through scenarios with multiple negotiations
 - Add sequence diagram based user interface for observing attestation manager interactions
 - Add Passport use case demonstration 
@@ -310,6 +310,6 @@ setsebool -P httpd_can_network_connect=off
 - Add CentOS 8 support
 - Add notion of Copland 'place' to selection/negotiation policy
 
-* Thu Mar 12 2020 Maat Developers <APL_Maat_Developers@listserv.jhuapl.edu> 1.2-1
+* Thu Mar 12 2020 Maat Developers <APL-Maat-Developers@jhuapl.edu> 1.2-1
 - Initial Open Source Release
 

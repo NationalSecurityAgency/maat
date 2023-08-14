@@ -1082,7 +1082,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
                   out errors of execution from failures of appraisal.
                 */
                 ret = run_asp(appraiser_asp, -1, -1, false, 3, asp_argv,-1);
-                dlog(0, "Result from appraiser ASP %d %d\n", ret, -1 * ret);
+                dlog(4, "Result from appraiser ASP %d\n", ret);
             }
 
             /*

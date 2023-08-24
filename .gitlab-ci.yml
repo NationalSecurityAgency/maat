@@ -75,7 +75,7 @@ default:
 .deb_build: &deb_build
   - /usr/bin/pbuilder-dist ${release} ${arch} create
   - /usr/bin/pbuilder-dist ${release} ${arch} update # is this necessary?
-  - ../configure --prefix=/usr --disable-selinux --disable-tpm
+  - ../configure --prefix=/usr --disable-selinux
   - make dist
   - mkdir staging
   - cp maat-*.tar.gz staging
@@ -181,6 +181,15 @@ build-ubuntu22:
     - ubuntu22
   script:
     - *build_no_selinux_no_tpm
+
+# build without selinux with TPM for ubuntu22
+build-ubuntu22-tpm:
+  stage: build
+  tags:
+    - ubuntu22
+    - tpm
+  script:
+    - *build_no_selinux
 
 # build without selinux for rhel7
 build-rhel7-no-selinux:
@@ -338,6 +347,25 @@ test-ubuntu22-basic:
         path: build/coverage.xml
     when: always
 
+# regular make check tests on ubuntu22 with TPM
+test-ubuntu22-basic-tpm:
+  stage: test
+  tags:
+    - ubuntu22
+    - tpm
+  script:
+    - *test_no_selinux
+  coverage: /^\s*lines:\s*\d+.\d+\%/
+  artifacts:
+    paths:
+      - build/src/test/*.log
+    expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
+    when: always
+
 # make check tests with address sanitizer on ubuntu22
 test-ubuntu22-asan:
   stage: test
@@ -345,6 +373,25 @@ test-ubuntu22-asan:
     - ubuntu22
   script:
     - *test_asan_no_tpm
+  coverage: /^\s*lines:\s*\d+.\d+\%/
+  artifacts:
+    paths:
+      - build/src/test/*.log
+    expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
+    when: always
+
+# make check tests with address sanitizer on ubuntu22
+test-ubuntu22-asan-tpm:
+  stage: test
+  tags:
+    - ubuntu22
+    - tpm
+  script:
+    - *test_asan
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
@@ -752,6 +799,83 @@ system-test-ubuntu20-fail-tpm:
   dependencies: []
   variables:
     release: focal
+    arch: amd64
+  before_script:
+    - "sudo killall -15 attestmgr || true"
+    - "sudo killall -9 attestmgr || true"
+  script:
+    - echo -n "deb [allow-insecure=yes] http://$ARCHIVE_HOST/deb/maat-$CI_COMMIT_SHORT_SHA/ubuntu ${release} multiverse" > maat.list
+    - sudo cp maat.list /etc/apt/sources.list.d/
+    - sudo apt-get --allow-unauthenticated update
+    - sudo apt-get --allow-unauthenticated -y --reinstall install maat
+    - export TPM2TOOLS_TCTI=tabrmd && tpm2_createek -c demo/credentials/ek.handle && tpm2_createak -C demo/credentials/ek.handle -c demo/credentials/ak.ctx -u demo/credentials/akpub.pem -f pem -p maatpass 
+    - sudo cp demo/credentials/ak* /etc/maat/credentials/
+    - sudo cp demo/credentials/client.* /etc/maat/credentials/
+    - echo "ubuntu-session 3.36.0-2ubuntu1 amd64" | sudo tee -a /usr/share/maat/asps/package.blacklist
+    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml -T 1 -v 1 &
+    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml -T 1 -v 1 &
+    - sleep 10
+    - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r packages | tee test_client.log || true"
+    - "kill %2 || true"
+    - "kill %1 || true"
+    - "sudo rm -f /etc/maat/credentials/ak*"
+    - "sudo rm -f /etc/maat/credentials/client.*"
+    - "if ! grep FAIL test_client.log ; then echo 'Did not find FAIL!' ; exit 1 ; fi"
+  after_script:
+    - sudo truncate -s 0 /usr/share/maat/asps/package.blacklist
+  artifacts:
+    paths:
+      - test_client.log
+    expire_in: 2 weeks
+
+# system test on ubuntu22
+system-test-ubuntu22-tpm:
+  stage: systemtest
+  tags:
+    - ubuntu22
+    - tpm
+  inherit:
+    default: false
+  dependencies: []
+  variables:
+    release: jammy
+    arch: amd64
+  before_script:
+    - "sudo killall -15 attestmgr || true"
+    - "sudo killall -9 attestmgr || true"
+  script:
+    - echo -n "deb [allow-insecure=yes] http://$ARCHIVE_HOST/deb/maat-$CI_COMMIT_SHORT_SHA/ubuntu ${release} multiverse" > maat.list
+    - sudo cp maat.list /etc/apt/sources.list.d/
+    - sudo apt-get --allow-unauthenticated update
+    - sudo apt-get --allow-unauthenticated -y --reinstall install maat
+    - export TPM2TOOLS_TCTI=tabrmd && tpm2_createek -c demo/credentials/ek.handle && tpm2_createak -C demo/credentials/ek.handle -c demo/credentials/ak.ctx -u demo/credentials/akpub.pem -f pem -p maatpass 
+    - sudo cp demo/credentials/ak* /etc/maat/credentials/
+    - sudo cp demo/credentials/client.* /etc/maat/credentials/
+    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml -T 1 -v 1 &
+    - LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml -T 1 -v 1 &
+    - sleep 10
+    - "/usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r processes | tee test_client.log || true"
+    - "kill %2 || true"
+    - "kill %1 || true"
+    - sudo rm -f /etc/maat/credentials/ak*
+    - sudo rm -f /etc/maat/credentials/client.*
+    - "if ! grep PASS test_client.log ; then echo 'Did not find PASS!' ; exit 1 ; fi"
+  artifacts:
+    paths:
+      - test_client.log
+    expire_in: 2 weeks
+
+# system test on ubunt22 that is expected to fail
+system-test-ubuntu22-fail-tpm:
+  stage: systemtest
+  tags:
+    - ubuntu22
+    - tpm
+  inherit:
+    default: false
+  dependencies: []
+  variables:
+    release: jammy
     arch: amd64
   before_script:
     - "sudo killall -15 attestmgr || true"

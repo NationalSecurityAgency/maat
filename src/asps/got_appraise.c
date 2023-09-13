@@ -65,7 +65,7 @@ int asp_measure(int argc, char *argv[])
     int ret_val = ASP_APB_SUCCESS;
     node_id_t node_id;
     magic_t data_type;
-    uint32_t pid;
+    char *response;
     measurement_graph *graph;
     address *address;
     measurement_data *data;
@@ -110,32 +110,34 @@ int asp_measure(int argc, char *argv[])
     }
 
     blob = container_of(data, blob_data, d);
+    /* Cast is justified because the signedness of the buffer contents is irrelevant to its use */
+    response = (char *)blob->buffer;
 
-    asp_logdebug("GOT appraise result %s for PID %"PRIu32"\n", blob->buffer, ((pid_address *)address)->pid);
+    asp_logdebug("GOT appraise result %s for PID %"PRIu32"\n", response, ((pid_address *)address)->pid);
 
-    if (strcmp(blob->buffer, GOT_PASS) == 0) {
+    if (strcmp(response, GOT_PASS) == 0) {
         rmd = report_data_with_level_and_text(
-                      REPORT_INFO,
-                      strdup("GOT Check Passed"),
-                      strlen("GOT Check Passed")+1);
+                  REPORT_INFO,
+                  strdup("GOT Check Passed"),
+                  strlen("GOT Check Passed")+1);
         ret_val = ASP_APB_SUCCESS;
-    } else if (strcmp(blob->buffer, GOT_FAIL) == 0) {
+    } else if (strcmp(response, GOT_FAIL) == 0) {
         rmd = report_data_with_level_and_text(
-                      REPORT_ERROR,
-                      strdup("GOT Check FAILED"),
-                      strlen("GOT Check FAILED")+1);
+                  REPORT_ERROR,
+                  strdup("GOT Check FAILED"),
+                  strlen("GOT Check FAILED")+1);
         ret_val = ASP_APB_ERROR_GENERIC;
-    } else if (strcmp(blob->buffer, GOT_UNC) == 0) {
+    } else if (strcmp(response, GOT_UNC) == 0) {
         rmd = report_data_with_level_and_text(
-                      REPORT_WARNING,
-                      strdup("GOT Check not taken"),
-                      strlen("Got Check not taken")+1);
+                  REPORT_WARNING,
+                  strdup("GOT Check not taken"),
+                  strlen("Got Check not taken")+1);
         ret_val = ASP_APB_UNDEF_RESULT;
     } else {
         rmd = report_data_with_level_and_text(
-                      REPORT_ERROR,
-                      strdup("Invalid GOT result"),
-                      strlen("Invalid GOT result")+1);
+                  REPORT_ERROR,
+                  strdup("Invalid GOT result"),
+                  strlen("Invalid GOT result")+1);
         ret_val = ASP_APB_ERROR_UNEXPECTEDMESSAGE;
     }
 

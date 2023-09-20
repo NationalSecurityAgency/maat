@@ -257,9 +257,12 @@ int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
         fprintf(stderr,"Error sign_xml: Could not generate sig.\n");
         goto out;
     }
-
     xmlFree(buf);
-
+    fprintf(stderr, "THIS IS MY SIG prior to encode: ");
+    for (int i = 0; i<strlen(signature); i++ ){
+        fprintf(stderr, "%u ", *(signature+i));
+    }
+    fprintf(stderr, "\n");
     b64sig = b64_encode(signature, size);
     free(signature);
     if (!b64sig) {
@@ -404,6 +407,10 @@ get_sig:
     }
 
     signature = b64_decode(b64sig, &sigsize);
+    fprintf(stderr, "THIS IS MY SIG after to decode: ");
+    for (int i = 0; i<strlen(signature); i++ ){
+        fprintf(stderr, "%u ", *(signature+i));
+    }
     if (!signature) {
         fprintf(stderr, "Error verify_xml: could not decode sig.\n");
         xmlFree(b64sig);

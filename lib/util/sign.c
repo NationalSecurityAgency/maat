@@ -34,6 +34,7 @@
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/rsa.h>
 #include <openssl/opensslv.h>
 #include <openssl/pem.h>
 #include <openssl/engine.h>
@@ -75,8 +76,9 @@ unsigned char *sign_buffer_openssl(const unsigned char *buf, unsigned int *size,
     int ret;
     int testsize = 256;
 
-    dlog(0, "I AM GOING TO SIGN THIS BUFFER: %s\n\n", buf);
+    dlog(0, "I AM GOING TO SIGN THIS BUFFER: %s\n", buf);
     dlog(0, "THIS BUFFER IS OF SIZE: %zd\n", strlen(buf));
+    dlog(0, "THIS BUFFER IS SIZEOF %zd\n", sizeof(buf));
 
     signature = NULL;
     keyfd = fopen(keyfile, "r");
@@ -159,8 +161,10 @@ unsigned char *sign_buffer_openssl(const unsigned char *buf, unsigned int *size,
 		EVP_PKEY_free(pkey);
 		return signature;
 	}
-	fprintf(stderr, "DigestSignUpdate: %i\n", sizeof(buf));
-	if (!EVP_DigestSignUpdate(ctx, buf, sizeof(buf))) {
+	fprintf(stderr, "DigestSignUpdate sizeof(buf): %zd\n", sizeof(buf));
+	fprintf(stderr, "DigestSignUpdate strlen(buf): %zd\n", strlen(buf));
+	fprintf(stderr, "DigestSignUpdate size: %zd\n", *size);
+	if (!EVP_DigestSignUpdate(ctx, buf, *size)){/* sizeof(buf))) { */
 		ERR_print_errors_fp(stderr);
 		free(signature);
 		signature = NULL;
@@ -171,7 +175,7 @@ unsigned char *sign_buffer_openssl(const unsigned char *buf, unsigned int *size,
 		return signature;
 	}
 	fprintf(stderr, "DigestSignFinal: %i\n", &size);
-	if (!EVP_DigestSignFinal(ctx, signature, &size)) {
+	if (!EVP_DigestSignFinal(ctx, signature, (size_t*)size)) {
 		ERR_print_errors_fp(stderr);
 		free(signature);
 		signature = NULL;
@@ -181,6 +185,7 @@ unsigned char *sign_buffer_openssl(const unsigned char *buf, unsigned int *size,
 		EVP_PKEY_free(pkey);
 		return signature;
 	}
+	fprintf(stderr, "SIG SIZE %u\n", *size);
 	BIO_dump_fp(stderr, signature, size);
 #else
 	dlog(1, "Unsupported OpenSSL version");
@@ -318,17 +323,56 @@ int verify_sig(const unsigned char *buf, size_t size, const unsigned char *sig,
 
 	sha256 = EVP_MD_fetch(NULL, "SHA256", NULL);
 	if(EVP_DigestVerifyInit(ctx, &pctx, sha256, NULL, pkey) != 1) {
+		dlog(0, "return code VerifyInit %d\n", rc);
 		ERR_print_errors_fp(stderr);
 		rc = -1;
 		goto out_pkey;
 	}
-	if (EVP_DigestVerifyUpdate(ctx, buf, size) != 1) {
-		ERR_print_errors_fp(stderr);
-		rc = -1;
-		goto out_pkey;
-	}
-	rc = EVP_DigestVerifyFinal(ctx, sig, (unsigned int) sigsize);
+	/* adding key verification step */
+	rc = EVP_PKEY_verify_init(pctx);
 	if (rc != 1) {
+		dlog(0, "return code PKEY_verify_init %d\n", rc);
+		ERR_print_errors_fp(stderr);
+		rc = -1;
+		goto out_pkey;
+	}
+	rc = EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PADDING);
+	if (rc <= 0){
+		dlog(0, "return code PKEY_CTX_set_rsa_padding %d\n", rc);
+		ERR_print_errors_fp(stderr);
+		rc = -1;
+		goto out_pkey;
+	}
+	rc =EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha256());
+ 	if ( rc <= 0){
+		dlog(0, "return code PKEY_CTX_set_signature_md %d\n", rc);
+		ERR_print_errors_fp(stderr);
+		rc = -1;
+		goto out_pkey;
+	}
+	dlog(0, "BUFFER %s\n", buf);
+	dlog(0, "BUFFER SIZE %zd\n", size);
+	dlog(0, "SIG SIZE %u\n", sigsize);
+ 	rc = EVP_PKEY_verify(pctx,
+                     sig, sigsize,
+                     buf, size);
+	if (rc != 1) {
+		dlog(0, "return code PKEY_verify %d\n", rc);
+		ERR_print_errors_fp(stderr);
+		rc = -1;
+		goto out_pkey;
+	}
+	/* end key verification step */
+	rc = EVP_DigestVerifyUpdate(ctx, buf, size);
+	if (rc != 1) {
+		dlog(0, "return code VerifyUpdate %d\n", rc);
+		ERR_print_errors_fp(stderr);
+		rc = -1;
+		goto out_pkey;
+	}
+	rc = EVP_DigestVerifyFinal(ctx, sig, sigsize);
+	if (rc != 1) {
+		dlog(0, "return code VerifyFinal %d\n", rc);
 		ERR_print_errors_fp(stdout);
 	}
 #else

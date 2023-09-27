@@ -103,7 +103,7 @@ char *construct_cert_filename(const char *prefix, xmlNode *root)
     size_t size;
 
     /* find signature element */
-    for (sig = root->children; sig; sig = sig->next) {
+    for (sig = root->children; sig != NULL; sig = sig->next) {
         char *signame = validate_cstring_ascii(sig->name, SIZE_MAX);
 
         if (signame != NULL && strcasecmp(signame, "signature") == 0) {
@@ -155,8 +155,11 @@ char *construct_cert_filename(const char *prefix, xmlNode *root)
  * key file.  Add a signature node to the document at the as a child of the
  * given root node.
  */
-int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
-             const char *privkey_file, const char *privkey_pass,
+int sign_xml(xmlDoc *doc,
+             xmlNode *root,
+             const char *certid,
+             const char *privkey_file,
+             const char *privkey_pass,
 #ifdef USE_TPM
              const char* nonce,
              const char* tpm_password,
@@ -168,44 +171,61 @@ int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
 #endif
              int flags)
 {
-    xmlNode *sig;
+    xmlNode *sigNode;
     xmlNode *sigval;
     xmlDoc *tmpdoc;
-    unsigned char *buf;
+    unsigned char *buf = NULL;
     int size_int;
     unsigned int size;
     unsigned char *signature;
+    size_t signatureLen = 0;
     char *b64sig;
 
     /* Prevents segfaults in weird situations, but is it really needed? */
     if (!root || !doc)
         return -1;
 
-    sig = signature_node(certid, flags);
-    if(!sig) {
+    sigNode = signature_node(certid, flags);
+    if(!sigNode) {
         dlog(1, "Failed to create signature node\n");
         return -1;
     }
 
-    xmlAddChild(root, sig);
+    xmlAddChild(root, sigNode);
 
     tmpdoc = xmlNewDoc((xmlChar*)"1.0");
     xmlDocSetRootElement(tmpdoc, xmlCopyNode(root, 1));
 
     /* dump doc into an unformatted string */
-    size_int = xmlC14NDocDumpMemory(tmpdoc, NULL, XML_C14N_1_0,
-                                    NULL, 0, &buf);
-    size_int = size_int -1; /* we want strlen not buffer size */
+    size_int = xmlC14NDocDumpMemory(tmpdoc,
+                                    NULL,
+                                    XML_C14N_1_0,
+                                    NULL,
+                                    0,
+                                    &buf);
+    //size_int = size_int - 1; /* we want strlen not buffer size */
+    
+    fprintf(stderr, "Got buf = 0x%08x, length = %d (strlen is %lu)\n", buf, size_int, strlen(buf));
 
-    if(size_int < 0 || buf==NULL) {
+    if(size_int < 0 || buf == NULL) {
         dlog(1, "Failed to get canonicalized contract\n");
         goto out;
     }
     size = (unsigned int) size_int;
 
-    if (flags & SIGNATURE_OPENSSL)
-        signature = sign_buffer_openssl(buf, &size, privkey_file,
-                                        privkey_pass);
+    if (flags & SIGNATURE_OPENSSL) {
+        fprintf(stderr, "Calling sign_buffer_openssl(0x%08x,%u,%s,%s, %lu)\n", (unsigned int)buf, size, privkey_file, privkey_pass, signatureLen);
+        signature = sign_buffer_openssl(buf,
+                                        size,
+                                        privkey_file,
+                                        privkey_pass,
+                                        &signatureLen);
+        if(signature != NULL) {
+            fprintf(stderr, "Got signature from sign_buffer_openssl(0x%08x,%u,%s,%s, %lu)\n", (unsigned int)buf, size, privkey_file, privkey_pass, signatureLen);
+        } else {
+            fprintf(stderr, "Got NULL signature from sign_buffer_openssl()\n");
+        }
+    }
     else if (flags & SIGNATURE_TPM) {
 #ifdef USE_TPM
         dlog(6, "Using TPM to sign.\n");
@@ -226,10 +246,17 @@ int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
             goto out;
         }
 
+<<<<<<< HEAD
         for (quoteval = sig->children; quoteval; quoteval=quoteval->next) {
             char *quotevalname = validate_cstring_ascii(quoteval->name, SIZE_MAX);
             if (quotevalname != NULL && strcasecmp(quotevalname, "tpmquotevalue") == 0)
                 break;
+=======
+        for (quoteval = sigNode->children; quoteval; quoteval=quoteval->next) {
+        char *quotevalname = validate_cstring_ascii(quoteval->name, SIZE_MAX);
+        if (quotevalname != NULL && strcasecmp(quotevalname, "tpmquotevalue") == 0)
+        break;
+>>>>>>> Commit of signature generation & verification fixes.
         }
         xmlNodeAddContent(quoteval, (xmlChar*)b64quote);
         b64_free(b64quote);
@@ -242,10 +269,18 @@ int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
         memcpy(signature, sig_quote->signature, size);
         free(sig_quote->signature);
 #else
-        dlog(4, "WARNING: TPM support disabled at compile time, "
-             "using OPENSSL\n");
-        signature = sign_buffer_openssl(buf, &size, privkey_file,
-                                        privkey_pass);
+        dlog(4, "WARNING: TPM support disabled at compile time, using OPENSSL\n");
+        fprintf(stderr, "Calling sign_buffer_openssl(0x%08x,%u,%s,%s, %lu)\n", (unsigned int)buf, size, privkey_file, privkey_pass, signatureLen);
+        signature = sign_buffer_openssl(buf,
+                                        size,
+                                        privkey_file,
+                                        privkey_pass,
+                                        &signatureLen);
+        if(signature != NULL) {
+            fprintf(stderr, "Got signature from sign_buffer_openssl(0x%08x,%u,%s,%s, %lu)\n", (unsigned int)buf, size, privkey_file, privkey_pass, signatureLen);
+        } else {
+            fprintf(stderr, "Got NULL signature from sign_buffer_openssl()\n");
+        }                                        
 #endif
     } else {
         fprintf(stderr, "Error sign_xml: Unsupported signature (%d)\n",
@@ -257,20 +292,25 @@ int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
         fprintf(stderr,"Error sign_xml: Could not generate sig.\n");
         goto out;
     }
-    xmlFree(buf);
-    fprintf(stderr, "THIS IS MY SIG prior to encode: ");
-    for (int i = 0; i<strlen(signature); i++ ){
-        fprintf(stderr, "%u ", *(signature+i));
+    fprintf(stderr, "Freeing buf (0x%08x) with call to xmlFree()...\n", (unsigned int)buf);
+    //xmlFree(buf);
+    fprintf(stderr, "Call to xmlFree() done\n");
+    fprintf(stderr, "THIS IS MY SIG (length=%lu) prior to encode:\n", signatureLen);
+    for (int i = 0; i < signatureLen; i++ ) {
+        fprintf(stderr, "%02x ", *(signature + i));
     }
     fprintf(stderr, "\n");
-    b64sig = b64_encode(signature, size);
+    b64sig = b64_encode(signature, signatureLen);
     free(signature);
     if (!b64sig) {
         fprintf(stderr, "Error sign_xml: base64 encode sig.\n");
         goto out;
     }
+    fprintf(stderr, "THIS IS MY SIG after encoding:\n");
+    fprintf(stderr, "%s", b64sig);
+    fprintf(stderr, "\n");
 
-    for (sigval = sig->children; sigval; sigval=sigval->next) {
+    for (sigval = sigNode->children; sigval != NULL; sigval = sigval->next) {
         char *sigvalname = validate_cstring_ascii(sigval->name, SIZE_MAX);
         if (sigvalname != NULL && strcasecmp(sigvalname, "signaturevalue") == 0)
             break;
@@ -278,7 +318,6 @@ int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
 
     xmlNodeAddContent(sigval, (xmlChar*)b64sig);
     b64_free(b64sig);
-
 
     xmlFreeDoc(tmpdoc);
 
@@ -293,23 +332,32 @@ out:
 /*
  * Given an XML doc and root node, verify the signature of the root element
  */
-int verify_xml(xmlDoc *doc, xmlNode *root, const char *prefix,
-               const char* nonce,
+int verify_xml(xmlDoc *doc,
+               xmlNode *root,
+               const char *prefix,
+               const char *nonce,
 #ifdef USE_TPM
                const char *akpubkey,
 #else
                const char *akpubkey UNUSED,
 #endif
-               int flags, const char *cacertfile)
+               int flags,
+               const char *cacertfile)
 {
-    xmlNode *sig;
-    xmlNode *sigval;
+    xmlNode *sigNode;
+    xmlNode *sigvalNode;
     xmlDoc *tmpdoc;
     xmlNode *newroot;
     char *b64sig;
+<<<<<<< HEAD
     unsigned char *signature, *buf;
     size_t sigsize;
     int size;
+=======
+    unsigned char *signature, *tpmquote, *buf;
+    size_t sigsize, quotesize;
+    int buflen;
+>>>>>>> Commit of signature generation & verification fixes.
     int ret = 0;
     char *certfile = NULL;
 
@@ -332,13 +380,14 @@ int verify_xml(xmlDoc *doc, xmlNode *root, const char *prefix,
     xmlDocSetRootElement(tmpdoc, newroot);
 
     /* find signature element */
-    for (sig = newroot->children; sig; sig = sig->next) {
-        char *signame = validate_cstring_ascii(sig->name, SIZE_MAX);
+    for (sigNode = newroot->children; sigNode != NULL; sigNode = sigNode->next) {
+        char *signame = validate_cstring_ascii(sigNode->name, SIZE_MAX);
+        //fprintf(stderr, "Looking at node '%s'\n", signame);
         if (signame != NULL && strcasecmp(signame, "signature") == 0)
             break;
     }
 
-    if (!sig) {
+    if (!sigNode) {
         fprintf(stderr, "Error xml_verify: No xml Signature node.\n");
         goto out;
     }
@@ -355,7 +404,7 @@ int verify_xml(xmlDoc *doc, xmlNode *root, const char *prefix,
         char *b64quote;
 
         /* Find quote value within that element */
-        for (quoteval = sig->children; quoteval; quoteval=quoteval->next) {
+        for (quoteval = sigNode->children; quoteval; quoteval=quoteval->next) {
             char *quotevalname = validate_cstring_ascii(quoteval->name, SIZE_MAX);
             if (quotevalname != NULL && strcasecmp(quotevalname, "tpmquotevalue") == 0)
                 break;
@@ -389,28 +438,32 @@ get_sig:
     }
 
     /* Find signature value within that element */
-    for (sigval = sig->children; sigval; sigval=sigval->next) {
-        char *sigvalname = validate_cstring_ascii(sigval->name, SIZE_MAX);
+    for (sigvalNode = sigNode->children; sigvalNode != NULL; sigvalNode = sigvalNode->next) {
+        char *sigvalname = validate_cstring_ascii(sigvalNode->name, SIZE_MAX);
         if (sigvalname != NULL && strcasecmp(sigvalname, "signaturevalue") == 0)
             break;
     }
 
-    if (!sigval) {
+    if (!sigvalNode) {
         fprintf(stderr, "Error verify_xml: No xml Signature node.\n");
         goto out;
     }
 
-    b64sig = xmlNodeGetContentASCII(sigval);
+    b64sig = xmlNodeGetContentASCII(sigvalNode);
     if (!b64sig) {
         fprintf(stderr, "Error verify_xml: empty signature value.\n");
         goto out;
     }
 
+    //fprintf(stderr, "Retrieved signature (%lu bytes):\n%s\n", strlen(b64sig), b64sig);
+
     signature = b64_decode(b64sig, &sigsize);
-    fprintf(stderr, "THIS IS MY SIG after to decode: ");
-    for (int i = 0; i<strlen(signature); i++ ){
-        fprintf(stderr, "%u ", *(signature+i));
+    //fprintf(stderr, "THIS IS MY SIG (%lu bytes) after decode:\n", sigsize);
+    for (int i = 0; i < sigsize; i++ ){
+        fprintf(stderr, "%02x ", *(signature + i));
     }
+    fprintf(stderr, "\n");
+
     if (!signature) {
         fprintf(stderr, "Error verify_xml: could not decode sig.\n");
         xmlFree(b64sig);
@@ -419,14 +472,18 @@ get_sig:
     xmlFree(b64sig);
 
     /* remove the signature from the doc */
-    xmlNodeSetContent(sigval, NULL);
-    size = xmlC14NDocDumpMemory(tmpdoc, NULL, XML_C14N_1_0,
-                                NULL, 0, &buf);
-    if(size < 0 || buf == NULL) {
+    xmlNodeSetContent(sigvalNode, NULL);
+    buflen = xmlC14NDocDumpMemory(tmpdoc,
+                                  NULL,
+                                  XML_C14N_1_0,
+                                  NULL,
+                                  0,
+                                  &buf);
+    if(buflen < 0 || buf == NULL) {
         fprintf(stderr, "Error verify_xml: failed to dump canonicalized document.\n");
         goto out;
     }
-    size = size -1; /* we want strlen not buffer size */
+    //buflen = buflen - 1; /* we want strlen not buffer size */
 
     /* Evaluate nonce if one is provided */
     char *contract_nonce = NULL;
@@ -455,8 +512,12 @@ get_sig:
     }
 
     if (flags & SIGNATURE_OPENSSL) {
-        ret = verify_buffer_openssl(buf, (size_t)size, signature, sigsize,
-                                    certfile, cacertfile);
+        ret = verify_buffer_openssl(buf,
+                                    (size_t)buflen,
+                                    signature,
+                                    sigsize,
+                                    certfile,
+                                    cacertfile);
     } else if (flags & SIGNATURE_TPM)  {
 #ifdef USE_TPM
         dlog(6, "Using TPM to verify.\n");
@@ -469,8 +530,12 @@ get_sig:
 #else
         dlog(4,"WARNING: TPM support disabled at compile time"
              "using OPENSSL\n");
-        ret = verify_buffer_openssl(buf, (size_t) size, signature, sigsize,
-                                    certfile, cacertfile);
+        ret = verify_buffer_openssl(buf,
+                                    (size_t)buflen,
+                                    signature,
+                                    sigsize,
+                                    certfile,
+                                    cacertfile);
 #endif
     }
 

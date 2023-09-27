@@ -38,9 +38,16 @@ int verify_cert(X509* cert, X509* cacert);
 int verify_sig(const unsigned char *buf, size_t size, const unsigned char *sig,
                size_t sigsize, X509 *cert);
 
-unsigned char *sign_buffer_openssl(const unsigned char *buf, unsigned int *size,
-                                   const char *keyfile, const char *password);
-int verify_buffer_openssl(const unsigned char *buf, size_t size, const unsigned char *sig,
-                          size_t sigsize, const char *certfile, const char *cacertfile);
+unsigned char *sign_buffer_openssl(const unsigned char *buf,
+								   const unsigned int buflen,
+								   const char *keyfile,
+								   const char *password,
+								   size_t *signatureLen);
+int verify_buffer_openssl(const unsigned char *buf,
+                          size_t size,
+						  const unsigned char *sig,
+                          size_t sigsize,
+						  const char *certfile,
+						  const char *cacertfile);
 
 #endif /* __UTIL__SIGN_H__ */

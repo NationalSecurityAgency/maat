@@ -521,7 +521,7 @@ get_sig:
     } else if (flags & SIGNATURE_TPM)  {
 #ifdef USE_TPM
         dlog(6, "Using TPM to verify.\n");
-        int res = checkquote(buf, size, signature, sigsize, nonce, akpubkey, tpmquote, quotesize);
+        int res = checkquote(buf, buflen, signature, sigsize, nonce, akpubkey, tpmquote, quotesize);
         if (res == 0) {
             ret = 1;
         } else {

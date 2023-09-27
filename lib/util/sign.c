@@ -43,6 +43,7 @@
 
 #include <util/util.h>
 #include <util/base64.h>
+#include <util/sign.h>
 
 /*
  * Given an arbitrary buffer and a key file, sign it with openssl using
@@ -248,8 +249,16 @@ unsigned char *sign_buffer_openssl(const unsigned char *buf,
 	// Clean up
 	fprintf(stderr, "FREE pkey...\n");
 	EVP_PKEY_free(pkey);
-	fprintf(stderr, "FREE ctx...\n");
+	/*fprintf(stderr, "FREE ctx...\n");
+	EVP_MD_CTX_free(ctx);*/
+#if OPENSSL_VERSION_MAJOR == 1
+	if(ctx) {
+		EVP_MD_CTX_destroy(ctx);
+	}
+#elif OPENSSL_VERSION_MAJOR == 3
 	EVP_MD_CTX_free(ctx);
+	//EVP_MD_free(sha256);
+#endif
 
 	fprintf(stderr, "Returning signature from sign_buffer_openssl()\n");
     return signature;
@@ -356,7 +365,7 @@ int verify_sig(const unsigned char *buf,
 		goto out_pkey;
 	}
 
-	rc = EVP_VerifyUpdate(ctx, buf, size);
+	rc = EVP_VerifyUpdate(ctx, buf, buflen);
 	if (!rc) {
 		ERR_print_errors_fp(stderr);
 		rc = -1;

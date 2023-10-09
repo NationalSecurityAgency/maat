@@ -546,7 +546,7 @@ END_TEST
 START_TEST(test_sign_openssl_small)
 {
     unsigned char *signature;
-    unsigned int signatureLen = 0;
+    size_t signatureLen = 0;
     unsigned int size;
     int ret;
 

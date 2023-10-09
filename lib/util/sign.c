@@ -64,7 +64,7 @@
  * 3. the input variables for the buffer and signature sizes could be incorrect.
  */
 unsigned char *sign_buffer_openssl(const unsigned char *buf,
-								   const unsigned int buflen,
+								   const size_t buflen,
 								   const char *keyfile,
 								   const char *password,
 								   size_t *signatureLen)
@@ -183,63 +183,6 @@ unsigned char *sign_buffer_openssl(const unsigned char *buf,
 		return signature;
 	}
 
-	// sha256 = EVP_MD_fetch(NULL, "SHA256", NULL);
-	// if(sha256 == NULL) {
-	// 	ERR_print_errors_fp(stderr);
-	// 	EVP_PKEY_free(pkey);
-	// 	free(signature);
-	// 	signature = NULL;
-	// 	EVP_MD_CTX_free(ctx);
-	// 	return signature;
-	// }
-
-	// pctx = EVP_PKEY_CTX_new(pkey, NULL);
-	// if (pctx == NULL) {
-	// 	ERR_print_errors_fp(stderr);
-	// 	EVP_PKEY_free(pkey);
-	// 	free(signature);
-	// 	signature = NULL;
-	// 	EVP_MD_CTX_free(ctx);
-	// 	EVP_MD_free(sha256);
-	// 	return signature;
-	// }
-
-	// if (!EVP_DigestSignInit(ctx, &pctx, sha256, NULL, pkey)) {
-	// 	ERR_print_errors_fp(stderr);
-	// 	EVP_PKEY_free(pkey);
-	// 	free(signature);
-	// 	signature = NULL;
-	// 	EVP_MD_CTX_free(ctx);
-	// 	EVP_MD_free(sha256);
-	// 	EVP_PKEY_CTX_free(pctx);
-	// 	return signature;
-	// }
-
-	// fprintf(stderr, "DigestSignUpdate strlen(buf): %zd\n", strlen((char*)buf));
-	// fprintf(stderr, "DigestSignUpdate buflen: %u\n", *buflen);
-	// if (!EVP_DigestSignUpdate(ctx, buf, *buflen)){
-	// 	ERR_print_errors_fp(stderr);
-	// 	EVP_PKEY_free(pkey);
-	// 	free(signature);
-	// 	signature = NULL;
-	// 	EVP_MD_CTX_free(ctx);
-	// 	EVP_MD_free(sha256);
-	// 	EVP_PKEY_CTX_free(pctx);
-	// 	return signature;
-	// }
-	
-	// fprintf(stderr, "DigestSignFinal buflen: %u\n", *buflen);
-	// if (!EVP_DigestSignFinal(ctx, signature, (size_t*)buflen)) {
-	// 	ERR_print_errors_fp(stderr);
-	// 	EVP_PKEY_free(pkey);
-	// 	free(signature);
-	// 	signature = NULL;
-	// 	EVP_MD_CTX_free(ctx);
-	// 	EVP_MD_free(sha256);
-	// 	EVP_PKEY_CTX_free(pctx);
-	// 	return signature;
-	// }
-
 	fprintf(stderr, "Signature of length %lu:\n", *signatureLen);
 	BIO_dump_fp(stderr, signature, *signatureLen);
 #else
@@ -284,7 +227,8 @@ X509 *load_cert(const char* filename)
     return cert;
 }
 
-int verify_cert(X509* cert, X509* cacert)
+int verify_cert(const X509* cert,
+                const X509* cacert)
 {
     int rc = 0;
 
@@ -321,10 +265,10 @@ int verify_cert(X509* cert, X509* cacert)
 }
 
 int verify_sig(const unsigned char *buf,
-			   size_t buflen,
+			   const size_t buflen,
 			   const unsigned char *signature,
-               size_t sigsize,
-			   X509 *cert)
+			   const size_t sigsize,
+			   const X509 *cert)
 {
     int rc;
     EVP_MD_CTX *ctx = NULL;
@@ -385,58 +329,12 @@ int verify_sig(const unsigned char *buf,
 		return rc;
 	}
 
-	// pctx = EVP_PKEY_CTX_new(pkey, NULL);
-	// if (pctx == NULL) {
-	// 	ERR_print_errors_fp(stderr);
-	// 	rc = -1;
-	// 	goto out;
-	// }
-
-	//sha256 = EVP_MD_fetch(NULL, "SHA256", NULL);
 	if(EVP_DigestVerifyInit(ctx, NULL, EVP_sha256(), NULL, pkey) != 1) {
 		dlog(0, "return code VerifyInit %d\n", rc);
 		ERR_print_errors_fp(stderr);
 		rc = -1;
 		goto out_pkey;
 	}
-
-	/* adding key verification step */
-	// rc = EVP_PKEY_verify_init(pctx);
-	// if (rc != 1) {
-	// 	dlog(0, "return code PKEY_verify_init %d\n", rc);
-	// 	ERR_print_errors_fp(stderr);
-	// 	rc = -1;
-	// 	goto out_pkey;
-	// }
-	// rc = EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PADDING);
-	// if (rc <= 0){
-	// 	dlog(0, "return code PKEY_CTX_set_rsa_padding %d\n", rc);
-	// 	ERR_print_errors_fp(stderr);
-	// 	rc = -1;
-	// 	goto out_pkey;
-	// }
-	// rc =EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha256());
- 	// if ( rc <= 0){
-	// 	dlog(0, "return code PKEY_CTX_set_signature_md %d\n", rc);
-	// 	ERR_print_errors_fp(stderr);
-	// 	rc = -1;
-	// 	goto out_pkey;
-	// }
-	// dlog(0, "BUFFER %s\n", buf);
-	// dlog(0, "BUFFER SIZE %zd\n", size);
-	// dlog(0, "SIG SIZE %lu\n", sigsize);
- 	// rc = EVP_PKEY_verify(pctx,
-	//                      signature,
-	// 					 sigsize,
-	// 					 buf,
-	// 					 size);
-	// if (rc != 1) {
-	// 	dlog(0, "return code PKEY_verify %d\n", rc);
-	// 	ERR_print_errors_fp(stderr);
-	// 	rc = -1;
-	// 	goto out_pkey;
-	// }
-	/* end key verification step */
 
 	rc = EVP_DigestVerifyUpdate(ctx, buf, buflen);
 	if (rc != 1) {
@@ -471,9 +369,9 @@ out:
 }
 
 int verify_buffer_openssl(const unsigned char *buf,
-						  size_t size,
+						  const size_t size,
 						  const unsigned char *sig,
-                          size_t sigsize,
+						  const size_t sigsize,
 						  const char *certfile,
 						  const char *cacertfile)
 {

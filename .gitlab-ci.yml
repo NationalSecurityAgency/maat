@@ -39,6 +39,11 @@ default:
   - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-tpm
   - make install
 
+# configure and build with selinux and TPM
+.build_with_selinux_and_tpm: &build_with_selinux_and_tpm
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd
+  - make install
+
 # build documentation
 .build_docs: &build_docs
   - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --disable-tpm
@@ -222,6 +227,13 @@ build-rhel8-selinux:
     - rhel8
   script:
     - *build_with_selinux_no_tpm
+
+# build with selinux and tpm support for rhel8
+  stage: build
+  tags:
+    - rhel8
+  script:
+    - *build_with_selinux_and_tpm
 
 # build without selinux for rhel9
 build-rhel9-no-selinux:

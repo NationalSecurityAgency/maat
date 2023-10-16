@@ -229,6 +229,7 @@ int sign_xml(xmlDoc *doc,
     else if (flags & SIGNATURE_TPM) {
 #ifdef USE_TPM
         dlog(6, "Using TPM to sign.\n");
+        fprintf(stderr, "Calling tpm2_sign(0x%08x,%u,%s,%s,0x%08x) to sign buffer\n", (unsigned int)buf, size_int, tpm_password, nonce, (unsigned int)akctx);
         struct tpm_sig_quote *sig_quote;
         sig_quote = tpm2_sign(buf, size_int, tpm_password, nonce, akctx);
         xmlNode *quoteval;
@@ -246,17 +247,10 @@ int sign_xml(xmlDoc *doc,
             goto out;
         }
 
-<<<<<<< HEAD
-        for (quoteval = sig->children; quoteval; quoteval=quoteval->next) {
-            char *quotevalname = validate_cstring_ascii(quoteval->name, SIZE_MAX);
-            if (quotevalname != NULL && strcasecmp(quotevalname, "tpmquotevalue") == 0)
-                break;
-=======
         for (quoteval = sigNode->children; quoteval; quoteval=quoteval->next) {
         char *quotevalname = validate_cstring_ascii(quoteval->name, SIZE_MAX);
         if (quotevalname != NULL && strcasecmp(quotevalname, "tpmquotevalue") == 0)
         break;
->>>>>>> Commit of signature generation & verification fixes.
         }
         xmlNodeAddContent(quoteval, (xmlChar*)b64quote);
         b64_free(b64quote);
@@ -268,7 +262,7 @@ int sign_xml(xmlDoc *doc,
         size = sig_quote->sig_size;
         memcpy(signature, sig_quote->signature, size);
         free(sig_quote->signature);
-#else
+#else  // Can't use TPM, so falling back to OpenSSL
         dlog(4, "WARNING: TPM support disabled at compile time, using OPENSSL\n");
         fprintf(stderr, "Calling sign_buffer_openssl(0x%08x,%u,%s,%s, %lu)\n", (unsigned int)buf, size, privkey_file, privkey_pass, signatureLen);
         signature = sign_buffer_openssl(buf,
@@ -292,13 +286,14 @@ int sign_xml(xmlDoc *doc,
         fprintf(stderr,"Error sign_xml: Could not generate sig.\n");
         goto out;
     }
-    fprintf(stderr, "Freeing buf (0x%08x) with call to xmlFree()...\n", (unsigned int)buf);
+    //fprintf(stderr, "Freeing buf (0x%08x) with call to xmlFree()...\n", (unsigned int)buf);
     //xmlFree(buf);
-    fprintf(stderr, "Call to xmlFree() done\n");
+    //fprintf(stderr, "Call to xmlFree() done\n");
     fprintf(stderr, "THIS IS MY SIG (length=%lu) prior to encode:\n", signatureLen);
-    for (int i = 0; i < signatureLen; i++ ) {
-        fprintf(stderr, "%02x ", *(signature + i));
-    }
+    BIO_dump_fp(stderr, signature, signatureLen);
+    //for (int i = 0; i < signatureLen; i++ ) {
+    //    fprintf(stderr, "%02x ", *(signature + i));
+    //}
     fprintf(stderr, "\n");
     b64sig = b64_encode(signature, signatureLen);
     free(signature);
@@ -307,7 +302,8 @@ int sign_xml(xmlDoc *doc,
         goto out;
     }
     fprintf(stderr, "THIS IS MY SIG after encoding:\n");
-    fprintf(stderr, "%s", b64sig);
+    BIO_dump_fp(stderr, b64sig, strlen(b64sig));
+    //fprintf(stderr, "%s", b64sig);
     fprintf(stderr, "\n");
 
     for (sigval = sigNode->children; sigval != NULL; sigval = sigval->next) {
@@ -349,22 +345,14 @@ int verify_xml(xmlDoc *doc,
     xmlDoc *tmpdoc;
     xmlNode *newroot;
     char *b64sig;
-<<<<<<< HEAD
-    unsigned char *signature, *buf;
-    size_t sigsize;
-    int size;
-=======
     unsigned char *signature, *tpmquote, *buf;
     size_t sigsize, quotesize;
     int buflen;
->>>>>>> Commit of signature generation & verification fixes.
     int ret = 0;
     char *certfile = NULL;
 
-#ifdef USE_TPM
-    size_t quotesize;
-    unsigned char *tpmquote;
-#endif
+    fprintf(stderr, "In verify_xml(0x%08x, 0x%08x, %s, %s, %d, %s)",
+        doc, root, prefix, nonce, flags, cacertfile);
 
     /* Prevents segfaults in weird situations, but is it really needed? */
     if (!root || !doc)
@@ -455,13 +443,12 @@ get_sig:
         goto out;
     }
 
-    //fprintf(stderr, "Retrieved signature (%lu bytes):\n%s\n", strlen(b64sig), b64sig);
+    fprintf(stderr, "Retrieved encoded signature (%lu bytes)\n", strlen(b64sig));
+    BIO_dump_fp(stderr, b64sig, strlen(b64sig));
 
     signature = b64_decode(b64sig, &sigsize);
-    //fprintf(stderr, "THIS IS MY SIG (%lu bytes) after decode:\n", sigsize);
-    for (int i = 0; i < sigsize; i++ ){
-        fprintf(stderr, "%02x ", *(signature + i));
-    }
+    fprintf(stderr, "THIS IS MY SIG (%lu bytes) after decode:\n", sigsize);
+    BIO_dump_fp(stderr, signature, sigsize);
     fprintf(stderr, "\n");
 
     if (!signature) {
@@ -483,8 +470,7 @@ get_sig:
         fprintf(stderr, "Error verify_xml: failed to dump canonicalized document.\n");
         goto out;
     }
-    //buflen = buflen - 1; /* we want strlen not buffer size */
-
+    
     /* Evaluate nonce if one is provided */
     char *contract_nonce = NULL;
     if(nonce) {
@@ -500,7 +486,7 @@ get_sig:
             goto non_out;
         }
 
-        dlog(7, "Retained Nonce: %s Nonce in Contract: %s\n", nonce, contract_nonce);
+        dlog(7, "Retained Nonce: %s, Nonce in Contract: %s\n", nonce, contract_nonce);
 
         if(memcmp((char *)nonce, contract_nonce, nonce_len)) {
             dlog(0, "Nonce in the contract did not match\n");
@@ -509,7 +495,12 @@ get_sig:
 
         free(contract_nonce);
         contract_nonce = NULL;
+    } else {
+        fprintf(stderr, "No nonce found");
     }
+
+    fprintf(stderr, "Verifying XML document:\n");
+    BIO_dump_fp(stderr, buf, buflen);
 
     if (flags & SIGNATURE_OPENSSL) {
         ret = verify_buffer_openssl(buf,

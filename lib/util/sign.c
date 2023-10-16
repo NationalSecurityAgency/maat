@@ -45,25 +45,20 @@
 #include <util/base64.h>
 #include <util/sign.h>
 
-/*
+/**
  * Given an arbitrary buffer and a key file, sign it with openssl using
  * a SHA1 digest and the private key specified in keyfile.  Return the
  * allocated buffer.
+ * 
+ * @param buf An unsigned char* pointing to the buffer to sign
+ * @param buflen A size_t containing the amount of data in the buffer to sign
+ * @param keyfile A char* containing the name of the key file
+ * @param password A char* containing the password to use to unlock the private key
+ * @param signatureLen A size_t* where the length of the signature will be written
+ * 
+ * @return An unsigned char* pointing to an allocated buffer containing the signature (the caller is responsible for freeing)
  */
-
-/*
- * This file has upgraded functionality for OPENSSL3 but currently is non-functional. This code has been modified to work
- * for both OPENSSL version 1 and 3 depending on what version is detected in the underlying system. Unfortunately, due to budget issues,
- * I could fix all the issues with this code.
- * Below are notes to guide the next programmer where the issues are.
- *
- * The current code compiles and runs but fails to verify the signature.
- * 2. The signature may not being encoded properly in the xml since the xml value
- * is empty. src/am/contracts.c under handle_initial_contract is one place where
- * the signature is encoded. Its possible the signature from DigestSignFinal function needs to be treated differently.
- * 3. the input variables for the buffer and signature sizes could be incorrect.
- */
-unsigned char *sign_buffer_openssl(const unsigned char *buf,
+unsigned char* sign_buffer_openssl(const unsigned char *buf,
 								   const size_t buflen,
 								   const char *keyfile,
 								   const char *password,

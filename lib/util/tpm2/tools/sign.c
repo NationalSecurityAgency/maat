@@ -368,7 +368,11 @@ static void main_onexit(void) {
   teardown_full(&ctx.ectx);
  }
 
-struct tpm_sig_quote *tpm2_sign(const unsigned char *buf, int buf_size, const char *pass, const char *nonce, const char *ctx_path) {
+struct tpm_sig_quote *tpm2_sign(const unsigned char *buf,
+                                int buf_size,
+                                const char *pass,
+                                const char *nonce,
+                                const char *ctx_path) {
 
   bool result = false;
   tool_rc ret = tool_rc_general_error;
@@ -442,6 +446,8 @@ struct tpm_sig_quote *tpm2_sign(const unsigned char *buf, int buf_size, const ch
     dlog(3, "Unable to run pcr reset/extend and quote\n");    
     return NULL;
   } else {
+    fprintf(stderr, "Returning signature from tpm2_sign() of length %d:\n", sig_quote.sig_size);
+    BIO_dump_fp(stderr, (char *)sig_quote.signature, (long unsigned int)sig_quote.sig_size);
     return &sig_quote;
   }
   

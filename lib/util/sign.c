@@ -198,7 +198,9 @@ unsigned char* sign_buffer_openssl(const unsigned char *buf,
 	//EVP_MD_free(sha256);
 #endif
 
-	fprintf(stderr, "Returning signature from sign_buffer_openssl()\n");
+	//fprintf(stderr, "Returning signature from sign_buffer_openssl()\n");
+	fprintf(stderr, "Returning signature from sign_buffer_openssl() of length %lu\n", *signatureLen);
+	BIO_dump_fp(stderr, signature, *signatureLen);
     return signature;
 }
 

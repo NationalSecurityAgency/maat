@@ -224,6 +224,7 @@ int sign_xml(xmlDoc *doc,
             fprintf(stderr, "Got signature from sign_buffer_openssl(0x%08x,%u,%s,%s, %lu)\n", (unsigned int)buf, size, privkey_file, privkey_pass, signatureLen);
         } else {
             fprintf(stderr, "Got NULL signature from sign_buffer_openssl()\n");
+            goto out;
         }
     }
     else if (flags & SIGNATURE_TPM) {
@@ -236,10 +237,11 @@ int sign_xml(xmlDoc *doc,
         char *b64quote;
 
         if (!sig_quote || !sig_quote->quote || !sig_quote->signature) {
-            fprintf(stderr,"Error sign_xml: Could not generate sig.\n");
+            fprintf(stderr,"Error sign_xml: Could not generate quote and/or signature.\n");
             goto out;
         }
 
+        fprintf(stderr, "Calling b64-encode() of quote (%d bytes)\n", sig_quote->quote_size);
         b64quote = b64_encode(sig_quote->quote, sig_quote->quote_size);
         free(sig_quote->quote);
         if (!b64quote) {
@@ -248,19 +250,21 @@ int sign_xml(xmlDoc *doc,
         }
 
         for (quoteval = sigNode->children; quoteval; quoteval=quoteval->next) {
-        char *quotevalname = validate_cstring_ascii(quoteval->name, SIZE_MAX);
-        if (quotevalname != NULL && strcasecmp(quotevalname, "tpmquotevalue") == 0)
-        break;
+            char *quotevalname = validate_cstring_ascii(quoteval->name, SIZE_MAX);
+            if (quotevalname != NULL && strcasecmp(quotevalname, "tpmquotevalue") == 0)
+                break;
         }
         xmlNodeAddContent(quoteval, (xmlChar*)b64quote);
         b64_free(b64quote);
-        signature = malloc(sig_quote->sig_size);
+
+        signatureLen = sig_quote->sig_size;
+        fprintf(stderr, "Calling malloc() for signature of %d bytes\n", signatureLen);
+        signature = malloc(signatureLen);
         if (!signature) {
             fprintf(stderr,"Error sign_xml: Could not allocate space for  sig.\n");
             goto out;
         }
-        size = sig_quote->sig_size;
-        memcpy(signature, sig_quote->signature, size);
+        memcpy(signature, sig_quote->signature, signatureLen);
         free(sig_quote->signature);
 #else  // Can't use TPM, so falling back to OpenSSL
         dlog(4, "WARNING: TPM support disabled at compile time, using OPENSSL\n");
@@ -274,6 +278,7 @@ int sign_xml(xmlDoc *doc,
             fprintf(stderr, "Got signature from sign_buffer_openssl(0x%08x,%u,%s,%s, %lu)\n", (unsigned int)buf, size, privkey_file, privkey_pass, signatureLen);
         } else {
             fprintf(stderr, "Got NULL signature from sign_buffer_openssl()\n");
+            goto out;
         }                                        
 #endif
     } else {
@@ -282,18 +287,8 @@ int sign_xml(xmlDoc *doc,
         goto out;
     }
 
-    if (!signature) {
-        fprintf(stderr,"Error sign_xml: Could not generate sig.\n");
-        goto out;
-    }
-    //fprintf(stderr, "Freeing buf (0x%08x) with call to xmlFree()...\n", (unsigned int)buf);
-    //xmlFree(buf);
-    //fprintf(stderr, "Call to xmlFree() done\n");
     fprintf(stderr, "THIS IS MY SIG (length=%lu) prior to encode:\n", signatureLen);
     BIO_dump_fp(stderr, signature, signatureLen);
-    //for (int i = 0; i < signatureLen; i++ ) {
-    //    fprintf(stderr, "%02x ", *(signature + i));
-    //}
     fprintf(stderr, "\n");
     b64sig = b64_encode(signature, signatureLen);
     free(signature);

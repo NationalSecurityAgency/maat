@@ -198,7 +198,7 @@ int maat_read_sz_buf(int chan, unsigned char **buf,
     // 1 MB default
     if(max_size == 0) {
         max_size = 1000000;
-    } else if (max_size < UINT32_MAX) {
+    } else if (max_size > UINT32_MAX) {
         //Max size that could have been transmitted is UINT32_MAX
         max_size = UINT32_MAX;
     }

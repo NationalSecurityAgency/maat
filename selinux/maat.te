@@ -832,6 +832,7 @@ allow system_appraise_asp_t maat_tmp_t:file {open};
 allow system_appraise_asp_t tmp_t:lnk_file {getattr read};
 allow system_appraise_asp_t userspace_appraiser_apb_t:fifo_file {read write};
 allow system_appraise_asp_t cert_t:dir {search};
+allow system_appraise_asp_t whitelist_t:file {read_file_perms};
 
 # GOT Measure ASP
 type got_measure_asp_t;

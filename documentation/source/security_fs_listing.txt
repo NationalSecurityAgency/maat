@@ -997,6 +997,8 @@ directory and its contents world readable (chmod 0755 for the directory, chmod 0
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |decrypt_asp.xml                         |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:whitelist_t:s0                     |distribution.whitelist                  |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |dpkg_check_asp.xml                      |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |dpkg_details_asp.xml                    |

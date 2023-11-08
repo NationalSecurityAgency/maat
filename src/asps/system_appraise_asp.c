@@ -38,26 +38,95 @@
 #include <measurement_spec/find_types.h>
 #include <measurement/system_measurement_type.h>
 #include <address_space/package.h>
+#include <include/maat-envvars.h>
+#include <util/csv.h>
 
 #include <common/asp.h>
 
-#define ASP_NAME "system_appraise"
+#ifndef DEFAULT_ASP_DIR
+#define DEFAULT_ASP_DIR "."
+#endif
 
-static const char *good_ids[] = { "ubuntu", "redhat", "\"centos\"", NULL };
-static const char *good_versions[] = { "\"16.04\"", "\"14.04\"", "\"7\"", NULL };
+#define ASP_NAME "system_appraise"
+#define MAX_LINE_LEN 1000
+
+GList *good_ids = NULL;
+GList *good_versions = NULL;
+int num_lines = 0;
+
 static const char *error_strings[] = {
     "Both distribution and version are known and valid",
     "Distribution is not known",
-    "Version is now known",
+    "Version is not known",
     NULL
 };
 
+static char *get_aspinfo_dir(void)
+{
+    char *aspdir = getenv(ENV_MAAT_ASP_DIR);
+    if(aspdir == NULL) {
+        dlog(5, "Warning: environment variable ENV_MAAT_ASP_DIR not set. "
+             " Using default path %s\n", DEFAULT_ASP_DIR);
+        aspdir = DEFAULT_ASP_DIR;
+    }
+
+    return aspdir;
+}
+
 int asp_init(int argc, char *argv[])
 {
-
     asp_loginfo("Initialized SYSTEM APPRAISER plugin\n");
 
     register_types();
+
+    char *full_path;
+    int index = 0;
+    char *line[MAX_LINE_LEN];
+    char *fields = NULL;
+    size_t length = 0;
+
+    // Get path
+    full_path = g_strdup_printf("%s/%s", get_aspinfo_dir(), "distribution.whitelist");
+
+    // Read a line and tokenize to the corresponding data structure Glist
+    //1. Get OS
+    read_line_csv(full_path, "1", 0, MAX_LINE_LEN, line);
+    fields = strtok(*line, ",");
+    while (fields != NULL) {
+        if (strcmp(fields, "1") != 0) {
+            length = strlen(fields);
+            if (fields[length-1] == '\n') {
+                fields[length-1]  = '\0';
+            }
+            good_ids = g_list_prepend(good_ids, g_strdup(fields));
+            num_lines++;
+        }
+        fields = strtok(NULL, ",");
+    }
+    free(*line);
+
+    //2. Get versions
+    GList *temp = NULL;
+    while (index < num_lines) {
+        temp = NULL;
+        char str[50];
+        sprintf(str, "%d", index + 2);
+        read_line_csv(full_path, str, 0, MAX_LINE_LEN, line);
+        fields = strtok(*line, ",");
+        while (fields != NULL) {
+            if (strcmp(fields, str) != 0) {
+                length = strlen(fields);
+                if (fields[length-1] == '\n') {
+                    fields[length-1]  = '\0';
+                }
+                temp = g_list_prepend(temp, g_strdup(fields));
+            }
+            fields = strtok(NULL, ",");
+        }
+        free(*line);
+        good_versions = g_list_prepend(good_versions, temp);
+        index++;
+    }
 
     return ASP_APB_SUCCESS;
 }
@@ -65,6 +134,13 @@ int asp_init(int argc, char *argv[])
 int asp_exit(int status)
 {
     asp_loginfo("Exiting SYSTEM APPRAISER plugin\n");
+    g_list_free_full(good_ids, free);
+    GList *iter = g_list_first(good_versions);
+    while (iter != NULL) {
+        g_list_free_full(iter->data, free);
+        iter = iter->next;
+    }
+    g_list_free(good_versions);
     return ASP_APB_SUCCESS;
 }
 
@@ -77,8 +153,9 @@ int asp_measure(int argc, char *argv[])
     system_data *s_data;
     measurement_data *data;
     int ret = ASP_APB_SUCCESS;
-    int i;
-    const char *iter;
+    GList *iter;
+    char *data_distribution = "";
+    unsigned int count = 0;
     int found = 0;
     int erridx = 0;
 
@@ -104,13 +181,17 @@ int asp_measure(int argc, char *argv[])
     }
     s_data = container_of(data, system_data, meas_data);
 
-    iter = good_ids[0];
-    for (i=0; iter != NULL; i++) {
-        iter = good_ids[i];
-        if (strcmp(s_data->distribution, iter) == 0) {
+    // Check good ids
+    iter = g_list_first(good_ids);
+    while (iter != NULL) {
+        if (strcmp(s_data->distribution, iter->data) == 0) {
+            strcpy(data_distribution, s_data->distribution);
             found = 1;
+            count++;
             break;
         }
+        count++;
+        iter = iter->next;
     }
 
     if (found != 1) {
@@ -119,13 +200,20 @@ int asp_measure(int argc, char *argv[])
         goto out_return;
     }
 
-    found = 0;
-    iter = good_versions[0];
-    for (i=0; iter != NULL; i++) {
-        iter = good_versions[i];
-        if (strcmp(s_data->distribution, iter) == 0) {
-            found = 1;
-            break;
+    // Check good versions. Check if id is unknown.
+    if (strcpy(data_distribution, "") != 0) {
+        count--;
+        iter = g_list_nth(good_versions, count);
+    }
+
+    while (iter != NULL) {
+        GList *lst = g_list_first(iter->data);
+        while (lst != NULL) {
+            if (strcmp(s_data->distribution, lst->data) == 0) {
+                found = 1;
+                break;
+            }
+            lst = lst->next;
         }
     }
 

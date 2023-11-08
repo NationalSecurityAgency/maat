@@ -278,14 +278,16 @@ if BUILD_whitelist_ASP
 asp_PROGRAMS    += whitelist
 aspinfo_DATA    += datafiles/modules.whitelist \
                    datafiles/packages.whitelist \
-                   datafiles/process.whitelist
+                   datafiles/process.whitelist \
+                   datafiles/distribution.whitelist
 whitelist_SOURCES = whitelist.c
 endif
 
 if BUILD_blacklist_ASP
 asp_PROGRAMS    += blacklist
 aspinfo_DATA    += datafiles/modules.blacklist \
-                   datafiles/process.blacklist datafiles/package.blacklist
+                   datafiles/process.blacklist \
+                   datafiles/package.blacklist
 blacklist_SOURCES = blacklist.c
 endif
 

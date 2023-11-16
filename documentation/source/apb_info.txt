@@ -38,18 +38,21 @@ APBs Currently Available
 
 .. table:: Sample APB Table
 
-  ==================== =======================================================
-  Name                 Description
-  ==================== =======================================================
-  appraiser            Initial implementation of an appraiser APB
-  complex_attestation  Combined measurements of two different platforms
-  hashdir              Returns a sha1 hash of all files in a directory
-  hashfile             Returns a sha1 hash of a file
-  process_measurement  SHA1 hash open files of process
-  userspace            Userspace measurement
-  layered_att          Layered measurement of a multi privilege-level platform
-  layered_appraiser    Appraisal of layered measurement
-  userspace_appraiser  Basic appraisal of userspace measurement
-  kim                  Placeholder for kernel integrity measurement
-  ==================== =======================================================
+  ============================= ==============================================================
+  Name                          Description
+  ============================= ==============================================================
+  appraiser                     Initial implementation of an appraiser APB
+  complex_attestation           Combined measurements of two different platforms
+  hashdir                       Returns a sha1 hash of all files in a directory
+  hashfile                      Returns a sha1 hash of a file
+  kim                           Placeholder for kernel integrity measurement
+  layered_appraiser             Appraisal of layered measurement
+  layered_att                   Layered measurement of a multi privilege-level platform
+  no_op                         Forward measurement with no processing
+  passport_userspace_appraiser  Appraise a userspace measurement and create a signed passport
+  process_measurement           SHA1 hash open files of process
+  request_passport              Requests a passport from a third party appraiser
+  userspace                     Userspace measurement
+  userspace_appraiser           Basic appraisal of userspace measurement
+  ============================= ==============================================================
 

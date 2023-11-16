@@ -2,7 +2,7 @@ AC_CONFIG_LINKS([documentation/source/am_desc.txt:documentation/source/am_desc.t
 AC_CONFIG_LINKS([documentation/source/apb_info.txt:documentation/source/apb_info.txt])
 AC_CONFIG_LINKS([documentation/source/apb_readme.md:documentation/source/apb_readme.md])
 AC_CONFIG_LINKS([documentation/source/asp_readme.md:documentation/source/asp_readme.md])
-AC_CONFIG_LINKS([documentation/source/configure_selector_config_policy.txt:documentation/source/configure_selector_config_policy.txt])
+AC_CONFIG_LINKS([documentation/source/configuring_selector_policy.txt:documentation/source/configuring_selector_policy.txt])
 AC_CONFIG_LINKS([documentation/source/configuring_attestation_manager.txt:documentation/source/configuring_attestation_manager.txt])
 AC_CONFIG_LINKS([documentation/source/index.txt:documentation/source/index.txt])
 AC_CONFIG_LINKS([documentation/source/maat_environment_variables.txt:documentation/source/maat_environment_variables.txt])

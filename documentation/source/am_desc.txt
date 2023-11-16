@@ -59,7 +59,7 @@ indicating that the machine that the Attester is running on can be trusted.
 .. note::
    The security authorization shown in this diagram is currently a work in progress
 
-The figure above demonstrates the state machine for the Attestation Manager acting as an Appraiser.
+The figure above shows the state machine for the Attestation Manager acting as an Appraiser.
 The AM enters its Initial state when it receives a measurement request contract.
 It then obtains security authorization if necessary.
 Next it sends an initial contract to the Attester,

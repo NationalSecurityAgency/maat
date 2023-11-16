@@ -23,7 +23,7 @@ Purpose and Intended Reader
 ===========================
 The purpose of this section is to inform users about the configuration options offered by Maat and where to find them.
 
-The intended reader is a system administrator who will be configuring the Maat Selection Configuration in order to have Maat meet their Attestation needs. 
+The intended reader is a system administrator who will be configuring Maat in order to have Maat meet their Attestation needs. 
 
 
 Configuration Details

@@ -32,6 +32,7 @@
 
 #define SYSTEM_MAX_ATTR_SZ   64
 #define SYSTEM_ATTR_FMT      "%63s"
+#define SYSTEM_ATTR_QUOTED_FMT  "\"%63[^\"]\""
 
 typedef struct system_data {
     struct measurement_data meas_data;

@@ -1,4 +1,13 @@
 # Changelog
+
+## [1.6-1] - 2024-03-21
+### Added
+- Introduction of full OpenSSL v3 support within Maat
+- Resolved system information ASP information collection error on some platforms
+- Resolved bug in system information appraisal ASP configuration parsing
+- Resolved input parsing error within the graph-shell utility
+- Resolved correctness bug related to improper variable initialization in the memory mapping ASP
+
 ## [1.5-1] - 2023-12-08
 ### Added
 - Updated the system information appraisal ASP to support dynamic reconfiguration

@@ -15,7 +15,7 @@
 #
 #
 
-AC_INIT([maat], [1.5])
+AC_INIT([maat], [1.6])
 AC_CONFIG_AUX_DIR([build-aux])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AM_INIT_AUTOMAKE([foreign -Wall tar-pax subdir-objects])
@@ -177,7 +177,6 @@ AS_IF([test "x$enable_tpm" = xyes],[
 	PKG_CHECK_MODULES([CRYPTO], [libcrypto >= 1.0.2g])
 ])
 AM_CONDITIONAL(USETPM, test "x$enable_tpm" = xyes)
-
 
 AC_ARG_WITH(maat-user,
 	AC_HELP_STRING([--with-maat-user=USER],

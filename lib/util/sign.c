@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 United States Government
+ * Copyright 2023 United States Government
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,42 +64,32 @@ unsigned char* sign_buffer_openssl(const unsigned char *buf,
 								   const char *password,
 								   size_t *signatureLen)
 {
-    EVP_PKEY *pkey;
-    //EVP_PKEY_CTX *pctx = NULL;
+    EVP_PKEY *pkey = NULL;
     EVP_MD_CTX *ctx = NULL;
-    //EVP_MD *sha256 = NULL;
     FILE *keyfd = NULL;
     unsigned char *signature = NULL;
     int ret;
- 
-    //fprintf(stderr, "I AM GOING TO SIGN THIS BUFFER at 0x%08x of length %u:\n", (unsigned int)buf, buflen);
-	BIO_dump_fp(stderr, buf, buflen);
-	//fprintf(stderr, "Or...\n%s\n", buf);
-
+	
     keyfd = fopen(keyfile, "r");
     if (keyfd == NULL) {
         dlog(0, "Error opening key file %s\n", keyfile);
-        return signature;
+        goto handle_error;
     }
 
     pkey = PEM_read_PrivateKey(keyfd, NULL, NULL, (void *)password);
     if (!pkey) {
         ERR_print_errors_fp(stderr);
-        fclose(keyfd);
-        return signature;
+        goto handle_error;
     }
     fclose(keyfd);
+    keyfd = NULL;
 
-	*signatureLen = (size_t)EVP_PKEY_size(pkey);
+    *signatureLen = (size_t)EVP_PKEY_size(pkey);
     signature = (unsigned char *)malloc(*signatureLen);
     if (!signature) {
         dperror("Error allocating key buffer");
-        EVP_PKEY_free(pkey);
-		*signatureLen = 0;
-        return signature;
+        goto handle_error;
     }
-	dlog(0, "OPENSSL VERSION ACTUAL %d\n", OPENSSL_VERSION_MAJOR);
-    dlog(0, "OPENSSL VERSION HEX %lx\n", OPENSSL_VERSION_NUMBER);
 
 #if OPENSSL_VERSION_MAJOR == 1
 	ctx = EVP_MD_CTX_create();
@@ -107,100 +97,69 @@ unsigned char* sign_buffer_openssl(const unsigned char *buf,
 	ret = EVP_SignInit(ctx, EVP_sha256());
 	if (!ret) {
 		ERR_print_errors_fp(stderr);
-		free(signature);
-		signature = NULL;
-		*signatureLen = 0;
-		EVP_MD_CTX_destroy(ctx);
-		EVP_PKEY_free(pkey);
-		return signature;
+		goto handle_error;
 	}
 	ret = EVP_SignUpdate(ctx, buf, buflen);
 	if (!ret) {
 		ERR_print_errors_fp(stderr);
-		free(signature);
-		signature = NULL;
-		*signatureLen = 0;
-		EVP_MD_CTX_destroy(ctx);
-		EVP_PKEY_free(pkey);
-		return signature;
+		goto handle_error;
 	}
 	ret = EVP_SignFinal(ctx, signature, signatureLen, pkey);
 	if (!ret) {
 		ERR_print_errors_fp(stderr);
-		free(signature);
-		signature = NULL;
-		*signatureLen = 0;
-		EVP_MD_CTX_destroy(ctx);
-		EVP_PKEY_free(pkey);
-		return signature;
+		goto handle_error;
 	}
+	EVP_MD_CTX_destroy(ctx);
 #elif OPENSSL_VERSION_MAJOR == 3
 	ctx = EVP_MD_CTX_new();
 	if(ctx == NULL) {
-		ERR_print_errors_fp(stderr);
-		EVP_PKEY_free(pkey);
-		free(signature);
-		signature = NULL;
-		*signatureLen = 0;
-		return signature;
+		goto handle_error;
 	}
 
 	ret = EVP_DigestSignInit(ctx, NULL, EVP_sha256(), NULL, pkey);
 	if (!ret) {
 		ERR_print_errors_fp(stderr);
-		EVP_PKEY_free(pkey);
-		free(signature);
-		signature = NULL;
-		*signatureLen = 0;
-		EVP_MD_CTX_free(ctx);
-		return signature;
+		goto handle_error;
 	}
 
 	ret = EVP_DigestSignUpdate(ctx, buf, buflen);
 	if (!ret) {
 		ERR_print_errors_fp(stderr);
-		EVP_PKEY_free(pkey);
-		free(signature);
-		signature = NULL;
-		*signatureLen = 0;
-		EVP_MD_CTX_free(ctx);
-		return signature;
+		goto handle_error;
 	}
 
 	ret = EVP_DigestSignFinal(ctx, signature, (size_t*)signatureLen);
 	if (!ret) {
 		ERR_print_errors_fp(stderr);
-		EVP_PKEY_free(pkey);
-		free(signature);
-		signature = NULL;
-		*signatureLen = 0;
-		EVP_MD_CTX_free(ctx);
-		return signature;
+		goto handle_error;
 	}
-
-	fprintf(stderr, "Signature of length %lu:\n", *signatureLen);
-	BIO_dump_fp(stderr, signature, *signatureLen);
+        EVP_MD_CTX_free(ctx);
 #else
 	dlog(1, "Unsupported OpenSSL version");
 #endif
-	
-	// Clean up
-	fprintf(stderr, "FREE pkey...\n");
-	EVP_PKEY_free(pkey);
-	/*fprintf(stderr, "FREE ctx...\n");
-	EVP_MD_CTX_free(ctx);*/
+    EVP_PKEY_free(pkey);
+    /* successful signature */
+    return signature;
+
+handle_error:
+    if (keyfd) {
+        fclose(keyfd);
+    }
+    if(ctx) {
 #if OPENSSL_VERSION_MAJOR == 1
-	if(ctx) {
-		EVP_MD_CTX_destroy(ctx);
-	}
+	EVP_MD_CTX_destroy(ctx);
 #elif OPENSSL_VERSION_MAJOR == 3
 	EVP_MD_CTX_free(ctx);
-	//EVP_MD_free(sha256);
 #endif
-
-	//fprintf(stderr, "Returning signature from sign_buffer_openssl()\n");
-	fprintf(stderr, "Returning signature from sign_buffer_openssl() of length %lu\n", *signatureLen);
-	BIO_dump_fp(stderr, signature, *signatureLen);
+    }
+    if( pkey != NULL) {
+        EVP_PKEY_free(pkey);
+    }
+    if(signature != NULL) {
+        free(signature);
+    }
+    signature = NULL;
+    *signatureLen = 0;
     return signature;
 }
 
@@ -270,11 +229,7 @@ int verify_sig(const unsigned char *buf,
     int rc;
     EVP_MD_CTX *ctx = NULL;
     EVP_PKEY_CTX *pctx = NULL;
-    //EVP_MD *sha256 = NULL;
     EVP_PKEY *pkey = NULL;
-    //unsigned int testsize = 384;
-
-	fprintf(stderr, "I AM GOING TO VERIFY THIS BUFFER at 0x%08x of length %lu:\n", (unsigned int)buf, buflen);
 
     if(sigsize > UINT_MAX) {
         dlog(1, "Signature verification failed. "
@@ -303,14 +258,14 @@ int verify_sig(const unsigned char *buf,
 	if (!rc) {
 		ERR_print_errors_fp(stderr);
 		rc = -1;
-		goto out_pkey;
+		goto out;
 	}
 
 	rc = EVP_VerifyUpdate(ctx, buf, buflen);
 	if (!rc) {
 		ERR_print_errors_fp(stderr);
 		rc = -1;
-		goto out_pkey;
+		goto out;
 	}
 
 	rc = EVP_VerifyFinal(ctx, signature, (unsigned int)sigsize, pkey);
@@ -327,39 +282,36 @@ int verify_sig(const unsigned char *buf,
 	}
 
 	if(EVP_DigestVerifyInit(ctx, NULL, EVP_sha256(), NULL, pkey) != 1) {
-		dlog(0, "return code VerifyInit %d\n", rc);
 		ERR_print_errors_fp(stderr);
 		rc = -1;
-		goto out_pkey;
+		goto out;
 	}
 
 	rc = EVP_DigestVerifyUpdate(ctx, buf, buflen);
 	if (rc != 1) {
-		dlog(0, "return code VerifyUpdate %d\n", rc);
 		ERR_print_errors_fp(stderr);
 		rc = -1;
-		goto out_pkey;
+		goto out;
 	}
 	
 	rc = EVP_DigestVerifyFinal(ctx, signature, sigsize);
 	if (rc != 1) {
-		dlog(0, "return code VerifyFinal %d\n", rc);
 		ERR_print_errors_fp(stdout);
 	}
 #else
 	fprintf(stderr, "Unsupported OpenSSL version");
 #endif
 
-out_pkey:
-    EVP_PKEY_free(pkey);
 out:
+   if( pkey != NULL) {
+        EVP_PKEY_free(pkey);
+    }
 #if OPENSSL_VERSION_MAJOR == 1
 	if(ctx) {
 		EVP_MD_CTX_destroy(ctx);
 	}
 #elif OPENSSL_VERSION_MAJOR == 3
 	EVP_MD_CTX_free(ctx);
-	//EVP_MD_free(sha256);
 #endif
 
     return rc;
@@ -394,9 +346,7 @@ int verify_buffer_openssl(const unsigned char *buf,
     if ((rc = verify_sig(buf, size, sig, sigsize, cert)) != 1) {
         fprintf(stderr, "Signature verification failed!\n");
         goto out;
-    } else {
-		fprintf(stderr, "Signature verification SUCCESS!\n");
-	}
+    }
 
 out:
     X509_free(cacert);

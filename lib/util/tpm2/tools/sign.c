@@ -446,8 +446,7 @@ struct tpm_sig_quote *tpm2_sign(const unsigned char *buf,
     dlog(3, "Unable to run pcr reset/extend and quote\n");    
     return NULL;
   } else {
-    fprintf(stderr, "Returning signature from tpm2_sign() of length %d:\n", sig_quote.sig_size);
-    BIO_dump_fp(stderr, (char *)sig_quote.signature, (long unsigned int)sig_quote.sig_size);
+    dlog(3, "Returning signature from tpm2_sign() of length %d:\n", sig_quote.sig_size);
     return &sig_quote;
   }
   

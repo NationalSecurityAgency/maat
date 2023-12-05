@@ -216,7 +216,7 @@ static int add_file_region_node(measurement_graph *graph, node_id_t process_node
     edge_id_t edge = INVALID_EDGE_ID;
     int rc = 0;
     GChecksum *csum = NULL;
-    size_t csum_size;
+    size_t csum_size = SHA256_TYPE_LEN;
     ssize_t result;
 
     var.type = &file_target_type;

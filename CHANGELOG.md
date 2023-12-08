@@ -1,4 +1,21 @@
 # Changelog
+## [1.5-1] - 2023-12-08
+### Added
+- Updated the system information appraisal ASP to support dynamic reconfiguration
+- Improved logical flow of documentation through changes to wording and section ordering
+- Fixed to documentation rendering of code, diagrams, etc.
+- Inclusion of section on complex attestation use-case into documentation
+- Resolved build warnings raised by compilers on various platforms
+- Introduced signal for ASPs to indicate that a measurement was unable to be taken, integrated into GOT measurement
+- Changed ASP error signaling, allowing for more fine grained error status to be returned to the calling APB
+- Developed ASP to perform appraisal of GOT/PLT measurer results, which was formerly handled in the Userspace Appraiser APB
+- Remediated measurement issues leading to false positive detection of GOT/PLT errors
+- Resolved memory corruption issues within TPM code
+- Integrated Valgrind analysis into CI and resolved memory leaks that were identified
+- Incorporate more testing platforms into CI, including Ubuntu 22 and RHEL8 with TPM support
+- Added code coverage reports to CI
+- Introduced numerous CI and unit test fixes
+
 ## [1.4-1] - 2023-04-04
 ### Added
 - TPM2 support

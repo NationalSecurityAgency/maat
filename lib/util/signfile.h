@@ -73,11 +73,11 @@ int sign_xml(xmlDoc *doc,
  *
  */
 int verify_xml(xmlDoc *doc, xmlNode *root, const char *keyfile,
-               const char* nonce, 
+               const char* nonce,
 #ifdef USE_TPM
- 	           const char* akpubkey,
+               const char* akpubkey,
 #else
- 	           const char* akpubkey UNUSED,
+               const char* akpubkey UNUSED,
 #endif
                int flags, const char* cacertfile);
 

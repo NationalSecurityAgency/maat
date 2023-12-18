@@ -222,8 +222,7 @@ int sign_xml(xmlDoc *doc,
             dlog(1, "Got NULL signature from sign_buffer_openssl()\n");
             goto out;
         }
-    }
-    else if (flags & SIGNATURE_TPM) {
+    } else if (flags & SIGNATURE_TPM) {
 #ifdef USE_TPM
         dlog(6, "Using TPM to sign.\n");
         struct tpm_sig_quote *sig_quote;
@@ -271,7 +270,7 @@ int sign_xml(xmlDoc *doc,
         } else {
             dlog(1, "Got NULL signature from sign_buffer_openssl()\n");
             goto out;
-        }                                        
+        }
 #endif
     } else {
         fprintf(stderr, "Error sign_xml: Unsupported signature (%d)\n",
@@ -448,7 +447,7 @@ get_sig:
         dlog(1, "Error: buffer length greater than maximum size.\n");
         goto out;
     }
-    
+
     /* Evaluate nonce if one is provided */
     char *contract_nonce = NULL;
     if(nonce) {

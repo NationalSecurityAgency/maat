@@ -35,23 +35,23 @@
 
 X509 *load_cert(const char* filename);
 int verify_cert(const X509* cert,
-				const X509* cacert);
+                const X509* cacert);
 int verify_sig(const unsigned char *buf,
-			   const size_t size,
-			   const unsigned char *sig,
-			   const size_t sigsize,
-			   const X509 *cert);
+               const size_t size,
+               const unsigned char *sig,
+               const size_t sigsize,
+               const X509 *cert);
 
 unsigned char *sign_buffer_openssl(const unsigned char *buf,
-								   const size_t buflen,
-								   const char *keyfile,
-								   const char *password,
-								   size_t *signatureLen);
+                                   const size_t buflen,
+                                   const char *keyfile,
+                                   const char *password,
+                                   size_t *signatureLen);
 int verify_buffer_openssl(const unsigned char *buf,
-						  const size_t size,
-						  const unsigned char *sig,
+                          const size_t size,
+                          const unsigned char *sig,
                           const size_t sigsize,
-						  const char *certfile,
-						  const char *cacertfile);
+                          const char *certfile,
+                          const char *cacertfile);
 
 #endif /* __UTIL__SIGN_H__ */

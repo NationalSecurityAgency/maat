@@ -21,7 +21,7 @@ AM_CPPFLAGS = -I$(srcdir)/../include -I$(srcdir)/.. -I$(srcdir) $(LIBMAAT_CFLAGS
 	-DDEFAULT_MEAS_SPEC_DIR="\"$(SPEC_INSTALL_DIR)\""
 
 if BUILD_COVERAGE
-AM_CPPFLAGS += -fprofile-arcs -ftest-coverage
+AM_CPPFLAGS += --coverage
 endif
 
 libmeasurement_spec_la_SOURCES = measurement_spec.c measurement_spec.h \

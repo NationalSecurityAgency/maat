@@ -437,6 +437,10 @@ void unload_apb(struct apb *apb)
         g_list_free(apb->meas_specs);
     }
 
+    if(apb->phrase_specs) {
+        g_list_free_full(apb->phrase_specs, &free_phrase_meas_spec_pair);
+    }
+
     if(apb->asps) {
         g_list_free(apb->asps);
     }

@@ -56,7 +56,7 @@ In the sequence diagram above:
     convey measurements.
   - The Appraiser sends a :ref:`response contract<ResponseContract>` to the Requester.
 
-.. note:: 
+.. note::
     If at any step the Appraiser decides
     that the attestation on the target machine is not possible, the
     Appraiser will send a response contract back to the Requester
@@ -77,7 +77,7 @@ initiate a connection with the Attester's Attestation Manager.
 Example:
 
 .. code-block:: xml
-        
+
         <contract version="2.0" type="request">
             <target type="host-port"/>10.0.0.2:2432</target>
             <!-- request a measurement of 10.0.0.2 on port 2432 -->
@@ -102,9 +102,8 @@ listed can satisfy the attestation request.
 
 The appraiser includes its public certificate in the initial contract,
 and uses the corresponding private key to sign the contract (and all
-subsequent contracts). The signatures conform to the XML Sig standard
-(http://www.w3.org/TR/xmldsig-core/) except that they don't use the
-correct namespace.
+subsequent contracts). The signatures are compatible with the XML Sig standard
+(http://www.w3.org/TR/xmldsig-core/), although the standard's namespace is not used.
 
 Example:
 
@@ -139,7 +138,7 @@ Example:
       <keyinfo>BB:65:51:9E:4C:5F:18:D6:A7:CA:13:13:7F:5E:32:98:E1:4A:C1:15</keyinfo>
     </signature>
   </contract>
-	
+
 .. _ModifiedContract:
 
 Modified Contract
@@ -168,12 +167,13 @@ Execute Contract
 
 Sent from the appraiser AM to the attester in response to a modified
 contract as the final phase of contract negotiation. This contract
-contains a single Copland Phrase chosen from the list provided by the 
+contains a single Copland Phrase chosen from the list provided by the
 attester in the modified contract. After this contract is sent,
 the attester is expected to spawn the selected APB to complete the
 attestation.
 
-* The execute contract is the same format as the modified and initial contracts with the following exceptions:
+The execute contract is the same format as the modified and initial contracts
+with the following exceptions:
 
 * The type attribute of the contract node is set to "execute"
 
@@ -190,10 +190,10 @@ attestation.
 Measurement Contract
 ====================
 
-Sent from the attester's APB to the appraiser's APB. This contract
-contains the serialized measurement data produced to satisfy the
-agreed-upon measurement specification. After this contract is sent,
-the attester's role is complete.
+Sent from the attester's APB to the appraiser's APB following the completion of
+the attester's APB's measurement activities. This contract contains the
+serialized measurement data produced to satisfy the agreed-upon measurement
+specification. After this contract is sent, the attester's role is complete.
 
 The libmaat-apb has API functions for generating and sending
 measurement contracts. Measurement contracts are the "Maat native"
@@ -213,7 +213,7 @@ Response Contract
 Sent from the appraiser's APB back to the original client that sent
 the request contract. This contract includes a final evaluation
 (PASS/FAIL) and a list of key/value pairs with any reporting data
-required to satisfy the client (see :ref:`Appraisal and Reporting<AppraisalandReporting>` 
+required to satisfy the client (see :ref:`Appraisal and Reporting<AppraisalandReporting>`
 for a detailed discussion of report data).
 
 Example:

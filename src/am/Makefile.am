@@ -48,7 +48,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/include -I$(srcdir)/src \
 
 
 if BUILD_COVERAGE
-AM_CPPFLAGS += -fprofile-arcs -ftest-coverage
+AM_CPPFLAGS += --coverage
 AM_LIBADD = -lgcov
 endif
 

@@ -238,7 +238,8 @@ START_TEST(test_appraiser_apb)
     int i;
     int eof_encountered;
 
-    status = maat_read_sz_buf(appraiser_chan, &resp_contract,
+    /* Cast is juftified because the function operation does not regard the signedness of the buffer */
+    status = maat_read_sz_buf(appraiser_chan, (unsigned char **)&resp_contract,
                               &resp_contract_sz, &bytes_read,
                               &eof_encountered,
                               6666660, 0);

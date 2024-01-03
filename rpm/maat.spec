@@ -15,7 +15,7 @@
 #
 
 Name:           maat
-Version:        1.4
+Version:        1.5
 Release:        1%{?dist}
 Summary:        Maat Measurement & Attestation Framework
 Group:          Administration/Monitoring
@@ -64,7 +64,7 @@ and base set of APBs and ASPs.
 %setup -q
 
 %build
-%configure --disable-static --enable-web-ui \
+%configure --disable-static --enable-web-ui --with-systemdsystemunitdir=/usr/lib/systemd/system \
 	   --with-asp-install-dir=%{_libexecdir}/maat/asps --with-apb-install-dir=%{_libexecdir}/maat/apbs \
 	   --disable-selinux-libdir-mapping --disable-tpm
 
@@ -248,6 +248,7 @@ setsebool -P httpd_can_network_connect=off
 %attr(4755, -, -) %{_libexecdir}/maat/asps/procrootasp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/procopenfileasp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/got_measure
+%{_libexecdir}/maat/asps/got_appraise
 %attr(4755, -, -) %{_libexecdir}/maat/asps/split_asp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/merge_asp
 %{_libexecdir}/maat/asps/rpm_details_asp
@@ -301,7 +302,31 @@ setsebool -P httpd_can_network_connect=off
 %{_datadir}/selinux/targeted/maat.pp
 
 %changelog
-* Mon Feb 28 2022 Maat Developers <APL_Maat_Developers@listserv.jhuapl.edu> 1.3-1
+* Fri Dec 8 2023 Maat Developers <apl-maat-developers@jhuapl.edu> 1.5-1
+- Updated the system information appraisal ASP to support dynamic reconfiguration
+- Improved logical flow of documentation through changes to wording and section ordering
+- Fixed to documentation rendering of code, diagrams, etc.
+- Inclusion of section on complex attestation use-case into documentation
+- Resolved build warnings raised by compilers on various platforms
+- Introduced signal for ASPs to indicate that a measurement was unable to be taken, integrated into GOT measurement
+- Changed ASP error signaling, allowing for more fine grained error status to be returned to the calling APB
+- Developed ASP to perform appraisal of GOT/PLT measurer results, which was formerly handled in the Userspace Appraiser APB
+- Remediated measurement issues leading to false positive detection of GOT/PLT errors
+- Resolved memory corruption issues within TPM code
+- Integrated Valgrind analysis into CI and resolved memory leaks that were identified
+- Incorporate more testing platforms into CI, including Ubuntu 22 and RHEL8 with TPM support
+- Added code coverage reports to CI
+- Introduced numerous CI and unit test fixes
+
+* Wed Apr 12 2023 Maat Developers <apl-maat-developers@jhuapl.edu> 1.4-1
+- TPM2 support
+- Removed ROADMAP.md
+- Addressed isses from static analysis
+- Fixed some memory leaks and Valgrind issues
+- Quality improvements to RPM packaging, SELinux integration
+- Added layered attestation demo
+
+* Mon Feb 28 2022 Maat Developers <APL-Maat-Developers@jhuapl.edu> 1.3-1
 - Carry nonce through scenarios with multiple negotiations
 - Add sequence diagram based user interface for observing attestation manager interactions
 - Add Passport use case demonstration 
@@ -309,6 +334,6 @@ setsebool -P httpd_can_network_connect=off
 - Add CentOS 8 support
 - Add notion of Copland 'place' to selection/negotiation policy
 
-* Thu Mar 12 2020 Maat Developers <APL_Maat_Developers@listserv.jhuapl.edu> 1.2-1
+* Thu Mar 12 2020 Maat Developers <APL-Maat-Developers@jhuapl.edu> 1.2-1
 - Initial Open Source Release
 

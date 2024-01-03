@@ -15,7 +15,7 @@
 #
 #
 
-AC_INIT([maat], [1.4], [APL_Maat_Developers@listserv.jhuapl.edu])
+AC_INIT([maat], [1.5])
 AC_CONFIG_AUX_DIR([build-aux])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AM_INIT_AUTOMAKE([foreign -Wall tar-pax subdir-objects])
@@ -315,6 +315,7 @@ DEFAULT_ASP(receive)
 DEFAULT_ASP(sign_send)
 DEFAULT_ASP(proc_namespaces)
 DEFAULT_ASP(got_measure)
+DEFAULT_ASP(got_appraise)
 DEFAULT_ASP(merge)
 DEFAULT_ASP(split)
 DEFAULT_ASP(kernel_msmt)

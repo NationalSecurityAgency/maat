@@ -1348,8 +1348,10 @@ int parse_arg_entry(xmlDocPtr doc, xmlNode *arg_entry, phrase_arg **arg)
                 tmp->type = STRING;
             } else {
                 dlog(1, "Warning: encountered unexpected type %s in argument block\n", type);
+                free(type);
                 continue;
             }
+            free(type);
         } else if(strcmp(name, "values") == 0) {
             if(tmp->type == 0) {
                 dlog(1, "Warning: have not processed an argument type yet, have to ignore values right now");

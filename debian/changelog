@@ -1,3 +1,31 @@
+maat (1.5-1) develop; urgency=low
+    * Updated the system information appraisal ASP to support dynamic reconfiguration
+    * Improved logical flow of documentation through changes to wording and section ordering
+    * Fixed to documentation rendering of code, diagrams, etc.
+    * Inclusion of section on complex attestation use-case into documentation
+    * Resolved build warnings raised by compilers on various platforms
+    * Introduced signal for ASPs to indicate that a measurement was unable to be taken, integrated into GOT measurement
+    * Changed ASP error signaling, allowing for more fine grained error status to be returned to the calling APB
+    * Developed ASP to perform appraisal of GOT/PLT measurer results, which was formerly handled in the Userspace Appraiser APB
+    * Remediated measurement issues leading to false positive detection of GOT/PLT errors
+    * Resolved memory corruption issues within TPM code
+    * Integrated Valgrind analysis into CI and resolved memory leaks that were identified
+    * Incorporate more testing platforms into CI, including Ubuntu 22 and RHEL8 with TPM support
+    * Added code coverage reports to CI
+    * Introduced numerous CI and unit test fixes
+
+ -- Maat Developers <apl-maat-developers@jhuapl.edu> Fri, 08 Dec 2023 01:23:33 -0500
+
+maat (1.4-1) develop; urgency=low
+    * TPM2 support
+    * Removed ROADMAP.md
+    * Addressed isses from static analysis
+    * Fixed some memory leaks and Valgrind issues
+    * Quality improvements to RPM packaging, SELinux integration
+    * Added layered attestation demo
+
+ -- Maat Developers <apl-maat-developers@jhuapl.edu> Wed, 12 Apr 2023 14:12:30 -0500
+
 maat (1.3-1) develop; urgency=low
 	* Carry nonce through scenarios with multiple negotiations
 	* Add sequence diagram based user interface for observing attestation manager interactions
@@ -5,8 +33,10 @@ maat (1.3-1) develop; urgency=low
 	* Add IoT Assurance work to contributions
 	* Add CentOS 8 support
 	* Add notion of Copland 'place' to selection/negotiation policy
-	
+
+ -- Maat Developers <apl-maat-developers@jhuapl.edu> Tue, 06 Dec 2022 14:45:00 -0500
+
 maat (1.2-1) unstable; urgency=low
 	* Initial Open Source Release
 
- -- Maat Developers <APL_Maat_Developers@listserv.jhuapl.edu>  Mon, 28 Feb 2022 17:31:28 -0500
+ -- Maat Developers <APL-Maat-Developers@jhuapl.edu>  Mon, 28 Feb 2022 17:31:28 -0500

@@ -97,8 +97,6 @@ bool files_load_public_silent(const char *path, TPM2B_PUBLIC *public);
 
 bool files_load_template_silent(const char *path, TPMT_PUBLIC *public);
 
-unsigned long get_file_size(FILE *f);
-
 void print_ssl_error(const char *failed_action);
 
 bool openssl_check(const UINT8 *buffer, UINT16 len, UINT8 *hash_buffer, UINT16 *hash_size);

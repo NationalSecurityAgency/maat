@@ -17,16 +17,16 @@ Maat User Guide / Documentation
    :numbered:
 
    maat_introduction
+   understanding_maat_features
+   understanding_maat_architecture
+   understanding_security_model
+   understanding_contracts
+   understanding_selection_process
+   configuring_selector_policy
+   configuring_attestation_manager
+   maat_environment_variables
    quick_start
    quick_start_maat_configuration
-   understanding_maat_features
-   understanding_contracts
-   understanding_maat_architecture
-   understanding_selection_process
-   configure_selector_config_policy
-   configuring_attestation_manager
-   understanding_security_model
-   maat_environment_variables
 
 .. only:: html
 
@@ -40,6 +40,7 @@ Maat User Guide / Documentation
       basic_tutorial
       setup_multirealms
       multirealm_tutorial
+      complex_attestation_tutorial
       layered_tutorial
       passport_creation_tutorial
       passport_use_tutorial

@@ -832,6 +832,7 @@ allow system_appraise_asp_t maat_tmp_t:file {open};
 allow system_appraise_asp_t tmp_t:lnk_file {getattr read};
 allow system_appraise_asp_t userspace_appraiser_apb_t:fifo_file {read write};
 allow system_appraise_asp_t cert_t:dir {search};
+allow system_appraise_asp_t whitelist_t:file {read_file_perms};
 
 # GOT Measure ASP
 type got_measure_asp_t;
@@ -850,6 +851,11 @@ domain_ptrace_all_domains(got_measure_asp_t)
 domain_getattr_all_domains(got_measure_asp_t)
 domain_search_all_domains_state(got_measure_asp_t)
 domain_read_all_domains_state(got_measure_asp_t)
+
+# GOT Appraise ASP
+type got_appraise_asp_t;
+type got_appraise_asp_exe_t;
+define_asp(got_appraise_asp_t, got_appraise_asp_exe_t)
 
 # Passport Maker ASP
 type passport_maker_asp_t;
@@ -1063,6 +1069,7 @@ allow_apb_asp(userspace_appraiser_apb_t, decompress_asp_exe_t, decompress_asp_t)
 allow_apb_asp(userspace_appraiser_apb_t, decrypt_asp_exe_t, decrypt_asp_t)
 allow_apb_asp(userspace_appraiser_apb_t, verify_measurement_contract_asp_exe_t, verify_measurement_contract_asp_t)
 allow_apb_asp(userspace_appraiser_apb_t, receive_asp_exe_t, receive_asp_t)
+allow_apb_asp(userspace_appraiser_apb_t, got_appraise_asp_exe_t, got_appraise_asp_t)
 
 # this is needed because the userspace appraiser launches 'subordinate' apbs. 
 # if we want to continue to allow this model of execution, should replace
@@ -1094,6 +1101,7 @@ allow_apb_asp(layered_appraiser_apb_t, decrypt_asp_exe_t, decrypt_asp_t)
 allow_apb_asp(layered_appraiser_apb_t, decompress_asp_exe_t, decompress_asp_t)
 allow_apb_asp(layered_appraiser_apb_t, verify_measurement_contract_asp_exe_t, verify_measurement_contract_asp_t)
 allow_apb_asp(layered_appraiser_apb_t, receive_asp_exe_t, receive_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, got_appraise_asp_exe_t, got_appraise_asp_t)
 
 # this is needed because the layered appraiser launches 'subordinate' apbs.
 # if we want to continue to allow this model of execution, should replace
@@ -1119,6 +1127,7 @@ allow_apb_asp(passport_userspace_appraiser_apb_t, whitelist_asp_exe_t, whitelist
 allow_apb_asp(passport_userspace_appraiser_apb_t, dpkg_check_asp_exe_t, dpkg_check_asp_t)
 allow_apb_asp(passport_userspace_appraiser_apb_t, system_appraise_asp_exe_t, system_appraise_asp_t)
 allow_apb_asp(passport_userspace_appraiser_apb_t, passport_maker_asp_exe_t, passport_maker_asp_t)
+allow_apb_asp(passport_userspace_appraiser_apb_t, got_appraise_asp_exe_t, got_appraise_asp_t)
 
 # this is needed because the passport userspace appraiser launches 'subordinate' apbs. 
 # if we want to continue to allow this model of execution, should replace

@@ -34,7 +34,7 @@ your certificates and ports are configured correctly.
 The tutorials that follow assume Maat is installed in `/opt/maat`. If you
 installed in a different directory, please modify accordingly.
 
-DEMO 1: SIMPLE ATTESTATION
+Demo 1: Simple Attestation
 --------------------------
 
 Set the following variables:
@@ -81,7 +81,7 @@ The output from the test_client should resemble:
 Where the <result>PASS</result> indicates successful measurement and
 appraisal (whereas <result>FAIL</result> would indicate failure).
 
-DEMO 2: ATTESTATION WITH SINGLE AM
+Demo 2: Attestation with Single AM
 ----------------------------------
 
 This demonstration illustrates how a single AM can be used as both the Attester
@@ -103,7 +103,7 @@ Run each of these commands in a separate terminal:
 
 The output should be similar to the output from the previous demo.
 
-DEMO 3: ATTESTATION WITH GOT/PLT MEASURE ASP
+Demo 3: Attestation with GOT/PLT Measure ASP
 --------------------------------------------
 
 This demo walks you through making changes to the selection policy to 
@@ -150,7 +150,7 @@ Run each of these commands in a separate terminal:
 
 The output should be similar to the output from the previous two demos.
 
-DEMO 4: SCHEDULING MEASUREMENTS VIA MESSAGE QUEUES
+Demo 4: Scheduling Measurements via Message Queues
 --------------------------------------------------
 
 Install these dependencies:
@@ -197,7 +197,7 @@ Where the "result" key in the result message is true if the attestation
 succeeded and false otherwise.
 
 
-DEMO 5: SCHEDULING MEASUREMENTS FROM THE UI
+Demo 5: Scheduling Measurements From the UI
 -------------------------------------------
 
 Install the dependency:

@@ -318,5 +318,5 @@ configure the Maat AM for your particular use case.
 
 If you would like to set up a web-based UI for Maat instead of interacting with
 the Maat AM via the command line, please follow the instructions at
-`:ref:`UI Tutorial<ui_tutorial>`.
+:ref:`UI Tutorial<ui_tutorial>`.
 

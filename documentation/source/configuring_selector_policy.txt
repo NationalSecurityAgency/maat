@@ -18,8 +18,18 @@
 
 .. _selCnfTut:
 
-Configuring Selector Config Policy
-###################################
+Configuring Selector Policy
+############################
+
+Purpose and Intended Audience
+==============================
+
+The purpose of this section is to define the structure of the configuration file that defines an Attestation Manager's (AM) selection policy.
+
+The intended audience for this section is a system administrator looking to understand how to interpret existing selection policies or how to write new selection policies that are tailored to their specific usecase. The audience for this section is presumed to be informed about the selection process as the described in the section entitled :ref:`Understanding the Selection Process <understandSelPrc>`.
+
+Selector Configuration
+=======================
 
 The selector configuration is defined in an XML file that primarily defines a set of selection rules. Rules specify a set of conditions that must be met for the rule to apply, and a set of options to be offered if the rule triggers. This section documents the complete set of significant elements and attributes values recognized by the selector. Note that the format is intended to be extensible by adding new attributes, so this list may expand as we discover additional inputs to the selection process.
 
@@ -59,7 +69,7 @@ A value in a collection. Contains a text node with the value.
 Rule
 ----
 
-A rule defines what actions to take or conditions to offer for a given attestation scenario. NB: unlike most elements in the selector configuration, the order in which rules appear is considered significant. In response to the selector_get_first_action API function, the selector implementation will return the first triggered rule found in the configuration file.
+A rule defines what actions to take or conditions to offer for a given attestation scenario. Unlike most elements in the selector configuration, the order in which rules appear is considered significant. The selector implementation will use the first triggered rule found in the configuration file.
 
 
         Attributes

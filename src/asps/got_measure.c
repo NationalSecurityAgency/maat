@@ -76,7 +76,6 @@ int asp_measure(int argc, char *argv[])
     pid_address *pa = NULL;
 
     asp_loginfo("Measure GOT_Measure ASP\n");
-    dlog(0, "I am user: %lu with euid %lu and gid %lu\n", getuid(), geteuid(), getgid());
 
     if(argc != 3) {
         res = ASP_APB_ERROR_GENERIC;

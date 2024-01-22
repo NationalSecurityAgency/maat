@@ -51,7 +51,7 @@ Run the following commands:
 
     pip3 install --user flask
 
-DEMO: USING ATTESTATION MANAGER UI TO VIEW A USERSPACE MEASUREMENT
+Demo: Using Attestation Manager UI to View a Userspace Measurement
 -------------------------------------------------------------------
 
 This demonstration works by setting up the AM to write specific messages

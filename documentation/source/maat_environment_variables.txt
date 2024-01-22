@@ -43,12 +43,12 @@ print to the terminal.  This will usually be set to 0.
 
 .. Table:: LIBMAAT_LOG_SYSLOG Supported Settings
 
-    ======= =========== =============================
-     Value     Enum         Description
-    ======= =========== =============================
-       0     LOG_EMERG	 System Unusuable
-       1     LOG_ALERT   Action Must Be Taken
-    ======= =========== =============================
+    ======= =============================
+     Value   Description
+    ======= =============================
+       0     Log to Syslog
+       1     Log to terminal
+    ======= =============================
 
 
 .. seealso:: https://linux.die.net/man/3/syslog

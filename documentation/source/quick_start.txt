@@ -1,3 +1,5 @@
+.. _quick_start:
+
 Quick Start: Preparing Environment, Building & Configuration
 ************************************************************
 
@@ -18,8 +20,6 @@ Quick Start: Preparing Environment, Building & Configuration
    limitations under the License.
 
 .. currentmodule:: maat
-
-.. _quick_start:
 
 .. |sngCol| raw:: html
 
@@ -73,7 +73,7 @@ For RHEL Machines:
    sudo yum install autoconf automake libtool check-devel glib2-devel   \
         libxml2-devel openssl-devel libuuid-devel libcap-devel make     \
         elfutils-devel json-c-devel selinux-policy-devel \
-        libselinux-devel tpm2-tss, tpm2-tss-devel, tpm2-tools
+        libselinux-devel tpm2-tss tpm2-tss-devel tpm2-tools
 
 
 
@@ -173,7 +173,7 @@ in the commands below.
 
 The default compilation of the Maat framework includes use of TPM2.0. If you 
 are using a system without TPM2.0, you can disable compilation of the 
-TPM2.0 commands by compiling with `--disable-tpm`. 
+TPM2.0 commands by including the `--disable-tpm` argument in the configure command below. 
 
 The following instructions install the Maat framework into the '/opt/maat' 
 directory. You can choose a different install prefix if you wish via the 
@@ -193,9 +193,7 @@ Clone the Maat repo, then run
     make
     sudo make install
 
-If you have SELinux capability in your environment, install the Maat SELinux 
-policy, reset the security context of Maat's installed files, and add the default
-AM port to SELinux management with:
+If you have SELinux capability in your environment, install the Maat SELinux policy, reset the security context of Maat's installed files, and add the default AM port to SELinux management with:
 
 .. code-block:: bash
 
@@ -218,8 +216,7 @@ and
 
 The next step is to configure your Attestation Manager for your specific use
 case. The Configuration section that follows will get you started with creating
-credentials for your AM. If you would rather skip to a demonstration of taking
-measurements with Maat, please continue to the
+credentials for your AM. If you would rather skip to a demonstration of taking measurements with Maat, please continue to the
 :ref:`Basic Tutorial <basic_tutorial>`.
 
 Maat also has a unit test suite built with the `check` unit test framework, 
@@ -252,6 +249,8 @@ the :ref:`Basic Tutorial <basic_tutorial>`,
 :ref:`Multirealm Tutorial <multirealm_tutorial>`,
 :ref:`Passport Creation Tutorial <passport_creation_tutorial>`,
 and :ref:`Passport Use Tutorial <passport_use_tutorial>`.
+
+Only use these credentials for development or demo purposes.
 **DO NOT USE THESE CREDENTIALS IN A REAL DEPLOYMENT.**
 
 Note: there is no fundamental difference between the client and server keys, 

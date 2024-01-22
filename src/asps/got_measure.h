@@ -23,4 +23,9 @@
  */
 
 #define ASP_NAME  "GOT Measure"
+
+#define GOT_PASS "PASS"
+#define GOT_FAIL "FAIL"
+#define GOT_UNC "UNKN"
+
 #endif

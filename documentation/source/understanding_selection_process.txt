@@ -1,5 +1,7 @@
-Understanding Selection Process
-********************************
+.. _understandSelPrc:
+
+Understanding the Selection Process
+************************************
 
 .. Copyright
 
@@ -19,8 +21,6 @@ Understanding Selection Process
 
 .. currentmodule:: maat
 
-.. _understandSelPrc:
-
 .. |cp| raw:: latex
 
    \clearpage
@@ -28,28 +28,11 @@ Understanding Selection Process
 Purpose and Intended Audience
 ==============================
 
-The purpose of the Selection Process section is to illustrate the roles of attestation, show how the attester and appraiser communicate, define the selector configuration, and detail the selection process.
+The purpose of this section is to illustrate the roles of attestation, show how the attester and appraiser communicate, define the selector configuration, and detail the selection process.
 
 The intended user of the section is anyone needing to understand the nuts and bolts of Maat as well as any system administrator that will need to fine tune Maat to function in their system.
 
-Two Roles of Attestation
-=========================
-
-The heart of Maat is the attestation manager (AM) dispatching components similar to init.d. The attestation manager provides a front door for the M&A
-architecture.
-
-During execution, the AM can take on the role of either the attester or the appraiser. For the purposes of the current configuration of the selection policy, the AM initiating a negotiation for measurement is
-referred to as the Appraiser, and the AM responding to the Appraiser is known as the Attester. 
-
-In the simplest use case, the Appraiser requests measurements to be made by the Attester. The Appraiser and Attester then negotiate over the specific measurement(s) to be taken. Once an agreement is reached,
-the Attester executes the chosen measurement(s) and returns the result to the Appraiser. The Appraiser then verifies the measurements for accuracy.
-
-With the flexibility provided by Copland, the names 'Attester' and 'Appraiser' become slight misnomers. Using Copland, the 'Attesting' machine could request measurements of the 'Appraising' machine before
-agreeing to provide details of its measurement (see the 'Mutual Attestation' use case). The negotiation process and selection policy is under active re-architecting with the integration of Copland and may be 
-modified to reflect more accurate naming in the near future. 
-
-
-|cp| 
+|cp|
 
 Attester/Appraiser Communications
 =================================
@@ -60,12 +43,12 @@ The previous sections discussed the architecture of the platform. The following 
    :scale:  60
    :align:  center
 
-The Attester and the Appraiser platforms will negotiate measurement through their domain's Attestation Manager (AM). An Attestation Protocol Block (APB) is forked by each AM to handle their part(s) of the 
+The Attester and the Appraiser platforms will negotiate measurement through their domain's Attestation Manager (AM). An Attestation Protocol Block (APB) is forked by each AM to handle their part(s) of the
 Attestation/Appraisal, and evidence is sent from Attesting APBs to Appraising APBs for evaluation. Attestation Service Providers (ASPs) perform the work for the APB, and will only communicate directly to the
 APB that created them or other ASPs running in the same domain.
 
 
-|cp| 
+|cp|
 
 .. _AppraisalandReporting:
 
@@ -101,7 +84,7 @@ Requester will then wait for the :ref:`response contract <ResponseContract>` fro
 
 **sample response contract**
 
-.. code-block:: xml 
+.. code-block:: xml
 
   <?xml version="1.0"?>
   <contract version="1.0" type="response">
@@ -124,7 +107,7 @@ Inputs to selection
 For a tutorial on modifying the selector configuration, go to
 :ref:`Modifying Selector Config <selCnfTut>`
 
-|cp| 
+|cp|
 
 Maat Selection Process
 =======================
@@ -148,5 +131,5 @@ The Maat selection process is a 6 step process between the Appraiser and Atteste
 
 At any point, negotiation can fail if either party does not accept the other's selections for the current scenario.
 Each AM uses its selection policy to determine acceptable measurements for the current
-scenario and stage of negotiation. 
+scenario and stage of negotiation.
 

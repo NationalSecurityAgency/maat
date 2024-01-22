@@ -28,7 +28,7 @@ Introduction
 These instructions give you the steps to set up and perform the first part
 of a multi-realm passport use case  demonstration. The test client requests a
 passport validating a userspace measurement from a second VM that represents a
-trusted third party appraiser. 
+trusted third party appraiser.
 
 Setup
 ======
@@ -36,42 +36,42 @@ Setup
 This tutorial uses APBs and ASPs that interact with a Mongo database for storage
 of passports on the system. These APBs and ASPs are not installed in Maat by
 default and require additional dependencies. Install the following packages on
-your system and start the Mongo service: 
+your system and start the Mongo service:
 
-For Ubuntu Machines: 
+For Ubuntu Machines:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-   sudo apt install libmongoc-1.0-0 libmongoc-dev libbson-dev libbson-1.0.0 \
-   mongodb
-   sudo service mongodb start
+        sudo apt install libmongoc-1.0-0 libmongoc-dev libbson-dev libbson-1.0.0 \
+        mongodb
+        sudo service mongodb start
 
-For RHEL Machines: 
+For RHEL Machines:
 
-.. code-block:: bash
-   
-   sudo yum install mongo-c-driver mongo-c-driver-devel libbson-devel libbson \
-   mongodb-org
-   sudo systemctl start mongod
-   
+    .. code-block:: bash
+
+        sudo yum install mongo-c-driver mongo-c-driver-devel libbson-devel libbson \
+        mongodb-org
+        sudo systemctl start mongod
+
 Once the service is running, set up the database with collections:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-   mongo
-   use maat
-   db.createCollection(passports, {})
-   db.createCollection(certificates, {})
+        mongo
+        use maat
+        db.createCollection(passports, {})
+        db.createCollection(certificates, {})
 
 Then, to build the APBs and ASPs, follow the directions that are located in the
 :ref:`Quick Start Guide <quick_start>`, but pass the following additional flags
 during configuration:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-   --enable-asp-passport_retriever --enable-asp-passport_storer \
-   --enable-apb-passport_storage --enable-apb-passport_ret \
-   --enable-apb-passport_appraiser
+        --enable-asp-passport_retriever --enable-asp-passport_storer \
+        --enable-apb-passport_storage --enable-apb-passport_ret \
+        --enable-apb-passport_appraiser
 
 Finally ensure that Maat is working correctly with the example scenarios
 outlined in the :ref:`Basic Tutorial <basic_tutorial>`.
@@ -80,260 +80,124 @@ Passport-Use-Case Demonstration Part 1
 =======================================
 
 This demo involves three AMs on two VMs:
-- AM_0 : Appraiser (in VM 0)
-- AM_1 : Attester  (in VM 0)
-- AM_2 : USM Appraiser (in VM 1)
+    - AM_0 : Appraiser (in VM 0)
+    - AM_1 : Attester  (in VM 0)
+    - AM_2 : USM Appraiser (in VM 1)
 
-Clone the VM you created in the setup step in order to get the proper number of 
-VMs.
+Clone the VM you created in the setup step in order to get the proper number of VMs.
 
 Explanation of Demo
 -------------------
 Here's what will happen in the demo:
 
-```
-1.  The requester sends a request to AM_0 running in VM_0 to receive a passport 
-    for itself that validates a userspace measurement.
+1. The requester sends a request to AM_0 running in VM_0 to receive a passport for itself that validates a userspace measurement.
 
-    The Copland phrase that the client will request to be executed is the
-    following:
-    
-    * @_1(@_1(@_2((USM get_passport)->SIG)))
-         _______________
-        |     VM_0      |
-        |   (1) ______  |
-      R------->|      | |
-        |      | AM_0 | |
-        |      |______| |
-        |_______________|
+    .. image:: images/passport_create_req.png
+        :scale: 30
+        :align: center
 
+   The Copland phrase that the client will request to be executed is the following:
 
-2.  AM_0 triggers a negotiation with itself (AM_0 refers to the thread acting as
-    an initiator for the phrase while AM_1 acts as the responder) in order to
-    determine if it is willing and able to take the measurement represented by
-    the phrase.
+    .. code-block:: none
 
-    AM_0 negotiates with itself over the following phrase:
+        @_1(@_1(@_2((USM get_passport)->SIG)))
 
-    @_1(@_2((USM get_passport)->SIG))
-         _____________________
-        |          VM_0       |
-        |  ______     ______  |
-        | |      |(2)|      | |
-        | | AM_0 |<->| AM_1 |
-        | |______|   |______| |
-        |_____________________|
+2. AM_0 triggers a negotiation with itself (AM_0 refers to the thread acting as an initiator for the phrase while AM_1 acts as the responder) in order to determine if it is willing and able to take the measurement represented by the phrase.
 
+    .. image:: images/passport_create_am0_nego_am1.png
+        :scale: 30
+        :align: center
 
-3.  After deciding that the phrase is satisfactory, AM_0 spawns the
-    passport_storage APB to store the passport in the mongodb, while AM_1
-    launches the request_passport APB to take the measurement and create the
-    passport. 
-         ______________________
-        |         VM_0         |
-        |  ______      ______  |
-        | |      |    |      | |
-        | | AM_0 |    | AM_1 | |
-        | |______|    |______| |
-        |   |           |      |
-        |   | (3)       |(3)   |
-        | [pp_stor]  [req_pp]  |
-        |______________________|
+   AM_0 negotiates with itself over the following phrase:
 
+    .. code-block:: none
 
-4.  Since the Copland phrase that AM_1 is tasked with executing begins with 
-    AM_2, the request_passport APB launches the send_request ASP in order to 
-    request a negotiation between AM_1 and AM_2 to appraise the requested
-    userspace measurement of VM_0 and create a passport.
+        @_1(@_2((USM get_passport)->SIG))
 
-    In this demo, the userspace resource that will be measurement is hashfiles.
-    The resource is specified in the third argument in the Copland phrase from
-    (2). This negotiation is over the following phrase:
+3. After deciding that the phrase is satisfactory, AM_0 spawns the passport_storage APB to store the passport in the mongodb, while AM_1 launches the request_passport APB to take the measurement and create the passport.
 
-    @_2((USM hashfiles) -> SIG)
-         _____________________           ________
-        |        VM_0         |         |  VM_1  |
-        |  ______     ______  |         |  ____  |
-        | |      |   |      | |   (4)   | |    | |
-        | | AM_0 |   | AM_1 |<-----'----->|AM_2| |
-        | |______|   |______| |    |    | |____| |
-        |   |           |     |    |    |________|
-        |   |           |     |    |
-        | [pp_stor]  [req_pp] |    |
-        |               |(4)  |    |
-        |            {send_r}------'
-        |_____________________|
+    .. image:: images/passport_create_am1_req_pass.png
+        :scale: 30
+        :align: center
 
+4. Since the Copland phrase that AM_1 is tasked with executing begins with AM_2, the request_passport APB launches the send_request ASP in order to request a negotiation between AM_1 and AM_2 to appraise the requested userspace measurement of VM_0 and create a passport.
 
-5.  AM_2 spawns a passport_userspace_appraiser APB in VM_1 while AM_1 spawns the
-    userspace APB and ASPs to measure the requested userspace resource.
-         _________________________           __________
-        |         VM_0            |         |   VM_1   |
-        |  ______    __________   |         |  ______  |
-        | |      |  |          |  |         | |      | |
-        | | AM_0 |  |   AM_1   |  |         | | AM_2 | |
-        | |______|  |__________|  |         | |______| |
-        |   |         |       |   |         |    |     |
-        |   |         |       |(5)|         |    |     |
-        | [pp_stor] [req_pp]  |   |         |    |(5)  |
-        |             |     [usm] |         | [pp_usm] |
-        |          {send_r}   |   |         |__________|
-        |                   {usm} |         
-        |                         |         
-        |_________________________|         
+    .. image:: images/passport_create_am1_send_req_am2.png
+        :scale: 30
+        :align: center
 
+   In this demo, the userspace resource that will be measurement is hashfiles. The resource is specified in the third argument in the Copland phrase from (2). This negotiation is over the following phrase:
 
-6.  AM_1 forks the sign_send ASP to forward the userspace measurement to the
-    passport_userspace_appraiser APB for AM_2 to appraise. 
-         _________________________           __________
-        |         VM_0            |         |   VM_1   |
-        |  ______    __________   |         |  ______  |
-        | |      |  |          |  |         | |      | |
-        | | AM_0 |  |   AM_1   |  |         | | AM_2 | |
-        | |______|  |__________|  |         | |______| |
-        |   |         |       |   |         |    |     |
-        |   |         |       |   |         |    |     |
-        | [pp_stor] [req_pp]  |   |   (6)   |    |     |
-        |             |     [usm] |    '----->[pp_usm] |
-        |          {send_r}   |   |    |    |__________|
-        |                     |   |    |     
-        |              {sign_send}-----'        
-        |_________________________|         
+    .. code-block:: none
 
+        @_2((USM hashfiles) -> SIG)
 
-7.  The passport_userspace_appraiser APB in VM_1 forks a passport_maker ASP
-    to create a passport using the results of the userspace measurement. The
-    passport contains:
+5. AM_2 spawns a passport_userspace_appraiser APB in VM_1 while AM_1 spawns the userspace APB and ASPs to measure the requested userspace resource.
+
+    .. image:: images/passport_create_am1_usm.png
+        :scale: 30
+        :align: center
+
+6. AM_1 forks the sign_send ASP to forward the userspace measurement to the passport_userspace_appraiser APB for AM_2 to appraise.
+
+    .. image:: images/passport_create_am2_usm_app.png
+        :scale: 30
+        :align: center
+
+7. The passport_userspace_appraiser APB in VM_1 forks a passport_maker ASP to create a passport using the results of the userspace measurement. The passport contains:
    	    * target type
 	    * target ip
 	    * measured resource
-	    * executed copland phrase 
+	    * executed copland phrase
 	    * date and time of passport creation
 	    * how long the passport will be valid (in seconds)
 	    * result of the appraisal
-	    * appraiser's signature 
-         _____________________           __________
-        |        VM_0         |         |   VM_1   |
-        |  ______    _______  |         |  ______  |
-        | |      |  |       | |         | |      | |
-        | | AM_0 |  | AM_1  | |         | | AM_2 | |
-        | |______|  |_______| |         | |______| |
-        |   |         |       |         |    |     |
-        |   |         |       |         |    |     |
-        | [pp_stor] [req_pp]  |         |    |     |
-        |             |       |         | [pp_usm] |
-        |          {send_r}   |         |    ^(7)  |
-        |                     |         |    |     |
-	|                     |         |   {pp}   |
-        |_____________________|         |__________|
+	    * appraiser's signature
 
+    .. image:: images/passport_create_am2_pass_maker.png
+        :scale: 30
+        :align: center
 
-8.  The passport is bundled into a response contract and is forwarded 
-    to the send request ASP. The passport is parsed from the contract
-    and added as a measurement.
-   
-    At this point, AM_2 plays no further role in the scenario
-         _____________________           __________
-        |        VM_0         |         |   VM_1   |
-        |  ______    _______  |         |  ______  |
-        | |      |  |       | |         | |      | |
-        | | AM_0 |  | AM_1  | |         | | AM_2 | |
-        | |______|  |_______| |         | |______| |
-        |   |         |       |         |    |     |
-        |   |         |       |         |    |     |
-        | [pp_stor] [req_pp]  |   (8)   |    |     |
-        |             |       |    '------[pp_usm] |
-        |          {send_r}<-------'    |    |     |
-        |                     |         |   {pp}   |
-        |_____________________|         |__________|
+8. The passport is bundled into a response contract and is forwarded to the send request ASP. The passport is parsed from the contract and added as a measurement.
 
+    .. image:: images/passport_create_am2_send_pass_am1.png
+        :scale: 30
+        :align: center
 
-9.  The request_passport APB on AM_1 then invokes all of the ASPs required 
-    to sign and send the measurement to AM_1 (these are not all drawn out for 
-    the sake of brevity). Each ASP takes the results of the previous measurement
-    and forward their result (starting with the passport from the send_request
-    ASP) to the next ASP through pipes set up in the APB. The relevant ASPS
-    include the:
-	* Serialize ASP - serializes the measurement buffer which contains the
-	  	    	  passport 
+   At this point, AM_2 plays no further role in the scenario
+
+9. The request_passport APB on AM_1 then invokes all of the ASPs required to sign and send the measurement to AM_1 (these are not all drawn out for the sake of brevity). Each ASP takes the results of the previous measurement and forward their result (starting with the passport from the send_request ASP) to the next ASP through pipes set up in the APB. The relevant ASPS include the:
+	    * Serialize ASP - serializes the measurement buffer which contains the passport
         * Compress ASP - compresses the serialized measurement buffer
-        * Create Contract ASP - creates the measurement contract which holds the
-	  	 	      	measurement
+        * Create Contract ASP - creates the measurement contract which holds the measurement
         * Encrypt ASP - encrypts the measurement and contract
         * Send ASP - sends the encrypted buffer to the intended recipient
-         _____________________
-        |        VM_0         |
-        |  ______     ______  |
-        | |      |   |      | |
-        | | AM_0 |   | AM_1 | |
-        | |______|   |______| |
-        |   |           |     |
-        |   |           |     |
-        | [pp_stor]  [pp_req] |
-        |          (9)| |(9)  |
-        |          .--' '---. |
-        |          |        | |
-        |  {asp}<--'--{asp}<' |
-        |_____________________|
 
+    .. image:: images/passport_create_am1_create_meas.png
+        :scale: 30
+        :align: center
 
-10. The measurement contract containing the passport is forwarded to the
-    passport_storage APB to be inserted in the mongodb.
+10. The measurement contract containing the passport is forwarded to the passport_storage APB to be inserted in the mongodb.
 
-    At this point, AM_1 plays no further role in the scenario	
-         ______________________
-        |         VM_0         |
-        |   ______     ______  |
-        |  |      |   |      | |
-        |  | AM_0 |   | AM_1 | |
-        |  |______|   |______| |
-        |    |           |     |
-        |    |           |     |
-        | [pp_stor]   [req_pp] |
-        |        ^  (10) |     |
-        |        '----{send}   |
-        |______________________|
+    .. image:: images/passport_create_am1_send_am0.png
+        :scale: 30
+        :align: center
 
+    At this point, AM_1 plays no further role in the scenario.
 
-11. The passport_storage APB spawned by AM_0 receives the measurement contract
-    from AM_1 and forks the passport storer ASP. The ASP parses the passport to
-    create a document containing the fields specified in (7). It then connects
-    to the mongodb and inserts the passport.
-         _____________
-        |     VM_0    |
-        |    ______   |
-        |   |      |  |
-        |   | AM_0 |  |
-        |   |______|  |
-        |      |      |
-	|      |      |
-	|  [pp_stor]  |
-	|      | (11) |
-	|      |      |
-	|    {stor}   |
-	|_____________|
+11. The passport_storage APB spawned by AM_0 receives the measurement contract from AM_1 and forks the passport storer ASP. The ASP parses the passport to create a document containing the fields specified in (7). It then connects to the mongodb and inserts the passport.
 
+    .. image:: images/passport_create_am0_store.png
+        :scale: 30
+        :align: center
 
-12. The result of the insertion is bundled in a response contract by the
-    passport_storage APB, which forwards it to the requestor.
+12. The result of the insertion is bundled in a response contract by the passport_storage APB, which forwards it to the requestor.
 
-    At this point, the scenario is complete. 
-         ______________
-        |      VM_0    |
-        |     ______   |
-        |    |      |  |
-        |    | AM_0 |  |
-        |    |______|  |
-        |       |      |
-	|       |      |
-    R<------[pp_stor]  |
-	|       |      |
-	|       |      |
-	|     {stor}   |
-	|______________|
+    .. image:: images/passport_create_am0_resp.png
+        :scale: 30
+        :align: center
 
-
-```
+    At this point, the scenario is complete.
 
 Demonstration
 -------
@@ -342,21 +206,12 @@ This demonstration uses three AM instances running on two separate VMs.
 Test_client, AM_0, and AM_1 will be running on VM_0 while AM_2 will
 be on VM_1
 
-The demo setup will look as follows, with the test client being spawned 
+The demo setup will look as follows, with the test client being spawned
 on the distinct VM_0:
 
-```
-    ______________________      _____________
-   |                      |    |             |
-   |        VM_0          |    |    VM_1     |
-   |   ______    ______   |    |   _______   |
-   |  |      |  |      |  |    |  |       |  |
-   |  | AM_0 |  | AM_1 |  |    |  | AM_2  |  |
-   |  | (app)|  | (att)|  |    |  | (app) |  |
-   |  |______|  |______|  |    |  |_______|  |
-   |______________________|    |_____________|
-
-```
+    .. image:: images/passport_create_demo_setup.png
+        :scale: 30
+        :align: center
 
 Directions to set up the VMs are located in the
 :ref:`Setup Multirealms Guide <setup_multirealms>`.
@@ -373,30 +228,35 @@ To start the scenario, you must start AM_0, AM_1, and AM_2. To do so, run
 
 On VM_1: AM_0
 
-   sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr -i 192.168.0.6:2342 \
-     -C /opt/maat/etc/maat/minimal-am-config.xml -m COPLAND \
-     -s /opt/maat/share/maat/selector-configurations/passport-maker-selector.xml
+    .. code-block:: xml
+
+        sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr -i 192.168.0.6:2342 \
+            -C /opt/maat/etc/maat/minimal-am-config.xml -m COPLAND \
+            -s /opt/maat/share/maat/selector-configurations/passport-maker-selector.xml
 
 On VM_1: AM_1
 
-    sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr -i 192.168.0.6:2343 \
-     -C /opt/maat/etc/maat/minimal-am-config.xml -m COPLAND \
-     -s /opt/maat/share/maat/selector-configurations/passport-maker-selector.xml
+    .. code-block:: xml
+
+        sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr -i 192.168.0.6:2343 \
+            -C /opt/maat/etc/maat/minimal-am-config.xml -m COPLAND \
+            -s /opt/maat/share/maat/selector-configurations/passport-maker-selector.xml
 
 On VM_2: AM_2
 
-   sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr -i 192.168.0.7:2342 \
-     -C /opt/maat/etc/maat/trusted-third-party-config.xml -m COPLAND \
-     -s /opt/maat/share/maat/selector-configurations/passport-maker-selector.xml
-    
+    .. code-block:: xml
 
-To take the measurement, you must invoke the test client on VM_0 using 
+        sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr -i 192.168.0.7:2342 \
+            -C /opt/maat/etc/maat/trusted-third-party-config.xml -m COPLAND \
+            -s /opt/maat/share/maat/selector-configurations/passport-maker-selector.xml
+
+To take the measurement, you must invoke the test client on VM_0 using
 the following:
 
-    /opt/maat/bin/test_client -l 192.168.0.6 -a 2342 -t 192.168.0.6 -p 2343 \
-    -r passport_hashfiles
+    .. code-block:: bash
 
-```
+        /opt/maat/bin/test_client -l 192.168.0.6 -a 2342 -t 192.168.0.6 -p 2343 \
+        -r passport_hashfiles
 
 You should see movement from each AM corresponding to the expected actions in
 the diagram above. A `<result>PASS</result>` in the test client's terminal
@@ -404,15 +264,14 @@ indicates success.
 
 To view the passport, find the document in the mongodb
 
-.. code-block:: bash
+    .. code-block:: bash
 
-   mongo
-   use maat
-   db.passports.find().pretty()
+        mongo
+        use maat
+        db.passports.find().pretty()
 
 Check that the last document in the collection is the newly generated passport
 by verifying the information in the data fields.
-
 
 This concludes the first part of the Passport Use Case tutorials. For
 demonstration of the second part and how a passport is used, please see the

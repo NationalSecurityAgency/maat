@@ -297,7 +297,7 @@ GSList *get_elf_mapping_groups(const char *pid)
     ssize_t chars_read = 0;
     mapping_group *grp = NULL;
 
-    enum collection_state {NONE, ELF, LDSO};
+    enum collection_state {NONE, ELF};
     enum collection_state state = NONE;
     while ((chars_read = getline(&line, &line_sz, fp)) != -1) {
         memory_mapping *mapping;
@@ -365,12 +365,12 @@ get_elf_mapping_groups_parse_mapping:
                  * compiled with Address Santizer) where a library gets mapped to
                  * multiple distinct, adjacent memory maps. This code deals with this edge
                  * case. However, TODO need a more generalizable way of processing the map
-                 * file because I don't know if we can assume that libraries and such
-                 * will always be mapped to a contiguous memory location */
+                 * file because this code doesn't correctly handle the presence of multiple
+                 * mappings of the same file */
                 p = mapping_groups;
                 while (p != NULL) {
                     grp = (mapping_group *)p->data;
-                    if(!strcmp(grp->path, file_path) && grp->end == start_address) {
+                    if(!strcmp(grp->path, file_path)) {
                         mapping_groups = g_slist_remove(mapping_groups, grp);
                         break;
                     }
@@ -398,16 +398,6 @@ get_elf_mapping_groups_parse_mapping:
                 }
 
                 state = ELF;
-                char *last_slash = rindex(file_path, '/');
-                if (last_slash != NULL) {
-                    // This is a loose check, but the LDSO logic just
-                    // collects all mappings until the next ld.so
-                    // mapping, so there shouldn't be any harm in false
-                    // positives.
-                    if (strncmp(last_slash + 1, "ld-", 3) == 0) {
-                        state = LDSO;
-                    }
-                }
             }
             break;
         case ELF:
@@ -468,33 +458,6 @@ get_elf_mapping_groups_parse_mapping:
 
                 grp->end = end_address;
                 grp->mappings = g_slist_prepend(grp->mappings, mapping);
-            }
-            break;
-        case LDSO:
-            // ld.so often has anonymous mappings or mappings for other
-            // files in its space, but we don't care about them, so pass
-            // over them and only grab ld.so's mappings.
-            if (chars_consumed < chars_read &&
-                    strcmp(file_path, grp->path) == 0) {
-                // At this point it's no different than any other ELF
-                mapping = malloc(sizeof(memory_mapping));
-                if(!mapping) {
-                    goto error;
-                }
-
-                mapping->start = start_address;
-                mapping->end = end_address;
-                mapping->offset = offset;
-                mapping->path = grp->path;
-                mapping->perms = strdup(permissions);
-                if (!mapping->perms) {
-                    free(mapping);
-                    goto error;
-                }
-
-                grp->end = end_address;
-                grp->mappings = g_slist_prepend(grp->mappings, mapping);
-                state = ELF;
             }
             break;
         default:

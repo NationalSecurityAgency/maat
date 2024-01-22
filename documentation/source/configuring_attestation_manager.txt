@@ -25,16 +25,28 @@ Configuring Attestation Manager (AM)
 
 .. _configuring_attestation_manager:
 
-Configuring
-============
+Purpose and Intended Audience
+==============================
 
-The attestation manager configuration file provides necessary information to the attestation manager. 
-Much of this information can also be specified as command line arguments. 
+The purpose of this section is to define the elements of the configuration of an AM.
+
+The intended audience for this section is a system administrator looking to deploy Maat.
+
+Configuration Elements
+=======================
+
+The AM configuration file specifies information relevant to the function of an AM.
+Much of this information can also be specified as command line arguments.
 Specifically the configuration file supports specifying:
 
 * Interfaces to listen on
 
-  * UNIX, INET, IVC
+  * Type of interface
+
+    * UNIX
+    * INET
+    * IVC (experimental)
+
   * Special rules associated with the interface, such as the ability to short-circuit negotiation
 
 * Credential files to be loaded
@@ -46,9 +58,11 @@ Specifically the configuration file supports specifying:
 * Selector configuration source
 
   * XML File
-  * Mongo Database
+  * Mongo Database (experimental)
 
 * Work directory
+
+* Places information store
 
 * Metadata directories
 
@@ -65,7 +79,7 @@ Specifically the configuration file supports specifying:
 |cp|
 
 Format
-======
+=======
 The attestation manager configuration uses an XML-based format. An example is below:
 
 .. code-block:: xml
@@ -93,12 +107,13 @@ The attestation manager configuration uses an XML-based format. An example is be
       <user>maat</user>
       <group>maat</group>
       <work dir="/tmp/attestmgr" />
+      <place name="/opt/maat/etc/maat/places.csv">
   </am-config>
 
 
 |cp|
 
-Maat supplied AM Configurations
+Maat Supplied AM Configurations
 ================================
 
 .. include:: ams.txt

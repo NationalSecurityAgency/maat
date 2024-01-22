@@ -32,7 +32,6 @@
 #include <sys/mman.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <unistd.h>
 #include <assert.h>
 
 #include <elf.h>
@@ -69,6 +68,8 @@
 
 // Used to enable things that are probably highly platform dependent.
 //#define EXPERIMENTAL
+
+#define UNKN TRUE+1
 
 // GNU_HASH bloom filter
 #define ELFCLASS_BITS 64
@@ -3165,8 +3166,8 @@ static void resolve_symbol(
 
     GList *p;
     for (p = elf_contexts;
-            resolution->address == 0
-            && weak_resolution->address == 0
+            (resolution->address == 0 || entry->contents != resolution->address)
+            && (weak_resolution->address == 0 || entry->contents != weak_resolution->address)
             && p
             && p->data;
             p = p->next) {
@@ -3527,7 +3528,7 @@ static char *get_cmdline(const char *pid)
     return buf;
 }
 
-static void scan_process(pid_t pid)
+static int scan_process(pid_t pid)
 {
     int res = 0;
     char *pid_string;
@@ -3535,7 +3536,7 @@ static void scan_process(pid_t pid)
     pid_string = malloc(g_num_digits_pid + 1);
     if(pid_string == NULL) {
         dlog(0, "Unable to allocate memory for a string representation of a PID\n");
-        return;
+        return 1;
     }
 
     res = snprintf(pid_string, g_num_digits_pid + 1, "%ld",
@@ -3543,14 +3544,14 @@ static void scan_process(pid_t pid)
     if (res < 0) {
         dlog(1, "Unable to convert the PID into string form\n");
         free(pid_string);
-        return;
+        return 1;
     }
 
     char *cmdline = get_cmdline(pid_string);
     if (!cmdline) {
         report_anomaly("Unable to access command line information of process");
         free(pid_string);
-        return;
+        return 1;
     }
 
     dlog(4, "Scanning PID %s: %s\n", pid_string, cmdline);
@@ -3561,13 +3562,13 @@ static void scan_process(pid_t pid)
         report_anomaly(" ELF library initialization "
                        " failed : %s ", elf_errmsg(elf_errno()));
         free(pid_string);
-        return;
+        return 1;
     }
 
     if(open_mem_fd(pid_string) < 0) {
         report_anomaly("Unable to open memory of process for reading\n");
         free(pid_string);
-        return;
+        return 1;
     }
 
     GSList *elf_mapping_groups = get_elf_mapping_groups(pid_string);
@@ -3587,7 +3588,7 @@ static void scan_process(pid_t pid)
     if (!exe_base_load_addr || move_exe_context_to_front(&elf_contexts, exe_base_load_addr) < 0) {
         report_anomaly("Could not find the ELF context for the executable");
         free(pid_string);
-        return;
+        return 1;
     }
 
     verify_exe_path(pid_string, ((elf_context *)elf_contexts->data)->path);
@@ -3606,7 +3607,7 @@ static void scan_process(pid_t pid)
         if (linkmap_list == NULL) {
             report_anomaly("Unable to retrieve link map based on address\n");
             free(pid_string);
-            return;
+            return 1;
         }
 
         if (verify_executable_link_map_entry(linkmap_list, elf_contexts) == 0
@@ -3652,6 +3653,7 @@ static void scan_process(pid_t pid)
     g_slist_foreach(elf_buffers, free_file_mapping_buffer,
                     GINT_TO_POINTER(TRUE));
     g_slist_free(elf_buffers);
+    return 0;
 }
 
 static int is_pid(uint32_t pid)
@@ -3669,14 +3671,14 @@ static int is_pid(uint32_t pid)
     pid_string = malloc(g_num_digits_pid + 1);
     if(pid_string == NULL) {
         dlog(0, "Unable to allocate memory for a string representation of a PID\n");
-        return FALSE;
+        return UNKN;
     }
 
     res = snprintf(pid_string, g_num_digits_pid + 1, "%" PRIu32 "", pid);
     if (res < 0) {
         dlog(1, "Unable to convert the PID into string form\n");
         free(pid_string);
-        return FALSE;
+        return UNKN;
     }
 
     strncat(buf, pid_string, (size_t)g_num_digits_pid);
@@ -3687,7 +3689,7 @@ static int is_pid(uint32_t pid)
     fp = fopen(buf, "rb");
     if (fp == NULL) {
         dlog(1, "Cannot open the process stat file %s: error - %s\n", buf, strerror(errno));
-        return FALSE;
+        return UNKN;
     }
 
     fclose(fp);
@@ -3695,7 +3697,10 @@ static int is_pid(uint32_t pid)
 }
 
 /* This function will be listed in a header file and will expose the got_measurer
- * functionality to other binaries */
+ * functionality to other binaries
+ *
+ * Returns 0 on success, 1 if an error occurred and measurement could not be performed, or a -1 if an
+ * anomaly was detected */
 int measure_got(const uint32_t pid_u)
 {
     int wstatus, res = 0;
@@ -3710,9 +3715,13 @@ int measure_got(const uint32_t pid_u)
     }
 
     //Determine if the argument is valid
-    if (is_pid(pid_u) == FALSE) {
+    res = is_pid(pid_u);
+    if (res == FALSE) {
         dlog(1, "Given invalid PID\n");
         return -1;
+    } else if (res == UNKN) {
+        dlog(1, "Cannot evaluate if PID represents current process\n");
+        return 1;
     }
 
     /*
@@ -3744,7 +3753,7 @@ int measure_got(const uint32_t pid_u)
         if(errno) {
             dlog(0, "Unable to trace process %ld: %s\n",
                  (long int)pid, strerror(errno));
-            return -1;
+            return 1;
         }
 
         res = waitpid(pid, &wstatus, 0);
@@ -3752,23 +3761,26 @@ int measure_got(const uint32_t pid_u)
         if(res < 0 || !WIFSTOPPED(wstatus)) {
             dlog(1, "Unable to properly wait on traced process of pid %ld,"
                  "skipping measurement\n", (long int)pid);
-            res = -1;
+            res = 1;
         }
     }
 
     dlog(6, "Scanning PID %ld\n", (long int)pid);
 
     if(res >= 0) {
-        scan_process(pid);
+        res = scan_process(pid);
     }
 
     if(uid == 0) {
         ptrace(PTRACE_DETACH, pid, NULL, NULL);
     }
 
-    if (passed == TRUE) {
+    if (passed == TRUE && res == 0) {
         dlog(4, "Measurement passed!\n");
         return 0;
+    } else if (res == 1) {
+        dlog(4, "Unable to take GOT/PLT measurement due to error\n");
+        return 1;
     } else {
         dlog(4, "Measurement failed!\n");
         return -1;

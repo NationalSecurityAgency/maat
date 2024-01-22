@@ -31,7 +31,7 @@ START_TEST(test_address_alloc)
     char *bar = "bar";
 
     a = sg_address_create(foo, bar);
-    ck_assert(a);
+    ck_assert(a != NULL);
     ck_assert(strcmp(a->space, foo)==0);
     ck_assert(strcmp(a->addr, bar)==0);
     ck_assert(a->addr != foo);
@@ -85,7 +85,7 @@ START_TEST(test_api_alloc)
     struct sg_graph *g = NULL;
 
     g = sg_create_graph();
-    ck_assert(g);
+    ck_assert(g != NULL);
 
     sg_free_graph(g);
 }
@@ -102,7 +102,7 @@ START_TEST(test_graph_api)
     edge_id_t e1 = sg_add_edge(g, n1, n2, NULL);
     edge_id_t e2 = sg_add_edge(g, n2, n1, "test");
 
-    ck_assert(g);
+    ck_assert(g != NULL);
 
     ck_assert(n1 != 0);
     ck_assert(n2 != 0);
@@ -183,7 +183,7 @@ START_TEST(test_data_alloc)
     char fd[] = "foodat";
 
     d = sg_data_create(tag, (const uint8_t *)fd, strlen(fd)+1);
-    ck_assert(d);
+    ck_assert(d != NULL);
     ck_assert(strcmp(d->tag, tag)==0);
     ck_assert(d->blob != NULL);
     ck_assert(memcmp(d->blob, fd, strlen(fd)+1) == 0);
@@ -275,7 +275,7 @@ START_TEST(test_edge_alloc)
     struct sg_node *n2 = sg_node_create("fiz", "ban");
 
     e = sg_edge_create(n1, n2, NULL);
-    ck_assert(e);
+    ck_assert(e != NULL);
     ck_assert(e->labels == NULL);
     ck_assert(sg_address_cmp(&n1->a, &e->source) == 0);
     ck_assert(sg_address_cmp(&n2->a, &e->dest) == 0);
@@ -358,7 +358,7 @@ START_TEST(test_graph_alloc)
     struct sg_graph *g = NULL;
 
     g = sg_graph_create();
-    ck_assert(g);
+    ck_assert(g != NULL);
     ck_assert(g->nodes == NULL);
     ck_assert(g->edges == NULL);
     ck_assert(g->labels == NULL);
@@ -377,7 +377,7 @@ START_TEST(test_graph_add)
     struct sg_edge *e3 = sg_edge_create(n2, n1, "test");
 
     g = sg_graph_create();
-    ck_assert(g);
+    ck_assert(g != NULL);
 
     ck_assert(sg_graph_add_node(g, n1) == 0);
     ck_assert(sg_graph_add_node(g, NULL) != 0);
@@ -412,7 +412,7 @@ START_TEST(test_graph_query)
     struct sg_edge *e3 = sg_edge_create(n2, n1, "test");
 
     g = sg_graph_create();
-    ck_assert(g);
+    ck_assert(g != NULL);
 
     ck_assert(sg_graph_add_node(g, n1) == 0);
     ck_assert(sg_graph_add_node(g, NULL) != 0);
@@ -467,16 +467,16 @@ START_TEST(test_json_minimal)
     char *json = NULL;
 
     g = sg_graph_create();
-    ck_assert(g);
+    ck_assert(g != NULL);
 
     ck_assert(sg_graph_to_string(NULL) == NULL);
     ck_assert(sg_string_to_graph(NULL) == NULL);
 
     json = sg_graph_to_string(g);
-    ck_assert(json);
+    ck_assert(json != NULL);
 
     g2 = sg_string_to_graph(json);
-    ck_assert(g2);
+    ck_assert(g2 != NULL);
 
     ck_assert(g2->nodes == NULL);
     ck_assert(g2->labels == NULL);
@@ -496,7 +496,7 @@ START_TEST(test_json_lots)
     char *tag = "foo";
 
     g = sg_graph_create();
-    ck_assert(g);
+    ck_assert(g != NULL);
 
     struct sg_node *n1 = sg_node_create("foo", "bar");
     struct sg_node *n2 = sg_node_create("fiz", "ban");
@@ -549,11 +549,11 @@ START_TEST(test_json_lots)
     ck_assert(g_list_length(g->edges) == 2);
 
     json = sg_graph_to_string(g);
-    ck_assert(json);
+    ck_assert(json != NULL);
     printf("%s\n", json);
 
     g2 = sg_string_to_graph(json);
-    ck_assert(g2);
+    ck_assert(g2 != NULL);
 
     ck_assert(g2->nodes != NULL);
     ck_assert(g2->labels != NULL);
@@ -625,7 +625,7 @@ START_TEST(test_node_alloc)
     char *addr = "bar";
 
     n = sg_node_create(space, addr);
-    ck_assert(n);
+    ck_assert(n != NULL);
     ck_assert(strcmp(n->a.space, space)==0);
     ck_assert(strcmp(n->a.addr, addr)==0);
     ck_assert(n->data == NULL);

@@ -43,7 +43,7 @@ graph_shell_LDADD = $(GLIB_LIBS) \
 	-lmaat_util-@PACKAGE_VERSION@  -ldl
 
 if BUILD_COVERAGE
-AM_CFLAGS += -fprofile-arcs -ftest-coverage
+AM_CFLAGS += --coverage
 endif
 
 clean-local:

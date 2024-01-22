@@ -85,7 +85,7 @@ void teardown(void)
     unload_all_asps(asps);
 }
 
-static char* create_passport()
+static char* create_passport(char *startdate)
 {
     char *target_type = "host-port";
     char *target = "127.0.0.1";
@@ -94,22 +94,12 @@ static char* create_passport()
     char *result = "PASS";
     char *period = "300";
 
-    time_t currtime;
-    struct tm *tm;
-    char startdate[MAX_TM_SZ];
-
     char *p_buf = NULL;
     size_t p_sz = 0;
     unsigned int size;
     unsigned char *s_buf = NULL;
     size_t s_sz = 0;
     char *b64sig;
-
-    //get time
-    time(&currtime);
-    tm = gmtime(&currtime);
-    memset(startdate, '0', MAX_TM_SZ);
-    strftime(startdate, MAX_TM_SZ, "%Y-%m-%dT%H:%M:%SZ", tm);
 
     //get passport as string
     p_sz = strlen(target_type) + strlen(target) + strlen(resource) +
@@ -199,7 +189,8 @@ START_TEST(test_passport_maker)
         fail_unless(WEXITSTATUS(status) == 0, "ASP exit value != 0 and is %d\n", status);
 
         /* Cast is justified because the function does not regard the signedness of the argument */
-        ret = maat_read_sz_buf(fd_out[0], &passport_buf, &passport_sz, &bytes_read, &eof_enc, TIMEOUT, 0);
+        ret = maat_read_sz_buf(fd_out[0], (unsigned char **)&passport_buf, &passport_sz, &bytes_read, &eof_enc,
+                               TIMEOUT, 0);
 
         fail_if(ret < 0, "Error reading passport from chan");
         fail_if(eof_enc, "EOF encountered before complete buffer read\n");
@@ -207,13 +198,21 @@ START_TEST(test_passport_maker)
         close(fd_out[0]);
     }
 
-    created_passport = create_passport();
-    fail_if(!created_passport, "test passport could not be created\n");
-
     decoded_passport = b64_decode(passport_buf, &encoded_sz);
+
+    // get start time from real passport to make sure test one is same
+    char *token, *tmp_str = strdup(decoded_passport);
+    int i;
+    // startdate is 6th token
+    for (i = 0; i < 6; i++, decoded_passport=NULL) {
+        token = strtok(decoded_passport, ",");
+    }
     free(passport_buf);
 
-    fail_if(strcmp(created_passport, decoded_passport) != 0, "Passport from ASP does not match the test passport\n");
+    created_passport = create_passport(token);
+    fail_if(!created_passport, "test passport could not be created\n");
+
+    fail_if(strcmp(created_passport, tmp_str) != 0, "Passport from ASP does not match the test passport\n");
 }
 END_TEST
 

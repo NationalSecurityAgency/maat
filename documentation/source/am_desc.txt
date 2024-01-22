@@ -25,19 +25,19 @@ Definition
 An attestation manager (AM) provides a front door for the M&A
 architecture. AMs are responsible for awaiting connections,
 negotiating the attestation protocol block (APB) to be used, and
-specifying the measurement evidence to be collected. The AM is somewhat 
-similar to the classic UNIX inetd super-server in that it is primarily 
-a connection dispatcher rather than a work unit in its own right. 
-The main difference is that during negotiation the AM is responsible 
-for enforcing a selection criteria that ensures a suitable protocol/evidence 
-pair is used, and a security policy that ensures the other end of the 
+specifying the measurement evidence to be collected. The AM is somewhat
+similar to the classic UNIX inetd super-server in that it is primarily
+a connection dispatcher rather than a work unit in its own right.
+The main difference is that during negotiation the AM is responsible
+for enforcing a selection criteria that ensures a suitable protocol/evidence
+pair is used, and a security policy that ensures the other end of the
 attestation is authorized to use the selected protocol/evidence pair. See the
 documentation for am/am.h and am/contracts.h for more details on the
 structure and role of the AM. The libmaat_am library implements most of the
 attestation manager constructs; the primary element left to clients is
 setting up and listening on communication channels.
 
-The Attestation Manager can run in the role of Attester or Appraiser.  
+The Attestation Manager can run in the role of Attester or Appraiser.
 
 .. raw:: latex
 
@@ -59,7 +59,7 @@ indicating that the machine that the Attester is running on can be trusted.
 .. note::
    The security authorization shown in this diagram is currently a work in progress
 
-The figure above demonstrates the state machine for the Attestation Manager acting as an Appraiser. 
+The figure above shows the state machine for the Attestation Manager acting as an Appraiser.
 The AM enters its Initial state when it receives a measurement request contract.
 It then obtains security authorization if necessary.
 Next it sends an initial contract to the Attester,
@@ -80,11 +80,11 @@ before ultimately moving to the Complete state.
 AM Taking on the Attester Role
 --------------------------------
 
-When an Attestation Manager receives an initial contract, it will automatically assume the role of 
-Attester. As an Attester, the AM will respond to initial contracts by reporting what measurements 
-it is willing and able to take. It will also perform measurements requested by the Appraiser in 
+When an Attestation Manager receives an initial contract, it will automatically assume the role of
+Attester. As an Attester, the AM will respond to initial contracts by reporting what measurements
+it is willing and able to take. It will also perform measurements requested by the Appraiser in
 an appropriately-negotiated execute contract, and send the measurement results to the
-Appraiser for review. 
+Appraiser for review.
 
 .. figure:: images/attester_selection_process.jpg
    :align:  center

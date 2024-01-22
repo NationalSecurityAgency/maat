@@ -607,7 +607,7 @@ static int load_selector_copl_internal(char *path, GList *apbs, selectordb_t **o
     return 0;
 
 error:
-    free_select_config(select_config);
+    g_list_free_full(select_config, free_rule);
     g_list_free_full(collections, (GDestroyNotify)free_collection);
     free(selector);
     free(user_selector);
@@ -678,32 +678,6 @@ static void free_collection(struct collection *collection)
 }
 
 /**
- * Release a GList of rule structs
- */
-static void free_select_config(GList *select_config)
-{
-    GList *iter = NULL;
-    for (iter = g_list_first(select_config); iter; iter=g_list_next(iter)) {
-        struct rule *tmp = (struct rule *)iter->data;
-        if(tmp)
-            free_rule(tmp);
-    }
-}
-
-/**
- * Release a GList of collection structs
- */
-static void free_collections(GList *collections)
-{
-    GList *iter = NULL;
-    for (iter = g_list_first(collections); iter; iter=g_list_next(iter)) {
-        struct collection *tmp = (struct collection *)iter->data;
-        if(tmp)
-            free_collection(tmp);
-    }
-}
-
-/**
  * Release the loaded selector selector representation freeing all its
  * associated resources.
  */
@@ -714,8 +688,8 @@ static void api_free_selector(selectordb_t *user_selector)
         GList *select_config = selector->select_config;
         GList *collections = selector->collections;
 
-        free_select_config(select_config);
-        free_collections(collections);
+        g_list_free_full(select_config, &free_rule);
+        g_list_free_full(collections, &free_collection);
 
         free(selector);
         free(user_selector);

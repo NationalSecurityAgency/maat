@@ -31,6 +31,7 @@
 		<asp uuid="e55303b6-bcc6-11ec-8422-0242ac120002">decrypt_asp</asp>
 		<asp uuid="70e8cb56-bcd9-11ec-9d64-0242ac120002">decompress_asp</asp>
 		<asp uuid="96158eee-bcf4-11ec-9d64-0242ac120002">verify_measurement_contract_asp</asp>
+        <asp uuid="3cc9f1a6-50c2-4612-b24b-8430ad1f1a83">got_appraiser</asp>
 	</asps>
     <copland>
         <phrase copland="(USM app)">userspace measurement appraiser</phrase>

@@ -54,7 +54,7 @@ LDADD = $(top_builddir)/src/am/libamfuncs.la \
 LDADD_APB = $(LDADD) $(LIBMAAT_APB_LIBS)
 
 if BUILD_COVERAGE
-AM_CPPFLAGS += -fprofile-arcs -ftest-coverage
+AM_CPPFLAGS += --coverage
 AM_LDFLAGS += -fprofile-arcs -ftest-coverage
 LDADD += -lgcov
 endif

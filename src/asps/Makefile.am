@@ -278,14 +278,16 @@ if BUILD_whitelist_ASP
 asp_PROGRAMS    += whitelist
 aspinfo_DATA    += datafiles/modules.whitelist \
                    datafiles/packages.whitelist \
-                   datafiles/process.whitelist
+                   datafiles/process.whitelist \
+                   datafiles/distribution.whitelist
 whitelist_SOURCES = whitelist.c
 endif
 
 if BUILD_blacklist_ASP
 asp_PROGRAMS    += blacklist
 aspinfo_DATA    += datafiles/modules.blacklist \
-                   datafiles/process.blacklist datafiles/package.blacklist
+                   datafiles/process.blacklist \
+                   datafiles/package.blacklist
 blacklist_SOURCES = blacklist.c
 endif
 
@@ -314,6 +316,11 @@ got_measure_SOURCES = userspace_measurement/memory.c userspace_measurement/memor
                       userspace_measurement/got_measurer.c userspace_measurement/got_measurer.h \
                       got_measure.c got_measure.h
 got_measure_LDADD = -lm
+endif
+
+if BUILD_got_appraise_ASP
+asp_PROGRAMS += got_appraise
+got_appraise_SOURCES = got_appraise.c got_appraise.h
 endif
 
 if BUILD_proc_namespaces_ASP

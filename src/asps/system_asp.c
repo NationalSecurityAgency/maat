@@ -84,7 +84,7 @@ int asp_measure(int argc, char *argv[])
     if(!data) {
         dlog(0, "measurement data alloc error\n");
         ret_val = -ENOMEM;
-        goto error_alloc;
+        goto clean_out;
     }
     s_data = container_of(data, system_data, meas_data);
 
@@ -93,7 +93,7 @@ int asp_measure(int argc, char *argv[])
     if(!fp) {
         dlog(3, "Failed to open file for reading (%s)\n", strerror(errno));
         ret_val = -EIO;
-        goto error_open;
+        goto clean_out;
     }
 
     /* Read the contents of os-release and pull out the name and version of the distro */
@@ -110,9 +110,18 @@ int asp_measure(int argc, char *argv[])
         }
 
         if(strcasecmp(key, "ID") == 0) {
-            sscanf(value, SYSTEM_ATTR_FMT, s_data->distribution);
+            // Cropped off quotes
+            if (value[0] == '\"') {
+                sscanf(value, SYSTEM_ATTR_QUOTED_FMT, s_data->distribution);
+            } else {
+                sscanf(value, SYSTEM_ATTR_FMT, s_data->distribution);
+            }
         } else if (strcasecmp(key, "VERSION_ID") == 0) {
-            sscanf(value, SYSTEM_ATTR_FMT, s_data->version);
+            if (value[0] == '\"') {
+                sscanf(value, SYSTEM_ATTR_QUOTED_FMT, s_data->version);
+            } else {
+                sscanf(value, SYSTEM_ATTR_FMT, s_data->version);
+            }
         }
     }
 
@@ -121,28 +130,27 @@ int asp_measure(int argc, char *argv[])
 
     if(strlen(s_data->distribution) == 0) {
         dlog(0, "Error: no distribution id found\n");
-        goto error_distribution;
+        goto clean_out;
     } else if(strlen(s_data->version) == 0) {
         dlog(0, "Error: no version id found\n");
+        goto clean_out;
     }
 
     if((ret_val = measurement_node_add_rawdata(graph, node_id, data)) < 0) {
         dlog(0, "Error while adding data to node: %d\n", ret_val);
         ret_val = ASP_APB_ERROR_GRAPHOPERATION;
-        goto error_add_data;
+        goto clean_out;
     }
 
-    free_measurement_data(data);
-    unmap_measurement_graph(graph);
-
     dlog(6, "system ASP returning with success\n");
-    return ASP_APB_SUCCESS;
+    ret_val = ASP_APB_SUCCESS;
 
-error_add_data:
-error_distribution:
-error_open:
-    free_measurement_data(data);
-error_alloc:
-    unmap_measurement_graph(graph);
+clean_out:
+    if (data != NULL) {
+        free_measurement_data(data);
+    }
+    if (graph != NULL) {
+        unmap_measurement_graph(graph);
+    }
     return ret_val;
 }

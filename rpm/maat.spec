@@ -108,12 +108,6 @@ initctl reload-configuration
 %preun
 %if 0%{?rhel} >= 7
 %systemd_preun maat.service
-%else
-%if 0%{?rhel} >= 6
-if status maat | grep running >/dev/null 2> /dev/null ; then 
-stop maat >/dev/null 2> /dev/null
-fi
-%endif
 %endif
 
 %if 0%{?fedora} >= 15
@@ -277,10 +271,6 @@ setsebool -P httpd_can_network_connect=off
 %{_datadir}/maat/selector-configurations/*
 %if 0%{?rhel} >= 7
 /usr/lib/systemd/system/maat.service
-%else
-%if 0%{?rhel} >= 6
-/etc/init/maat.conf
-%endif
 %endif
 %if 0%{?fedora} >= 15
 /usr/lib/systemd/system/maat.service
@@ -289,11 +279,26 @@ setsebool -P httpd_can_network_connect=off
 %files webui
 %{_prefix}/web/*
 %{python3_sitelib}/mq_client.py
+%if 0%{?rhel} >= 9
+%{python3_sitelib}/__pycache__/mq_client.cpython-39.pyc
+%{python3_sitelib}/__pycache__/mq_client.cpython-39.opt-1.pyc
+%else
+%if 0%{?rhel} >= 7
 %{python3_sitelib}/__pycache__/mq_client.cpython-36.pyc
 %{python3_sitelib}/__pycache__/mq_client.cpython-36.opt-1.pyc
+%endif
+%endif
+
 %{python3_sitelib}/libmaat_client.py
+%if 0%{?rhel} >= 9
+%{python3_sitelib}/__pycache__/libmaat_client.cpython-39.pyc
+%{python3_sitelib}/__pycache__/libmaat_client.cpython-39.opt-1.pyc
+%else
+%if 0%{?rhel} >= 7
 %{python3_sitelib}/__pycache__/libmaat_client.cpython-36.pyc
 %{python3_sitelib}/__pycache__/libmaat_client.cpython-36.opt-1.pyc
+%endif
+%endif
 
 %files devel
 %{_includedir}/%{name}-%{version}

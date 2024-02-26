@@ -583,7 +583,6 @@ test-rhel9-basic-no-selinux:
         coverage_format: cobertura
         path: build/coverage.xml
     when: always
-  allow_failure: true # fails due to using sha1 digest which is disabled by default
 
 # make check tests with address sanitizer on rhel9
 test-rhel9-asan:
@@ -602,7 +601,6 @@ test-rhel9-asan:
         coverage_format: cobertura
         path: build/coverage.xml
     when: always
-  allow_failure: true # for now fails due to configure saying C compiler not working
 
 ## package
 
@@ -685,7 +683,6 @@ package-rhel9-x86_64-rpm:
     paths:
       - build/staging
     expire_in: 2 weeks
-  allow_failure: true # for now this is allowed because of an issue with flask header
 
 ## deploy
 

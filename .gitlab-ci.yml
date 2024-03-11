@@ -269,7 +269,6 @@ build-rhel9-selinux:
     - rhel9
   script:
     - *build_with_selinux_no_tpm
-  allow_failure: true # for now this is allowed because of an issue with flask header
 
 #build without selinux without TPM for ubuntu23
 build-ubuntu23:

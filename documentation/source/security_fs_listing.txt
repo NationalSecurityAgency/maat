@@ -133,11 +133,11 @@ requirements. They are included here only for completeness.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |UNIX Perms  |User  |Group  |SELinux Label                                        |Filename                                |
 +============+======+=======+=====================================================+========================================+
-|drwxr-xr-x. |root  |root   |unconfined_u:object_r:usr_t:s0                       |maat-1.5                                |
+|drwxr-xr-x. |root  |root   |unconfined_u:object_r:usr_t:s0                       |maat-1.6                                |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.5
+/opt/maat/include/maat-1.6
 ----------------------------------------------
 
 Maat include headers directory.
@@ -168,7 +168,7 @@ no specific security requirements.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.5/apb
+/opt/maat/include/maat-1.6/apb
 ----------------------------------------------
 
 Maat APB include headers directory.
@@ -182,7 +182,7 @@ Maat APB include headers directory.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.5/asp
+/opt/maat/include/maat-1.6/asp
 ----------------------------------------------
 
 Maat ASP include headers directory.
@@ -194,7 +194,7 @@ Maat ASP include headers directory.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.5/client
+/opt/maat/include/maat-1.6/client
 ----------------------------------------------
 
 Maat Client include headers directory.
@@ -206,7 +206,7 @@ Maat Client include headers directory.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.5/common
+/opt/maat/include/maat-1.6/common
 ----------------------------------------------
 
 Maat Common include headers directory.
@@ -234,7 +234,7 @@ Maat Common include headers directory.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.5/graph
+/opt/maat/include/maat-1.6/graph
 ----------------------------------------------
 
 Maat Graph include headers directory.
@@ -246,7 +246,7 @@ Maat Graph include headers directory.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.5/measurement_spec
+/opt/maat/include/maat-1.6/measurement_spec
 ----------------------------------------------
 
 Maat Measurement Spec include headers directory.
@@ -260,7 +260,7 @@ Maat Measurement Spec include headers directory.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.5/sgraph
+/opt/maat/include/maat-1.6/sgraph
 ----------------------------------------------
 
 Maat Sgraph include headers directory.
@@ -272,7 +272,7 @@ Maat Sgraph include headers directory.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.5/types
+/opt/maat/include/maat-1.6/types
 ----------------------------------------------
 
 Maat Types include headers directory.
@@ -294,7 +294,7 @@ specific security requirements.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.5/types/address_space
+/opt/maat/include/maat-1.6/types/address_space
 ----------------------------------------------
 
 Header files for address_spaces defined in the Maat libmaat_basetypes library.
@@ -334,7 +334,7 @@ Header files for address_spaces defined in the Maat libmaat_basetypes library.
 +------------+------+-------+-----------------------------------------------------+-------------------------------------------+
 
 
-/opt/maat/include/maat-1.5/types/measurement
+/opt/maat/include/maat-1.6/types/measurement
 ----------------------------------------------
 
 Header files for measurement types defined in the Maat libmaat_basetypes library.
@@ -422,7 +422,7 @@ Header files for measurement types defined in the Maat libmaat_basetypes library
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.5/types/target
+/opt/maat/include/maat-1.6/types/target
 ----------------------------------------------
 
 Header files for target types defined in the Maat libmaat_basetypes library.
@@ -462,7 +462,7 @@ Header files for target types defined in the Maat libmaat_basetypes library.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.5/util
+/opt/maat/include/maat-1.6/util
 ----------------------------------------------
 
 Maat Util include headers directory.
@@ -518,25 +518,25 @@ library type to avoid this, but it would require distributing Maat with all of i
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |UNIX Perms  |User  |Group  |SELinux Label                                        |Filename                                |
 +============+======+=======+=====================================================+========================================+
-|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_apb-1.5.a                       |
+|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_apb-1.6.a                       |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_apb-1.5.la                      |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_apb-1.6.la                      |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_apb-1.5.so                      |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_apb-1.6.so                      |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_apb-1.5.so.0                    |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_apb-1.6.so.0                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_apb-1.5.so.0.1.0                |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_apb-1.6.so.0.1.0                |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_asp-1.5.a                       |
+|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_asp-1.6.a                       |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_asp-1.5.la                      |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_asp-1.6.la                      |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_asp-1.5.so                      |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_asp-1.6.so                      |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_asp-1.5.so.0                    |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_asp-1.6.so.0                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_asp-1.5.so.0.1.0                |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_asp-1.6.so.0.1.0                |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_basetypes.a                     |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
@@ -548,45 +548,45 @@ library type to avoid this, but it would require distributing Maat with all of i
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_basetypes.so.0.0.0              |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_client-1.5.a                    |
+|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_client-1.6.a                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_client-1.5.la                   |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_client-1.6.la                   |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_client-1.5.so                   |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_client-1.6.so                   |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_client-1.5.so.0                 |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_client-1.6.so.0                 |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_client-1.5.so.0.1.0             |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_client-1.6.so.0.1.0             |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_graph-1.5.a                     |
+|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_graph-1.6.a                     |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_graph-1.5.la                    |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_graph-1.6.la                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_graph-1.5.so                    |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_graph-1.6.so                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_graph-1.5.so.0                  |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_graph-1.6.so.0                  |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_graph-1.5.so.0.0.0              |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_graph-1.6.so.0.0.0              |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_sgraph-1.5.a                    |
+|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_sgraph-1.6.a                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_sgraph-1.5.la                   |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_sgraph-1.6.la                   |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_sgraph-1.5.so                   |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_sgraph-1.6.so                   |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_sgraph-1.5.so.0                 |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_sgraph-1.6.so.0                 |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_sgraph-1.5.so.0.0.0             |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_sgraph-1.6.so.0.0.0             |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_util-1.5.a                      |
+|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_util-1.6.a                      |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_util-1.5.la                     |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_util-1.6.la                     |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_util-1.5.so                     |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_util-1.6.so                     |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_util-1.5.so.0                   |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_util-1.6.so.0                   |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_util-1.5.so.0.1.0               |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_util-1.6.so.0.1.0               |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |drwxr-xr-x. |root  |root   |unconfined_u:object_r:usr_t:s0                       |maat                                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+

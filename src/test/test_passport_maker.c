@@ -117,13 +117,14 @@ static char* create_passport(char *startdate)
     //sign buf
     p_sz = strlen(p_buf);
     size = (unsigned int)p_sz;
+    size_t signature_len = 0;
 
-    s_buf = sign_buffer_openssl(p_buf, &size, priv_key, NULL);
+    s_buf = sign_buffer_openssl(p_buf, size, priv_key, NULL, &signature_len);
     if (!s_buf) {
         return NULL;
     }
 
-    b64sig = b64_encode(s_buf, size);
+    b64sig = b64_encode(s_buf, signature_len);
     if (!b64sig) {
         return NULL;
     }

@@ -32,7 +32,10 @@
 #include <libxml/c14n.h>
 #endif
 
+#include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/rsa.h>
+#include <openssl/opensslv.h>
 #include <openssl/pem.h>
 #include <openssl/engine.h>
 #include <openssl/x509_vfy.h>
@@ -40,70 +43,123 @@
 
 #include <util/util.h>
 #include <util/base64.h>
+#include <util/sign.h>
 
-/*
+/**
  * Given an arbitrary buffer and a key file, sign it with openssl using
  * a SHA1 digest and the private key specified in keyfile.  Return the
  * allocated buffer.
+ *
+ * @param buf An unsigned char* pointing to the buffer to sign
+ * @param buflen A size_t containing the amount of data in the buffer to sign
+ * @param keyfile A char* containing the name of the key file
+ * @param password A char* containing the password to use to unlock the private key
+ * @param signatureLen A size_t* where the length of the signature will be written
+ *
+ * @return An unsigned char* pointing to an allocated buffer containing the signature (the caller is responsible for freeing)
  */
-unsigned char *sign_buffer_openssl(const unsigned char *buf, unsigned int *size,
-                                   const char *keyfile, const char *password)
+unsigned char* sign_buffer_openssl(const unsigned char *buf,
+                                   const size_t buflen,
+                                   const char *keyfile,
+                                   const char *password,
+                                   size_t *signatureLen)
 {
-    EVP_MD_CTX *ctx;
-    EVP_PKEY *pkey;
-    FILE *keyfd;
-    unsigned char *signature;
+    EVP_PKEY *pkey = NULL;
+    EVP_MD_CTX *ctx = NULL;
+    FILE *keyfd = NULL;
+    unsigned char *signature = NULL;
     int ret;
-
-    signature = NULL;
-    ctx = EVP_MD_CTX_create();
 
     keyfd = fopen(keyfile, "r");
     if (keyfd == NULL) {
         dlog(0, "Error opening key file %s\n", keyfile);
-        goto out;
+        goto handle_error;
     }
 
     pkey = PEM_read_PrivateKey(keyfd, NULL, NULL, (void *)password);
     if (!pkey) {
         ERR_print_errors_fp(stderr);
-        fclose(keyfd);
-        goto out;
+        goto handle_error;
     }
     fclose(keyfd);
+    keyfd = NULL;
 
-    signature = (unsigned char *)malloc((size_t)EVP_PKEY_size(pkey));
+    *signatureLen = (size_t)EVP_PKEY_size(pkey);
+    signature = (unsigned char *)malloc(*signatureLen);
     if (!signature) {
         dperror("Error allocating key buffer");
-        goto out_pkey;
+        goto handle_error;
     }
 
-    ret = EVP_SignInit(ctx, EVP_sha1());
-    if (!ret) {
-        ERR_print_errors_fp(stderr);
-        free(signature);
-        signature = NULL;
-        goto out_pkey;
-    }
-    ret = EVP_SignUpdate(ctx, buf, *size);
-    if (!ret) {
-        ERR_print_errors_fp(stderr);
-        free(signature);
-        signature = NULL;
-        goto out_pkey;
-    }
-    ret = EVP_SignFinal(ctx, signature, size, pkey);
-    if (!ret) {
-        ERR_print_errors_fp(stderr);
-        free(signature);
-        signature = NULL;
-    }
+#if OPENSSL_VERSION_MAJOR == 1
+    ctx = EVP_MD_CTX_create();
 
-out_pkey:
-    EVP_PKEY_free(pkey);
-out:
+    ret = EVP_SignInit(ctx, EVP_sha256());
+    if (!ret) {
+        ERR_print_errors_fp(stderr);
+        goto handle_error;
+    }
+    ret = EVP_SignUpdate(ctx, buf, buflen);
+    if (!ret) {
+        ERR_print_errors_fp(stderr);
+        goto handle_error;
+    }
+    ret = EVP_SignFinal(ctx, signature, signatureLen, pkey);
+    if (!ret) {
+        ERR_print_errors_fp(stderr);
+        goto handle_error;
+    }
     EVP_MD_CTX_destroy(ctx);
+#elif OPENSSL_VERSION_MAJOR == 3
+    ctx = EVP_MD_CTX_new();
+    if(ctx == NULL) {
+        goto handle_error;
+    }
 
+    ret = EVP_DigestSignInit(ctx, NULL, EVP_sha256(), NULL, pkey);
+    if (!ret) {
+        ERR_print_errors_fp(stderr);
+        goto handle_error;
+    }
+
+    ret = EVP_DigestSignUpdate(ctx, buf, buflen);
+    if (!ret) {
+        ERR_print_errors_fp(stderr);
+        goto handle_error;
+    }
+
+    ret = EVP_DigestSignFinal(ctx, signature, (size_t*)signatureLen);
+    if (!ret) {
+        ERR_print_errors_fp(stderr);
+        goto handle_error;
+    }
+    EVP_MD_CTX_free(ctx);
+#else
+    dlog(1, "Unsupported OpenSSL version");
+#endif
+    EVP_PKEY_free(pkey);
+    /* successful signature */
+    return signature;
+
+handle_error:
+    if (keyfd) {
+        fclose(keyfd);
+    }
+    if(ctx) {
+#if OPENSSL_VERSION_MAJOR == 1
+        EVP_MD_CTX_destroy(ctx);
+#elif OPENSSL_VERSION_MAJOR == 3
+        EVP_MD_CTX_free(ctx);
+#endif
+    }
+    if( pkey != NULL) {
+        EVP_PKEY_free(pkey);
+    }
+    if(signature != NULL) {
+        free(signature);
+    }
+    signature = NULL;
+    *signatureLen = 0;
     return signature;
 }
 
@@ -127,7 +183,8 @@ X509 *load_cert(const char* filename)
     return cert;
 }
 
-int verify_cert(X509* cert, X509* cacert)
+int verify_cert(const X509* cert,
+                const X509* cacert)
 {
     int rc = 0;
 
@@ -163,26 +220,22 @@ int verify_cert(X509* cert, X509* cacert)
     return rc;
 }
 
-int verify_sig(const unsigned char *buf, size_t size, const unsigned char *sig,
-               size_t sigsize, X509 *cert)
+int verify_sig(const unsigned char *buf,
+               const size_t buflen,
+               const unsigned char *signature,
+               const size_t sigsize,
+               const X509 *cert)
 {
     int rc;
-    EVP_MD_CTX *ctx;
-    EVP_PKEY *pkey;
+    EVP_MD_CTX *ctx = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
+    EVP_PKEY *pkey = NULL;
 
     if(sigsize > UINT_MAX) {
         dlog(1, "Signature verification failed. "
              "Signature of size %zu is too large (must be <= %d)\n",
-             size, INT_MAX);
+             buflen, INT_MAX);
         return -1;
-    }
-
-    ctx = EVP_MD_CTX_create();
-
-    if(ctx == NULL) {
-        ERR_print_errors_fp(stderr);
-        rc = -1;
-        goto out;
     }
 
     pkey = X509_get_pubkey(cert);
@@ -192,37 +245,84 @@ int verify_sig(const unsigned char *buf, size_t size, const unsigned char *sig,
         goto out;
     }
 
-    rc = EVP_VerifyInit(ctx, EVP_sha1());
+#if OPENSSL_VERSION_MAJOR == 1
+    ctx = EVP_MD_CTX_create();
+
+    if(ctx == NULL) {
+        ERR_print_errors_fp(stderr);
+        rc = -1;
+        goto out;
+    }
+
+    rc = EVP_VerifyInit(ctx, EVP_sha256());
     if (!rc) {
         ERR_print_errors_fp(stderr);
         rc = -1;
-        goto out_pkey;
+        goto out;
     }
 
-    rc = EVP_VerifyUpdate(ctx, buf, size);
+    rc = EVP_VerifyUpdate(ctx, buf, buflen);
     if (!rc) {
         ERR_print_errors_fp(stderr);
         rc = -1;
-        goto out_pkey;
+        goto out;
     }
 
-    rc = EVP_VerifyFinal(ctx, sig, (unsigned int)sigsize, pkey);
+    rc = EVP_VerifyFinal(ctx, signature, (unsigned int)sigsize, pkey);
     if (rc <= 0) {
         ERR_print_errors_fp(stdout);
     }
+#elif OPENSSL_VERSION_MAJOR == 3
 
-out_pkey:
-    EVP_PKEY_free(pkey);
+    ctx = EVP_MD_CTX_new();
+    if(ctx == NULL) {
+        ERR_print_errors_fp(stderr);
+        rc = -1;
+        return rc;
+    }
+
+    if(EVP_DigestVerifyInit(ctx, NULL, EVP_sha256(), NULL, pkey) != 1) {
+        ERR_print_errors_fp(stderr);
+        rc = -1;
+        goto out;
+    }
+
+    rc = EVP_DigestVerifyUpdate(ctx, buf, buflen);
+    if (rc != 1) {
+        ERR_print_errors_fp(stderr);
+        rc = -1;
+        goto out;
+    }
+
+    rc = EVP_DigestVerifyFinal(ctx, signature, sigsize);
+    if (rc != 1) {
+        ERR_print_errors_fp(stdout);
+    }
+#else
+    fprintf(stderr, "Unsupported OpenSSL version");
+#endif
+
 out:
+    if( pkey != NULL) {
+        EVP_PKEY_free(pkey);
+    }
+#if OPENSSL_VERSION_MAJOR == 1
     if(ctx) {
         EVP_MD_CTX_destroy(ctx);
     }
+#elif OPENSSL_VERSION_MAJOR == 3
+    EVP_MD_CTX_free(ctx);
+#endif
 
     return rc;
 }
 
-int verify_buffer_openssl(const unsigned char *buf, size_t size, const unsigned char *sig,
-                          size_t sigsize, const char *certfile, const char *cacertfile)
+int verify_buffer_openssl(const unsigned char *buf,
+                          const size_t size,
+                          const unsigned char *sig,
+                          const size_t sigsize,
+                          const char *certfile,
+                          const char *cacertfile)
 {
     int rc;
     X509 *cert = NULL;

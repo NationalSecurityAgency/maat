@@ -58,6 +58,7 @@ static const char *error_strings[] = {
     "Both distribution and version are known and valid",
     "Distribution is not known",
     "Version is not known",
+    "Measurement error",
     NULL
 };
 
@@ -81,17 +82,19 @@ int asp_init(int argc, char *argv[])
 
     char *full_path;
     int index = 0;
-    char *line[MAX_LINE_LEN];
+    char *line;
     char *fields = NULL;
     size_t length = 0;
+    char str[50];
+    GList *temp = NULL;
 
     // Get path
     full_path = g_strdup_printf("%s/%s", get_aspinfo_dir(), "distribution.whitelist");
 
     // Read a line and tokenize to the corresponding data structure Glist
     //1. Get OS
-    read_line_csv(full_path, "1", 0, MAX_LINE_LEN, line);
-    fields = strtok(*line, ",");
+    read_line_csv(full_path, "1", 0, MAX_LINE_LEN, &line);
+    fields = strtok(line, ",");
     while (fields != NULL) {
         if (strcmp(fields, "1") != 0) {
             length = strlen(fields);
@@ -103,16 +106,14 @@ int asp_init(int argc, char *argv[])
         }
         fields = strtok(NULL, ",");
     }
-    free(*line);
+    free(line);
 
     //2. Get versions
-    GList *temp = NULL;
     while (index < num_lines) {
         temp = NULL;
-        char str[50];
         sprintf(str, "%d", index + 2);
-        read_line_csv(full_path, str, 0, MAX_LINE_LEN, line);
-        fields = strtok(*line, ",");
+        read_line_csv(full_path, str, 0, MAX_LINE_LEN, &line);
+        fields = strtok(line, ",");
         while (fields != NULL) {
             if (strcmp(fields, str) != 0) {
                 length = strlen(fields);
@@ -123,7 +124,7 @@ int asp_init(int argc, char *argv[])
             }
             fields = strtok(NULL, ",");
         }
-        free(*line);
+        free(line);
         good_versions = g_list_prepend(good_versions, temp);
         index++;
     }
@@ -146,17 +147,16 @@ int asp_exit(int status)
 
 int asp_measure(int argc, char *argv[])
 {
-    measurement_graph *graph;
-    node_id_t node_id;
-    report_data *rmd;
+    measurement_graph *graph = NULL;
+    node_id_t node_id = INVALID_NODE_ID;
+    report_data *rmd = NULL;
     magic_t data_type;
-    system_data *s_data;
-    measurement_data *data;
+    system_data *s_data = NULL;
+    measurement_data *data = NULL;
     int ret = ASP_APB_SUCCESS;
-    GList *iter;
-    char *data_distribution = "";
+    GList *iter = NULL;
+    GList *lst = NULL;
     unsigned int count = 0;
-    int found = 0;
     int erridx = 0;
 
     if((argc < 4) ||
@@ -164,12 +164,15 @@ int asp_measure(int argc, char *argv[])
             ((sscanf(argv[3], MAGIC_FMT, &data_type)) != 1) ||
             (map_measurement_graph(argv[1], &graph) != 0)) {
         asp_logerror("Usage: "ASP_NAME" <graph path> <node id> <data type magic>\n");
-        return -EINVAL;
+        ret = -EINVAL;
+        erridx = 3;
+        goto out_clean_up;
     }
 
     if (data_type != SYSTEM_TYPE_MAGIC) {
-        unmap_measurement_graph(graph);
-        return -EINVAL;
+        ret = -EINVAL;
+        erridx = 3;
+        goto out_clean_up;
     }
 
     ret = measurement_node_get_rawdata(graph, node_id,
@@ -177,7 +180,8 @@ int asp_measure(int argc, char *argv[])
     if (ret < 0) {
         asp_logerror("get data failed\n");
         ret = -EINVAL;
-        goto out_err;
+        erridx = 3;
+        goto out_clean_up;
     }
     s_data = container_of(data, system_data, meas_data);
 
@@ -185,56 +189,58 @@ int asp_measure(int argc, char *argv[])
     iter = g_list_first(good_ids);
     while (iter != NULL) {
         if (strcmp(s_data->distribution, iter->data) == 0) {
-            strcpy(data_distribution, s_data->distribution);
-            found = 1;
-            count++;
             break;
         }
         count++;
         iter = iter->next;
     }
 
-    if (found != 1) {
+    // If the OS distribution is found then check for its version.
+    // Otherwise, report errors and clean up.
+    if (iter == NULL) {
         erridx = 1;
         ret = -ENOENT;
-        goto out_return;
-    }
-
-    // Check good versions. Check if id is unknown.
-    if (strcpy(data_distribution, "") != 0) {
-        count--;
+        goto out_clean_up;
+    } else {
         iter = g_list_nth(good_versions, count);
     }
 
-    while (iter != NULL) {
-        GList *lst = g_list_first(iter->data);
+    // Check good versions.
+    if (iter != NULL) {
+        lst = g_list_first(iter->data);
         while (lst != NULL) {
-            if (strcmp(s_data->distribution, lst->data) == 0) {
-                found = 1;
-                break;
+            if (strcmp(s_data->version, lst->data) == 0) {
+                goto out_clean_up;
             }
             lst = lst->next;
         }
-    }
 
-    if (found != 1) {
-        erridx = 2;
-        ret = -ENOENT;
+        if (lst == NULL) {
+            erridx = 2;
+            ret = -ENOENT;
+        }
     }
 
     /* XXX: clean up this exit path... */
-out_return:
+out_clean_up:
+
+    // Handle out_return
     rmd = report_data_with_level_and_text(
               (ret == ASP_APB_SUCCESS) ? REPORT_INFO : REPORT_ERROR,
               strdup(error_strings[erridx]),
               strlen(error_strings[erridx])+1);
     measurement_node_add_rawdata(graph, node_id, &rmd->d);
 
-    free_measurement_data(&rmd->d);
+    if (&rmd->d != NULL) {
+        free_measurement_data(&rmd->d);
+    }
 
-out_err:
-    free_measurement_data(data);
-    unmap_measurement_graph(graph);
-
+    // Handle out_err
+    if (data != NULL) {
+        free_measurement_data(data);
+    }
+    if (graph != NULL) {
+        unmap_measurement_graph(graph);
+    }
     return ret;
 }

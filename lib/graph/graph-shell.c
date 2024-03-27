@@ -36,11 +36,17 @@ static char *readline(char *prompt)
 {
     char *buf = NULL;
     size_t bufsz = 0;
+    size_t length = 0;
     printf("%s", prompt);
     ssize_t read = getline(&buf, &bufsz, stdin);
     if(read < 0) {
         free(buf);
         return NULL;
+    }
+    // Clean newline which appended to the path
+    length = strlen(buf);
+    if (buf[length-1] == '\n') {
+        buf[length-1] = '\0';
     }
     return buf;
 }

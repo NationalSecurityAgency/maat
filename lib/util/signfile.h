@@ -45,8 +45,11 @@
  * tpm_password is a password with which to interact with the TPM
  * flags are status values as to how to sign.
  */
-int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
-             const char *privkey_file, const char *privkey_pass,
+int sign_xml(xmlDoc *doc,
+             xmlNode *root,
+             const char *certid,
+             const char *privkey_file,
+             const char *privkey_pass,
 #ifdef USE_TPM
              const char* nonce,
              const char* tpm_password,
@@ -70,11 +73,11 @@ int sign_xml(xmlDoc *doc, xmlNode *root, const char *certid,
  *
  */
 int verify_xml(xmlDoc *doc, xmlNode *root, const char *keyfile,
-               const char* nonce, 
+               const char* nonce,
 #ifdef USE_TPM
- 	           const char* akpubkey,
+               const char* akpubkey,
 #else
- 	           const char* akpubkey UNUSED,
+               const char* akpubkey UNUSED,
 #endif
                int flags, const char* cacertfile);
 

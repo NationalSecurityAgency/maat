@@ -33,7 +33,6 @@
 #ifdef ENABLE_SELINUX
 #include <selinux/selinux.h>
 #include <selinux/context.h>
-#include <selinux/flask.h>
 #endif
 
 #ifdef ENABLE_SELINUX
@@ -220,7 +219,7 @@ void exe_sec_ctxt_set_execcon(char *exe_path,
                 exit(the_error);
             }
             if(security_compute_create(my_context, file_context,
-                                       SECCLASS_PROCESS, &new_context)) {
+                                       string_to_security_class("process"), &new_context)) {
                 int the_error = errno;
                 dlog(0, "Failed to compute default SELinux destination context: %s\n",
                      strerror(the_error));

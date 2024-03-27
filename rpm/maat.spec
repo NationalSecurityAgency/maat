@@ -15,7 +15,7 @@
 #
 
 Name:           maat
-Version:        1.5
+Version:        1.6
 Release:        1%{?dist}
 Summary:        Maat Measurement & Attestation Framework
 Group:          Administration/Monitoring
@@ -302,6 +302,13 @@ setsebool -P httpd_can_network_connect=off
 %{_datadir}/selinux/targeted/maat.pp
 
 %changelog
+* Thu Mar 21 2024 Maat Developers <apl-maat-developers@jhuapl.edu> 1.6-1
+- Introduction of full OpenSSL v3 support within Maat
+- Resolved system information ASP information collection error on some platforms
+- Resolved bug in system information appraisal ASP configuration parsing
+- Resolved input parsing error within the graph-shell utility
+- Resolved correctness bug related to improper variable initialization in the memory mapping ASP
+
 * Fri Dec 8 2023 Maat Developers <apl-maat-developers@jhuapl.edu> 1.5-1
 - Updated the system information appraisal ASP to support dynamic reconfiguration
 - Improved logical flow of documentation through changes to wording and section ordering
@@ -329,7 +336,7 @@ setsebool -P httpd_can_network_connect=off
 * Mon Feb 28 2022 Maat Developers <APL-Maat-Developers@jhuapl.edu> 1.3-1
 - Carry nonce through scenarios with multiple negotiations
 - Add sequence diagram based user interface for observing attestation manager interactions
-- Add Passport use case demonstration 
+- Add Passport use case demonstration
 - Add IoT Assurance work to contributions
 - Add CentOS 8 support
 - Add notion of Copland 'place' to selection/negotiation policy

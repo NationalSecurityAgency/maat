@@ -1,3 +1,12 @@
+maat (1.6-1) develop; urgency=low
+    * Introduction of full OpenSSL v3 support within Maat
+    * Resolved system information ASP information collection error on some platforms
+    * Resolved bug in system information appraisal ASP configuration parsing
+    * Resolved input parsing error within the graph-shell utility
+    * Resolved correctness bug related to improper variable initialization in the memory mapping ASP
+
+ -- Maat Developers <apl-maat-developers@jhuapl.edu> Thu, 21 Mar 2024 10:30:00 -0500
+
 maat (1.5-1) develop; urgency=low
     * Updated the system information appraisal ASP to support dynamic reconfiguration
     * Improved logical flow of documentation through changes to wording and section ordering

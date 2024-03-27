@@ -24,18 +24,34 @@
 #include <openssl/pem.h>
 #include <openssl/engine.h>
 #include <openssl/x509_vfy.h>
+#include <openssl/opensslv.h>
 
 #ifndef __UTIL__SIGN_H__
 #define __UTIL__SIGN_H__
 
-X509 *load_cert(const char* filename);
-int verify_cert(X509* cert, X509* cacert);
-int verify_sig(const unsigned char *buf, size_t size, const unsigned char *sig,
-               size_t sigsize, X509 *cert);
+#ifndef OPENSSL_VERSION_MAJOR
+#define OPENSSL_VERSION_MAJOR (OPENSSL_VERSION_NUMBER >> 28)
+#endif
 
-unsigned char *sign_buffer_openssl(const unsigned char *buf, unsigned int *size,
-                                   const char *keyfile, const char *password);
-int verify_buffer_openssl(const unsigned char *buf, size_t size, const unsigned char *sig,
-                          size_t sigsize, const char *certfile, const char *cacertfile);
+X509 *load_cert(const char* filename);
+int verify_cert(const X509* cert,
+                const X509* cacert);
+int verify_sig(const unsigned char *buf,
+               const size_t size,
+               const unsigned char *sig,
+               const size_t sigsize,
+               const X509 *cert);
+
+unsigned char *sign_buffer_openssl(const unsigned char *buf,
+                                   const size_t buflen,
+                                   const char *keyfile,
+                                   const char *password,
+                                   size_t *signatureLen);
+int verify_buffer_openssl(const unsigned char *buf,
+                          const size_t size,
+                          const unsigned char *sig,
+                          const size_t sigsize,
+                          const char *certfile,
+                          const char *cacertfile);
 
 #endif /* __UTIL__SIGN_H__ */

@@ -105,6 +105,7 @@ int asp_measure(int argc, char *argv[])
     size_t passport_sz = 0;
     unsigned int size;
     unsigned char *signature_buf = NULL;
+    size_t signature_len = 0;
     char *b64sig;
     char *encoded_passport;
 
@@ -172,14 +173,14 @@ int asp_measure(int argc, char *argv[])
     passport_sz = strlen((char *)passport_buf);
     size = (unsigned int)passport_sz;
 
-    signature_buf = sign_buffer_openssl(passport_buf, &size, keyfile, keypass);
+    signature_buf = sign_buffer_openssl(passport_buf, size, keyfile, keypass, &signature_len);
     if (!signature_buf) {
         asp_logerror("Error: could not generate signature\n");
         free(passport_buf);
         return -1;
     }
 
-    b64sig = b64_encode(signature_buf, size);
+    b64sig = b64_encode(signature_buf, signature_len);
     if (!b64sig) {
         asp_logerror("Error: could not base64 encode signature\n");
         free(passport_buf);
@@ -190,7 +191,7 @@ int asp_measure(int argc, char *argv[])
 
     //add signature to passport
     passport_sz += strlen(b64sig) + 2; /*account for formatting*/
-    tmp = realloc(passport_buf, passport_sz*sizeof(unsigned char));
+    tmp = realloc(passport_buf, passport_sz * sizeof(unsigned char));
     if(tmp == NULL) {
         asp_logerror("Error: realloc of passport buf failed\n");
         free(passport_buf);

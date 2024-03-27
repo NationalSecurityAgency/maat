@@ -230,8 +230,8 @@ static struct asp *find_inventory_asp(measurement_graph *g,
     if(distribution == NULL) {
         dlog(1, "Error: no system distribution in address space\n");
     } else if((strcasecmp(distribution, "fedora")  == 0) ||
-              (strcasecmp(distribution, "\"centos\"")  == 0) ||
-              (strcasecmp(distribution, "\"rhel\"") == 0)) {
+              (strcasecmp(distribution, "centos")  == 0) ||
+              (strcasecmp(distribution, "rhel") == 0)) {
 
         if(mtype == &pkginv_measurement_type) {
             ret = find_asp(apb_asps, "rpm_inv");

@@ -546,17 +546,24 @@ END_TEST
 START_TEST(test_sign_openssl_small)
 {
     unsigned char *signature;
+    size_t signatureLen = 0;
     unsigned int size;
     int ret;
 
-    size = (unsigned int)strlen(test_string)+1;
-    signature = sign_buffer_openssl((unsigned char *)test_string, &size,
-                                    keyfile, NULL);
+    size = (unsigned int)strlen(test_string);
+    signature = sign_buffer_openssl((unsigned char *)test_string,
+                                    size,
+                                    keyfile,
+                                    NULL,
+                                    &signatureLen);
     fail_if(!signature, "signing failed");
 
     ret = verify_buffer_openssl((unsigned char *)test_string,
-                                strlen(test_string)+1,
-                                signature, size, certfile, cacertfile);
+                                size,
+                                signature,
+                                signatureLen,
+                                certfile,
+                                cacertfile);
     fail_if(ret != 1, "verification failed");
     free(signature);
 }
@@ -565,16 +572,24 @@ END_TEST
 START_TEST(test_sign_openssl_big)
 {
     unsigned char *signature;
+    size_t signatureLen = 0;
     unsigned int size;
     int ret;
 
     size = RANDOMBUF;
     signature = sign_buffer_openssl((unsigned char *)mostly_ones,
-                                    &size, keyfile, NULL);
+                                    size,
+                                    keyfile,
+                                    NULL,
+                                    &signatureLen);
     fail_if(!signature, "signing failed");
 
-    ret = verify_buffer_openssl((unsigned char *)mostly_ones, RANDOMBUF,
-                                signature, size, certfile, cacertfile);
+    ret = verify_buffer_openssl((unsigned char *)mostly_ones,
+                                size,
+                                signature,
+                                signatureLen,
+                                certfile,
+                                cacertfile);
     fail_if(ret != 1, "verification failed");
     free(signature);
 }

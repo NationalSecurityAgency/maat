@@ -206,7 +206,7 @@ AC_ARG_WITH(nobody-group,
     AC_HELP_STRING([--with-nobody-group=GROUP],
 		   [set the default unprivileged group (default nobody or nogroup)]),
     [ NOBODY_GROUP="$with_nobody_group" ])
-	
+
 if test x"$with_nobody_group" = x; then
     AC_MSG_CHECKING([the group for user "nobody"])
     if grep '^nobody:' /etc/group >/dev/null 2>&1; then
@@ -320,6 +320,8 @@ DEFAULT_ASP(split)
 DEFAULT_ASP(kernel_msmt)
 DEFAULT_ASP(send_request)
 EXTRA_ASP(tlm_ret)
+DEFAULT_ASP(deleg_meas_skeleton)
+DEFAULT_ASP(deleg_meas_appraise_skeleton)
 
 # End asp enable macros.
 
@@ -390,7 +392,8 @@ DEFAULT_APB([userspace_appraiser])
 DEFAULT_APB([layered_appraiser])
 EXTRA_APB([quiot_tlm])
 EXTRA_APB([quiot_tlm_appraiser])
-
+DEFAULT_APB([deleg_meas_skeleton])
+DEFAULT_APB([deleg_meas_appraise_skeleton])
 
 IF_APB([passport_ret],
       [PKG_CHECK_MODULES(LIBMONGOC, libmongoc-1.0 >= 1.0)

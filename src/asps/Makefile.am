@@ -357,6 +357,18 @@ send_request_asp_SOURCES = send_request_asp.c
 send_request_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS)
 endif
 
+if BUILD_deleg_meas_skeleton_ASP
+asp_PROGRAMS += deleg_meas_skeleton_asp
+deleg_meas_skeleton_asp_SOURCES = deleg_meas_skeleton_asp.c
+deleg_meas_skeleton_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS) -lrt
+endif
+
+if BUILD_deleg_meas_appraise_skeleton_ASP
+asp_PROGRAMS += deleg_meas_appraise_skeleton_asp
+deleg_meas_appraise_skeleton_asp_SOURCES = deleg_meas_appraise_skeleton_asp.c
+deleg_meas_appraise_skeleton_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS) -lrt
+endif
+
 AM_CPPFLAGS = -O2 -DDEFAULT_ASP_DIR="\"$(ASP_INFO_DIR)\"" \
 		-I$(top_srcdir)/src/types \
 		-I$(top_srcdir)/src $(LIBMAAT_CFLAGS) \

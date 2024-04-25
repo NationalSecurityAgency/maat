@@ -101,6 +101,8 @@
 @aspdir@/create_measurement_contract_asp -- gen_context(system_u:object_r:create_measurement_contract_asp_exe_t)
 @aspdir@/decompress_asp                  -- gen_context(system_u:object_r:decompress_asp_exe_t)
 @aspdir@/receive_asp                  -- gen_context(system_u:object_r:receive_asp_exe_t)
+@aspdir@/deleg_meas_skeleton_asp              -- gen_context(system_u:object_r:deleg_meas_skeleton_asp_exe_t)
+@aspdir@/deleg_meas_appraise_skeleton_asp     -- gen_context(system_u:object_r:deleg_meas_appraise_skeleton_asp_exe_t)
 #
 # APB implementations
 #
@@ -122,4 +124,6 @@
 @apbdir@/request_passport_apb                  -- gen_context(system_u:object_r:request_passport_apb_exe_t)
 #@apbdir@/passport_storage_apb                  -- gen_context(system_u:object_r:passport_storage_apb_exe_t)
 @apbdir@/passport_userspace_appraiser_apb                  -- gen_context(system_u:object_r:passport_userspace_appraiser_apb_exe_t)
+@apbdir@/deleg_meas_skeleton_apb              -- gen_context(system_u:object_r:deleg_meas_skeleton_apb_exe_t)
+@apbdir@/deleg_meas_appraise_skeleton_apb     -- gen_context(system_u:object_r:deleg_meas_appraise_skeleton_apb_exe_t)
 

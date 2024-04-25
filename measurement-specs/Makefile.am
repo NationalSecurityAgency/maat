@@ -34,4 +34,5 @@ dist_spec_DATA=hashdir_mspec.xml \
 	userspace_packages_mspec.xml \
 	got_measure_mspec.xml \
 	passport_mspec.xml \
-	layered_measurement_mspec.xml
+	layered_measurement_mspec.xml \
+	deleg_meas_skeleton_mspec.xml

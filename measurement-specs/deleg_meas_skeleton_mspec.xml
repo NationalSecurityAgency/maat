@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2024 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+-->
+<measurement_specification>
+	<name>delegated measurement mspec</name>
+	<uuid>bd4ee748-578c-4fa1-86ab-c80c13f036cf</uuid>
+	<description>
+       This measurement spec triggers a measurement program (via the deleg_meas_skeleton_asp)
+       to take a measurement of a system.
+	</description>
+
+	<instructions>
+	  <instruction type="simple" name="deleg_meas">
+	    <target_type   name="anon_target_type" magic="0xA0A0A0A0"/>
+	    <address_type  name="unit_address_space" magic="0x50EC50EC"/>
+	    <measurement_type name="blob_measurement_type" magic="0xB10BB10B"/>
+	  </instruction>
+	</instructions>
+
+	<variables>
+	    <variable instruction="deleg_meas" >
+	      <address operation="equal">meas</address>
+	    </variable>
+	</variables>
+</measurement_specification>

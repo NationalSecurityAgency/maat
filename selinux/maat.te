@@ -769,6 +769,35 @@ require {
 
 allow dummy_appraisal_t maat_tmp_t:file { rw_file_perms };
 
+# Delegated Measurement ASP
+# Change this policy to conform with nay modifications made
+type deleg_meas_skeleton_asp_t;
+type deleg_meas_skeleton_asp_exe_t;
+define_asp(deleg_meas_skeleton_asp_t, deleg_meas_skeleton_asp_exe_t);
+
+allow deleg_meas_skeleton_asp_t tmpfs_t:filesystem {getattr};
+allow deleg_meas_skeleton_asp_t tmpfs_t:dir {add_name remove_name write};
+allow deleg_meas_skeleton_asp_t tmpfs_t:shm {write};
+allow deleg_meas_skeleton_asp_t tmpfs_t:file {create open read write unlink getattr};
+
+allow deleg_meas_skeleton_asp_t bin_t:file {execute_no_trans execute map};
+
+allow bin_t tmpfs_t:file {open write getattr};
+allow bin_t tmpfs_t:shm {write getattr};
+
+# Delegated Measurement Appraisal ASP
+# Change this policy to conform with any modifications made
+type deleg_meas_appraise_skeleton_asp_t;
+type deleg_meas_appraise_skeleton_asp_exe_t;
+define_asp(deleg_meas_appraise_skeleton_asp_t, deleg_meas_appraise_skeleton_asp_exe_t);
+
+allow deleg_meas_appraise_skeleton_asp_t tmpfs_t:filesystem {getattr};
+allow deleg_meas_appraise_skeleton_asp_t tmpfs_t:dir {add_name remove_name write};
+allow deleg_meas_appraise_skeleton_asp_t tmpfs_t:shm {write};
+allow deleg_meas_appraise_skeleton_asp_t tmpfs_t:file {create open read write unlink getattr};
+
+allow deleg_meas_appraise_skeleton_asp_t bin_t:file {execute_no_trans execute map};
+
 # Process Measurement APB
 define_apb(process_measurement_apb_t, process_measurement_apb_exe_t)
 
@@ -984,6 +1013,18 @@ allow_apb_asp(request_passport_apb_t, encrypt_asp_exe_t, encrypt_asp_t)
 allow_apb_asp(request_passport_apb_t, create_measurement_contract_asp_exe_t, create_measurement_contract_asp_t)
 allow_apb_asp(request_passport_apb_t, send_asp_exe_t, send_asp_t)
 allow_apb_asp(request_passport_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_t)
+
+# Delegated Measurement APB
+type deleg_meas_skeleton_apb_t;
+type deleg_meas_skeleton_apb_exe_t;
+define_apb(deleg_meas_skeleton_apb_t, deleg_meas_skeleton_apb_exe_t)
+allow_apb_asp(deleg_meas_skeleton_apb_t, deleg_meas_skeleton_asp_exe_t, deleg_meas_skeleton_asp_t)
+
+# Delegated Measurement Appraisal APB
+type deleg_meas_appraise_skeleton_apb_t;
+type deleg_meas_appraise_skeleton_apb_exe_t;
+define_apb(deleg_meas_appraise_skeleton_apb_t, deleg_meas_appraise_skeleton_apb_exe_t)
+allow_apb_asp(deleg_meas_appraise_skeleton_apb_t, deleg_meas_appraise_skeleton_asp_exe_t, deleg_meas_appraise_skeleton_asp_t)
 
 # Passport Ret APB
 #type passport_ret_apb_t;

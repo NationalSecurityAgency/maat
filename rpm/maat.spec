@@ -216,6 +216,8 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/apbs/no_op_apb
 %{_libexecdir}/maat/apbs/request_passport_apb
 %{_libexecdir}/maat/apbs/passport_userspace_appraiser_apb
+%{_libexecdir}/maat/apbs/deleg_meas_skeleton_apb
+%{_libexecdir}/maat/apbs/deleg_meas_appraise_skeleton_apb
 # ASPs, enumerated explicitly because some need suid
 # %{_libexecdir}/maat/asps/*
 %{_libexecdir}/maat/asps/blacklist
@@ -268,6 +270,8 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/asps/verify_measurement_contract_asp
 %{_libexecdir}/maat/asps/receive_asp
 %{_libexecdir}/maat/asps/passport_maker_asp
+%{_libexecdir}/maat/asps/deleg_meas_skeleton_asp
+%{_libexecdir}/maat/asps/deleg_meas_appraise_skeleton_asp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/proc_namespaces_asp
 %{_libexecdir}/maat/asps/kernel_msmt_asp
 %{_datadir}/maat/selector-configurations/*

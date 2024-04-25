@@ -182,11 +182,12 @@ END_TEST
 
 void setup(void)
 {
-    libmaat_init(0, 2);
+    libmaat_init(0, 4);
 }
 
 void teardown(void)
 {
+    libmaat_exit();
 }
 
 int main(void)

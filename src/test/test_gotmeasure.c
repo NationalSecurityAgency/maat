@@ -66,6 +66,7 @@ void setup(void)
 void teardown(void)
 {
     destroy_measurement_graph(g_graph);
+    libmaat_exit();
 }
 
 START_TEST(test_gotmeasure)

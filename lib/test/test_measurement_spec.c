@@ -63,6 +63,8 @@ Suite* ms_suite (void)
     Suite *s = suite_create ("Measurement Spec Tests");
 
     TCase *tc_basic = tcase_create ("Basic Tests");
+    tcase_add_checked_fixture (tc_basic, setup, teardown);
+
     tcase_add_test (tc_basic, test_load_measurement_specification_info);
     tcase_add_test (tc_basic, test_load_all_measurement_specifications_info);
     suite_add_tcase (s, tc_basic);

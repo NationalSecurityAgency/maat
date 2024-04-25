@@ -50,6 +50,7 @@ void setup(void)
 
 void teardown(void)
 {
+    libmaat_exit();
 }
 
 int test_only_read_process_metadata(long p, process_metadata_measurement **out);

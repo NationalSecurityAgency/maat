@@ -74,6 +74,7 @@ void teardown(void)
 {
     destroy_measurement_graph(graph);
     unload_all_asps(asps);
+    libmaat_exit();
 }
 
 START_TEST(test_proc_env_asp)

@@ -139,6 +139,7 @@ Suite* apb_suite (void)
     Suite *s = suite_create ("AM APB Tests");
 
     TCase *tc_basic = tcase_create ("Basic Tests");
+    tcase_add_checked_fixture (tc_basic, setup, teardown);
 
     tcase_add_test (tc_basic, test_load_apb_info);
     tcase_add_test (tc_basic, test_load_all_apbs_info);

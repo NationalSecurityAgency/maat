@@ -68,6 +68,7 @@ void setup(void)
 void teardown(void)
 {
     unload_all_asps(g_asps);
+    libmaat_exit();
 }
 
 START_TEST(test_encryptdecrypt)

@@ -1165,6 +1165,16 @@ START_TEST(test_attestmgr_load_invalid_config_bad_timeout)
 }
 END_TEST
 
+void setup(void)
+{
+    libmaat_init(0, 4);
+}
+
+void teardown(void)
+{
+    libmaat_exit();
+}
+
 int main(void)
 {
     Suite *suite;
@@ -1174,6 +1184,7 @@ int main(void)
 
     suite = suite_create("am_config");
     am_config_tests = tcase_create("am_config");
+    tcase_add_checked_fixture(am_config_tests, setup, teardown);
 
     tcase_add_test(am_config_tests, test_load_inet_iface_config);
     tcase_add_test(am_config_tests, test_load_invalid_inet_iface_config);

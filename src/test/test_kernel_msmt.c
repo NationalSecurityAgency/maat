@@ -51,6 +51,7 @@ void setup(void)
 
 void teardown(void)
 {
+    libmaat_exit();
 }
 
 START_TEST(test_get_kernel_msmt)

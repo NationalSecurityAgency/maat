@@ -223,13 +223,11 @@ int main(void)
     srunner_set_log(sr, "test_results_selector.log");
     srunner_set_xml(sr, "test_results_selector.xml");
 
-    /* Initialize libmaat SSL */
-    libmaat_ssl_init();
+    libmaat_init(0, 4);
 
     srunner_run_all(sr, CK_NORMAL);
 
-    /* Destroy libmaat ssl */
-    libmaat_ssl_exit();
+    libmaat_exit();
 
     number_failed = srunner_ntests_failed (sr);
     srunner_free(sr);

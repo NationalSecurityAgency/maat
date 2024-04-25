@@ -64,3 +64,8 @@ static inline void setup(void)
     setenv("LIBMAAT_ASPMAIN", LIBMAAT_ASPMAIN, 1);
     libmaat_init(0, 5);
 }
+
+static inline void teardown(void)
+{
+    libmaat_exit();
+}

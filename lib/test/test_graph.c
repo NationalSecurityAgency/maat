@@ -312,13 +312,17 @@ END_TEST
 
 void checked_setup(void)
 {
-    libmaat_init(0,5);
+    setup();
     register_target_type(&dummy_target_type);
     register_measurement_type(&dummy_measurement_type);
     register_address_space(&simple_address_space);
 }
 
-void checked_teardown(void) {}
+void checked_teardown(void)
+{
+    teardown();
+}
+
 Suite * graph_suite (void)
 {
     Suite *s = suite_create ("Graph Tests");
@@ -337,6 +341,8 @@ Suite * graph_suite (void)
     suite_add_tcase (s, tc_feature);
 
     TCase *tc_negative = tcase_create ("Negative Tests");
+    tcase_add_checked_fixture (tc_negative, checked_setup, checked_teardown);
+
     tcase_add_test (tc_negative, test_get_nonexistent);
     suite_add_tcase (s, tc_negative);
     return s;

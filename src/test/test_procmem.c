@@ -64,7 +64,7 @@ void setup(void)
             size_t csum_size = 64;
 
             measurement_variable *file_var = NULL;
-            libmaat_init(0, 2);
+            libmaat_init(0, 4);
 
             asps = load_all_asps_info(ASP_PATH);
             register_address_space(&pid_mem_range_space);
@@ -102,6 +102,8 @@ void teardown(void)
 
     unload_all_asps(asps);
     asps = NULL;
+
+    libmaat_exit();
 }
 
 int performHash(char * buffer, uint64_t length, sha256_measurement_data * hashdata);

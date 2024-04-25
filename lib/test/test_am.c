@@ -172,9 +172,10 @@ Suite* am_suite (void)
 
     /*Core test case */
     TCase *tc_feature = tcase_create ("Feature Tests");
-    tcase_add_test (tc_feature, test_new_am);
+    tcase_add_checked_fixture (tc_basic, setup, teardown);
 
-    tcase_add_test(tc_feature, test_load_selector);
+    tcase_add_test (tc_feature, test_new_am);
+    tcase_add_test (tc_feature, test_load_selector);
     tcase_add_test (tc_feature, test_appraiser_initial_options);
     tcase_add_test (tc_feature, test_attester_select_options);
     tcase_add_test (tc_feature, test_appraiser_select_option);

@@ -21,6 +21,7 @@
 #include <measurement_spec/find_types.h>
 
 #include "dummy_types.h"
+#include "test-data.h"
 
 #include <check.h>
 
@@ -96,11 +97,14 @@ END_TEST
 
 void checked_setup()
 {
+    setup();
     register_measurement_type(&dummy_measurement_type);
 }
 
 void checked_teardown(void)
-{}
+{
+    teardown();
+}
 
 int main(void)
 {

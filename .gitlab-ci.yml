@@ -214,22 +214,6 @@ build-ubuntu22-tpm:
   script:
     - *build_no_selinux
 
-# build without selinux for rhel7
-build-rhel7-no-selinux:
-  stage: build
-  tags:
-    - rhel7
-  script:
-    - *build_no_selinux_no_tpm
-
-# build with selinux for rhel7
-build-rhel7-selinux:
-  stage: build
-  tags:
-    - rhel7
-  script:
-    - *build_with_selinux_no_tpm
-
 # build without selinux for rhel8
 build-rhel8-no-selinux:
   stage: build
@@ -493,42 +477,6 @@ test-debian11-basic:
         path: build/coverage.xml
     when: always
 
-# regular make check tests without selinux on rhel7
-test-rhel7-basic-no-selinux:
-  stage: test
-  tags:
-    - rhel7
-  script:
-    - *test_no_selinux_no_tpm
-  coverage: /^\s*lines:\s*\d+.\d+\%/
-  artifacts:
-    paths:
-      - build/src/test/*.log
-    expire_in: 2 weeks
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: build/coverage.xml
-    when: always
-
-# make check tests with address sanitizer on rhel7
-test-rhel7-asan:
-  stage: test
-  tags:
-    - rhel7
-  script:
-    - *test_asan_no_tpm
-  coverage: /^\s*lines:\s*\d+.\d+\%/
-  artifacts:
-    paths:
-      - build/src/test/*.log
-    expire_in: 2 weeks
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: build/coverage.xml
-    when: always
-
 # make check tests without selinux on rhel8
 test-rhel8-basic-no-selinux:
   stage: test
@@ -635,22 +583,6 @@ package-ubuntu22-amd64-deb:
       - build/staging
     expire_in: 2 weeks
 
-# package rhel7 rpm
-package-rhel7-x86_64-rpm:
-  stage: package
-  tags:
-    - rhel7
-  variables:
-    distro: "centos+epel"
-    release: 7
-    arch: x86_64
-  script:
-    - *rpm_repo
-  artifacts:
-    paths:
-      - build/staging
-    expire_in: 2 weeks
-
 # package rhel8 rpm
 package-rhel8-x86_64-rpm:
   stage: package
@@ -722,29 +654,6 @@ create-ubuntu22-repo:
     expire_in: 2 weeks
 
 ## systemtest
-
-# system test with selinux on rhel7
-system-test-selinux-rhel7:
-  stage: systemtest
-  tags:
-    - rhel7
-  inherit:
-    default: false
-  dependencies: []
-  variables:
-    release: 7
-  timeout: 2 hours
-  before_script:
-    - "sudo killall -15 attestmgr || true"
-    - "sudo killall -9 attestmgr || true"
-    - sudo semanage port -d -t attestmgr_port_t -p tcp 2343 || true
-    - sudo yum remove maat maat-selinux -y || true
-  script:
-    *rhel_selinux_system_test
-  artifacts:
-    paths:
-      - "*.log"
-    expire_in: 2 weeks
 
 # system test with selinux on rhel8
 system-test-selinux-rhel8:

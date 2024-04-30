@@ -41,10 +41,10 @@ get Maat up and running to integrate into their network.
 Supported Operating System Distributions and Releases
 =====================================================
 
-Maat is tested and supported for Red Hat Enterprise Linux 7 and 8 and Ubuntu
-20.04 (focal) and 22.04 (jammy). Other distributions/releases (such as
-equivalent CentOS or earlier Ubuntu versions) may also work but are not
-officially supported.
+Maat is tested and supported for Red Hat Enterprise Linux 7 and 8; Ubuntu
+20.04 (focal), 22.04 (jammy), and Ubuntu 23.10 (minotaur); and Debian 11.
+Other distributions/releases (such as equivalent CentOS or earlier Ubuntu
+versions) may also work but are not officially supported.
 
 Dependencies
 ============
@@ -58,7 +58,7 @@ library and libxml2. However, some optional parts of Maat require other
 libraries and other languages.  These are summarized in the table below and can
 be installed with the following commands.
 
-For Ubuntu Machines: 
+For Debian and Ubuntu Machines: 
 
 .. code-block:: bash
 
@@ -121,7 +121,7 @@ the dependencies summarized in the commands below.
 Building docs the is not necessary
 to complete the rest of the Quick Start guide or the tutorials.
 
-For Ubuntu Machines: 
+For Debian and Ubuntu Machines: 
 
 .. code-block:: bash
 

@@ -39,6 +39,18 @@ default:
   - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-tpm
   - make install
 
+# configure and build without selinux and without TPM for debian 11, ubuntu 23, and other debian based OSes of the same 'level'
+.build_no_selinux_no_tpm_deb_docker: &build_no_selinux_no_tpm_deb_docker
+  - apt-get -y update
+  - apt -y install build-essential autoconf automake libtool check libglib2.0-dev libxml2-dev libssl-dev uuid-dev libcap-dev make libelf-dev libjson-c-dev libtss2-dev tpm2-tools
+  - apt -y install gcovr
+  - autoreconf -i
+  - "[ -d build ] || mkdir build"
+  - cd build
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --enable-coverage --disable-selinux --disable-tpm --enable-tests
+  - make
+  - make install
+
 # configure and build with selinux and TPM
 .build_with_selinux_and_tpm: &build_with_selinux_and_tpm
   - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd
@@ -59,6 +71,12 @@ default:
 # run check tests without selinux adn without TPM
 .test_no_selinux_no_tpm: &test_no_selinux_no_tpm
   - ../configure  --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --disable-tpm --enable-coverage
+  - make check
+  - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
+
+# configure and build without selinux and without TPM for debian 11, ubuntu 23, and other debian based OSes of the same 'level'
+.test_no_selinux_no_tpm_deb_docker: &test_no_selinux_no_tpm_deb_docker
+  - *build_no_selinux_no_tpm_deb_docker
   - make check
   - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
 
@@ -252,6 +270,26 @@ build-rhel9-selinux:
     - *build_with_selinux_no_tpm
   allow_failure: true # for now this is allowed because of an issue with flask header
 
+#build without selinux without TPM for ubuntu23
+build-ubuntu23:
+ stage: build
+ inherit:
+  default: false
+ tags:
+  - ubuntu23
+ script:
+  - *build_no_selinux_no_tpm_deb_docker
+
+#build without selinux without TPM for debian 11
+build-debian11:
+ stage: build
+ inherit:
+  default: false
+ tags:
+  - debian11
+ script:
+  - *build_no_selinux_no_tpm_deb_docker
+
 ## docs
 
 # build docs on ubuntu20
@@ -398,12 +436,52 @@ test-ubuntu22-asan:
 
 # make check tests with address sanitizer on ubuntu22
 test-ubuntu22-asan-tpm:
+   stage: test
+   tags:
+     - ubuntu22
+     - tpm
+   script:
+     - *test_asan
+   coverage: /^\s*lines:\s*\d+.\d+\%/
+   artifacts:
+     paths:
+       - build/src/test/*.log
+     expire_in: 2 weeks
+     reports:
+       coverage_report:
+         coverage_format: cobertura
+         path: build/coverage.xml
+     when: always
+
+# regular make check tests on ubuntu23
+test-ubuntu23-basic:
   stage: test
+  inherit:
+    default: false
   tags:
-    - ubuntu22
-    - tpm
+    - ubuntu23
   script:
-    - *test_asan
+    - *test_no_selinux_no_tpm_deb_docker
+  coverage: /^\s*lines:\s*\d+.\d+\%/
+  artifacts:
+    paths:
+      - build/src/test/*.log
+    expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
+    when: always
+
+# regular make check tests on debian 11
+test-debian11-basic:
+  stage: test
+  inherit:
+    default: false
+  tags:
+    - debian11
+  script:
+    - *test_no_selinux_no_tpm_deb_docker
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:

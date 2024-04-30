@@ -91,7 +91,15 @@ endif
 
 if BUILD_procenv_ASP
 suid_asp_PROGRAMS += procenv
+if ENABLE_TESTS
+noinst_LTLIBRARIES += libprocenv_helper.la
+libprocenv_helper_la_SOURCES = procenv.c
 procenv_SOURCES = procenv.c
+procenv_LDADD   = $(LIBMAAT_ASP_LIBS) libprocenv_helper.la
+else
+procenv_SOURCES = procenv.c
+endif
+procenv_CFLAGS = $(AM_CFLAGS)
 endif
 
 if BUILD_system_ASP
@@ -267,6 +275,15 @@ endif
 
 if BUILD_procroot_ASP
 suid_asp_PROGRAMS    += procrootasp
+if ENABLE_TESTS
+noinst_LTLIBRARIES                += libprocrootasp_helper.la
+libprocrootasp_helper_la_SOURCES  = procrootasp.c
+procrootasp_SOURCES               = procrootasp.c
+procrootasp_LDADD                 = $(LIBMAAT_ASP_LIBS) libprocrootasp_helper.la
+else
+procrootasp_SOURCES = procrootasp.c
+endif
+procrootasp_CFLAGS  = $(AM_CFLAGS)
 endif
 
 if BUILD_passport_maker_ASP
@@ -310,6 +327,7 @@ libgotmeasure_helper_la_SOURCES = userspace_measurement/memory.c userspace_measu
                       userspace_measurement/got_measurer.c userspace_measurement/got_measurer.h \
                       got_measure.c got_measure.h
 libgotmeasure_helper_la_CFLAGS = $(AM_CFLAGS)
+libgotmeasure_helper_la_LIBADD = -lm
 endif
 
 got_measure_SOURCES = userspace_measurement/memory.c userspace_measurement/memory.h \

@@ -247,6 +247,7 @@ build-rhel8-selinux:
     - *build_with_selinux_no_tpm
 
 # build with selinux and tpm support for rhel8
+build-rhel8-selinux-tpm:
   stage: build
   tags:
     - rhel8

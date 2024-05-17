@@ -99,12 +99,6 @@ START_TEST(test_load_all_asps_info_w_null_param)
 }
 END_TEST
 
-void teardown(void)
-{
-    libmaat_exit();
-    return;
-}
-
 Suite * comms_suite (void)
 {
     Suite *s = suite_create ("ASP Tests");

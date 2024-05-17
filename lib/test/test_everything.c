@@ -65,7 +65,7 @@ void unchecked_teardown(void)
     close(the_pipe[0]);
     close(the_pipe[1]);
     free_attestation_manager(am);
-    libmaat_exit();
+    teardown();
 }
 
 

@@ -56,7 +56,7 @@ void setup(void)
 {
     measurement_variable *passport_var;
 
-    libmaat_init(0, 2);
+    libmaat_init(0, 4);
 
     asps = load_all_asps_info(ASP_PATH);
 
@@ -75,6 +75,7 @@ void setup(void)
 void teardown(void)
 {
     unload_all_asps(asps);
+    libmaat_exit();
 }
 
 START_TEST(test_storer)

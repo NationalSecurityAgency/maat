@@ -79,11 +79,16 @@ test_csv_LDADD                  = ${LDADD} \
                                   ../util/libmaat_util-@PACKAGE_VERSION@.la
 
 test_client_SOURCES             = test_client.c
-test_client_LDADD               = ../client/libmaat_client-@PACKAGE_VERSION@.la @CHECK_LIBS@ $(XML_LIBS)
+test_client_LDADD               = ../client/libmaat_client-@PACKAGE_VERSION@.la \
+                                  ../util/libmaat_util-@PACKAGE_VERSION@.la \
+                                  @CHECK_LIBS@ \
+                                  $(XML_LIBS)
 test_client_CPPFLAGS            = $(AM_CPPFLAGS) -I$(srcdir)/../client
 
 test_sgraph_SOURCES		= test_sgraph.c
-test_sgraph_LDADD		= ../sgraph/libmaat_sgraph-@PACKAGE_VERSION@.la @CHECK_LIBS@ 
+test_sgraph_LDADD		= ../sgraph/libmaat_sgraph-@PACKAGE_VERSION@.la \
+						  ../util/libmaat_util-@PACKAGE_VERSION@.la \
+                          @CHECK_LIBS@
 
 
 

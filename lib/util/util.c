@@ -304,7 +304,7 @@ char *file_to_string(const char *filename)
 
     ret = stat(filename, &stbuf);
     if (ret) {
-        dlog(6, "stat returned %zd\n", ret);
+        dlog(6, "stat returned %zd for filename: %s\n", ret, filename);
         return NULL;
     }
 

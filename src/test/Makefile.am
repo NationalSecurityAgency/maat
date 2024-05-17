@@ -96,7 +96,7 @@ endif
 if BUILD_procenv_ASP
 check_PROGRAMS += test_procenv
 test_procenv = test_procenv.c
-test_procenv_LDADD = $(LDADD_APB)
+test_procenv_LDADD = $(LDADD_APB) $(builddir)/../asps/libprocenv_helper.la
 endif
 
 if BUILD_hashfileservice_ASP
@@ -139,10 +139,16 @@ test_readelf_SOURCES = test_readelf.c
 test_readelf_LDADD = $(LDADD_APB)
 endif
 
+if BUILD_elf_appraise_ASP
+check_PROGRAMS += test_appraise_elf
+test_appraise_elf_SOURCES = test_appraise_elf.c
+test_appraise_elf_LDADD = $(LDADD_APB)
+endif
+
 if BUILD_procroot_ASP
 check_PROGRAMS += test_procroot
 test_procroot_SOURCES = test_procroot.c
-test_procroot_LDADD = $(LDADD_APB)
+test_procroot_LDADD = $(LDADD_APB) $(builddir)/../asps/libprocrootasp_helper.la
 endif
 
 if BUILD_proc_namespaces_ASP

@@ -18,7 +18,10 @@
 #include <config.h>
 #include <string.h>
 #include <check.h>
+
 #include <maat-client.h>
+
+#include "test-data.h"
 
 START_TEST(test_create_request)
 {
@@ -107,13 +110,13 @@ START_TEST(test_parse_response_pass)
 }
 END_TEST
 
-
 Suite * client_suite (void)
 {
     Suite *s = suite_create ("Maat Client Tests");
 
     /*Core test case */
     TCase *tc_feature = tcase_create ("Maat Client Feature Tests");
+    tcase_add_checked_fixture (tc_feature, setup, teardown);
     tcase_add_test (tc_feature, test_create_request);
     tcase_add_test (tc_feature, test_parse_response_pass);
     suite_add_tcase (s, tc_feature);

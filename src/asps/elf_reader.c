@@ -54,6 +54,16 @@ typedef struct RefStruct {
     char* ref_name;
 } Reference;
 
+/**
+ * @brief This function frees a file references structure from memory.
+ *
+ * @param refs A double pointer to a file references structure.
+ *
+ * @param nr_refs A pointer to an unsigned long containing the number or references stored
+ *                in the file references structure.
+ *
+ * @return This function does not return a value.
+*/
 static void free_reference_table(Reference **refs, size_t *nr_refs)
 {
     size_t i = 0;
@@ -66,6 +76,19 @@ static void free_reference_table(Reference **refs, size_t *nr_refs)
     *nr_refs = 0;
 }
 
+/**
+ * @brief This function computes the checksum of the content of a buffer.
+ *
+ * @param buf A pointer to the input buffer.
+ *
+ * @param buf_size The size of the input buffer.
+ *
+ * @param retbuf A double pointer to the return buffer containing the newly computed checksum.
+ *
+ * @param retsize A pointer to an unsigned long with the retbuf size value.
+ *
+ * @return 0 on success, otherwise an error value.
+*/
 static int compute_checksum_binary(uint8_t *buf, size_t bufsize,
                                    uint8_t **retbuf, size_t *retsize)
 {
@@ -96,6 +119,24 @@ static int compute_checksum_binary(uint8_t *buf, size_t bufsize,
     return 0;
 }
 
+/**
+ * @brief This function appends a new file reference into an existing file reference
+ *        structure table.
+ *
+ * @param num The number of the file reference to be appended.
+ *
+ * @param file_name A pointer to the new file name to be appended.
+ *
+ * @param ref_name A pointer to the new reference name to be appended.
+ *
+ * @param refs A double pointer to the file references table to which the new reference
+ *             in being appended to.
+ *
+ * @param nr_refs A pointer to an unsigned long with the number of entries in the file references
+ *                table after append.
+ *
+ * @return 0 on success, otherwise an error value.
+*/
 static int append_reference(int num, char *file_name, char *ref_name,
                             Reference **refs, size_t *nr_refs)
 {
@@ -120,6 +161,21 @@ static int append_reference(int num, char *file_name, char *ref_name,
     return 0;
 }
 
+/**
+ * @brief This function appends an ELF symbol table entry into an existing ELF Header measurement
+ *        data structure.
+ *
+ * @param data A pointer to the ELF Header measurement structure to which the new ELF symbol table
+ *             entry will be appended to.
+ *
+ * @param sym A pointer to the new ELF symbol table entry that will be appended.
+ *
+ * @param symname A pointer to the new symbol name.
+ *
+ * @param ref A pointer to an existing file reference structure.
+ *
+ * @return 0 on success, otherwise an error value.
+*/
 static int append_symbol(elfheader_meas_data *data, GElf_Sym *sym, char *symname,
                          Reference *ref)
 {
@@ -150,6 +206,26 @@ static int append_symbol(elfheader_meas_data *data, GElf_Sym *sym, char *symname
     return 0;
 }
 
+/**
+ * @brief This function scans a verneed section of an ELF file and populates a file references
+ *        structure with information from the vernaux structures.
+ *
+ * @param elf A pointer to an ELF file descriptor.
+ *
+ * @param refScn A pointer to an ELF file section descriptor.
+ *
+ * @param symbol_count An integer containing the symbol counter. This parameter is unused.
+ *
+ * @param elfheader_data A pointer to the ELF Header measurement structure to which the new ELF symbol table
+ *                       entry will be appended to.
+ *
+ * @param refs A double pointer to an existing file references structure.
+ *
+ * @param nrrefs A pointer to an unsigned long with the number of entries in the file references
+ *               table after append.
+ *
+ * @return 0 on success, otherwise an error value.
+*/
 static int scan_verneed_section(Elf *elf, Elf_Scn *refScn,
                                 __attribute__((__unused__))int symbol_count,
                                 elfheader_meas_data *elfheader_data,
@@ -306,6 +382,26 @@ error_out:
     return ret_val;
 }
 
+/**
+ * @brief This function appends file references and ELF symbols into an existing
+ *        ELF Header measurement data structure.
+ *
+ * @param elf A pointer to an ELF file descriptor.
+ *
+ * @param symScn A pointer to an ELF file section descriptor.
+ *
+ * @param verScn A pointer to an ELF file section descriptor.
+ *
+ * @param symbol_count An unsigned long containing the symbol counter.
+ *
+ * @param refs A pointer to an existing file reference structure.
+ *
+ * @param refcount An unsigned long with the number of entries in the file reference structure.
+ *
+ * @param elfheader_data A pointer to an existing ELF Header measurement structure that will be populated.
+ *
+ * @return 0 on success, otherwise -1.
+*/
 static int zip_refs_and_symbols(Elf *elf,
                                 Elf_Scn *symScn,
                                 Elf_Scn *verScn,
@@ -396,7 +492,7 @@ static int zip_refs_and_symbols(Elf *elf,
 }
 
 
-int asp_init(int argc, char *argv[])
+int asp_init(int argc UNUSED, char *argv[] UNUSED)
 {
     int ret_val = 0;
 
@@ -412,11 +508,27 @@ int asp_init(int argc, char *argv[])
     return ASP_APB_SUCCESS;
 }
 
-int asp_exit(int status)
+int asp_exit(int status UNUSED)
 {
     return ASP_APB_SUCCESS;
 }
 
+/**
+ * @brief This function hashes a program segment header content and adds the hash value into a node
+ *        graph of type sha256_measurement_type.
+ *
+ * @param elf_path A pointer to an ELF file path.
+ *
+ * @param fd An integer value containing a file descriptor.
+ *
+ * @param phdr A pointer to a program segment header.
+ *
+ * @param g A pointer to a measurement graph.
+ *
+ * @param parent A node ID value.
+ *
+ * @return 0 on success, otherwise -1.
+*/
 static int hash_load_segment(char *elf_path, int fd, GElf_Phdr *phdr,
                              measurement_graph *g, node_id_t parent)
 {
@@ -512,6 +624,22 @@ error_alloc_buf:
     return -1;
 }
 
+/**
+ * @brief This function hashes a section header content and adds the hash value into a node
+ *        graph of type sha256_measurement_type.
+ *
+ * @param elf_path A pointer to an ELF file path.
+ *
+ * @param xhdr A pointer to a section header structure, including the section name.
+ *
+ * @param scn A pointer to an ELF file section descriptor.
+ *
+ * @param g A pointer to a measurement graph.
+ *
+ * @param parent A node ID value.
+ *
+ * @return 0 on success, otherwise -1.
+*/
 static int hash_section(char *elf_path, elf_sct_hdr *xhdr, Elf_Scn *scn,
                         measurement_graph *g, node_id_t parent)
 {
@@ -846,6 +974,8 @@ int asp_measure(int argc, char *argv[])
                  elfheader_data->d.type->magic, node_id);
 
     ret_val = measurement_node_add_rawdata(graph, node_id,  &elfheader_data->d);
+
+    dlog(6, "ELF NODE "ID_FMT" with data of type "MAGIC_FMT"\n", node_id, elfheader_data->d.type->magic);
 
 error_zip_refs:
 // ERROR Handling Cases

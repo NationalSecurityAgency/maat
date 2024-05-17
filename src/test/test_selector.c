@@ -698,12 +698,25 @@ END_TEST
 /* } */
 /* END_TEST */
 
+void setup(void)
+{
+    libmaat_init(0, 4);
+}
+
+void teardown(void)
+{
+    libmaat_exit();
+}
+
 Suite* sel_suite (void)
 {
     Suite *s = suite_create ("Selector Tests");
 
     TCase *tc_basic = tcase_create ("Basic Tests");
+    tcase_add_checked_fixture(tc_basic, setup, teardown);
     TCase *tc_higher = tcase_create ("Higher Level Tests");
+    tcase_add_checked_fixture(tc_higher, setup, teardown);
+
     tcase_add_test (tc_basic, test_load_collection);
     tcase_add_test (tc_basic, test_load_match_condition);
     tcase_add_test (tc_basic, test_load_condition);

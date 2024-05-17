@@ -1692,7 +1692,7 @@ int get_target_meas_spec(uuid_t meas_spec_uuid, struct meas_spec **mspec)
     char *mspec_dir = getenv(ENV_MAAT_MEAS_SPEC_DIR);
     if(mspec_dir == NULL) {
         dlog(1, "Warning: environment variable " ENV_MAAT_MEAS_SPEC_DIR
-             " not set. Using default path " DEFAULT_MEAS_SPEC_DIR);
+             " not set. Using default path %s\n", DEFAULT_MEAS_SPEC_DIR);
         mspec_dir = DEFAULT_MEAS_SPEC_DIR;
     }
 

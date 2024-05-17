@@ -15,7 +15,6 @@
  *
  */
 
-
 #include <stdio.h>
 #include <string.h>
 #include <dlfcn.h>
@@ -34,6 +33,8 @@
 
 #include <maat-basetypes.h>
 
+#define ARGS 3
+#define TEST_TIMEOUT 100
 
 int apb_execute(struct apb *apb UNUSED, struct scenario *scen UNUSED,
                 uuid_t meas_spec UNUSED, int peerchan UNUSED,
@@ -44,49 +45,69 @@ int apb_execute(struct apb *apb UNUSED, struct scenario *scen UNUSED,
     return -1;
 }
 
-GList *asps = NULL;
-measurement_graph *graph;
-node_id_t proc_node;
-struct asp *procenvasp;
+measurement_graph *g_graph;
+node_id_t g_proc_node;
 
 void setup(void)
 {
+    int success                    = -1;
+    pid_t target_pid               = 0;
     measurement_variable *proc_var = NULL;
 
+    /* Initalize logging */
     libmaat_init(0, 4);
 
-    asps = load_all_asps_info(ASP_PATH);
+    /* Register required types */
     register_address_space(&pid_address_space);
     register_measurement_type(&proc_env_measurement_type);
 
-    graph = create_measurement_graph(NULL);
+    /* Create the measurement graph */
+    g_graph = create_measurement_graph(NULL);
+
+    /* Create measurement variable */
     proc_var = new_measurement_variable(&process_target_type, alloc_address(&pid_address_space));
 
-    ((pid_address*)(proc_var->address))->pid = getpid();
+    /* Create child process which will be the test process */
+    target_pid = fork();
 
-    measurement_graph_add_node(graph, proc_var, NULL, &proc_node);
+    fail_if(target_pid == -1, "Unable to fork a target process");
 
-    procenvasp = find_asp(asps, "PROCENV");
+    fail_if(target_pid > UINT32_MAX, "Unable to represent pid within the measurement graph");
+
+    if (target_pid == 0) {
+        /* Child process benignly sleeps to allow measurement */
+        sleep(TEST_TIMEOUT);
+    }
+
+    /* Cast is justified due to the previous bounds check */
+    ((pid_address*)(proc_var->address))->pid = (uint32_t)target_pid;
+
+    /* Add measurement node to the graph */
+    success = measurement_graph_add_node(g_graph, proc_var, NULL, &g_proc_node);
+    fail_if(success <= 0, "Unable to add node to the measurement graph\n");
+
     free_measurement_variable(proc_var);
 }
 
 void teardown(void)
 {
-    destroy_measurement_graph(graph);
-    unload_all_asps(asps);
+    destroy_measurement_graph(g_graph);
+    libmaat_exit();
 }
 
 START_TEST(test_proc_env_asp)
 {
-    char *graph_path = measurement_graph_get_path(graph);
-    node_id_str nid;
-    char *asp_argv[] = {graph_path, nid};
-    int rc =           -1;
+    node_id_str nid  = {0};
+    char *graph_path = measurement_graph_get_path(g_graph);
+    char *asp_argv[] = {"procenv", graph_path, nid};
 
-    str_of_node_id(proc_node, nid);
+    str_of_node_id(g_proc_node, nid);
 
-    rc = run_asp(procenvasp, -1, -1, false, 2, asp_argv, -1);
-    fail_unless(rc == 0, "run_asp procenv_asp failed with code %d", rc);
+    /* Check if the ASP executes properly */
+    fail_if(asp_init(ARGS, asp_argv) != 0, "ASP Init call failed");
+    fail_if(asp_measure(ARGS, asp_argv) != 0, "Measurement failed");
+    fail_if(asp_exit(0) != 0, "Exit failed");
+
     free(graph_path);
 }
 END_TEST
@@ -102,7 +123,7 @@ int main(void)
     procenv = tcase_create("procenv");
     tcase_add_checked_fixture(procenv, setup, teardown);
     tcase_add_test(procenv, test_proc_env_asp);
-    tcase_set_timeout(procenv, 10);
+    tcase_set_timeout(procenv, TEST_TIMEOUT);
     suite_add_tcase(s, procenv);
 
     r = srunner_create(s);

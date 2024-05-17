@@ -68,6 +68,7 @@ void setup(void)
 void teardown(void)
 {
     unload_all_asps(g_asps);
+    libmaat_exit();
 }
 
 static int process_request(const char *req, size_t len)
@@ -217,7 +218,7 @@ START_TEST(test_sendrequest)
     /* Cast is acceptable because the function does not regard the signedness of the
      * argument */
     rc = maat_read_sz_buf(acc_sock, (unsigned char **) &msg, &msg_len, &bytes_read,
-                            &eof_encountered, READ_TO, 0);
+                          &eof_encountered, READ_TO, 0);
     if(rc != 0) {
         stop_asp(g_sendrequestasp);
         fail_if(true, "Error reading from the child");

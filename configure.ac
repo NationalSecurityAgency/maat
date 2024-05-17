@@ -15,7 +15,7 @@
 #
 #
 
-AC_INIT([maat], [1.6])
+AC_INIT([maat], [1.7])
 AC_CONFIG_AUX_DIR([build-aux])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AM_INIT_AUTOMAKE([foreign -Wall tar-pax subdir-objects])
@@ -206,7 +206,7 @@ AC_ARG_WITH(nobody-group,
     AC_HELP_STRING([--with-nobody-group=GROUP],
 		   [set the default unprivileged group (default nobody or nogroup)]),
     [ NOBODY_GROUP="$with_nobody_group" ])
-	
+
 if test x"$with_nobody_group" = x; then
     AC_MSG_CHECKING([the group for user "nobody"])
     if grep '^nobody:' /etc/group >/dev/null 2>&1; then
@@ -271,6 +271,7 @@ DEFAULT_ASP(hashfileservice)
 DEFAULT_ASP(md5fileservice)
 DEFAULT_ASP(procfds)
 DEFAULT_ASP(elf_reader)
+DEFAULT_ASP(elf_appraise)
 DEFAULT_ASP(netstatunix)
 DEFAULT_ASP(netstattcp)
 DEFAULT_ASP(netstatudp)
@@ -320,10 +321,20 @@ DEFAULT_ASP(split)
 DEFAULT_ASP(kernel_msmt)
 DEFAULT_ASP(send_request)
 EXTRA_ASP(tlm_ret)
+DEFAULT_ASP(deleg_meas_skeleton)
+DEFAULT_ASP(deleg_meas_appraise_skeleton)
 
 # End asp enable macros.
 
 IF_ASP([elf_reader],
+	[AC_CHECK_LIB([elf],[elf_version], [],
+			[AC_MSG_ERROR(Can't find libelf. Please install the libelf development package)])
+
+         AC_CHECK_HEADER([gelf.h], [],
+			[AC_MSG_FAILURE([Can't find gelf.h. Please install the libelf development package])])
+         ])
+
+IF_ASP([elf_appraise],
 	[AC_CHECK_LIB([elf],[elf_version], [],
 			[AC_MSG_ERROR(Can't find libelf. Please install the libelf development package)])
 
@@ -390,7 +401,8 @@ DEFAULT_APB([userspace_appraiser])
 DEFAULT_APB([layered_appraiser])
 EXTRA_APB([quiot_tlm])
 EXTRA_APB([quiot_tlm_appraiser])
-
+DEFAULT_APB([deleg_meas_skeleton])
+DEFAULT_APB([deleg_meas_appraise_skeleton])
 
 IF_APB([passport_ret],
       [PKG_CHECK_MODULES(LIBMONGOC, libmongoc-1.0 >= 1.0)

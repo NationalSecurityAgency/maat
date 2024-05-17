@@ -80,6 +80,7 @@ void setup(void)
 void teardown(void)
 {
     unload_all_asps(g_asps);
+    libmaat_exit();
 }
 
 static int process_request(const char *req, size_t len)
@@ -184,7 +185,7 @@ START_TEST(test_sendexecutetcp)
     asp_argv[8] = AKCTX;
     asp_argv[9] = strdup("1");
 #else
-    asp_argv[7] = ""; 
+    asp_argv[7] = "";
     asp_argv[8] = "";
     asp_argv[9] = strdup("0");
 #endif

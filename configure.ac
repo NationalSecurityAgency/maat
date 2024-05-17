@@ -15,7 +15,7 @@
 #
 #
 
-AC_INIT([maat], [1.6])
+AC_INIT([maat], [1.7])
 AC_CONFIG_AUX_DIR([build-aux])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AM_INIT_AUTOMAKE([foreign -Wall tar-pax subdir-objects])

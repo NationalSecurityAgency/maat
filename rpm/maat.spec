@@ -15,7 +15,7 @@
 #
 
 Name:           maat
-Version:        1.6
+Version:        1.7
 Release:        1%{?dist}
 Summary:        Maat Measurement & Attestation Framework
 Group:          Administration/Monitoring
@@ -312,6 +312,15 @@ setsebool -P httpd_can_network_connect=off
 %{_datadir}/selinux/targeted/maat.pp
 
 %changelog
+* Fri May 17 2024 Maat Developers <apl-maat-developers@jhuapl.edu> 1.7-1
+- Addition of APBs, ASPs, and supporting policy files to represent a basic integration of existing measurement tools into Maat
+- Official support for Debian 11 and Ubuntu 23.10
+- Added new ELF file attribute appraisal ASP
+- Resolved RHEL 9 package build errors
+- Resolved SELinux policy issues
+- Increased verbosity of unit tests
+- Added more content to the layered attestation use case documentation
+
 * Thu Mar 21 2024 Maat Developers <apl-maat-developers@jhuapl.edu> 1.6-1
 - Introduction of full OpenSSL v3 support within Maat
 - Resolved system information ASP information collection error on some platforms

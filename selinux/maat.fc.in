@@ -72,6 +72,7 @@
 @aspdir@/proc_namespaces_asp            -- gen_context(system_u:object_r:proc_namespaces_asp_exe_t)
 @aspdir@/procopenfileasp		-- gen_context(system_u:object_r:proc_open_file_asp_exe_t)
 @aspdir@/elf_reader			-- gen_context(system_u:object_r:readelf_asp_exe_t)
+@aspdir@/elf_appraise			-- gen_context(system_u:object_r:elf_appraise_asp_exe_t)
 @aspdir@/dummy_appraisal		-- gen_context(system_u:object_r:dummy_appraisal_exe_t)
 @aspdir@/blacklist			-- gen_context(system_u:object_r:blacklist_asp_exe_t)
 @aspdir@/dpkg_details_asp		-- gen_context(system_u:object_r:dpkg_details_asp_exe_t)

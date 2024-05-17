@@ -146,10 +146,10 @@ static int execute_sign_send_pipeline(measurement_graph *graph,
     } else {
 
         char *sign_send_asp_argv[10] = {graph_path, peerchan_str,
-                                       certfile, keyfile, keypass,
-                                       tpmpass, akctx, sign_tpm_str,
-                                       workdir, partner_cert
-                                      };
+                                        certfile, keyfile, keypass,
+                                        tpmpass, akctx, sign_tpm_str,
+                                        workdir, partner_cert
+                                       };
         ret_val = run_asp(sign_send_asp, -1, -1, false, 10,
                           sign_send_asp_argv, -1);
 
@@ -253,7 +253,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
 
     end = time(NULL);
 
-    dlog(2, "Total time: %ld seconds\n", end-start);
+    dlog(6, "Total time: %ld seconds\n", end-start);
 #ifdef DUMP_MEMORY_USAGE
     g_char *memstat = g_strdup_printf("/bin/cat /proc/%d/status", getpid());
     (void)system(memstat);

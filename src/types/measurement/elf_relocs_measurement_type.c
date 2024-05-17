@@ -119,7 +119,7 @@ error:
     return ret_val;
 }
 
-int unserialize_elf_relocs_data(char *serialized, size_t serialized_sz,
+int unserialize_elf_relocs_data(char *serialized, size_t serialized_sz UNUSED,
                                 measurement_data **d)
 {
     measurement_data *data = NULL;

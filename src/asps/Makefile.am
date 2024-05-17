@@ -89,6 +89,11 @@ asp_PROGRAMS       += elf_reader
 elf_reader_SOURCES  = elf_reader.c
 endif
 
+if BUILD_elf_appraise_ASP
+asp_PROGRAMS       += elf_appraise
+elf_appraise_SOURCES  = elf_appraise.c elf_appraise.h
+endif
+
 if BUILD_procenv_ASP
 suid_asp_PROGRAMS += procenv
 if ENABLE_TESTS
@@ -296,6 +301,7 @@ asp_PROGRAMS    += whitelist
 aspinfo_DATA    += datafiles/modules.whitelist \
                    datafiles/packages.whitelist \
                    datafiles/process.whitelist \
+                   datafiles/binary.whitelist \
                    datafiles/distribution.whitelist
 whitelist_SOURCES = whitelist.c
 endif

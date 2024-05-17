@@ -716,6 +716,8 @@ state) should be installed with appropriate ownership, and their SUID or SGID bi
 +------------+------+-------+-----------------------------------------------------------+---------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:dummy_appraisal_exe_t:s0                 |dummy_appraisal                        |
 +------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:elf_appraise_asp_exe_t:s0                |elf_appraise                           |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:readelf_asp_exe_t:s0                     |elf_reader                             |
 +------------+------+-------+-----------------------------------------------------------+---------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:encrypt_asp_exe_t:s0                     |encrypt_asp                            |
@@ -995,6 +997,8 @@ directory and its contents world readable (chmod 0755 for the directory, chmod 0
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |UNIX Perms  |User  |Group  |SELinux Label                                        |Filename                                |
 +============+======+=======+=====================================================+========================================+
+|-rw-r--r--. |root  |root   |system_u:object_r:whitelist_t:s0                     |binary.whitelist                        |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |blacklist.xml                           |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |compress_asp.xml                        |
@@ -1014,6 +1018,8 @@ directory and its contents world readable (chmod 0755 for the directory, chmod 0
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |dpkg_inv_asp.xml                        |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |dummy_appraisal.xml                     |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |elf_appraise.xml                        |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |elf_reader.xml                          |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
@@ -1136,6 +1142,8 @@ directory and its contents world readable (chmod 0755 for the directory, chmod 0
 |-rw-r--r--. |root  |root   |system_u:object_r:measurement_spec_t:s0              |proc_open_files_mspec.xml               |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:measurement_spec_t:s0              |test_measurement_mspec.xml              |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:measurement_spec_t:s0              |userspace_elf_mspec.xml                 |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:measurement_spec_t:s0              |userspace_hashfiles_mspec.xml           |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+

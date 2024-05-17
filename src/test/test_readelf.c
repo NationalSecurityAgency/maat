@@ -23,6 +23,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <check.h>
+#include <config.h>
 
 #include <graph/graph-core.h>
 #include <common/asp_info.h>
@@ -48,6 +49,8 @@ GList *asps = NULL;
 measurement_graph *graph;
 node_id_t file_node;
 struct asp *elfreaderasp;
+measurement_data *data = NULL;
+elfheader_meas_data *elfheader_data = NULL;
 
 void setup(void)
 {
@@ -76,6 +79,19 @@ void teardown(void)
     libmaat_exit();
 }
 
+/**
+ * @brief This function verifies that the node contains the expected data.
+ *
+ * @return 0 on success, otherwise an error value.
+*/
+int verify_node_data()
+{
+    int ret = measurement_node_get_rawdata(graph, file_node,
+                                           &elfheader_measurement_type, &data);
+    elfheader_data = container_of(data, elfheader_meas_data, d);
+
+    return ret;
+}
 
 START_TEST(test_readelf)
 {
@@ -87,10 +103,20 @@ START_TEST(test_readelf)
     dlog(6, "Starting Unit Test\n");
     fail_unless(elfreaderasp != NULL, "ASP NOT FOUND");
 
+    // Exclude ASP security context capabilities
+    elfreaderasp->desired_sec_ctxt.cap_set = NULL;
+
     int rc = run_asp(elfreaderasp, -1, -1, false, 2, asp_argv, -1);
     fail_unless(rc == 0, "run_asp read_elf failed with code %d", rc);
 
-    // TODO verify measurement is in graph
+    int node_data = verify_node_data();
+    fail_unless(node_data == 0, "Node data extract failed with error code %d", node_data);
+
+    fail_unless(data->type->magic == LIBELF_TYPE_MAGIC, "Node data type "MAGIC_FMT" is unexpected", data->type->magic);
+
+    int found_file = strcmp(elfheader_data->filename, "/bin/ls");
+    fail_unless(found_file == 0, "Node data verify failed with error code %d", found_file);
+
     free(graph_path);
 }
 END_TEST

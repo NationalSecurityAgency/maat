@@ -271,6 +271,7 @@ DEFAULT_ASP(hashfileservice)
 DEFAULT_ASP(md5fileservice)
 DEFAULT_ASP(procfds)
 DEFAULT_ASP(elf_reader)
+DEFAULT_ASP(elf_appraise)
 DEFAULT_ASP(netstatunix)
 DEFAULT_ASP(netstattcp)
 DEFAULT_ASP(netstatudp)
@@ -326,6 +327,14 @@ DEFAULT_ASP(deleg_meas_appraise_skeleton)
 # End asp enable macros.
 
 IF_ASP([elf_reader],
+	[AC_CHECK_LIB([elf],[elf_version], [],
+			[AC_MSG_ERROR(Can't find libelf. Please install the libelf development package)])
+
+         AC_CHECK_HEADER([gelf.h], [],
+			[AC_MSG_FAILURE([Can't find gelf.h. Please install the libelf development package])])
+         ])
+
+IF_ASP([elf_appraise],
 	[AC_CHECK_LIB([elf],[elf_version], [],
 			[AC_MSG_ERROR(Can't find libelf. Please install the libelf development package)])
 

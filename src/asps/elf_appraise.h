@@ -15,15 +15,16 @@
  *
  */
 
-#include <elf_section_target_type.h>
+/*! \file
+ * ASP to appraise ELF data measurements
+ */
 
-static void *elf_section_read_instance(target_type *type UNUSED, address *a UNUSED, size_t *size UNUSED)
-{
-    return NULL;
-}
+#include <include/maat-envvars.h>
 
-struct target_type elf_section_target_type = {
-    .magic         = ELF_SECTION_TARGET_TYPE_MAGIC,
-    .name          = ELF_SECTION_TARGET_TYPE_NAME,
-    .read_instance = elf_section_read_instance
-};
+#define ASP_NAME        "elf_appraise"
+
+#define BIN_WHITELIST_FN "binary.whitelist"
+
+#ifndef DEFAULT_ASP_DIR
+#define DEFAULT_ASP_DIR "."
+#endif

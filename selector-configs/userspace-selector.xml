@@ -34,6 +34,7 @@
               <condition name="userspace-hashfile"   apb_phrase="((USM hashfile file) -> SIG):file=/bin/ls"/>
 	      <condition name="userspace-mtab"       apb_phrase="((USM mtab) -> SIG)"/>
 	      <condition name="got_measure"          apb_phrase="((USM got) -> SIG)"/>
+          <condition name="elf_header"          apb_phrase="((USM elf) -> SIG)"/>
 	</action>
     </rule>
 
@@ -48,6 +49,7 @@
               <condition name="userspace-hashfile"   apb_phrase="((USM hashfile file) -> SIG):file=/bin/ls"/>
 	      <condition name="userspace-mtab"       apb_phrase="((USM mtab) -> SIG)"/>
 	      <condition name="got_measure"          apb_phrase="((USM got) -> SIG)"/>
+          <condition name="elf_header"          apb_phrase="((USM elf) -> SIG)"/>
     	</action>
     </rule>
 
@@ -103,6 +105,13 @@
         <action selector_action="accept">
               <condition name="userspace-hashfile"   apb_phrase="((USM hashfile file) -> SIG):file=/bin/ls"/>
         </action>
+    </rule>
+    <!--resource == elf_header, choose elf mspec-->
+    <rule role="appraiser" phase="execute">
+	<match_condition attr="resource" operator="is" value="elf_header"/>
+        <action selector_action="accept">
+	      <condition name="userspace-elf"  apb_phrase="((USM elf) -> SIG)"/>
+	</action>
     </rule>
 
 

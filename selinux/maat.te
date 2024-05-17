@@ -486,6 +486,15 @@ define_asp(readelf_asp_t, readelf_asp_exe_t)
 read_files_pattern(readelf_asp_t, bin_t, bin_t)
 read_files_pattern(readelf_asp_t, lib_t, lib_t)
 
+# Appraise ELF ASP
+type elf_appraise_asp_t;
+type elf_appraise_asp_exe_t;
+define_asp(elf_appraise_asp_t, elf_appraise_asp_exe_t)
+
+allow elf_appraise_asp_t whitelist_t:file {read_file_perms};
+allow elf_appraise_asp_t cert_t:dir {search};
+allow elf_appraise_asp_t asp_info_dir_t:dir {search};
+
 # Process measurement ASP
 type process_measurement_apb_t;
 type process_measurement_apb_exe_t;
@@ -939,6 +948,7 @@ allow_apb_asp(userspace_apb_t, send_execute_asp_exe_t, send_execute_asp_t)
 allow_apb_asp(userspace_apb_t, proc_fds_asp_exe_t, proc_fds_asp_t)
 allow_apb_asp(userspace_apb_t, proc_mem_asp_exe_t, proc_mem_asp_t)
 allow_apb_asp(userspace_apb_t, proc_namespaces_asp_exe_t, proc_namespaces_asp_t)
+allow_apb_asp(userspace_apb_t, readelf_asp_exe_t, readelf_asp_t)
 
 # Hashdir APB
 type hashdir_apb_t;
@@ -1116,6 +1126,7 @@ allow_apb_asp(userspace_appraiser_apb_t, decrypt_asp_exe_t, decrypt_asp_t)
 allow_apb_asp(userspace_appraiser_apb_t, verify_measurement_contract_asp_exe_t, verify_measurement_contract_asp_t)
 allow_apb_asp(userspace_appraiser_apb_t, receive_asp_exe_t, receive_asp_t)
 allow_apb_asp(userspace_appraiser_apb_t, got_appraise_asp_exe_t, got_appraise_asp_t)
+allow_apb_asp(userspace_appraiser_apb_t, elf_appraise_asp_exe_t, elf_appraise_asp_t)
 
 # this is needed because the userspace appraiser launches 'subordinate' apbs. 
 # if we want to continue to allow this model of execution, should replace

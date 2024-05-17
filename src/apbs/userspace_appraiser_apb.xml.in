@@ -32,11 +32,12 @@
 		<asp uuid="70e8cb56-bcd9-11ec-9d64-0242ac120002">decompress_asp</asp>
 		<asp uuid="96158eee-bcf4-11ec-9d64-0242ac120002">verify_measurement_contract_asp</asp>
         <asp uuid="3cc9f1a6-50c2-4612-b24b-8430ad1f1a83">got_appraiser</asp>
+		<asp uuid="C75ABC0E-39E9-442A-93AB-54CE8D361213">elf_appraise</asp>
 	</asps>
     <copland>
         <phrase copland="(USM app)">userspace measurement appraiser</phrase>
         <spec uuid="55042348-e8d5-4443-abf7-3d67317c7dab">userspace  measurement specification</spec>
-    </copland>
+    </copland>	
 	<security_context>
 	  <selinux><type>userspace_appraiser_apb_t</type></selinux>
 	</security_context>

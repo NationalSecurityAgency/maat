@@ -626,6 +626,9 @@ struct asp *select_appraisal_asp(node_id_t node UNUSED,
     if (measurement_type == BLOB_MEASUREMENT_TYPE_MAGIC) {
         return find_asp(apb_asps, "got_appraise");
     }
+    if (measurement_type == LIBELF_TYPE_MAGIC) {
+        return find_asp(apb_asps, "elf_appraise");
+    }
     return NULL;
 }
 
@@ -671,7 +674,7 @@ void gather_report_data(measurement_graph *g, enum report_levels report_level,
 
         if((measurement_node_get_rawdata(g, node, &report_measurement_type,
                                          &data)) != 0) {
-            dlog(3, "Failed to read report data from node?");
+            dlog(3, "Failed to read report data from node?\n");
             continue;
         }
         rmd = container_of(data, report_data, d);
@@ -708,7 +711,7 @@ void gather_report_data(measurement_graph *g, enum report_levels report_level,
         char *tmpstring = g_strdup_printf("[%d] %s", rmd->loglevel,
                                           rmd->text_data);
         if (tmpstring == NULL) {
-            dlog(0, "Error allocating temp string buffer, log message was %s",
+            dlog(0, "Error allocating temp string buffer, log message was %s\n",
                  rmd->text_data);
             goto tmpstring_alloc_failed;
         }
@@ -844,7 +847,7 @@ int run_apb_with_blob(struct apb *apb, uuid_t spec_uuid, struct scenario *scen, 
         goto error_read;
     }
 
-    dlog(4, "result from subordinate APB (%s): %s\n", apb->name, result);
+    dlog(4, "Result from subordinate APB (%s): %s\n", apb->name, result);
     *out = result;
     *sz_out = resultsz;
 
@@ -1038,14 +1041,15 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
         char type_str[MAGIC_STR_LEN+1];
 
         sprintf(type_str, MAGIC_FMT, data_type);
+        measurement_type *meas_type= find_measurement_type(data_type);
         int ret = 0;
 
         // Blob measurement types that are embedded in a measurement request
         // represent an embedded measurement subgraph that should be handled by
         // a subordinate APB
         if(data_type == BLOB_MEASUREMENT_TYPE_MAGIC &&
-            (addr->space == &measurement_request_address_space ||
-             addr->space == &dynamic_measurement_request_address_space)) {
+                (addr->space == &measurement_request_address_space ||
+                 addr->space == &dynamic_measurement_request_address_space)) {
 
             struct apb *sub_apb = NULL;
             uuid_t mspec;
@@ -1060,12 +1064,12 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
                 dlog(4, "Result from subordinate APB %d\n", ret);
             }
 
-        // Everything else goes to some ASP for appraisal
+            // Everything else goes to some ASP for appraisal
         } else {
             struct asp *appraiser_asp = NULL;
             appraiser_asp = select_appraisal_asp(node, data_type, apb_asps);
             if(!appraiser_asp) {
-                dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", type_str);
+                dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", meas_type->name);
                 ret = 0;
                 //ret = -1; // not a failure at this point - don't have sub ASPs for all measurements yet
             } else {
@@ -1102,7 +1106,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
         if (data_type == PKG_DETAILS_TYPE_MAGIC) {
             whitelist_appraiser_asp = find_asp(apb_asps, "whitelist");
             if(!whitelist_appraiser_asp) {
-                dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", type_str);
+                dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", meas_type->name);
                 ret = 0;
                 //ret = -1; // not a failure at this point - don't have sub ASPs for all yet
             } else {

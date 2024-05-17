@@ -139,6 +139,12 @@ test_readelf_SOURCES = test_readelf.c
 test_readelf_LDADD = $(LDADD_APB)
 endif
 
+if BUILD_elf_appraise_ASP
+check_PROGRAMS += test_appraise_elf
+test_appraise_elf_SOURCES = test_appraise_elf.c
+test_appraise_elf_LDADD = $(LDADD_APB)
+endif
+
 if BUILD_procroot_ASP
 check_PROGRAMS += test_procroot
 test_procroot_SOURCES = test_procroot.c

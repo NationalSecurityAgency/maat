@@ -38,7 +38,7 @@ of passports on the system. These APBs and ASPs are not installed in Maat by
 default and require additional dependencies. Install the following packages on
 your system and start the Mongo service:
 
-For Ubuntu Machines:
+For Debian or Ubuntu Machines:
 
     .. code-block:: bash
 

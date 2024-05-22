@@ -17,7 +17,7 @@
 
 #include <elf_section_target_type.h>
 
-static void *elf_section_read_instance(target_type *type, address *a, size_t *size)
+static void *elf_section_read_instance(target_type *type UNUSED, address *a UNUSED, size_t *size UNUSED)
 {
     return NULL;
 }

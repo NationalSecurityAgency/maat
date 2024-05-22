@@ -38,7 +38,11 @@
 #ifdef ENABLE_SELINUX
 static int parse_selinux_context(xmlNode *selinux_node, context_t *ctxt)
 {
-    security_context_t exec_ctxt;
+    int rc                        = 0;
+    security_context_t exec_ctxt  = NULL;
+    char *content                 = NULL;
+    char *unstripped              = NULL;
+
     *ctxt = NULL;
 
     if(getexeccon(&exec_ctxt) != 0) {
@@ -57,17 +61,24 @@ static int parse_selinux_context(xmlNode *selinux_node, context_t *ctxt)
         goto error;
     }
 
+    if (selinux_node->children == NULL) {
+        dlog(1, "No children in the SELinux node\n");
+        rc = -1;
+        goto error;
+    }
+
     xmlNode *child_node;
     for(child_node = selinux_node->children; child_node; child_node = child_node->next) {
-        char *unstripped = xmlNodeGetContentASCII(child_node);
-        char *content;
-        int rc = 0;
+        rc = 0;
+        unstripped = xmlNodeGetContentASCII(child_node);
+
         if(unstripped == NULL) {
             goto error;
         }
 
         rc = strip_whitespace(unstripped, &content);
         free(unstripped);
+        unstripped = NULL;
         if (rc) {
             goto error;
         }
@@ -80,8 +91,12 @@ static int parse_selinux_context(xmlNode *selinux_node, context_t *ctxt)
             rc = context_type_set(*ctxt, content);
         } else if(xmlStrcasecmp(child_node->name, (const xmlChar*)"range") == 0) {
             rc = context_range_set(*ctxt, content);
+        } else {
+            dlog(2, "When parsing SELinux node, encountered invalid child node \"%s\", skipping...\n",
+                 (char *)child_node->name);
         }
         free(content);
+        content = NULL;
         /* ignore extra fields */
 
         if(rc != 0) {

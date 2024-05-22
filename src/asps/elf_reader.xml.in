@@ -87,6 +87,7 @@
 	</measurers>
 	<security_context>
 	  <selinux><type>readelf_asp_t</type></selinux>
+	  <capabilities>cap_dac_override+ep</capabilities>
 	  <user>${MAAT_USER}</user>
 	  <group>${MAAT_GROUP}</group>
 	</security_context>

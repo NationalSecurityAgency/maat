@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<asp>
+  <name>deleg_meas_appraise_skeleton_asp</name>
+  <uuid>ded547f8-a0a8-42f1-b5dd-7b8093420932</uuid>
+  <description> Demonstrate the format of an ASP that runs an external measurement tool and places the output
+                into a node with the blob measurement type. This pattern is useful for quick integrations of
+                external measurement tools into Maat. THIS ASP WILL NEED TO BE MODIFIED TO INTEGRATE APPRAISERS
+		FOR ANY MEASUREMENT IN THE DELEGATED MEASUREMENT ASP.
+  </description>
+  <aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/deleg_meas_appraise_skeleton_asp</aspfile>
+  <measurers>
+    <satisfier id="0">
+      <value name="type">GRAPH</value>
+      <capability target_type="anon_target_type" target_magic="0xA0A0A0A0" target_desc = "An instance of the anonymous target type, which describes a generic measurement"
+                  address_type="unit_address_space" address_magic="0x50EC50EC" address_desc = "An instance of the unit address space, which refers to a singular measurement"
+                  measurement_type="blob_measurement_type" measurement_magic="0xB10BB10B" measurement_desc = "An instnce of the blob measuremen type, which describes a buffer"/>
+    </satisfier>
+  </measurers>
+  <security_context>
+    <selinux>
+      <type>deleg_meas_appraise_skeleton_asp_t</type>
+    </selinux>
+    <user>${MAAT_USER}</user>
+    <group>${MAAT_GROUP}</group>
+  </security_context>
+</asp>

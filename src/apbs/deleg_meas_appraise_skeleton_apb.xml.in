@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2023 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+-->
+<apb>
+  <name>deleg_meas_appraise_skeleton_apb</name>
+  <desc>Appraiser APB for the delegated measurement ASP</desc>
+  <uuid>52cd2980-7cf4-4bd9-a15d-d3f6e227094c</uuid>
+  <file hash="XXXXX">${APB_INSTALL_DIR}/deleg_meas_appraise_skeleton_apb</file>
+  <input_type>????</input_type>
+  <output_type>????</output_type>
+  <asps ordered="False">
+    <asp uuid="ded547f8-a0a8-42f1-b5dd-7b8093420932" initial="True">deleg_meas_appraise_skeleton_asp</asp>
+  </asps>
+  <copland>
+    <phrase copland="(DELEG app)">Delegated appraiser</phrase>
+    <spec uuid="bd4ee748-578c-4fa1-86ab-c80c13f036cf">Delegated measurement spec</spec>
+  </copland>
+  <security_context>
+    <selinux>
+      <type>deleg_meas_appraise_skeleton_apb_t</type>
+    </selinux>
+    <user>${MAAT_USER}</user>
+    <group>${MAAT_GROUP}</group>
+  </security_context>
+</apb>

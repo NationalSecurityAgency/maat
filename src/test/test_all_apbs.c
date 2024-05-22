@@ -41,7 +41,7 @@ GList *meas_specs = NULL;
 
 void setup(void)
 {
-    libmaat_init(0, 2);
+    libmaat_init(0, 4);
 
     setenv(ENV_MAAT_APB_DIR, APB_PATH, 1);
     setenv(ENV_MAAT_ASP_DIR, ASP_PATH, 1);
@@ -70,6 +70,7 @@ void teardown(void)
     unload_all_asps(asps);
     g_list_free_full(apbs, (GDestroyNotify)unload_apb);
     g_list_free_full(meas_specs, (GDestroyNotify)free_measurement_specification_info);
+    libmaat_exit();
     return;
 }
 
@@ -101,9 +102,9 @@ START_TEST(test_all_apbs)
     scen.size    = strlen(scen.contract);
     scen.workdir = strdup(SRCDIR"/workdirs/workdir-test-all-apbs");
 #ifdef USE_TPM
-     scen.tpmpass = strdup("maatpass");
-     scen.sign_tpm = 1;
-     scen.akctx = strdup(SRCDIR"/credentials/ak.ctx");
+    scen.tpmpass = strdup("maatpass");
+    scen.sign_tpm = 1;
+    scen.akctx = strdup(SRCDIR"/credentials/ak.ctx");
 #endif
     dlog(1,"Calling all APBs:\n");
     for (iter = apbs; iter && iter->data; iter = g_list_next(iter)) {

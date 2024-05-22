@@ -89,9 +89,22 @@ asp_PROGRAMS       += elf_reader
 elf_reader_SOURCES  = elf_reader.c
 endif
 
+if BUILD_elf_appraise_ASP
+asp_PROGRAMS       += elf_appraise
+elf_appraise_SOURCES  = elf_appraise.c elf_appraise.h
+endif
+
 if BUILD_procenv_ASP
 suid_asp_PROGRAMS += procenv
+if ENABLE_TESTS
+noinst_LTLIBRARIES += libprocenv_helper.la
+libprocenv_helper_la_SOURCES = procenv.c
 procenv_SOURCES = procenv.c
+procenv_LDADD   = $(LIBMAAT_ASP_LIBS) libprocenv_helper.la
+else
+procenv_SOURCES = procenv.c
+endif
+procenv_CFLAGS = $(AM_CFLAGS)
 endif
 
 if BUILD_system_ASP
@@ -267,6 +280,15 @@ endif
 
 if BUILD_procroot_ASP
 suid_asp_PROGRAMS    += procrootasp
+if ENABLE_TESTS
+noinst_LTLIBRARIES                += libprocrootasp_helper.la
+libprocrootasp_helper_la_SOURCES  = procrootasp.c
+procrootasp_SOURCES               = procrootasp.c
+procrootasp_LDADD                 = $(LIBMAAT_ASP_LIBS) libprocrootasp_helper.la
+else
+procrootasp_SOURCES = procrootasp.c
+endif
+procrootasp_CFLAGS  = $(AM_CFLAGS)
 endif
 
 if BUILD_passport_maker_ASP
@@ -279,6 +301,7 @@ asp_PROGRAMS    += whitelist
 aspinfo_DATA    += datafiles/modules.whitelist \
                    datafiles/packages.whitelist \
                    datafiles/process.whitelist \
+                   datafiles/binary.whitelist \
                    datafiles/distribution.whitelist
 whitelist_SOURCES = whitelist.c
 endif
@@ -310,6 +333,7 @@ libgotmeasure_helper_la_SOURCES = userspace_measurement/memory.c userspace_measu
                       userspace_measurement/got_measurer.c userspace_measurement/got_measurer.h \
                       got_measure.c got_measure.h
 libgotmeasure_helper_la_CFLAGS = $(AM_CFLAGS)
+libgotmeasure_helper_la_LIBADD = -lm
 endif
 
 got_measure_SOURCES = userspace_measurement/memory.c userspace_measurement/memory.h \
@@ -355,6 +379,18 @@ if BUILD_send_request_ASP
 asp_PROGRAMS += send_request_asp
 send_request_asp_SOURCES = send_request_asp.c
 send_request_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS)
+endif
+
+if BUILD_deleg_meas_skeleton_ASP
+asp_PROGRAMS += deleg_meas_skeleton_asp
+deleg_meas_skeleton_asp_SOURCES = deleg_meas_skeleton_asp.c
+deleg_meas_skeleton_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS) -lrt
+endif
+
+if BUILD_deleg_meas_appraise_skeleton_ASP
+asp_PROGRAMS += deleg_meas_appraise_skeleton_asp
+deleg_meas_appraise_skeleton_asp_SOURCES = deleg_meas_appraise_skeleton_asp.c
+deleg_meas_appraise_skeleton_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS) -lrt
 endif
 
 AM_CPPFLAGS = -O2 -DDEFAULT_ASP_DIR="\"$(ASP_INFO_DIR)\"" \

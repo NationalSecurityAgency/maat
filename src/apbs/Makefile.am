@@ -191,6 +191,18 @@ no_op_apb_SOURCES = no_op_apb.c
 no_op_apb_LDADD   = $(AM_LIBADD) $(LIBMAAT_CLIENT_LIBS) $(LIBMAAT_AM_LIBS)
 endif
 
+if BUILD_deleg_meas_skeleton_APB
+apb_PROGRAMS			+= deleg_meas_skeleton_apb
+deleg_meas_skeleton_apb_SOURCES = deleg_meas_skeleton_apb.c $(APB_COMMON_SOURCES)
+deleg_meas_skeleton_apb_LDADD   = $(AM_LIBADD)
+endif
+
+if BUILD_deleg_meas_appraise_skeleton_APB
+apb_PROGRAMS			+= deleg_meas_appraise_skeleton_apb
+deleg_meas_appraise_skeleton_apb_SOURCES = deleg_meas_appraise_skeleton_apb.c $(APB_COMMON_SOURCES)
+deleg_meas_appraise_skeleton_apb_LDADD   = $(AM_LIBADD)
+endif
+
 apbinfo_DATA+=$(patsubst %, %.xml, $(apb_PROGRAMS) $(suid_apb_PROGRAMS))
 check_DATA=$(patsubst %.xml, test-info/%.xml, $(apbinfo_DATA))
 

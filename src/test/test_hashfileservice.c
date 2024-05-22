@@ -52,7 +52,7 @@ void setup(void)
 {
     measurement_variable *binbash_var;
 
-    libmaat_init(0, 2);
+    libmaat_init(0, 4);
 
     asps = load_all_asps_info(ASP_PATH);
     register_address_space(&simple_file_address_space);
@@ -73,6 +73,7 @@ void teardown(void)
 {
     destroy_measurement_graph(graph);
     unload_all_asps(asps);
+    libmaat_exit();
 }
 
 START_TEST(test_hash_bin_bash)

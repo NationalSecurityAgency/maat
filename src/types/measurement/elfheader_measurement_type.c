@@ -318,7 +318,7 @@ err_no_filename:
     return -1;
 }
 
-static int elfheader_type_unserialize_data(char *sd, size_t sd_size, measurement_data **d)
+static int elfheader_type_unserialize_data(char *sd, size_t sd_size UNUSED, measurement_data **d)
 {
     if(sd == NULL || d == NULL) {
         return -EINVAL;
@@ -605,14 +605,92 @@ static const char *str_of_phdr_type(Elf64_Word p_type)
     return "UNKNOWN";
 }
 
+static const char *str_of_shdr_type(Elf64_Word sh_type)
+{
+    switch(sh_type) {
+    case SHT_NULL:
+        return "NULL";
+    case SHT_PROGBITS:
+        return "PROGBITS";
+    case SHT_SYMTAB:
+        return "SYMTAB";
+    case SHT_STRTAB:
+        return "STRTAB";
+    case SHT_RELA:
+        return "RELA";
+    case SHT_HASH:
+        return "HASH";
+    case SHT_DYNAMIC:
+        return "DYNAMIC";
+    case SHT_NOTE:
+        return "NOTE";
+    case SHT_NOBITS:
+        return "NOBITS";
+    case SHT_REL:
+        return "REL";
+    case SHT_SHLIB:
+        return "SHLIB";
+    case SHT_DYNSYM:
+        return "DYNSYM";
+    case SHT_INIT_ARRAY:
+        return "INIT_ARRAY";
+    case SHT_FINI_ARRAY:
+        return "FINI_ARRAY";
+    case SHT_PREINIT_ARRAY:
+        return "PREINIT_ARRAY";
+    case SHT_GROUP:
+        return "GROUP";
+    case SHT_SYMTAB_SHNDX:
+        return "SYMTAB_SHNDX";
+    case SHT_NUM:
+        return "NUM";
+    case SHT_LOOS:
+        return "LOOS";
+    case SHT_GNU_ATTRIBUTES:
+        return "GNU_ATTRIBUTES";
+    case SHT_GNU_HASH:
+        return "GNU_HASH";
+    case SHT_GNU_LIBLIST:
+        return "GNU_LIBLIST";
+    case SHT_CHECKSUM:
+        return "CHECKSUM";
+    case SHT_LOSUNW:
+        return "LOSUNW";
+    //case SHT_SUNW_move: return "SUNW_move";
+    case SHT_SUNW_COMDAT:
+        return "SUNW_COMDAT";
+    case SHT_SUNW_syminfo:
+        return "SUNW_syminfo";
+    case SHT_GNU_verdef:
+        return "GNU_verdef";
+    case SHT_GNU_verneed:
+        return "GNU_verneed";
+    case SHT_GNU_versym:
+        return "GNU_versym";
+    //case SHT_HISUNW: return "HISUNW";
+    //case SHT_HIOS: return "HIOS";
+    case SHT_LOPROC:
+        return "LOPROC";
+    case SHT_HIPROC:
+        return "HIPROC";
+    case SHT_LOUSER:
+        return "LOUSER";
+    case SHT_HIUSER:
+        return "HIUSER";
+    }
+    return "UNKNOWN";
+}
+
 static int human_readable(measurement_data *d, char **out, size_t *outsize)
 {
+    char *buf = NULL;
+
     if(d == NULL || out == NULL || outsize == NULL) {
         return -EINVAL;
     }
 
     elfheader_meas_data *ed = container_of(d, elfheader_meas_data, d);
-    char *buf = g_strdup_printf("file: %s\n", ed->filename);
+    buf = g_strdup_printf("file: %s\n", ed->filename);
     if(buf == NULL) {
         goto error;
     }
@@ -661,14 +739,135 @@ static int human_readable(measurement_data *d, char **out, size_t *outsize)
     for(iter = g_list_first(ed->section_headers); iter != NULL; iter = g_list_next(iter)) {
         struct elf_section_header *shdr = (struct elf_section_header *)iter->data;
         char *sbuf = g_strdup_printf("shdr[%d]: {\n"
-                                     "\tname: %s\n"
-                                     "\toffset: %0"PRIx64"\n"
-                                     "\tsize:   %0"PRIx64"\n"
+                                     "\tname:      %s\n"
+                                     "\toffset:    %016"PRIx64"\n"
+                                     "\tsize:      %016"PRIx64"\n"
                                      "}\n",
                                      hnum++,
                                      shdr->section_name,
                                      shdr->section_hdr.sh_offset,
                                      shdr->section_hdr.sh_size);
+        if(sbuf == NULL) {
+            goto error;
+        }
+
+        size_t len = strlen(sbuf);
+        char *tmp = g_realloc(buf, bufsz + len);
+        if(tmp == NULL) {
+            g_free(sbuf);
+            goto error;
+        }
+        buf = tmp;
+        strcat(buf, sbuf);
+        bufsz += len;
+        g_free(sbuf);
+    }
+
+    *out = buf;
+    *outsize = bufsz;
+    return 0;
+
+error:
+    g_free(buf);
+    return -1;
+}
+
+static int human_readable_extended(measurement_data *d, char **out, size_t *outsize)
+{
+    char *buf = NULL;
+
+    if(d == NULL || out == NULL || outsize == NULL) {
+        return -EINVAL;
+    }
+
+    elfheader_meas_data *ed = container_of(d, elfheader_meas_data, d);
+    buf = g_strdup_printf("file: %s\n", ed->filename);
+    if(buf == NULL) {
+        goto error;
+    }
+    size_t bufsz = strlen(buf)+1;
+
+    size_t i = 0;
+    for(i = 0; i < ed->nr_phdrs; i++) {
+        GElf_Phdr *phdr = &ed->program_headers[i];
+        char *pbuf = g_strdup_printf("phdr[%zu]: {\n"
+                                     "\ttype:   %s\n"
+                                     "\tflags:  %c%c%c [%0"PRIx64"]\n"
+                                     "\toffset: %016"PRIx64"\n"
+                                     "\tvaddr:  %016"PRIx64"\n"
+                                     "\tpaddr:  %016"PRIx64"\n"
+                                     "\tfilesz: %016"PRIx64"\n"
+                                     "\tmemsz:  %016"PRIx64"\n"
+                                     "\talign:  %016"PRIx64"\n"
+                                     "}\n",
+                                     i,
+                                     str_of_phdr_type(phdr->p_type),
+                                     phdr->p_flags & PF_R ? 'R' : '-',
+                                     phdr->p_flags & PF_W ? 'W' : '-',
+                                     phdr->p_flags & PF_X ? 'X' : '-',
+                                     (long unsigned)phdr->p_flags,
+                                     phdr->p_offset,
+                                     phdr->p_vaddr, phdr->p_paddr,
+                                     phdr->p_filesz, phdr->p_memsz,
+                                     phdr->p_align);
+        if(pbuf == NULL) {
+            goto error;
+        }
+        size_t len = strlen(pbuf);
+        char *tmp = g_realloc(buf, bufsz + len);
+        if(tmp == NULL) {
+            g_free(pbuf);
+            goto error;
+        }
+        buf = tmp;
+        strcat(buf, pbuf);
+        bufsz += len;
+        g_free(pbuf);
+    }
+
+    int hnum = 0;
+    GList *iter;
+    for(iter = g_list_first(ed->section_headers); iter != NULL; iter = g_list_next(iter)) {
+        struct elf_section_header *shdr = (struct elf_section_header *)iter->data;
+        char *sbuf = g_strdup_printf("shdr[%d]: {\n"
+                                     "\tname:      %s\n"
+                                     "\ttype:      %s\n"
+                                     "\tflags:     %c%c%c%c%c%c%c%c%c%c%c%c%c%c [%0"PRIx64"]\n"
+                                     "\taddress:   %016"PRIx64"\n"
+                                     "\toffset:    %016"PRIx64"\n"
+                                     "\tsize:      %016"PRIx64"\n"
+                                     "\tlink:      %u\n"
+                                     "\tinfo:      %u\n"
+                                     "\taddralign: %lu\n"
+                                     "\tentsize:   %016"PRIx64"\n"
+                                     "}\n",
+                                     hnum++,
+                                     shdr->section_name,
+                                     str_of_shdr_type(shdr->section_hdr.sh_type),
+                                     shdr->section_hdr.sh_flags & SHF_WRITE ? 'W' : '-',
+                                     shdr->section_hdr.sh_flags & SHF_ALLOC ? 'A' : '-',
+                                     shdr->section_hdr.sh_flags & SHF_EXECINSTR ? 'X' : '-',
+                                     shdr->section_hdr.sh_flags & SHF_MERGE ? 'M' : '-',
+                                     shdr->section_hdr.sh_flags & SHF_STRINGS ? 'S' : '-',
+                                     shdr->section_hdr.sh_flags & SHF_INFO_LINK ? 'I' : '-',
+                                     shdr->section_hdr.sh_flags & SHF_LINK_ORDER ? 'L' : '-',
+                                     shdr->section_hdr.sh_flags & SHF_OS_NONCONFORMING ? 'O' : '-',
+                                     shdr->section_hdr.sh_flags & SHF_GROUP ? 'G' : '-',
+                                     shdr->section_hdr.sh_flags & SHF_TLS ? 'T' : '-',
+                                     shdr->section_hdr.sh_flags & SHF_COMPRESSED ? 'C' : '-',
+                                     shdr->section_hdr.sh_flags & SHF_MASKOS ? 'K' : '-',
+                                     shdr->section_hdr.sh_flags & SHF_MASKPROC ? 'P' : '-',
+                                     //shdr->section_hdr.sh_flags & SHF_GNU_RETAIN ? 'R' : '-',
+                                     shdr->section_hdr.sh_flags & SHF_ORDERED ? 'D' : '-',
+                                     //shdr->section_hdr.sh_flags & SHF_EXCLUDE ? 'I' : '-',
+                                     (long unsigned)shdr->section_hdr.sh_flags,
+                                     shdr->section_hdr.sh_addr,
+                                     shdr->section_hdr.sh_offset,
+                                     shdr->section_hdr.sh_size,
+                                     shdr->section_hdr.sh_link,
+                                     shdr->section_hdr.sh_info,
+                                     shdr->section_hdr.sh_addralign,
+                                     shdr->section_hdr.sh_entsize);
         if(sbuf == NULL) {
             goto error;
         }
@@ -703,5 +902,6 @@ struct measurement_type elfheader_measurement_type = {
     .serialize_data	= elfheader_type_serialize_data,
     .unserialize_data	= elfheader_type_unserialize_data,
     .get_feature        = get_feature,
-    .human_readable     = human_readable
+    .human_readable     = human_readable,
+    .human_readable_extended     = human_readable_extended
 };

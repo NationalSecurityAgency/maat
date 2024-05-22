@@ -155,7 +155,7 @@ Demo 4: Scheduling Measurements via Message Queues
 
 Install these dependencies:
 
-Ubuntu:
+Debian/Ubuntu:
 
 .. code-block:: bash
 
@@ -209,7 +209,7 @@ edit `/etc/lighttpd/lighttpd.conf`:
 + set server.document-root = "/opt/maat/web"
 + add ".py" to the list of static-file.exclude-extensions
 
-### On Ubuntu:
+### On Debian/Ubuntu:
 
 edit `/etc/lighttpd/conf-available/10-cgi.conf`:
 

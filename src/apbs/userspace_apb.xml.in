@@ -40,6 +40,7 @@
 	  <asp uuid="726B1964-1145-4F73-A6BC-DF17BBDEFF8E">procmem</asp>
 	  <asp uuid="cd82c9f7-760d-4535-5197-74daadaa1f44">sign_send</asp>
 	  <asp uuid="1762695e-b3b9-466e-88d1-df1571e0a073">md5fileservice</asp>
+	  <asp uuid="3338EB5D-5C2E-4C0F-A8D2-E9D58DDD2D38">elf_reader</asp>
 	</asps>
     <copland>
       <phrase copland="((USM full) -> SIG)">full userspace measurement</phrase>
@@ -68,6 +69,10 @@
     <copland>
       <phrase copland="((KIM runtime_meas) -~- @_1((USM pkginv) -> SIG) -> SIG)">package inventory of remote with runtime measurement of self</phrase>
       <spec uuid="55042348-e8d5-4443-1777-3d67317c7dab">verified userspace mspec</spec>
+    </copland>
+	<copland>
+      <phrase copland="((USM elf) -> SIG)">elf measurement</phrase>
+      <spec uuid="635e14aa-05bb-42c1-b9b1-331e7419f45d">elf header reader</spec>
     </copland>
 	<security_context>
 	  <selinux><type>userspace_apb_t</type></selinux>

@@ -57,7 +57,7 @@ void setup(void)
 {
     measurement_variable var = {.type = &system_target_type, .address = NULL};
 
-    libmaat_init(0, 2);
+    libmaat_init(0, 4);
 
     asps = load_all_asps_info(ASP_PATH);
     register_types();
@@ -79,6 +79,7 @@ void teardown(void)
 {
     destroy_measurement_graph(graph);
     unload_all_asps(asps);
+    libmaat_exit();
 }
 
 START_TEST(test_sys_asp)

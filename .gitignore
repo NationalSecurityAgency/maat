@@ -75,6 +75,7 @@ lib/graph/graph-shell
 src/asps/blacklist
 src/asps/dummy_appraisal
 src/asps/elf_reader
+src/asps/elf_appraise
 src/asps/got_measure
 src/asps/lsmod
 src/asps/procenv

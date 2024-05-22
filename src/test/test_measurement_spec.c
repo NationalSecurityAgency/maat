@@ -450,6 +450,7 @@ END_TEST
 
 void checked_setup()
 {
+    libmaat_init(0, 4);
     register_target_type(&dummy_target_type);
     register_measurement_type(&dummy_measurement_type);
     register_address_space(&simple_address_space);
@@ -457,6 +458,7 @@ void checked_setup()
 
 void checked_teardown()
 {
+    libmaat_exit();
 }
 
 static GQueue *enumerate_variables(void *ctxt, target_type *ttype,

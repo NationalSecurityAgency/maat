@@ -72,6 +72,7 @@
 @aspdir@/proc_namespaces_asp            -- gen_context(system_u:object_r:proc_namespaces_asp_exe_t)
 @aspdir@/procopenfileasp		-- gen_context(system_u:object_r:proc_open_file_asp_exe_t)
 @aspdir@/elf_reader			-- gen_context(system_u:object_r:readelf_asp_exe_t)
+@aspdir@/elf_appraise			-- gen_context(system_u:object_r:elf_appraise_asp_exe_t)
 @aspdir@/dummy_appraisal		-- gen_context(system_u:object_r:dummy_appraisal_exe_t)
 @aspdir@/blacklist			-- gen_context(system_u:object_r:blacklist_asp_exe_t)
 @aspdir@/dpkg_details_asp		-- gen_context(system_u:object_r:dpkg_details_asp_exe_t)
@@ -101,6 +102,8 @@
 @aspdir@/create_measurement_contract_asp -- gen_context(system_u:object_r:create_measurement_contract_asp_exe_t)
 @aspdir@/decompress_asp                  -- gen_context(system_u:object_r:decompress_asp_exe_t)
 @aspdir@/receive_asp                  -- gen_context(system_u:object_r:receive_asp_exe_t)
+@aspdir@/deleg_meas_skeleton_asp              -- gen_context(system_u:object_r:deleg_meas_skeleton_asp_exe_t)
+@aspdir@/deleg_meas_appraise_skeleton_asp     -- gen_context(system_u:object_r:deleg_meas_appraise_skeleton_asp_exe_t)
 #
 # APB implementations
 #
@@ -122,4 +125,6 @@
 @apbdir@/request_passport_apb                  -- gen_context(system_u:object_r:request_passport_apb_exe_t)
 #@apbdir@/passport_storage_apb                  -- gen_context(system_u:object_r:passport_storage_apb_exe_t)
 @apbdir@/passport_userspace_appraiser_apb                  -- gen_context(system_u:object_r:passport_userspace_appraiser_apb_exe_t)
+@apbdir@/deleg_meas_skeleton_apb              -- gen_context(system_u:object_r:deleg_meas_skeleton_apb_exe_t)
+@apbdir@/deleg_meas_appraise_skeleton_apb     -- gen_context(system_u:object_r:deleg_meas_appraise_skeleton_apb_exe_t)
 

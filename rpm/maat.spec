@@ -15,7 +15,7 @@
 #
 
 Name:           maat
-Version:        1.6
+Version:        1.7
 Release:        1%{?dist}
 Summary:        Maat Measurement & Attestation Framework
 Group:          Administration/Monitoring
@@ -108,12 +108,6 @@ initctl reload-configuration
 %preun
 %if 0%{?rhel} >= 7
 %systemd_preun maat.service
-%else
-%if 0%{?rhel} >= 6
-if status maat | grep running >/dev/null 2> /dev/null ; then 
-stop maat >/dev/null 2> /dev/null
-fi
-%endif
 %endif
 
 %if 0%{?fedora} >= 15
@@ -216,6 +210,8 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/apbs/no_op_apb
 %{_libexecdir}/maat/apbs/request_passport_apb
 %{_libexecdir}/maat/apbs/passport_userspace_appraiser_apb
+%{_libexecdir}/maat/apbs/deleg_meas_skeleton_apb
+%{_libexecdir}/maat/apbs/deleg_meas_appraise_skeleton_apb
 # ASPs, enumerated explicitly because some need suid
 # %{_libexecdir}/maat/asps/*
 %{_libexecdir}/maat/asps/blacklist
@@ -224,6 +220,7 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/asps/dpkg_inv_asp
 %{_libexecdir}/maat/asps/dummy_appraisal
 %{_libexecdir}/maat/asps/elf_reader
+%{_libexecdir}/maat/asps/elf_appraise
 %{_libexecdir}/maat/asps/send_execute_tcp_asp
 %{_libexecdir}/maat/asps/send_request_asp
 %{_libexecdir}/maat/asps/hashfileserviceasp
@@ -268,15 +265,13 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/asps/verify_measurement_contract_asp
 %{_libexecdir}/maat/asps/receive_asp
 %{_libexecdir}/maat/asps/passport_maker_asp
+%{_libexecdir}/maat/asps/deleg_meas_skeleton_asp
+%{_libexecdir}/maat/asps/deleg_meas_appraise_skeleton_asp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/proc_namespaces_asp
 %{_libexecdir}/maat/asps/kernel_msmt_asp
 %{_datadir}/maat/selector-configurations/*
 %if 0%{?rhel} >= 7
 /usr/lib/systemd/system/maat.service
-%else
-%if 0%{?rhel} >= 6
-/etc/init/maat.conf
-%endif
 %endif
 %if 0%{?fedora} >= 15
 /usr/lib/systemd/system/maat.service
@@ -285,11 +280,26 @@ setsebool -P httpd_can_network_connect=off
 %files webui
 %{_prefix}/web/*
 %{python3_sitelib}/mq_client.py
+%if 0%{?rhel} >= 9
+%{python3_sitelib}/__pycache__/mq_client.cpython-39.pyc
+%{python3_sitelib}/__pycache__/mq_client.cpython-39.opt-1.pyc
+%else
+%if 0%{?rhel} >= 7
 %{python3_sitelib}/__pycache__/mq_client.cpython-36.pyc
 %{python3_sitelib}/__pycache__/mq_client.cpython-36.opt-1.pyc
+%endif
+%endif
+
 %{python3_sitelib}/libmaat_client.py
+%if 0%{?rhel} >= 9
+%{python3_sitelib}/__pycache__/libmaat_client.cpython-39.pyc
+%{python3_sitelib}/__pycache__/libmaat_client.cpython-39.opt-1.pyc
+%else
+%if 0%{?rhel} >= 7
 %{python3_sitelib}/__pycache__/libmaat_client.cpython-36.pyc
 %{python3_sitelib}/__pycache__/libmaat_client.cpython-36.opt-1.pyc
+%endif
+%endif
 
 %files devel
 %{_includedir}/%{name}-%{version}
@@ -302,6 +312,15 @@ setsebool -P httpd_can_network_connect=off
 %{_datadir}/selinux/targeted/maat.pp
 
 %changelog
+* Fri May 17 2024 Maat Developers <apl-maat-developers@jhuapl.edu> 1.7-1
+- Addition of APBs, ASPs, and supporting policy files to represent a basic integration of existing measurement tools into Maat
+- Official support for Debian 11 and Ubuntu 23.10
+- Added new ELF file attribute appraisal ASP
+- Resolved RHEL 9 package build errors
+- Resolved SELinux policy issues
+- Increased verbosity of unit tests
+- Added more content to the layered attestation use case documentation
+
 * Thu Mar 21 2024 Maat Developers <apl-maat-developers@jhuapl.edu> 1.6-1
 - Introduction of full OpenSSL v3 support within Maat
 - Resolved system information ASP information collection error on some platforms

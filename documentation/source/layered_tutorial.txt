@@ -25,22 +25,60 @@ Layered Appraisal Maat Tutorial
 Introduction
 ============
 
-These instructions give you the steps to set up and perform a multi-realm
-appraisal demonstration. In this scenario, a relying party wants to determine if
-an application that is operating in an unprivileged domain of a hypervisor
-platform is in an expected state.  A dedicated measurement domain on the
-platform would negotiate what measurement of the overall hypervisor platform
-would be taken and, in turn, request various other components on the platform
-contribute measurements to produce a holistic picture of the attesting
-environment.
+These instructions give you the steps to set up and perform a layered measurement and appraisal
+demonstration.
 
-In specific, the measurement would be composed of a strictly ordered set of a
-KIM and userspace measurement of the most privileged domain (Dom0), the
-measurement domain itself (DomM), and a designated target domain hosting a
-userland application of some interest (DomT).  These measurements will be
-bundled by the measurement APB operating in DomM and then sent to another
-platform to be appraised, the result of which will be returned to the test
-client.
+Motivation
+----------
+
+Increasingly, individuals and organizations alike are taking advantage of virtualization technologies.
+Organizations are moving workstations, servers, and other pieces of infrastructure off-premises
+to cloud services, such as virtual desktops provided by hypervisors, in order to avoid
+the requirements and costs of hardware acquisition and maintenance. Operating systems in use by millions
+every day are embracing virtualization technologies in order to provide security and isolation for
+disparate domains of execution.
+
+Within such a context, the virtualized agents - hereafter referred to as user domains -
+rely upon the virtualizing agent - hereafter referred as the control domain - in order to provide access
+to hardware resources and, by proxy, disk access, network communications, and more. Consequently, control
+domains can wield a large influence over the operation of user domains. This implies that one must establish
+that the control domain, which provides services to one or more user domains, is in an expected state
+to justify trust in any conclusions regarding the expectedness of the operation of any user domains.
+
+Furthermore, even within the boundary of a user domain, the kernel provides userspace processes with
+mediated access to hardware resources, and so the kernel, just like the control domain, needs to be known
+to be operating in an expected state in order to be able to build trust in the operation of userspace
+applications within the domain. These operations in question would include the production of measurements
+by userspace measurement agents utilized by Maat.
+
+As with any other environment, trust in a privileged context, such as control domain or a kernel, can be
+justified via measurement and attestation. If measurements of the privileged context indicicate that it
+is in an expected state, then we can justify trust in its operation and, most importantly, the interfaces
+it provides to less privileged domains. Therefore, a full attestation of the user domain needs to include
+attestation of any privileged context upon which it depends. This is what we will refer to as
+a layered attestation, because it involves attestations from multiple executing domains.
+
+Scenario Overview
+------------------
+
+In this scenario, a user application is operating in a user domain which is instantiated on a hypervisor
+platform. A relying party wants to determine if the user domain in which this application is operating is
+in an expected state and has not been corrupted or maliciously subverted. In order to determine this, the
+relying party can request a layred measurement of the user domain. A dedicated measurement domain on the
+platform would negotiate with the relying party to determine what specific layered measurement would be
+taken and, in turn, request various other components on the platform contribute measurements to produce
+a holistic picture of the attesting environment.
+
+The measurement would be composed of a strictly ordered set of:
+    - a Kernel Integrity Measurement (KIM) of the control domain (Dom0)
+    - a userspace measurement of Dom0
+    - a Kernel Integrity Measurement (KIM) of the measurement domain (DomM)
+    - a userspace measurement of DomM
+    - a Kernel Integrity Measurement (KIM) of the target domain hsting the application of interest (DomT)
+    - a userspace measurement of DomT
+
+These measurements will be bundled by the measurement APB operating in DomM and then sent to another
+platform to be appraised, the result of which will be returned to the test client.
 
 One important detail is that the strict measurement ordering enforced in this
 APB allows an appraiser to justify acceptance of the validity of measurements of

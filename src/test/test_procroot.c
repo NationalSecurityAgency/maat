@@ -34,6 +34,9 @@
 
 #include <types/maat-basetypes.h>
 
+#define ARGS 3
+#define TEST_TIMEOUT 100
+
 /* linking against libmaat_apb requires defining apb_execute so you can be an APB. */
 int apb_execute(struct apb *apb UNUSED, struct scenario *scen UNUSED,
                 uuid_t meas_spec UNUSED, int peerchan UNUSED,
@@ -44,51 +47,70 @@ int apb_execute(struct apb *apb UNUSED, struct scenario *scen UNUSED,
     return -1;
 }
 
-
-GList *asps = NULL;
-measurement_graph *graph;
-node_id_t file_node;
-struct asp *procrootasp;
+measurement_graph *g_graph;
+node_id_t g_file_node;
 
 void setup(void)
 {
-    measurement_variable *file_var;
+    int success                     = -1;
+    pid_t target_pid                = 0;
+    measurement_variable *file_var  = NULL;
 
-    libmaat_init(0, 2);
+    /* Initialize logging */
+    libmaat_init(0, 4);
 
-    asps = load_all_asps_info(ASP_PATH);
+    /* Register required types */
     register_address_space(&simple_file_address_space);
     register_address_space(&pid_address_space);
     register_measurement_type(&proc_root_measurement_type);
     register_target_type(&file_target_type);
-    graph = create_measurement_graph(NULL);
 
+    /* Create measurement graph */
+    g_graph = create_measurement_graph(NULL);
+
+    /* Create measurement variable */
     file_var = new_measurement_variable(&file_target_type, alloc_address(&pid_address_space));
 
-    ((pid_address*)(file_var->address))->pid = getpid();
+    /* Create child process which will be the test process */
+    target_pid = fork();
 
-    int success = measurement_graph_add_node(graph, file_var, NULL, &file_node);
+    fail_if(target_pid == -1, "Unable to fork a target process\n");
 
-    procrootasp = find_asp(asps, "procroot");
+    fail_if(target_pid > UINT32_MAX, "Unable to represent pid within the measurement graph\n");
+
+    if (target_pid == 0) {
+        /* Child process benignly sleeps to allow measurement */
+        sleep(TEST_TIMEOUT);
+    }
+
+    /* Cast is justified due to the previous bounds check */
+    ((pid_address*)(file_var->address))->pid = (uint32_t)target_pid;
+
+    /* Add measurement node to the graph */
+    success = measurement_graph_add_node(g_graph, file_var, NULL, &g_file_node);
+    fail_if(success <= 0, "Unable to add a node to the measurement graph\n");
+
     free_measurement_variable(file_var);
 }
 
 void teardown(void)
 {
-    destroy_measurement_graph(graph);
-    unload_all_asps(asps);
+    destroy_measurement_graph(g_graph);
+    libmaat_exit();
 }
 
 START_TEST(test_proc_root_ld_so_conf)
 {
-    char *graph_path = measurement_graph_get_path(graph);
-    node_id_str nid;
-    char *asp_argv[] = {graph_path, nid};
-    int rc;
-    str_of_node_id(file_node, nid);
+    node_id_str nid      = {0};
+    char *graph_path     = measurement_graph_get_path(g_graph);
+    char *asp_argv[ARGS] = {"procroot", graph_path, nid};
 
-    rc = run_asp(procrootasp, -1, -1, false, 2, asp_argv, -1);
-    fail_unless(rc == 0, "run_asp procroot_asp failed with code %d", rc);
+    str_of_node_id(g_file_node, nid);
+
+    /* Check that the ASP executes correctly */
+    fail_if(asp_init(ARGS, asp_argv) != 0, "ASP Init call failed");
+    fail_if(asp_measure(ARGS, asp_argv) != 0, "Measurement failed");
+    fail_if(asp_exit(0) != 0, "Exit failed");
 
     free(graph_path);
 }

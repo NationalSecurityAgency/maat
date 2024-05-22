@@ -91,6 +91,9 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     char *msmt                  = NULL;
     unsigned char *response_buf = NULL;
     char tmpstr[200]            = {0};
+    time_t start, end;
+
+    start = time(NULL);
 
     // Load all asps we need
     apb_asps = apb->asps;
@@ -187,7 +190,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
               (xmlChar*)target,
               (xmlChar*)resource, evaluation, report_data_list,
               scen->certfile, scen->keyfile, scen->keypass, NULL,
-              scen->tpmpass, scen->akctx, scen->sign_tpm, 
+              scen->tpmpass, scen->akctx, scen->sign_tpm,
               (xmlChar **)&response_buf, &sz);
 
     if(ret < 0 || response_buf == NULL) {
@@ -220,6 +223,10 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     }
 
     dlog(6, "Appraiser wrote %zd byte(s)\n", bytes_written);
+
+    end = time(NULL);
+
+    dlog(6, "Total appraisal time: %ld seconds\n", end-start);
 
     return 0;
 }

@@ -25,4 +25,5 @@ dist_selector_DATA = iot_selector.xml \
 	complex-att-selector.xml\
 	passport-selector.xml\
 	passport-maker-selector.xml \
-	layered-selector.xml
+	layered-selector.xml \
+	deleg-meas-selector.xml

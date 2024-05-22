@@ -92,7 +92,7 @@ void setup(void)
 {
     measurement_variable var = {.type = &file_target_type, .address = NULL};
 
-    libmaat_init(0, 2);
+    libmaat_init(0, 4);
 
     asps = load_all_asps_info(ASP_PATH);
     register_types();
@@ -200,6 +200,7 @@ void teardown(void)
 {
     destroy_measurement_graph(graph);
     unload_all_asps(asps);
+    libmaat_exit();
 }
 
 START_TEST(test_serialize_graph_asp)
@@ -402,7 +403,7 @@ START_TEST(test_create_contract_asp)
     char *sign_tpm = "1";
     char *tpm_pass = "maatpass";
     char *akctx = akctx_filename;
-#else    
+#else
     char *sign_tpm = "0";
     char *tpm_pass = "";
     char *akctx = "";
@@ -474,7 +475,7 @@ START_TEST(test_create_contract_asp_encrypted)
     char *sign_tpm = "1";
     char *tpm_pass = "maatpass";
     char *akctx = akctx_filename;
-#else    
+#else
     char *sign_tpm = "0";
     char *tpm_pass = "";
     char *akctx = "";
@@ -550,7 +551,7 @@ START_TEST(test_create_contract_asp_compressed)
     char *sign_tpm = "1";
     char *tpm_pass = "maatpass";
     char *akctx = akctx_filename;
-#else    
+#else
     char *sign_tpm = "0";
     char *tpm_pass = "";
     char *akctx = "";
@@ -621,7 +622,7 @@ START_TEST(test_create_contract_asp_compressed_encrypted)
     char *sign_tpm = "1";
     char *tpm_pass = "maatpass";
     char *akctx = akctx_filename;
-#else    
+#else
     char *sign_tpm = "0";
     char *tpm_pass = "";
     char *akctx = "";

@@ -33,7 +33,7 @@ installed in a different directory, please modify accordingly.
 
 Install these dependencies:
 
-Ubuntu:
+Debian or Ubuntu:
 
 .. code-block:: bash
 

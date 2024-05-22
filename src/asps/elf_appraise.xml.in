@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2023 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+-->
+<asp>
+	<name>elf_appraise</name>
+	<uuid>C75ABC0E-39E9-442A-93AB-54CE8D361213</uuid>
+	<type>File</type>
+	<description>Appraises Executable and Linkable Format (ELF) information ob binaries</description>
+	<usage>elf_appraise [graph path] [node id] [data type magic]</usage>
+	<inputdescription>This ASP expects a graph with nodes of type elfheader_measurement_type.</inputdescription>
+	<outputdescription>
+		The ASP verifies that the .text portion of the binary's section header is writable.
+		It reports back an appraisal error if a writable .text section is detected, and if the specific binary is not whitelisted.
+		Otherwise, the appraisal passes.
+	</outputdescription>
+	<seealso>
+		http://manpages.ubuntu.com/manpages/precise/en/man5/elf.5.html</seealso>
+	<example>TBD</example>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/elf_appraise</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">GRAPH</value>
+			<capability target_type="file_target_type" target_magic="1001" target_desc = "An instance of target type, which describes atributes of the target file" 
+				address_type="path_address_space" address_magic="0x5F5F5F5F" address_desc = "An instance of address type that decribes the file address, for this asp it is a path. This includes file information such as address, device major/minor, file size, node, and full name." 
+                measurement_type="elfheader_measurement_type" measurement_magic="3202" measurement_desc = "An instance of measurement type that describes the content of the elf file targeit. This includes describing all information from the Elf header and symbols of the file." />
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <selinux><type>elf_appraise_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+	</security_context>
+</asp>

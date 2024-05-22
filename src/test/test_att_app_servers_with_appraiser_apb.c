@@ -62,7 +62,7 @@ int setup_dispatch_loop(int argc, char **argv);
 
 void setup(void)
 {
-    libmaat_init(0, 1);
+    libmaat_init(0, 4);
 
     mkdir(ATTESTER_WORKDIR, 0777);
     mkdir(APPRAISER_WORKDIR, 0777);
@@ -91,6 +91,9 @@ void teardown(void)
 
     unlink("/tmp/att.sock");
     unlink("/tmp/app.sock");
+
+    libmaat_exit();
+
     return;
 }
 

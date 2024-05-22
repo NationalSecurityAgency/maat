@@ -1021,6 +1021,16 @@ START_TEST(test_attestmgr_getopt_fail)
 }
 END_TEST
 
+void setup(void)
+{
+    libmaat_init(0, 4);
+}
+
+void teardown(void)
+{
+    libmaat_exit();
+}
+
 int main(void)
 {
     Suite *suite;
@@ -1030,6 +1040,7 @@ int main(void)
 
     suite = suite_create("am_getopt");
     test_cases = tcase_create("am_getopt");
+    tcase_add_checked_fixture(test_cases, setup, teardown);
 
     tcase_add_test(test_cases, test_attestmgr_getopt);
     tcase_add_test(test_cases, test_attestmgr_getopt_full_config_xml);

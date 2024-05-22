@@ -24,6 +24,8 @@
 #include <sgraph/sgraph_internal.h>
 #include <sgraph/sgraph.h>
 
+#include "test-data.h"
+
 START_TEST(test_address_alloc)
 {
     struct sg_address *a = NULL;
@@ -71,6 +73,8 @@ Suite *address_suite(void)
     s = suite_create("SGRAPH");
 
     tc_address = tcase_create("address");
+    tcase_add_checked_fixture (tc_address, setup, teardown);
+
     tcase_add_test(tc_address, test_address_alloc);
     tcase_add_test(tc_address, test_address_null);
     tcase_add_test(tc_address, test_cmp_address);
@@ -168,6 +172,7 @@ Suite *api_suite(void)
     s = suite_create("api");
 
     tc_api = tcase_create("api");
+    tcase_add_checked_fixture (tc_api, setup, teardown);
     tcase_add_test(tc_api, test_api_alloc);
     tcase_add_test(tc_api, test_graph_api);
 
@@ -258,6 +263,7 @@ Suite *data_suite(void)
     s = suite_create("data");
 
     tc_data = tcase_create("data");
+    tcase_add_checked_fixture (tc_data, setup, teardown);
     tcase_add_test(tc_data, test_data_alloc);
     tcase_add_test(tc_data, test_data_null);
     tcase_add_test(tc_data, test_data_cmp);
@@ -343,6 +349,7 @@ Suite *edge_suite(void)
     s = suite_create("edge");
 
     tc_edge = tcase_create("edge");
+    tcase_add_checked_fixture (tc_edge, setup, teardown);
     tcase_add_test(tc_edge, test_edge_alloc);
     tcase_add_test(tc_edge, test_edge_null);
     tcase_add_test(tc_edge, test_sg_edge_cmp);
@@ -452,6 +459,7 @@ Suite *graph_suite(void)
     s = suite_create("graph");
 
     tc_graph = tcase_create("graph");
+    tcase_add_checked_fixture (tc_graph, setup, teardown);
     tcase_add_test(tc_graph, test_graph_alloc);
     tcase_add_test(tc_graph, test_graph_add);
     tcase_add_test(tc_graph, test_graph_query);
@@ -609,6 +617,7 @@ Suite *json_suite(void)
     s = suite_create("json");
 
     tc_json = tcase_create("json");
+    tcase_add_checked_fixture (tc_json, setup, teardown);
     tcase_add_test(tc_json, test_json_minimal);
     tcase_add_test(tc_json, test_json_lots);
     tcase_add_test(tc_json, test_json_misc);
@@ -718,6 +727,7 @@ Suite *node_suite(void)
     s = suite_create("node");
 
     tc_node = tcase_create("node");
+    tcase_add_checked_fixture (tc_node, setup, teardown);
     tcase_add_test(tc_node, test_node_alloc);
     tcase_add_test(tc_node, test_node_null);
     tcase_add_test(tc_node, test_node_cmp);

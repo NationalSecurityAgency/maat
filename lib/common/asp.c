@@ -228,6 +228,7 @@ struct asp *find_asp(GList *list, const char *name)
         struct asp *p = (struct asp *)l->data;
 
         if (strcasecmp(p->name, name)==0) {
+            dlog(6, "Found ASP %s.\n", p->name);
             return p;
         }
     }

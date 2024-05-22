@@ -318,6 +318,8 @@ struct asp *select_asp(measurement_graph *g, measurement_type *mtype,
         return find_asp(apb_asps, "procmem");
     } else if (mtype == &fds_measurement_type) {
         return find_asp(apb_asps, "procfds");
+    } else if (mtype == &elfheader_measurement_type) {
+        return find_asp(apb_asps, "elf_reader");
     }
 
     return NULL;

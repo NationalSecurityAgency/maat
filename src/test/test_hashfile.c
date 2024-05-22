@@ -46,7 +46,7 @@
 #define NONCE "dd586e37ecc7a9fecd5cc00152031d7c18866aea"
 #if USE_TPM
 #define TPMPASS "maatpass"
-#define AKCTX SRCDIR "/credentials/ak.ctx" 
+#define AKCTX SRCDIR "/credentials/ak.ctx"
 #define AKPUB SRCDIR "/credentials/akpub.pem"
 #endif
 
@@ -69,7 +69,7 @@ void setup(void)
     struct apb *apb;
     GList *l;
 
-    libmaat_init(0, 2);
+    libmaat_init(0, 4);
 
     setenv(ENV_MAAT_APB_DIR, APB_PATH, 1);
     setenv(ENV_MAAT_ASP_DIR, ASP_PATH, 1);
@@ -97,6 +97,7 @@ void teardown(void)
     unload_all_asps(asps);
     g_list_free_full(apbs, (GDestroyNotify)unload_apb);
     g_list_free_full(meas_specs, (GDestroyNotify)free_measurement_specification_info);
+    libmaat_exit();
     return;
 }
 
@@ -325,8 +326,8 @@ static int conduct_test(const char *args)
     scen.akctx = strdup(AKCTX);
     scen.akpubkey = strdup(AKPUB);
     if(scen.tpmpass == NULL || scen.akctx == NULL || scen.akpubkey == NULL) {
-      dlog(0, "Unable to create a scenario object\n");
-      goto error;
+        dlog(0, "Unable to create a scenario object\n");
+        goto error;
     }
 #endif
 

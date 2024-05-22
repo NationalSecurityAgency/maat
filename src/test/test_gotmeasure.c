@@ -36,6 +36,7 @@
 #include <maat-basetypes.h>
 #define ANSWER_SIZE 5
 #define ARGS 3
+#define TEST_TIMEOUT 1000
 
 int apb_execute(struct apb *apb UNUSED, struct scenario *scen UNUSED,
                 uuid_t meas_spec UNUSED, int peerchan UNUSED,
@@ -66,11 +67,13 @@ void setup(void)
 void teardown(void)
 {
     destroy_measurement_graph(g_graph);
+    libmaat_exit();
 }
 
 START_TEST(test_gotmeasure)
 {
     char *graph_path = measurement_graph_get_path(g_graph);
+    pid_t target_pid;
     node_id_str nid;
     node_id_t pid_node;
     measurement_data *got = NULL;
@@ -85,8 +88,20 @@ START_TEST(test_gotmeasure)
     pid_var = new_measurement_variable(&process_target_type, alloc_address(&pid_address_space));
     fail_if(pid_var == NULL || pid_var->address == NULL, "Failed to create measurement variable\n");
 
-    /* This function always succeeds */
-    ((pid_mem_range *)(pid_var->address))->pid = getpid();
+    /* Create child process which will be the test process */
+    target_pid = fork();
+
+    fail_if(target_pid == -1, "Unable to fork a target process");
+
+    fail_if(target_pid > UINT32_MAX, "Unable to represent pid within the measurement graph");
+
+    if (target_pid == 0) {
+        /* Child process benignly sleeps to allow measurement */
+        sleep(TEST_TIMEOUT);
+    }
+
+    /* Cast is justified due to the previous bounds check */
+    ((pid_mem_range *)(pid_var->address))->pid = (uint32_t)target_pid;
 
     fail_if(measurement_graph_add_node(g_graph, pid_var, NULL, &pid_node) < 0,
             "Unable to add node to graph\n");
@@ -122,7 +137,7 @@ int main(void)
     gotmeasureservice = tcase_create("gotmeasure");
     tcase_add_checked_fixture(gotmeasureservice, setup, teardown);
     tcase_add_test(gotmeasureservice, test_gotmeasure);
-    tcase_set_timeout(gotmeasureservice, 1000);
+    tcase_set_timeout(gotmeasureservice, TEST_TIMEOUT);
     suite_add_tcase(s, gotmeasureservice);
 
     r = srunner_create(s);

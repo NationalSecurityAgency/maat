@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <util/xml_util.h>
 
+#include "test-data.h"
+
 START_TEST (test_retrieve_nodes)
 {
     node_id_t n = INVALID_NODE_ID;
@@ -184,20 +186,13 @@ START_TEST (test_unconsumed)
 }
 END_TEST
 
-void checked_setup(void)
-{
-    libmaat_init(0,5);
-}
-
-void checked_teardown(void) {}
-
 Suite * graph_announcements_suite (void)
 {
     Suite *s = suite_create ("Graph Announcements Tests");
 
     /*Core test case */
     TCase *tc_feature = tcase_create ("Feature Tests");
-    tcase_add_checked_fixture(tc_feature, checked_setup, checked_teardown);
+    tcase_add_checked_fixture(tc_feature, setup, teardown);
 
     tcase_add_test (tc_feature, test_retrieve_nodes);
     tcase_add_test (tc_feature, test_retrieve_edges);

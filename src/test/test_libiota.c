@@ -75,13 +75,14 @@ unsigned char nonce[64];
 
 void setup(void)
 {
-
+    libmaat_init(0, 4);
 }
 
 void teardown(void)
 {
     destroy_measurement_graph(graph);
     unload_all_asps(asps);
+    libmaat_exit();
 }
 
 START_TEST(test_uart_request)

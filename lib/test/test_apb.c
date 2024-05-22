@@ -246,25 +246,19 @@ START_TEST(test_parse_copland)
 }
 END_TEST
 
-void teardown(void)
-{
-    libmaat_exit();
-    return;
-}
-
 Suite* apb_suite (void)
 {
     Suite *s = suite_create ("APB Tests");
 
     TCase *tc_basic = tcase_create ("Basic Tests");
-
+    tcase_add_checked_fixture (tc_basic, setup, teardown);
     tcase_add_test (tc_basic, test_load_apb_info);
     tcase_add_test (tc_basic, test_load_all_apbs_info);
     tcase_add_test (tc_basic, test_apb_search);
     tcase_add_test (tc_basic, test_parse_copland);
 
     TCase *tc_run_asp = tcase_create("Running ASP Tests");
-    tcase_add_checked_fixture(tc_run_asp, setup, teardown);
+    tcase_add_checked_fixture (tc_run_asp, setup, teardown);
     tcase_add_test (tc_run_asp, test_run_asp_return_success);
     tcase_add_test (tc_run_asp, test_run_asp_return_failure);
 

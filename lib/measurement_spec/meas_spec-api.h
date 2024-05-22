@@ -388,6 +388,22 @@ typedef struct measurement_type {
      */
     int (*human_readable)(measurement_data *d,
                           char **out, size_t *outsize);
+
+    /**
+     * Optional method to return an extended human readable form of the
+     * measurement data. The extended version prints the entire measurement data
+     * structure (e.g., the full Executable and Linking Format (ELF)
+     * representation of a binary file) rather than just a portion of it.
+     * The extended version of the human_readable does not need to be machine
+     * parseable. Primarily intended as an aid for debugging.
+     *
+     * On success, returns 0 and assigns *@out to a malloc()ed buffer
+     * containing a NULL-terminated ASCII string of length *@outsize.
+     *
+     * returns < 0 on failure.
+     */
+    int (*human_readable_extended)(measurement_data *d,
+                                   char **out, size_t *outsize);
 } measurement_type;
 
 /**

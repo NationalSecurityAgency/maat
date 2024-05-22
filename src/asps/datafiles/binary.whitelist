@@ -1,0 +1,8 @@
+# 
+# Binary whitelist file
+#
+# File names appearing in this list (one per line) are the only
+# binaries allowed to have a writable .text ELF section header.
+# The current version supports appraising binary files within the
+# target directories /bin and /lib.
+# Add binary names in the form /<target-dir>/<binary-name> (e.g., /bin/ls).

@@ -192,11 +192,22 @@ bson_err:
     return err;
 }
 
+void setup(void)
+{
+    libmaat_init(0, 4);
+}
+
+void teardown(void)
+{
+    libmaat_exit();
+}
+
 Suite* sel_suite (void)
 {
     Suite *s = suite_create ("Selector Tests");
 
     TCase *tc_basic = tcase_create ("Basic Tests");
+    tcase_add_checked_fixture(tc_basic, setup, teardown);
     tcase_add_test (tc_basic, test_load_selector);
     tcase_add_test (tc_basic, test_get_first_action_with_no_matches);
     tcase_add_test (tc_basic, test_get_first_action_success);

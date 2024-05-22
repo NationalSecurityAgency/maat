@@ -133,11 +133,11 @@ requirements. They are included here only for completeness.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |UNIX Perms  |User  |Group  |SELinux Label                                        |Filename                                |
 +============+======+=======+=====================================================+========================================+
-|drwxr-xr-x. |root  |root   |unconfined_u:object_r:usr_t:s0                       |maat-1.6                                |
+|drwxr-xr-x. |root  |root   |unconfined_u:object_r:usr_t:s0                       |maat-1.7                                |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.6
+/opt/maat/include/maat-1.7
 ----------------------------------------------
 
 Maat include headers directory.
@@ -168,7 +168,7 @@ no specific security requirements.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.6/apb
+/opt/maat/include/maat-1.7/apb
 ----------------------------------------------
 
 Maat APB include headers directory.
@@ -182,7 +182,7 @@ Maat APB include headers directory.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.6/asp
+/opt/maat/include/maat-1.7/asp
 ----------------------------------------------
 
 Maat ASP include headers directory.
@@ -194,7 +194,7 @@ Maat ASP include headers directory.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.6/client
+/opt/maat/include/maat-1.7/client
 ----------------------------------------------
 
 Maat Client include headers directory.
@@ -206,7 +206,7 @@ Maat Client include headers directory.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.6/common
+/opt/maat/include/maat-1.7/common
 ----------------------------------------------
 
 Maat Common include headers directory.
@@ -234,7 +234,7 @@ Maat Common include headers directory.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.6/graph
+/opt/maat/include/maat-1.7/graph
 ----------------------------------------------
 
 Maat Graph include headers directory.
@@ -246,7 +246,7 @@ Maat Graph include headers directory.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.6/measurement_spec
+/opt/maat/include/maat-1.7/measurement_spec
 ----------------------------------------------
 
 Maat Measurement Spec include headers directory.
@@ -260,7 +260,7 @@ Maat Measurement Spec include headers directory.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.6/sgraph
+/opt/maat/include/maat-1.7/sgraph
 ----------------------------------------------
 
 Maat Sgraph include headers directory.
@@ -272,7 +272,7 @@ Maat Sgraph include headers directory.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.6/types
+/opt/maat/include/maat-1.7/types
 ----------------------------------------------
 
 Maat Types include headers directory.
@@ -294,7 +294,7 @@ specific security requirements.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.6/types/address_space
+/opt/maat/include/maat-1.7/types/address_space
 ----------------------------------------------
 
 Header files for address_spaces defined in the Maat libmaat_basetypes library.
@@ -334,7 +334,7 @@ Header files for address_spaces defined in the Maat libmaat_basetypes library.
 +------------+------+-------+-----------------------------------------------------+-------------------------------------------+
 
 
-/opt/maat/include/maat-1.6/types/measurement
+/opt/maat/include/maat-1.7/types/measurement
 ----------------------------------------------
 
 Header files for measurement types defined in the Maat libmaat_basetypes library.
@@ -422,7 +422,7 @@ Header files for measurement types defined in the Maat libmaat_basetypes library
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.6/types/target
+/opt/maat/include/maat-1.7/types/target
 ----------------------------------------------
 
 Header files for target types defined in the Maat libmaat_basetypes library.
@@ -462,7 +462,7 @@ Header files for target types defined in the Maat libmaat_basetypes library.
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 
 
-/opt/maat/include/maat-1.6/util
+/opt/maat/include/maat-1.7/util
 ----------------------------------------------
 
 Maat Util include headers directory.
@@ -518,25 +518,25 @@ library type to avoid this, but it would require distributing Maat with all of i
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |UNIX Perms  |User  |Group  |SELinux Label                                        |Filename                                |
 +============+======+=======+=====================================================+========================================+
-|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_apb-1.6.a                       |
+|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_apb-1.7.a                       |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_apb-1.6.la                      |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_apb-1.7.la                      |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_apb-1.6.so                      |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_apb-1.7.so                      |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_apb-1.6.so.0                    |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_apb-1.7.so.0                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_apb-1.6.so.0.1.0                |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_apb-1.7.so.0.1.0                |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_asp-1.6.a                       |
+|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_asp-1.7.a                       |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_asp-1.6.la                      |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_asp-1.7.la                      |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_asp-1.6.so                      |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_asp-1.7.so                      |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_asp-1.6.so.0                    |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_asp-1.7.so.0                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_asp-1.6.so.0.1.0                |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_asp-1.7.so.0.1.0                |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_basetypes.a                     |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
@@ -548,45 +548,45 @@ library type to avoid this, but it would require distributing Maat with all of i
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_basetypes.so.0.0.0              |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_client-1.6.a                    |
+|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_client-1.7.a                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_client-1.6.la                   |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_client-1.7.la                   |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_client-1.6.so                   |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_client-1.7.so                   |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_client-1.6.so.0                 |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_client-1.7.so.0                 |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_client-1.6.so.0.1.0             |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_client-1.7.so.0.1.0             |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_graph-1.6.a                     |
+|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_graph-1.7.a                     |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_graph-1.6.la                    |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_graph-1.7.la                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_graph-1.6.so                    |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_graph-1.7.so                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_graph-1.6.so.0                  |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_graph-1.7.so.0                  |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_graph-1.6.so.0.0.0              |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_graph-1.7.so.0.0.0              |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_sgraph-1.6.a                    |
+|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_sgraph-1.7.a                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_sgraph-1.6.la                   |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_sgraph-1.7.la                   |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_sgraph-1.6.so                   |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_sgraph-1.7.so                   |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_sgraph-1.6.so.0                 |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_sgraph-1.7.so.0                 |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_sgraph-1.6.so.0.0.0             |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_sgraph-1.7.so.0.0.0             |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_util-1.6.a                      |
+|-rw-r--r--. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_util-1.7.a                      |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_util-1.6.la                     |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_util-1.7.la                     |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_util-1.6.so                     |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_util-1.7.so                     |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_util-1.6.so.0                   |
+|lrwxrwxrwx. |root  |root   |unconfined_u:object_r:usr_t:s0                       |libmaat_util-1.7.so.0                   |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_util-1.6.so.0.1.0               |
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lib_t:s0                           |libmaat_util-1.7.so.0.1.0               |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |drwxr-xr-x. |root  |root   |unconfined_u:object_r:usr_t:s0                       |maat                                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
@@ -642,6 +642,10 @@ unlike ASPS, none of these executables is expected to have its SUID or SGID bits
 +------------+------+-------+-------------------------------------------------------------+--------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:complex_attestation_apb_exe_t:s0           |complex_attestation_apb         |
 +------------+------+-------+-------------------------------------------------------------+--------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:deleg_meas_skeleton_apb_exe_t:s0           |deleg_meas_skeleton_apb         |
++------------+------+-------+-------------------------------------------------------------+--------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:deleg_meas_appraise_skeleton_apb_exe_t:s0  |deleg_meas_appraise_skeleton_apb|
++------------+------+-------+-------------------------------------------------------------+--------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:forwarding_apb_exe_t:s0                    |forwarding_apb                  |
 +------------+------+-------+-------------------------------------------------------------+--------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:hashdir_apb_exe_t:s0                       |hashdir_apb                     |
@@ -687,113 +691,119 @@ This directory and its contents must be readable/executable (but not writable) b
 the AM and APBs to execute the ASPs. ASPs requiring special permissions (e.g., reading process
 state) should be installed with appropriate ownership, and their SUID or SGID bits set.
 
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|UNIX Perms  |User  |Group  |SELinux Label                                             |Filename                                |
-+============+======+=======+==========================================================+========================================+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:blacklist_asp_exe_t:s0                  |blacklist                               |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:compress_asp_exe_t:s0                   |compress_asp                            |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:create_measurement_contract_asp_exe_t:s0|create_measurement_contract_asp         |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:decompress_asp_exe_t:s0                 |decompress_asp                          |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:decrypt_asp_exe_t:s0                    |decrypt_asp                             |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:dpkg_check_asp_exe_t:s0                 |dpkg_check_asp                          |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:dpkg_details_asp_exe_t:s0               |dpkg_details_asp                        |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:dpkg_inv_asp_exe_t:s0                   |dpkg_inv_asp                            |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:dummy_appraisal_exe_t:s0                |dummy_appraisal                         |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:readelf_asp_exe_t:s0                    |elf_reader                              |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:encrypt_asp_exe_t:s0                    |encrypt_asp                             |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwsr-xr-x. |root  |root   |system_u:object_r:got_measure_asp_exe_t:s0                |got_measure                             |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:got_appraise_asp_exe_t:s0               |got_appraise                            |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:hash_file_service_asp_exe_t:s0          |hashfileserviceasp                      |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:hash_service_asp_exe_t:s0               |hashserviceasp                          |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwsr-xr-x. |root  |root   |system_u:object_r:ima_asp_exe_t:s0                        |ima_asp                                 |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwsr-xr-x. |root  |root   |system_u:object_r:kernel_msmt_asp_exe_t:s0                |kernel_msmt_asp                         |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwsr-xr-x. |root  |root   |system_u:object_r:list_directory_service_asp_exe_t:s0     |listdirectoryserviceasp                 |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lsmod_asp_exe_t:s0                      |lsmod                                   |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:lsproc_asp_exe_t:s0                     |lsprocasp                               |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:md5_file_service_asp_exe_t:s0           |md5fileserviceasp                       |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwsr-xr-x. |root  |root   |system_u:object_r:memory_mapping_asp_exe_t:s0             |memorymappingasp                        |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:merge_asp_exe_t:s0                      |merge_asp                               |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:mtab_asp_exe_t:s0                       |mtabasp                                 |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:netstat_asp_exe_t:s0                    |netstatraw6asp                          |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:netstat_asp_exe_t:s0                    |netstatrawasp                           |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:netstat_asp_exe_t:s0                    |netstattcp6asp                          |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:netstat_asp_exe_t:s0                    |netstattcpasp                           |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:netstat_asp_exe_t:s0                    |netstatudp6asp                          |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:netstat_asp_exe_t:s0                    |netstatudpasp                           |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:netstat_asp_exe_t:s0                    |netstatunixasp                          |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:passport_maker_asp_exe_t:s0             |passport_maker_asp                      |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwsr-xr-x. |root  |root   |system_u:object_r:proc_env_asp_t:s0                       |procenv                                 |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwsr-xr-x. |root  |root   |system_u:object_r:proc_fds_asp_exe_t:s0                   |procfds                                 |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwsr-xr-x. |root  |root   |system_u:object_r:proc_mem_asp_exe_t:s0                   |procmem                                 |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwsr-xr-x. |root  |root   |system_u:object_r:proc_namespaces_asp_exe_t:s0            |proc_namespaces_asp                     |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwsr-xr-x. |root  |root   |system_u:object_r:proc_open_file_asp_exe_t:s0             |procopenfileasp                         |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwsr-xr-x. |root  |root   |system_u:object_r:proc_root_asp_exe_t:s0                  |procrootasp                             |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:receive_asp_exe_t:s0                    |receive_asp                             |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:rpm_details_asp_exe_t:s0                |rpm_details_asp                         |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:rpm_inv_asp_exe_t:s0                    |rpm_inv_asp                             |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:send_execute_asp_exe_t:s0               |send_execute_asp                        |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:send_execute_tcp_asp_exe_t:s0           |send_execute_tcp_asp                    |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:send_request_asp_exe_t:s0               |send_request_asp                        |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:send_asp_exe_t:s0                       |send_asp                                |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:serialize_graph_exe_t:s0                |serialize_graph_asp                     |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:sign_send_exe_t:s0                      |sign_send_asp                           |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:split_exe_t:s0                          |split_asp                               |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:system_appraise_asp_exe_t:s0            |system_appraise_asp                     |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:system_asp_exe_t:s0                     |system_asp                              |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:verify_measurement_contract_asp_exe_t:s0|verify_measurement_contract_asp         |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
-|-rwxr-xr-x. |root  |root   |system_u:object_r:whitelist_asp_exe_t:s0                  |whitelist                               |
-+------------+------+-------+----------------------------------------------------------+----------------------------------------+
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|UNIX Perms  |User  |Group  |SELinux Label                                              |Filename                               |
++============+======+=======+===========================================================+=======================================+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:blacklist_asp_exe_t:s0                   |blacklist                              |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:compress_asp_exe_t:s0                    |compress_asp                           |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:create_measurement_contract_asp_exe_t:s0 |create_measurement_contract_asp        |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:decompress_asp_exe_t:s0                  |decompress_asp                         |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:decrypt_asp_exe_t:s0                     |decrypt_asp                            |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:deleg_meas_skeleton_asp_exe_t:s0         |deleg_meas_skeleton_asp                |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:deleg_meas_appraise_skeleton_asp_exe_t:s0|deleg_meas_appraise_skeleton_asp       |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:dpkg_check_asp_exe_t:s0                  |dpkg_check_asp                         |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:dpkg_details_asp_exe_t:s0                |dpkg_details_asp                       |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:dpkg_inv_asp_exe_t:s0                    |dpkg_inv_asp                           |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:dummy_appraisal_exe_t:s0                 |dummy_appraisal                        |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:elf_appraise_asp_exe_t:s0                |elf_appraise                           |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:readelf_asp_exe_t:s0                     |elf_reader                             |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:encrypt_asp_exe_t:s0                     |encrypt_asp                            |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwsr-xr-x. |root  |root   |system_u:object_r:got_measure_asp_exe_t:s0                 |got_measure                            |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:got_appraise_asp_exe_t:s0                |got_appraise                           |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:hash_file_service_asp_exe_t:s0           |hashfileserviceasp                     |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:hash_service_asp_exe_t:s0                |hashserviceasp                         |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwsr-xr-x. |root  |root   |system_u:object_r:ima_asp_exe_t:s0                         |ima_asp                                |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwsr-xr-x. |root  |root   |system_u:object_r:kernel_msmt_asp_exe_t:s0                 |kernel_msmt_asp                        |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwsr-xr-x. |root  |root   |system_u:object_r:list_directory_service_asp_exe_t:s0      |listdirectoryserviceasp                |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lsmod_asp_exe_t:s0                       |lsmod                                  |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:lsproc_asp_exe_t:s0                      |lsprocasp                              |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:md5_file_service_asp_exe_t:s0            |md5fileserviceasp                      |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwsr-xr-x. |root  |root   |system_u:object_r:memory_mapping_asp_exe_t:s0              |memorymappingasp                       |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:merge_asp_exe_t:s0                       |merge_asp                              |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:mtab_asp_exe_t:s0                        |mtabasp                                |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:netstat_asp_exe_t:s0                     |netstatraw6asp                         |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:netstat_asp_exe_t:s0                     |netstatrawasp                          |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:netstat_asp_exe_t:s0                     |netstattcp6asp                         |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:netstat_asp_exe_t:s0                     |netstattcpasp                          |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:netstat_asp_exe_t:s0                     |netstatudp6asp                         |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:netstat_asp_exe_t:s0                     |netstatudpasp                          |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:netstat_asp_exe_t:s0                     |netstatunixasp                         |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:passport_maker_asp_exe_t:s0              |passport_maker_asp                     |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwsr-xr-x. |root  |root   |system_u:object_r:proc_env_asp_t:s0                        |procenv                                |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwsr-xr-x. |root  |root   |system_u:object_r:proc_fds_asp_exe_t:s0                    |procfds                                |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwsr-xr-x. |root  |root   |system_u:object_r:proc_mem_asp_exe_t:s0                    |procmem                                |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwsr-xr-x. |root  |root   |system_u:object_r:proc_namespaces_asp_exe_t:s0             |proc_namespaces_asp                    |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwsr-xr-x. |root  |root   |system_u:object_r:proc_open_file_asp_exe_t:s0              |procopenfileasp                        |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwsr-xr-x. |root  |root   |system_u:object_r:proc_root_asp_exe_t:s0                   |procrootasp                            |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:receive_asp_exe_t:s0                     |receive_asp                            |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:rpm_details_asp_exe_t:s0                 |rpm_details_asp                        |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:rpm_inv_asp_exe_t:s0                     |rpm_inv_asp                            |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:send_execute_asp_exe_t:s0                |send_execute_asp                       |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:send_execute_tcp_asp_exe_t:s0            |send_execute_tcp_asp                   |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:send_request_asp_exe_t:s0                |send_request_asp                       |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:send_asp_exe_t:s0                        |send_asp                               |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:serialize_graph_exe_t:s0                 |serialize_graph_asp                    |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:sign_send_exe_t:s0                       |sign_send_asp                          |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:split_exe_t:s0                           |split_asp                              |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:system_appraise_asp_exe_t:s0             |system_appraise_asp                    |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:system_asp_exe_t:s0                      |system_asp                             |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:verify_measurement_contract_asp_exe_t:s0 |verify_measurement_contract_asp        |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:whitelist_asp_exe_t:s0                   |whitelist                              |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
 
 
 /opt/maat/lib/pkgconfig
@@ -987,6 +997,8 @@ directory and its contents world readable (chmod 0755 for the directory, chmod 0
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |UNIX Perms  |User  |Group  |SELinux Label                                        |Filename                                |
 +============+======+=======+=====================================================+========================================+
+|-rw-r--r--. |root  |root   |system_u:object_r:whitelist_t:s0                     |binary.whitelist                        |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |blacklist.xml                           |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |compress_asp.xml                        |
@@ -1006,6 +1018,8 @@ directory and its contents world readable (chmod 0755 for the directory, chmod 0
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |dpkg_inv_asp.xml                        |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |dummy_appraisal.xml                     |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |elf_appraise.xml                        |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |elf_reader.xml                          |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
@@ -1128,6 +1142,8 @@ directory and its contents world readable (chmod 0755 for the directory, chmod 0
 |-rw-r--r--. |root  |root   |system_u:object_r:measurement_spec_t:s0              |proc_open_files_mspec.xml               |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:measurement_spec_t:s0              |test_measurement_mspec.xml              |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:measurement_spec_t:s0              |userspace_elf_mspec.xml                 |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:measurement_spec_t:s0              |userspace_hashfiles_mspec.xml           |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+

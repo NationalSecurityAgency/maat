@@ -100,12 +100,18 @@ contains a list of Copland Phrases called initial options (represented
 as <option> nodes). From the appraiser's perspective, any of the options
 listed can satisfy the attestation request.
 
-The appraiser includes its public certificate in the initial contract,
-and uses the corresponding private key to sign the contract (and all
-subsequent contracts). The signatures are compatible with the XML Sig standard
-(http://www.w3.org/TR/xmldsig-core/), although the standard's namespace is not used.
+The appraiser can sign contracts either with OpenSSL, or by using features
+provided by a TPM. In either case, the appraiser includes its public
+certificate in the initial contract, and uses the corresponding private key to
+sign the contract (and all subsequent contracts). When using OpenSSL to sign a
+contract, the signature protects the contract itself.  In the case of TPM, the
+signature protects an enclosed TPM quote, which in turn contains a hash of the
+contract, thereby protecting that contract. The signatures and quotes (if any)
+are compatible with the XML Sig standard (http://www.w3.org/TR/xmldsig-core/),
+although the standard's namespace is not used.
 
-Example:
+
+Example using OpenSSL signatures:
 
 .. code-block:: xml
 
@@ -129,7 +135,7 @@ Example:
       <signedinfo>
         <canonicalizationmethod algorithm="XML C14N 1.0"/>
         <signaturemethod algorithm="RSA"/>
-        <digestmethod algorithm="SHA-1"/>
+        <digestmethod algorithm="SHA-256"/>
       </signedinfo>
       <signaturevalue>
           <!-- base 64 encoded signature elided -->
@@ -138,6 +144,47 @@ Example:
       <keyinfo>BB:65:51:9E:4C:5F:18:D6:A7:CA:13:13:7F:5E:32:98:E1:4A:C1:15</keyinfo>
     </signature>
   </contract>
+
+
+Example using TPM signatures:
+
+.. code-block:: xml
+
+  <contract version="2.0" type="initial">
+    <subcontract> <!-- There's only ever one subcontract -->
+      <option>
+        <!--
+         ! each option node should have one value node as a child,
+         ! which contains the candidate Copland phrase
+         !-->
+        <value name="APB_phrase">((USM full) -> SIG)</value>
+      </option>
+      ...
+    </subcontract>
+    <nonce>0542ebfe07ac3da972d23196e73330ef6eb2c1d4</nonce>
+    <AttestationCredential fingerprint="BB:65:51:9E:4C:5F:18:D6:A7:CA:13:13:7F:5E:32:98:E1:4A:C1:15">
+        <!-- PEM encoded certificate elided -->
+        ...
+    </AttestationCredential>
+    <signature>
+      <signedinfo>
+        <canonicalizationmethod algorithm="XML C14N 1.0"/>
+        <signaturemethod algorithm="RSA"/>
+        <digestmethod algorithm="SHA-256"/>
+        <reference URI="#tpms_attest" />
+      </signedinfo>
+      <signaturevalue>
+          <!-- base 64 encoded signature elided -->
+          ...
+      </signaturevalue>
+      <keyinfo>BB:65:51:9E:4C:5F:18:D6:A7:CA:13:13:7F:5E:32:98:E1:4A:C1:15</keyinfo>
+      <object id="tpms_attest">
+          <!-- base 64 encoded quote elided -->
+          ...
+      </object>
+    </signature>
+  </contract>
+
 
 .. _ModifiedContract:
 
@@ -417,6 +464,7 @@ Children:
 	* SignedInfo
 	* SignatureValue
 	* KeyValue
+	* Object (only used with TPM signatures)
 
 
 .. rst-class:: html-toggle
@@ -545,7 +593,8 @@ Relevant Contracts:
         Initial, Modified, Execute, Measurement
 
 Description:
-        Metadata describing the signature block.
+        Metadata describing the signature block, and potentially pointing to
+        a TPM quote.
 
 Attributes:
         *none*
@@ -554,6 +603,7 @@ Children:
 	* CanonicalizationMethod - Required
 	* SignatureMethod - Required
 	* DigestMethod - Required
+	* Reference - Only used with TPM signatures
 
 
 .. rst-class:: html-toggle
@@ -599,6 +649,28 @@ Attributes:
 Children:
         *none*
 
+
+.. rst-class:: html-toggle
+
+Object
+------
+
+Tag Name:
+        Object
+
+Relevant Contracts:
+        Initial, Modified, Execute, Measurement
+
+Description:
+        Contains a base-64 encoded TPM quote, which in turn contains a digest
+        of the contract.  If this node exists, then the signature covers the
+        quote, and not the contract itself.
+
+Attributes:
+        * id - Required. Should be "tpms_attest"
+
+Children:
+        *none*
 
 .. rst-class:: html-toggle
 
@@ -657,10 +729,32 @@ Relevant Contracts:
 
 Description:
         Indicates the hash algorithm used to digest the contract for
-	signing. Only SHA-1 is known to work.
+	signing. Only SHA-256 is supported as SHA-1 is considered weak.
 
 Attributes:
         algorithm - required
 
 Children:
         *none*
+
+
+.. rst-class:: html-toggle
+
+Reference
+---------
+
+Tag Name:
+        Reference
+
+Relevant Contracts:
+        Initial, Modified, Execute, Measurement
+
+Description:
+        Points to the Object node where the TPM quote is located
+
+Attributes:
+        URI - required. Should be "#tpms_attest"
+
+Children:
+        *none*
+

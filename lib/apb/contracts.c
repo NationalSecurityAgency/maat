@@ -272,16 +272,24 @@ int handle_measurement_contract(struct scenario *scen, appraise_fn *appraise, in
         if (subcobj->nodesetval->nodeTab[i]->type == XML_ELEMENT_NODE) {
             if (scen->verify_tpm)
                 ret = verify_xml(doc,
-                                 subcobj->nodesetval->nodeTab[i], tmpstr,
-                                 scen->nonce, scen->akpubkey, SIGNATURE_TPM, scen->cacert);
+                                 subcobj->nodesetval->nodeTab[i],
+                                 tmpstr,
+                                 scen->nonce,
+                                 scen->akpubkey,
+                                 SIGNATURE_TPM,
+                                 scen->cacert);  // Not used by TPM
             else
                 ret = verify_xml(doc,
-                                 subcobj->nodesetval->nodeTab[i], tmpstr,
-                                 scen->nonce, scen->akpubkey, SIGNATURE_OPENSSL,
+                                 subcobj->nodesetval->nodeTab[i],
+                                 tmpstr,
+                                 scen->nonce,
+                                 scen->akpubkey,  // Not used by OpenSSL
+                                 SIGNATURE_OPENSSL,
                                  scen->cacert);
 
 
-            if (ret != 1) { /* 1 == good signature */
+            if (ret != MAAT_SIGNVFY_SUCCESS) {
+                /* bad signature? */
                 dlog(0, "subcontract signature failed\n");
                 goto subcontract_signature_failed;
             }
@@ -324,10 +332,10 @@ int handle_measurement_contract(struct scenario *scen, appraise_fn *appraise, in
 
     /* sign contract with that cert */
     fingerprint_buf = get_fingerprint(scen->certfile, NULL);
-    ret = sign_xml(doc, root, fingerprint_buf, scen->keyfile, scen->keypass,
+    ret = sign_xml(root, fingerprint_buf, scen->keyfile, scen->keypass,
                    scen->nonce, scen->tpmpass, scen->akctx, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
 
-    if(ret != 0) {
+    if(ret != MAAT_SIGNVFY_SUCCESS) {
         dlog(0, "Failed to sign access contract\n");
         goto signature_failed;
     }
@@ -478,12 +486,12 @@ int create_integrity_response(target_id_type_t target_typ, xmlChar *target,
 
         fprint = get_fingerprint(certfile, NULL);
 #ifdef USE_TPM
-        ret = sign_xml(doc, root, fprint, keyfile, keypass, nonce, tpmpass, akctx, sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+        ret = sign_xml(root, fprint, keyfile, keypass, nonce, tpmpass, akctx, sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
 #else
-        ret = sign_xml(doc, root, fprint, keyfile, keypass, NULL, NULL, NULL, SIGNATURE_OPENSSL);
+        ret = sign_xml(root, fprint, keyfile, keypass, NULL, NULL, NULL, SIGNATURE_OPENSSL);
 #endif
         free(fprint);
-        if(ret != 0) {
+        if(ret != MAAT_SIGNVFY_SUCCESS) {
             dlog(0, "Failed to sign integrity response contract\n");
             goto integrity_response_cleanup;
         }
@@ -649,11 +657,11 @@ unsigned char *generate_measurement_contract(struct scenario *scen,
             obj = NULL;
             scratch = get_fingerprint(scen->certfile, NULL);
 
-            ret = sign_xml(doc, subc, scratch, scen->keyfile, scen->keypass,
+            ret = sign_xml(subc, scratch, scen->keyfile, scen->keypass,
                            scen->nonce, scen->tpmpass, scen->akctx,
                            scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
 
-            if(ret != 0) {
+            if(ret != MAAT_SIGNVFY_SUCCESS) {
                 dlog(1, "Error while signing measurement contract\n");
             }
 

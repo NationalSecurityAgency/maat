@@ -112,15 +112,24 @@ static int verify_contract(char *workdir, char *nonce, char *cacert,
         if (subcobj->nodesetval->nodeTab[i]->type == XML_ELEMENT_NODE) {
             if (verify_tpm) {
                 ret = verify_xml(doc,
-                                 subcobj->nodesetval->nodeTab[i], tmpstr,
-                                 nonce, akpubkey, SIGNATURE_TPM, cacert);
+                                 subcobj->nodesetval->nodeTab[i],
+                                 tmpstr,
+                                 nonce,
+                                 akpubkey,
+                                 SIGNATURE_TPM,
+                                 cacert);
             } else {
                 ret = verify_xml(doc,
-                                 subcobj->nodesetval->nodeTab[i], tmpstr,
-                                 nonce, akpubkey, SIGNATURE_OPENSSL, cacert);
+                                 subcobj->nodesetval->nodeTab[i],
+                                 tmpstr,
+                                 nonce,
+                                 akpubkey,
+                                 SIGNATURE_OPENSSL,
+                                 cacert);
             }
 
-            if (ret != 1) { /* 1 == good signature */
+            if (ret != MAAT_SIGNVFY_SUCCESS) {
+                /* bad signature? */
                 dlog(0, "Signature for subcontract %d failed\n", i);
                 goto subcontract_sig_err;
             }

@@ -192,10 +192,16 @@ static int initcon_new_xml(struct scenario *scen, xmlDoc *doc,
     xmlAddChild(root, node);
 
     fprint = get_fingerprint(scen->certfile, NULL);
-    ret = sign_xml(doc, root, fprint, scen->keyfile, scen->keypass, *nonce,
-                   scen->tpmpass, scen->akctx, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+    ret = sign_xml(root,
+                   fprint,
+                   scen->keyfile,
+                   scen->keypass,
+                   *nonce,
+                   scen->tpmpass,
+                   scen->akctx,
+                   scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
     free(fprint);
-    if (ret) {
+    if (ret != MAAT_SIGNVFY_SUCCESS) {
         dperror("Error signing XML file");
         return -1;
     }
@@ -539,11 +545,15 @@ int handle_initial_contract(struct attestation_manager *manager,
         /*
          * verify signature
          */
-        ret = verify_xml(doc, root, creddir, scen->nonce, scen->akpubkey,
+        ret = verify_xml(doc,
+                         root,
+                         creddir,
+                         scen->nonce,
+                         scen->akpubkey,
                          scen->verify_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL,
                          scen->cacert);
-        if(ret != 1) {
-            /* 1 == good signature */
+        if(ret != MAAT_SIGNVFY_SUCCESS) {
+            /* bad signature? */
             dlog(1, "Failed signature verification\n");
             goto verify_failed;
         }
@@ -660,10 +670,16 @@ int handle_initial_contract(struct attestation_manager *manager,
      * sign contract with that cert
      */
     fprint = get_fingerprint(scen->certfile, NULL);
-    ret = sign_xml(doc, root, fprint, scen->keyfile, scen->keypass, scen->nonce,
-                   scen->tpmpass, scen->akctx, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+    ret = sign_xml(root,
+                   fprint,
+                   scen->keyfile,
+                   scen->keypass,
+                   scen->nonce,
+                   scen->tpmpass,
+                   scen->akctx,
+                   scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
     free(fprint);
-    if(ret != 0) {
+    if(ret != MAAT_SIGNVFY_SUCCESS) {
         dlog(0, "Failed to sign XML contract\n");
         goto sign_xml_failed;
     }
@@ -781,10 +797,15 @@ int handle_modified_contract(struct attestation_manager *manager,
             goto out;
         }
 
-        rc = verify_xml(doc, root, creddir, scen->nonce, scen->akpubkey,
+        rc = verify_xml(doc,
+                        root,
+                        creddir,
+                        scen->nonce,
+                        scen->akpubkey,
                         scen->verify_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL,
                         scen->cacert);
-        if (rc != 1) {
+        if(rc != MAAT_SIGNVFY_SUCCESS) {
+            /* bad signature? */
             dlog(1, "subcontract signature failed\n");
             rc = -6;
             goto out;
@@ -840,10 +861,16 @@ int handle_modified_contract(struct attestation_manager *manager,
 
     /* sign contract with that cert */
     fingerprint = get_fingerprint(scen->certfile, NULL);
-    rc = sign_xml(doc, root, fingerprint, scen->keyfile, scen->keypass, scen->nonce,
-                  scen->tpmpass, scen->akctx, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+    rc = sign_xml(root,
+                  fingerprint,
+                  scen->keyfile,
+                  scen->keypass,
+                  scen->nonce,
+                  scen->tpmpass,
+                  scen->akctx,
+                  scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
 
-    if(rc != 0) {
+    if(rc != MAAT_SIGNVFY_SUCCESS) {
         rc = -8;
         dlog(1, "Failed to add signatures\n.");
         goto out;
@@ -1040,10 +1067,15 @@ int handle_execute_contract(struct attestation_manager *manager,
         char creddir[201];
         snprintf(creddir, 200, "%s/cred", scen->workdir);
 
-        ret = verify_xml(doc, root, creddir, scen->nonce, scen->akpubkey,
+        ret = verify_xml(doc,
+                         root,
+                         creddir,
+                         scen->nonce,
+                         scen->akpubkey,
                          scen->verify_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL,
                          scen->cacert);
-        if (ret != 1) { /* 1 == good signature */
+        if(ret != MAAT_SIGNVFY_SUCCESS) {
+            /* bad signature? */
             dlog(1, "Failed signature verification\n");
             ret = -1;
             goto out;
@@ -1200,10 +1232,16 @@ int create_error_response(struct scenario *scen)
         }
 
         fprint = get_fingerprint(certfile, NULL);
-        ret = sign_xml(doc, root, fprint, keyfile, scen->keypass, nonce, scen->tpmpass,
-                       scen->akctx, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+        ret = sign_xml(root,
+                       fprint,
+                       keyfile,
+                       scen->keypass,
+                       nonce,
+                       scen->tpmpass,
+                       scen->akctx,
+                       scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
         free(fprint);
-        if(ret != 0) {
+        if(ret != MAAT_SIGNVFY_SUCCESS) {
             dlog(0, "Failed to sign integrity response contract\n");
             goto integrity_response_cleanup;
         }

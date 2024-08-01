@@ -283,9 +283,9 @@ int create_execute_contract(char *version, int sig_flags,
     xmlAddChild(root, cred_node);
 
     fprint = get_fingerprint(certfile, NULL);
-    ret = sign_xml(doc, root, fprint, keyfile, keyfilepass, nonce, tpmpass, akctx, sig_flags);
+    ret = sign_xml(root, fprint, keyfile, keyfilepass, nonce, tpmpass, akctx, sig_flags);
     free(fprint);
-    if(ret) {
+    if(ret != MAAT_SIGNVFY_SUCCESS) {
         dlog(0, "Error signing XML\n");
         ret = -1;
         goto out;
@@ -489,7 +489,7 @@ char *xpath_get_content(xmlDoc *doc, const char *path)
 {
     xmlXPathObject *obj;
     char *ret = NULL;
-
+    
     obj = xpath(doc, path);
     if (obj && obj->nodesetval->nodeNr) {
         if (obj->nodesetval->nodeTab[0]->type == XML_ELEMENT_NODE) {

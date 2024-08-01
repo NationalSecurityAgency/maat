@@ -20,6 +20,7 @@
 #include <libxml/tree.h>
 #include <glib.h>
 #include <common/taint.h>
+#include <util/xml_node_names.h>
 
 /*! \file
  *  functions to validate xml doc structures.
@@ -37,47 +38,66 @@ int validate_node(xmlNode *base, xmlNode *con,
                   GList *node_ignore, GList *prop_ignore, GList *cond_ignore,
                   int superset);
 #endif
-int validate_document(xmlDoc *base, xmlDoc *con, int superset);
-
 
 /**
- * Verify that the buffer pointed to by @buf contains a NULL
- * terminated string of printable ASCII characters of no more than
- * @max bytes (including the NULL terminator). It is safe to pass
- * SIZE_MAX for a string that is guarenteed to be terminated otherwise
- * @max should be the size of the buffer pointed to by @buf.
- *
- * On successful validation, returns a pointer to the same buffer cast
- * as a char *.
- *
- * Returns NULL if validation fails (including if @buf is NULL).
+ * @brief Validate an XML document
+ * 
+ * @param base Base xmlDoc*
+ * @param con Contract xmlDoc* 
+ * @param superset Flag that controls checking whether or not con is a superset of base
+ * 
+ * @return int 0 if node has been validated, -1 on failure
  */
-char __untainted *validate_cstring_ascii(const unsigned char *buf, size_t max);
+int validate_document(xmlDoc *base,
+                      xmlDoc *con,
+                      int superset);
 
 /**
- * Verify that the buffer pointed to by @buf contains a NULL
- * terminated string of printable ASCII characters of exactly
- * @len bytes (including the NULL terminator).
- *
- * On successful validation, returns a pointer to the same buffer cast
- * as a char *.
- *
- * Returns NULL if validation fails (including if @buf is NULL).
- *
+ * @brief Verify that the buffer pointed to by @buf contains a NULL
+ *        terminated string of printable ASCII characters of no more
+ *        than @max bytes (including the NULL terminator). It is safe
+ *        to pass SIZE_MAX for a string that is guarenteed to be
+ *        terminated otherwise @max should be the size of the buffer
+ *        pointed to by @buf.
+ * 
+ * @param buf Buffer containing a string to be checked
+ * @param max Maximum length of the string
+ * 
+ * @return char* On successful validation, returns a pointer to the same
+ *         buffer cast as a char*, or returns NULL if validation fails
+ *         (including if @buf is NULL)
  */
-char __untainted *validate_cstring_ascii_len(const unsigned char *buf, size_t len);
+char __untainted *validate_cstring_ascii(const unsigned char *buf,
+                                         size_t max);
 
 /**
- * Verify that the buffer pointed to by @fprint contains a NULL
- * terminated string of at most @max characters (including NULL
- * terminator) consisting of groups of two hexadecimal characters
- * [0-9a-fA-F] separated by colons.
- *
- * On successful validation, returns a pointer to the same buffer cast
- * as a char *.
- *
- * Returns NULL if validation fails (including if @buf is NULL).
+ * @brief Verify that the buffer pointed to by @buf contains a NULL
+ *        terminated string of printable ASCII characters of exactly
+ *        @len bytes (including the NULL terminator)
+ * 
+ * @param buf Buffer containing a string to be checked
+ * @param len Expected length of the string
+ * 
+ * @return char* On successful validation, returns a pointer to the
+ *         same buffer cast as a char*, or NULL if validation fails
+ *         (including if @buf is NULL)
  */
-char __untainted *validate_pubkey_fingerprint(unsigned char *fprint, size_t max);
+char __untainted *validate_cstring_ascii_len(const unsigned char *buf,
+                                             size_t len);
+
+/**
+ * @brief Given a key fingerprint (i.e., a string consisting of pairs of hex
+ *        digits interspersed with ':'), validate the format of that fingerprint.
+ *        Note that this function does not check to see if the fingerprint actually
+ *        matches that of a given key; it only checks the format.
+ * 
+ * @param fingerprint String fingerprint to validate (format should be "aa:bb...yy:zz")
+ * @param max size_t maximum length that the fingerprint can be
+ * 
+ * @return char* Pointer to the fingerprint, or NULL if the fingerprint
+ *         string does not pass validation
+ */
+char __untainted *validate_pubkey_fingerprint(unsigned char *buf,
+                                              size_t max);
 
 #endif

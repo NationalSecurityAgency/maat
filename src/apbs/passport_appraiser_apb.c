@@ -592,10 +592,10 @@ static int appraise_passport(struct json_object *contract)
         }
         g_free(certfile_path);
 
-        if (verified == 1)
+        if (verified == MAAT_SIGNVFY_SUCCESS)
             break;
     }
-    if (verified != 1) {
+    if (verified != MAAT_SIGNVFY_SUCCESS) {
         dlog(5, "not valid: third party appraiser's signature verification failed\n");
         res = -1;
         goto cleanup;

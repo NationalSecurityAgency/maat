@@ -62,7 +62,8 @@ int setup_dispatch_loop(int argc, char **argv);
 
 void setup(void)
 {
-    libmaat_init(0, 4);
+    // Only output LOG_NOTICE or higher (use LOG_DEBUG for lots more info)
+    libmaat_init(0, LOG_DEBUG);
 
     mkdir(ATTESTER_WORKDIR, 0777);
     mkdir(APPRAISER_WORKDIR, 0777);

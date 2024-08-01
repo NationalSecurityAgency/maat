@@ -502,11 +502,17 @@ int adjust_measurement_contract_to_access_contract(struct scenario *scen)
 
     /* sign contract with that cert */
     fingerprint_buf = get_fingerprint(scen->certfile, NULL);
-    ret = sign_xml(doc, root, fingerprint_buf, scen->keyfile, scen->keypass,
-                   scen->nonce, scen->tpmpass, scen->akctx, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+    ret = sign_xml(root,
+                   fingerprint_buf,
+                   scen->keyfile,
+                   scen->keypass,
+                   scen->nonce,
+                   scen->tpmpass,
+                   scen->akctx,
+                   scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
     free(fingerprint_buf);
     fingerprint_buf = NULL;
-    if(ret != 0) {
+    if(ret != MAAT_SIGNVFY_SUCCESS) {
         dlog(0, "Failed to sign access contract\n");
         goto sig_err;
     }

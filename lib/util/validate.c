@@ -29,10 +29,17 @@
 
 #include <ctype.h>
 
-/*
- * Determine whether a given nodename propname pair is in the list
+/**
+ * @brief Determine whether a given nodename:propname pair is in the list
+ * 
+ * @param nodename char* Node name
+ * @param propname char* Property name
+ * @param ignore List to check for nodename:propname pair
+ * 
+ * @return int Return 1 if nodename:propname pair is found, 0 if not
  */
-static inline int conditional_in_list(const char *nodename, const char *propname,
+static inline int conditional_in_list(const char *nodename,
+                                      const char *propname,
                                       GList *ignore)
 {
     GList *tmp;
@@ -47,13 +54,18 @@ static inline int conditional_in_list(const char *nodename, const char *propname
     }
 
     return 0;
-}
+}  // conditional_in_list()
 
-
-/*
- * Determine whether a given string is in the list
+/**
+ * @brief Determine whether a given string is in the list
+ * 
+ * @param name String to find
+ * @param ignore List to check
+ * 
+ * @return int Return 1 if the name string is found in the list, 0 if not
  */
-static inline int string_in_list(const char *name, GList *ignore)
+static inline int string_in_list(const char *name,
+                                 GList *ignore)
 {
     GList *tmp;
 
@@ -65,17 +77,28 @@ static inline int string_in_list(const char *name, GList *ignore)
     }
 
     return 0;
-}
+}  // string_in_list()
 
-/*
- * Compare the properties associated with two nodes.
- * optionally include a GList of strings to ignore if there are differences.
- * 'superset' controls whether to check that con is a superset of base, or
- * fail if its not an exact match.
- * XXX: Add ability to selectively ignore props based upon node name.
+/**
+ * @brief Compare the properties associated with two nodes.  Optionally
+ *        include a GList of strings to ignore if there are differences.
+ *        'superset' controls whether to check that con is a superset of
+ *        base, or fail if its not an exact match.
+ * TODO: Add ability to selectively ignore props based upon node name.
+ * 
+ * @param base xmlNode* 
+ * @param con xmlNode* 
+ * @param prop_ignore GList List of properties to ignore
+ * @param cond_ignore GList List of conditionals to ignore
+ * @param superset Flag that controls checking whether or not con is a superset of base
+ * 
+ * @return int 0 if node has been validated, -1 on failure
  */
-int validate_props(xmlNode *base, xmlNode *con,
-                   GList *prop_ignore, GList *cond_ignore, int superset)
+int validate_props(xmlNode *base,
+                   xmlNode *con,
+                   GList *prop_ignore,
+                   GList *cond_ignore,
+                   int superset)
 {
     xmlAttr *battr;
     char *btmp, *ctmp;
@@ -119,16 +142,35 @@ int validate_props(xmlNode *base, xmlNode *con,
         free(ctmp);
     }
     return 0;
-}
+}  // validate_props()
 
-int validate_node(xmlNode *base, xmlNode *con,
-                  GList *node_ignore, GList *prop_ignore, GList *cond_ignore,
+/**
+ * @brief Validate a node
+ * 
+ * @param base xmlNode* 
+ * @param con xmlNode* 
+ * @param node_ignore GList List of nodes to ignore
+ * @param prop_ignore GList List of properties to ignore
+ * @param cond_ignore GList List of conditionals to ignore
+ * @param superset Flag that controls checking whether or not con is a superset of base
+ * 
+ * @return int 0 if node has been validated, -1 on failure
+ */
+int validate_node(xmlNode *base,
+                  xmlNode *con,
+                  GList *node_ignore,
+                  GList *prop_ignore,
+                  GList *cond_ignore,
                   int superset)
 {
     xmlNode *bnode, *cnode;
     char *btmp, *ctmp;
 
-    if (validate_props(base, con, prop_ignore, cond_ignore, superset)) {
+    if (validate_props(base,
+                       con,
+                       prop_ignore,
+                       cond_ignore,
+                       superset)) {
         dlog(1, "Failed to validate props for node %s\n", base->name);
         return -1;
     }
@@ -171,8 +213,10 @@ int validate_node(xmlNode *base, xmlNode *con,
                 if (cnode->type != XML_ELEMENT_NODE)
                     continue;
                 if (strcasecmp((char*)bnode->name, (char*)cnode->name)==0 &&
-                        !validate_props(bnode, cnode,
-                                        prop_ignore, cond_ignore,
+                        !validate_props(bnode,
+                                        cnode,
+                                        prop_ignore,
+                                        cond_ignore,
                                         superset))
                     break;
             }
@@ -218,21 +262,43 @@ int validate_node(xmlNode *base, xmlNode *con,
     }
 
     return 0;
-}
+}  // validate_node()
 
-static struct conditional_ignore *alloc_cond_ignore(char *n, char *p)
+/**
+ * @brief Allocate a conditional_ignore structure containing the provided 
+ *        node name and property name strings and return it to the caller
+ * 
+ * @param nondename Node name string 
+ * @param propname Property name string
+ * 
+ * @return struct conditional_ignore* Allocated struct containing the
+ *         node name and property name (caller is responsible for freeing)
+ */
+static struct conditional_ignore *alloc_cond_ignore(char *nondename,
+                                                    char *propname)
 {
     struct conditional_ignore *ret;
 
     ret = malloc(sizeof(*ret));
     if (!ret)
         return NULL;
-    ret->nodename = n;
-    ret->propname = p;
+    ret->nodename = nondename;
+    ret->propname = propname;
     return ret;
-}
+}  // alloc_cond_ignore()
 
-int validate_document(xmlDoc *base, xmlDoc *con, int superset)
+/**
+ * @brief Validate an XML document
+ * 
+ * @param base Base xmlDoc*
+ * @param con Contract xmlDoc* 
+ * @param superset Flag that controls checking whether or not con is a superset of base
+ * 
+ * @return int 0 if node has been validated, -1 on failure
+ */
+int validate_document(xmlDoc *base,
+                      xmlDoc *con,
+                      int superset)
 {
     int ret = 0;
     xmlNode *broot, *croot;
@@ -256,17 +322,21 @@ int validate_document(xmlDoc *base, xmlDoc *con, int superset)
     /* AttestationCredential can be removed from contracts. */
     node_ignore = g_list_append(node_ignore, "AttestationCredential");
     /* signature and nonce change locations within the contract */
-    node_ignore = g_list_append(node_ignore, "signature");
-    node_ignore = g_list_append(node_ignore, "nonce");
-    node_ignore = g_list_append(node_ignore, "bit");
+    node_ignore = g_list_append(node_ignore, XML_NODENAME_SIGNATURE);  // "signature"
+    node_ignore = g_list_append(node_ignore, XML_NODENAME_NONCE);  // "nonce"
+    node_ignore = g_list_append(node_ignore, XML_NODENAME_BIT);  // "bit"
 
     /* Type can be modified */
-    ci = alloc_cond_ignore("contract", "type");
+    ci = alloc_cond_ignore(XML_NODENAME_CONTRACT, XML_PROPNAME_TYPE);
     if (ci)
         cond_ignore = g_list_append(cond_ignore, ci);
 
-    ret = validate_node(broot, croot,
-                        node_ignore, prop_ignore, cond_ignore, superset);
+    ret = validate_node(broot,
+                        croot,
+                        node_ignore,
+                        prop_ignore,
+                        cond_ignore,
+                        superset);
 
     /* Type can be modified */
     free(ci);
@@ -275,9 +345,23 @@ int validate_document(xmlDoc *base, xmlDoc *con, int superset)
 
     return ret;
 
-}
+}  // validate_document()
 
-
+/**
+ * @brief Verify that the buffer pointed to by @buf contains a NULL
+ *        terminated string of printable ASCII characters of no more
+ *        than @max bytes (including the NULL terminator). It is safe
+ *        to pass SIZE_MAX for a string that is guarenteed to be
+ *        terminated otherwise @max should be the size of the buffer
+ *        pointed to by @buf.
+ * 
+ * @param buf Buffer containing a string to be checked
+ * @param max Maximum length of the string
+ * 
+ * @return char* On successful validation, returns a pointer to the same
+ *         buffer cast as a char*, or returns NULL if validation fails
+ *         (including if @buf is NULL)
+ */
 char __untainted *validate_cstring_ascii(const unsigned char *buf, size_t max)
 {
     const unsigned char *res =  buf;
@@ -298,8 +382,20 @@ char __untainted *validate_cstring_ascii(const unsigned char *buf, size_t max)
     }
 
     return UNTAINT((char*)res);
-}
+}  // validate_cstring_ascii()
 
+/**
+ * @brief Verify that the buffer pointed to by @buf contains a NULL
+ *        terminated string of printable ASCII characters of exactly
+ *        @len bytes (including the NULL terminator)
+ * 
+ * @param buf Buffer containing a string to be checked
+ * @param len Expected length of the string
+ * 
+ * @return char* On successful validation, returns a pointer to the
+ *         same buffer cast as a char*, or NULL if validation fails
+ *         (including if @buf is NULL)
+ */
 char __untainted *validate_cstring_ascii_len(const unsigned char *buf, size_t len)
 {
     const unsigned char *res = buf;
@@ -327,9 +423,21 @@ char __untainted *validate_cstring_ascii_len(const unsigned char *buf, size_t le
     }
 
     return UNTAINT((char*)res);
-}
+}  // validate_cstring_ascii_len()
 
-char *validate_pubkey_fingerprint(unsigned char *fprint, size_t max)
+/**
+ * @brief Given a key fingerprint (i.e., a string consisting of pairs of hex
+ *        digits interspersed with ':'), validate the format of that fingerprint.
+ *        Note that this function does not check to see if the fingerprint actually
+ *        matches that of a given key; it only checks the format.
+ * 
+ * @param fingerprint String fingerprint to validate (format should be "aa:bb...yy:zz")
+ * @param max size_t maximum length that the fingerprint can be
+ * 
+ * @return char* Pointer to the fingerprint, or NULL if the fingerprint
+ *         string does not pass validation
+ */
+char *validate_pubkey_fingerprint(unsigned char *fingerprint, size_t max)
 {
     /*
       pubkey fingerprints must be of the form
@@ -337,30 +445,31 @@ char *validate_pubkey_fingerprint(unsigned char *fprint, size_t max)
     */
     size_t i;
     size_t len = 0;
-    if(fprint == NULL) {
+    if(fingerprint == NULL) {
         goto fail;
     }
 
-    for(i=0; (i < max && fprint[i] != '\0'); i++) {
+    // Format must be 2 hex digits, followed by ':' if another pair of hex digits is to follow
+    for(i = 0; (i < max && fingerprint[i] != '\0'); i++) {
         if((i % 3 == 0 || i % 3 == 1)) {
-            if(!isxdigit(fprint[i])) {
+            if(!isxdigit(fingerprint[i])) {
                 goto fail;
             }
         } else {
-            if(fprint[i] != ':') {
+            if(fingerprint[i] != ':') {
                 goto fail;
             }
         }
         len++;
     }
 
-    if(i%3 != 2) {
+    if(i % 3 != 2) {
         goto fail;
     }
 
-    return UNTAINT((char*)fprint);
+    return UNTAINT((char*)fingerprint);
 
 fail:
     dlog(0, "Error: bad public key fingerprint\n");
     return NULL;
-}
+}  // validate_pubkey_fingerprint()

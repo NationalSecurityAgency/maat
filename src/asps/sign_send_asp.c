@@ -325,10 +325,16 @@ static int sign_contract(xmlDoc *doc, xmlNode *subcontract_node, char *certfile,
         return -1;
     }
 
-    ret = sign_xml(doc, subcontract_node, scratch, keyfile, keypass,
-                   nonce, tpmpass, akctx, sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+    ret = sign_xml(subcontract_node,
+                   scratch,
+                   keyfile,
+                   keypass,
+                   nonce,
+                   tpmpass,
+                   akctx,
+                   sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
 
-    if(ret != 0) {
+    if(ret != MAAT_SIGNVFY_SUCCESS) {
         dlog(1, "Error while signing measurement contract\n");
     }
 

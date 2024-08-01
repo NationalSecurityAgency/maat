@@ -43,13 +43,18 @@
 #include <openssl/conf.h>
 
 #include <util/util.h>
+#include <util/xml_util.h>
+#include <libxml/c14n.h>
 #include <util/base64.h>
 #include <util/checksum.h>
 #include <util/compress.h>
 #include <util/crypto.h>
 #include <util/sign.h>
+#include <util/signfile.h>
+#include <util/signvfy.h>
 #include <util/validate.h>
 #include <util/maat-io.h>
+#include <util/xml_node_names.h>
 
 #ifdef USE_TPM
 #include <util/tpm2/tools/sign.h>
@@ -75,9 +80,11 @@ const unsigned char test_string_csum_raw[] = { 0x6d, 0xbc, 0xe4, 0xe2, 0xcc,
 
 char *certfile = NULL;
 char *keyfile = NULL;
+char *fingerprintedcertfile = NULL;
 char *cacertfile = NULL;
 char *simple_xml = NULL;
 char *extended_xml = NULL;
+char *interop_test_xml = NULL;
 unsigned char key[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 unsigned char iv[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 #ifdef USE_TPM
@@ -85,6 +92,9 @@ unsigned char bnonce[20] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
                              9, 8, 7, 6, 5, 4, 3, 2, 1, 0
                            };
 #endif
+// This nonce needs to match what's in the XML under /contract/nonce:
+unsigned char *b64_nonce =      "0542ebfe07ac3da972d23196e73330ef6eb2c1d4";
+unsigned char *b64_bad_nonce =  "0542ebfe07ac3da972d23196e73330ef6eb2c14d";
 unsigned char *random_buf = NULL;
 unsigned char *all_ones = NULL;
 unsigned char *mostly_ones = NULL;
@@ -119,6 +129,7 @@ void unchecked_setup(void)
 
     certfile = ATTESTER_CERT;
     keyfile = ATTESTER_KEY;
+    fingerprintedcertfile = FINGERPRINTED_CERT;
     cacertfile = CA_CERT;
 
     snprintf(scratch, 255, "%s/xml/test-files/simple.xml", srcdir);
@@ -126,6 +137,9 @@ void unchecked_setup(void)
 
     snprintf(scratch, 255, "%s/xml/test-files/extended.xml", srcdir);
     extended_xml = strdup(scratch);
+
+    snprintf(scratch, 255, "%s/xml/test-files/interop_test.xml", srcdir);
+    interop_test_xml = strdup(scratch);
 
     return;
 }
@@ -159,7 +173,7 @@ void unchecked_teardown(void)
 {
     free(simple_xml);
     free(extended_xml);
-
+    free(interop_test_xml);
     free(random_buf);
     free(all_ones);
     free(mostly_ones);
@@ -564,7 +578,7 @@ START_TEST(test_sign_openssl_small)
                                 signatureLen,
                                 certfile,
                                 cacertfile);
-    fail_if(ret != 1, "verification failed");
+    fail_if(ret != MAAT_SIGNVFY_SUCCESS, "verification failed");
     free(signature);
 }
 END_TEST
@@ -590,7 +604,7 @@ START_TEST(test_sign_openssl_big)
                                 signatureLen,
                                 certfile,
                                 cacertfile);
-    fail_if(ret != 1, "verification failed");
+    fail_if(ret != MAAT_SIGNVFY_SUCCESS, "verification failed");
     free(signature);
 }
 END_TEST
@@ -628,7 +642,256 @@ START_TEST(test_sign_tpm_big)
     fail_if(res != 0, "checkquote failure %d\n", res);
 }
 END_TEST
-#endif
+
+#endif /* USE_TPM */
+
+START_TEST(test_interop_openssl_sign_openssl_verify)
+{
+    xmlDoc *doc = NULL;
+    xmlNode *docroot = NULL;
+    xmlNode *bogusNode = NULL;
+    int ret;
+
+    dlog(LOG_NOTICE, "In test_interop_openssl_sign_openssl_verify()...\n");
+    doc = xmlReadFile(interop_test_xml, NULL, 0);
+    docroot = xmlDocGetRootElement(doc);
+
+    ret = sign_xml(docroot,
+                   "1a:2b:3c:4d",  // certid (fingerprint)
+                   keyfile,
+                   "",
+                   b64_nonce,  // nonce
+                   NULL,  // tpmpass
+                   NULL,  // akctx
+                   SIGNATURE_OPENSSL);  // flags
+    fail_if(ret != MAAT_SIGNVFY_SUCCESS, "sign_xml() with OpenSSL failed");
+
+    // Verify the signature and check the (good) nonce
+    ret = verify_xml(doc,
+                     docroot,
+                     CREDS_DIR "/",  // prefix
+                     b64_nonce,  // nonce
+                     fingerprintedcertfile,
+                     SIGNATURE_OPENSSL,
+                     cacertfile);
+    dlog(LOG_NOTICE, "With the original XML and a good nonce, verify_xml() returned %s, expected MAAT_SIGNVFY_SUCCESS\n", (ret == MAAT_SIGNVFY_SUCCESS ? "MAAT_SIGNVFY_SUCCESS" : "MAAT_SIGNVFY_FAILURE" ));
+    fail_if(ret != MAAT_SIGNVFY_SUCCESS, "verify_xml() with OpenSSL failed but it should have succeeded, ret=%d", ret);
+
+    // Verify the signature and check the (bad) nonce
+    ret = verify_xml(doc,
+                     docroot,
+                     CREDS_DIR "/",  // prefix
+                     b64_bad_nonce,  // nonce
+                     fingerprintedcertfile,
+                     SIGNATURE_OPENSSL,
+                     cacertfile);
+    dlog(LOG_NOTICE, "With the original XML and a bad nonce, verify_xml() returned %s, expected MAAT_SIGNVFY_FAILURE\n", (ret == MAAT_SIGNVFY_SUCCESS ? "MAAT_SIGNVFY_SUCCESS" : "MAAT_SIGNVFY_FAILURE" ));
+    fail_if(ret == MAAT_SIGNVFY_SUCCESS, "verify_xml() with OpenSSL succeeded but it should have failed, ret=%d", ret);
+
+    // Tamper with the XML and try to verify once again (it should fail)
+    bogusNode = xmlNewNode(NULL, (xmlChar*)"bogusNode");
+    xmlAddChild(docroot, bogusNode);
+
+    ret = verify_xml(doc,
+                     docroot,
+                     CREDS_DIR "/",  // prefix
+                     b64_nonce,  // nonce
+                     fingerprintedcertfile,
+                     SIGNATURE_OPENSSL,
+                     cacertfile);
+    dlog(LOG_NOTICE, "With the tampered XML and a good nonce, verify_xml() returned %s, expected MAAT_SIGNVFY_FAILURE\n", (ret == MAAT_SIGNVFY_SUCCESS ? "MAAT_SIGNVFY_SUCCESS" : "MAAT_SIGNVFY_FAILURE" ));
+    fail_if(ret == MAAT_SIGNVFY_SUCCESS, "verify_xml() with OpenSSL succeeded but it should have failed, ret=%d", ret);
+
+    xmlFreeDoc(doc);
+}  // test_interop_openssl_sign_openssl_verify
+END_TEST
+
+#ifdef USE_TPM
+
+START_TEST(test_interop_tpm_sign_openssl_verify)
+{
+    xmlDoc *doc = NULL;
+    xmlNode *docroot = NULL;
+    xmlNode *bogusNode = NULL;
+    int ret;
+
+    dlog(LOG_NOTICE, "In test_interop_tpm_sign_openssl_verify()...\n");
+    doc = xmlReadFile(interop_test_xml, NULL, 0);
+    docroot = xmlDocGetRootElement(doc);
+
+    ret = sign_xml(docroot,
+                   NULL,  // certid (fingerprint)
+                   NULL,  // privkey_file
+                   "",    // privkey_pass
+                   b64_nonce,  // nonce
+                   TPMPASS, // tpmpass
+                   AKCTX,   // akctx
+                   SIGNATURE_TPM);  // flags
+    fail_if(ret != MAAT_SIGNVFY_SUCCESS, "sign_xml() with TPM failed");
+
+    // Verify the signature and check the (good) nonce
+    ret = verify_xml(doc,
+                     docroot,
+                     NULL,  // prefix
+                     b64_nonce,  // nonce
+                     AKPUB,
+                     SIGNATURE_OPENSSL,  // not SIGNATURE_TPM
+                     NULL);  // cacertfile
+    dlog(LOG_NOTICE, "With the original XML and a good nonce, verify_xml() returned %s, expected MAAT_SIGNVFY_SUCCESS\n", (ret == MAAT_SIGNVFY_SUCCESS ? "MAAT_SIGNVFY_SUCCESS" : "MAAT_SIGNVFY_FAILURE" ));
+    fail_if(ret != MAAT_SIGNVFY_SUCCESS, "verify_xml() with OpenSSL failed but it should have succeeded, ret=%d", ret);
+
+    // Verify the signature and check the (bad) nonce
+    ret = verify_xml(doc,
+                     docroot,
+                     NULL,  // prefix
+                     b64_bad_nonce,  // nonce
+                     AKPUB,
+                     SIGNATURE_OPENSSL,  // not SIGNATURE_TPM
+                     NULL);  // cacertfile
+    dlog(LOG_NOTICE, "With the original XML and a bad nonce, verify_xml() returned %s, expected MAAT_SIGNVFY_FAILURE\n", (ret == MAAT_SIGNVFY_SUCCESS ? "MAAT_SIGNVFY_SUCCESS" : "MAAT_SIGNVFY_FAILURE" ));
+    fail_if(ret == MAAT_SIGNVFY_SUCCESS, "verify_xml() with OpenSSL succeeded but it should have failed, ret=%d", ret);
+
+    // Tamper with the XML and try to verify once again (it should fail)
+    bogusNode = xmlNewNode(NULL, (xmlChar*)"bogusNode");
+    xmlAddChild(docroot, bogusNode);
+
+    ret = verify_xml(doc,
+                     docroot,
+                     NULL,  // prefix
+                     b64_nonce,  // nonce
+                     AKPUB,
+                     SIGNATURE_OPENSSL,  // not SIGNATURE_TPM
+                     NULL);  // cacertfile
+    dlog(LOG_NOTICE, "With the tampered XML and a good nonce, verify_xml() returned %s, expected MAAT_SIGNVFY_FAILURE\n", (ret == MAAT_SIGNVFY_SUCCESS ? "MAAT_SIGNVFY_SUCCESS" : "MAAT_SIGNVFY_FAILURE" ));
+    fail_if(ret == MAAT_SIGNVFY_SUCCESS, "verify_xml() with OpenSSL succeeded but it should have failed, ret=%d", ret);
+
+    xmlFreeDoc(doc);
+}  // test_interop_tpm_sign_openssl_verify
+END_TEST
+
+START_TEST(test_interop_openssl_sign_tpm_verify)
+{
+    xmlDoc *doc = NULL;
+    xmlNode *docroot = NULL;
+    xmlNode *bogusNode = NULL;
+    int ret;
+
+    dlog(LOG_NOTICE, "In test_interop_openssl_sign_tpm_verify()...\n");
+    doc = xmlReadFile(interop_test_xml, NULL, 0);
+    docroot = xmlDocGetRootElement(doc);
+
+    ret = sign_xml(docroot,
+                   "1a:2b:3c:4d",  // certid (fingerprint)
+                   keyfile,
+                   "",
+                   b64_nonce,  // nonce
+                   NULL,  // tpmpass
+                   NULL,  // akctx
+                   SIGNATURE_OPENSSL);  // flags
+    fail_if(ret != MAAT_SIGNVFY_SUCCESS, "sign_xml() with OpenSSL failed");
+
+    // Verify the signature and check the (good) nonce
+    ret = verify_xml(doc,
+                     docroot,
+                     CREDS_DIR "/",  // prefix
+                     b64_nonce,  // nonce
+                     fingerprintedcertfile,
+                     SIGNATURE_TPM,
+                     cacertfile);
+    dlog(LOG_NOTICE, "With the original XML and a good nonce, verify_xml() returned %s, expected MAAT_SIGNVFY_SUCCESS\n", (ret == MAAT_SIGNVFY_SUCCESS ? "MAAT_SIGNVFY_SUCCESS" : "MAAT_SIGNVFY_FAILURE" ));
+    fail_if(ret != MAAT_SIGNVFY_SUCCESS, "verify_xml() with OpenSSL failed but it should have succeeded, ret=%d", ret);
+
+    // Verify the signature and check the (bad) nonce
+    ret = verify_xml(doc,
+                     docroot,
+                     CREDS_DIR "/",  // prefix
+                     b64_bad_nonce,  // nonce
+                     fingerprintedcertfile,
+                     SIGNATURE_TPM,
+                     cacertfile);
+    dlog(LOG_NOTICE, "With the original XML and a bad nonce, verify_xml() returned %s, expected MAAT_SIGNVFY_FAILURE\n", (ret == MAAT_SIGNVFY_SUCCESS ? "MAAT_SIGNVFY_SUCCESS" : "MAAT_SIGNVFY_FAILURE" ));
+    fail_if(ret == MAAT_SIGNVFY_SUCCESS, "verify_xml() with OpenSSL succeeded but it should have failed, ret=%d", ret);
+
+    // Tamper with the XML and try to verify once again (it should fail)
+    bogusNode = xmlNewNode(NULL, (xmlChar*)"bogusNode");
+    xmlAddChild(docroot, bogusNode);
+
+    ret = verify_xml(doc,
+                     docroot,
+                     CREDS_DIR "/",  // prefix
+                     b64_nonce,  // nonce
+                     fingerprintedcertfile,
+                     SIGNATURE_TPM,
+                     cacertfile);
+    dlog(LOG_NOTICE, "With the tampered XML and a good nonce, verify_xml() returned %s, expected MAAT_SIGNVFY_FAILURE\n", (ret == MAAT_SIGNVFY_SUCCESS ? "MAAT_SIGNVFY_SUCCESS" : "MAAT_SIGNVFY_FAILURE" ));
+    fail_if(ret == MAAT_SIGNVFY_SUCCESS, "verify_xml() with OpenSSL succeeded but it should have failed, ret=%d", ret);
+
+    xmlFreeDoc(doc);
+}  // test_interop_openssl_sign_tpm_verify
+END_TEST
+
+START_TEST(test_interop_tpm_sign_tpm_verify)
+{
+    xmlDoc *doc = NULL;
+    xmlNode *docroot = NULL;
+    xmlNode *bogusNode = NULL;
+    int ret;
+
+    dlog(LOG_NOTICE, "In test_interop_tpm_sign_tpm_verify()...\n");
+    doc = xmlReadFile(interop_test_xml, NULL, 0);
+    docroot = xmlDocGetRootElement(doc);
+
+    ret = sign_xml(docroot,
+                   NULL,  // certid (fingerprint)
+                   NULL,  // privkey_file
+                   "",    // privkey_pass
+                   b64_nonce,  // nonce
+                   TPMPASS, // tpmpass
+                   AKCTX,   // akctx
+                   SIGNATURE_TPM);  // flags
+    fail_if(ret != MAAT_SIGNVFY_SUCCESS, "sign_xml() with TPM failed");
+
+    // Verify the signature and check the (good) nonce
+    ret = verify_xml(doc,
+                     docroot,
+                     NULL,  // prefix
+                     b64_nonce,  // nonce
+                     AKPUB,
+                     SIGNATURE_TPM,
+                     NULL);
+    dlog(LOG_NOTICE, "With the original XML and a good nonce, verify_xml() returned %s, expected MAAT_SIGNVFY_SUCCESS\n", (ret == MAAT_SIGNVFY_SUCCESS ? "MAAT_SIGNVFY_SUCCESS" : "MAAT_SIGNVFY_FAILURE" ));
+    fail_if(ret != MAAT_SIGNVFY_SUCCESS, "verify_xml() with OpenSSL failed but it should have succeeded, ret=%d", ret);
+
+    // Verify the signature and check the (bad) nonce
+    ret = verify_xml(doc,
+                     docroot,
+                     NULL,  // prefix
+                     b64_bad_nonce,  // nonce
+                     AKPUB,
+                     SIGNATURE_TPM,
+                     NULL);
+    dlog(LOG_NOTICE, "With the original XML and a bad nonce, verify_xml() returned %s, expected MAAT_SIGNVFY_FAILURE\n", (ret == MAAT_SIGNVFY_SUCCESS ? "MAAT_SIGNVFY_SUCCESS" : "MAAT_SIGNVFY_FAILURE" ));
+    fail_if(ret == MAAT_SIGNVFY_SUCCESS, "verify_xml() with OpenSSL succeeded but it should have failed, ret=%d", ret);
+
+    // Tamper with the XML and try to verify once again (it should fail)
+    bogusNode = xmlNewNode(NULL, (xmlChar*)"bogusNode");
+    xmlAddChild(docroot, bogusNode);
+
+    ret = verify_xml(doc,
+                     docroot,
+                     NULL,  // prefix
+                     b64_nonce,  // nonce
+                     AKPUB,
+                     SIGNATURE_TPM,
+                     NULL);
+    dlog(LOG_NOTICE, "With the tampered XML and a good nonce, verify_xml() returned %s, expected MAAT_SIGNVFY_FAILURE\n", (ret == MAAT_SIGNVFY_SUCCESS ? "MAAT_SIGNVFY_SUCCESS" : "MAAT_SIGNVFY_FAILURE" ));
+    fail_if(ret == MAAT_SIGNVFY_SUCCESS, "verify_xml() with OpenSSL succeeded but it should have failed, ret=%d", ret);
+
+    xmlFreeDoc(doc);
+}  // test_interop_tpm_sign_tpm_verify
+END_TEST
+
+#endif /* USE_TPM */
 
 START_TEST(test_buffer_to_file)
 {
@@ -773,6 +1036,9 @@ int main(void)
 
     int nfail;
 
+    // Only output LOG_NOTICE or higher (use LOG_DEBUG for lots more info)
+    libmaat_init(0, LOG_NOTICE);
+
     util = suite_create("util");
 
     base64 = tcase_create("base64");
@@ -810,6 +1076,12 @@ int main(void)
     tcase_set_timeout(sign, 60);
     tcase_add_test(sign, test_sign_openssl_small);
     tcase_add_test(sign, test_sign_openssl_big);
+    tcase_add_test(sign, test_interop_openssl_sign_openssl_verify);
+#ifdef USE_TPM
+    tcase_add_test(sign, test_interop_tpm_sign_openssl_verify);
+    tcase_add_test(sign, test_interop_openssl_sign_tpm_verify);
+    tcase_add_test(sign, test_interop_tpm_sign_tpm_verify);
+#endif /* USE_TPM */
 
     utils = tcase_create("util");
     tcase_add_unchecked_fixture(utils, unchecked_setup,

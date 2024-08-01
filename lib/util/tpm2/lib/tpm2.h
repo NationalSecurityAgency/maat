@@ -83,24 +83,117 @@ struct tpm2_session {
     } internal;
 };
 
+/**
+ * @brief Function to report whether this host is big-endian or not.  TODO: Consider using
+ *        a built-in macro if one exists, e.g.:  #if __BIG_ENDIAN__
+ *
+ * @return A bool indicating whether this host is big-endian (true) or little-endian (false)
+ */
 bool is_big_endian(void);
 
+/**
+ * @brief Function to read in 8-bit values.
+ *
+ * @param f Pointer to FILE object to read the value form
+ * @param data Buffer to put the read value into
+ * @param size Total number of bytes to read in
+ *
+ * @return bool TRUE on success, FALSE on failure
+ */
 bool read8(FILE *f, UINT8 *data, size_t size);
 
+/**
+ * @brief Function to read in 16-bit values.
+ *
+ * @param f Pointer to FILE object to read the value form
+ * @param data Buffer to put the read value into
+ * @param size Total number of bytes to read in
+ *
+ * @return bool TRUE on success, FALSE on failure
+ */
 bool read16(FILE *f, UINT16 *data, size_t size);
 
+/**
+ * @brief Function to read in 32-bit values.
+ *
+ * @param f Pointer to FILE object to read the value form
+ * @param data Buffer to put the read value into
+ * @param size Total number of bytes to read in
+ *
+ * @return bool TRUE on success, FALSE on failure
+ */
 bool read32(FILE *f, UINT32 *data, size_t size);
 
+/**
+ * @brief Function to read in 64-bit values.
+ *
+ * @param f Pointer to FILE object to read the value form
+ * @param data Buffer to put the read value into
+ * @param size Total number of bytes to read in
+ *
+ * @return bool TRUE on success, FALSE on failure
+ */
 bool read64(FILE *f, UINT64 *data, size_t size);
 
+/**
+ * @brief Function for reading in a TPM2B_PUBLIC struct
+ *
+ * @param path File to read from
+ * @param public TPM2B_PUBLIC struct to read data into
+ *
+ * @return bool TRUE on success, FALSE on failure
+ */
 bool files_load_public_silent(const char *path, TPM2B_PUBLIC *public);
 
-bool files_load_template_silent(const char *path, TPMT_PUBLIC *public);
+/**
+ * @brief Function for reading in a TPMT_PUBLIC struct
+ *
+ * @param path File to read from
+ * @param public TPMT_PUBLIC struct to read data into
+ *
+ * @return bool TRUE on success, FALSE on failure
+ */
+bool files_load_template_silent(const char *path, TPMT_PUBLIC *template);
 
+/**
+ * @brief Prints and logs SSL errors
+ *
+ * @param failed_action Pointer to a char string containing a failed action,
+ *        which will be printed & logged with the SSL error string.
+ */
 void print_ssl_error(const char *failed_action);
 
-bool openssl_check(const UINT8 *buffer, UINT16 len, UINT8 *hash_buffer, UINT16 *hash_size);
+/**
+ * @brief Function to hash a buffer using SHA-256.
+ *
+ * TODO: Should [len] and [hash_size] be UINT16 values?  Or should we use size_t, since that is what OpenSSL uses?
+ *
+ * @param data_buffer A const UINT8* pointing to the buffer to hash.
+ * @param data_len A const UINT16 containing the number of bytes in the buffer to hash
+ * @param hash_buffer A UINT8* pointing to the buffer where the hash will be written
+ * @param hash_len A UINT16* where the length of the hash will be written
+ *
+ * @return A bool indicating whether or not the hash operation was successful
+ */
+bool do_sha256_hash(const UINT8 *data_buffer,
+                    const UINT16 data_buflen,
+                    UINT8 *hash_buffer,
+                    UINT16 *hash_buflen);
 
-bool bin_from_hex(const char *input, UINT16 *len, BYTE *buffer);
+/**
+ * @brief Converts an ASCII string of hex digits into a string of bytes.
+ *
+ * @param hexstr Buffer containing the null-terminated hex string to convert
+ * @param byte_buffer Buffer where the bytes will be stored
+ * @param byte_buflen Length of the buffer where the bytes will be stored must
+ *        be passed in (it must be at least half the length of the hex string).
+ *        The number of bytes actually written to the buffer will be stored in
+ *        this location.
+ *
+ * @return A bool indicating success or failure of the conversion
+ */
+bool hexstr_to_binary(const char *hexstr,
+                      BYTE *byte_buffer,
+                      UINT16 *byte_buflen);
 
 #endif /* LIB_TPM2_H_ */

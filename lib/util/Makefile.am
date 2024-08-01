@@ -26,8 +26,8 @@ libmaat_util_@PACKAGE_VERSION@_la_SOURCES = util.c csv.c xml_util.c base64.c che
 
 library_includedir=$(includedir)/@PACKAGE_NAME@-@PACKAGE_VERSION@/util
 library_include_HEADERS = util.h csv.h xml_util.h base64.h checksum.h crypto.h \
-			validate.h compress.h sign.h keyvalue.h signfile.h \
-			inet-socket.h unix-socket.h maat-io.h
+			validate.h compress.h sign.h keyvalue.h signfile.h signvfy.h \
+			inet-socket.h unix-socket.h maat-io.h xml_node_names.h hexlog.h
 
 AM_CPPFLAGS= -I$(srcdir) -I$(srcdir)/.. $(GLIB_CFLAGS) \
 		$(XML_CPPFLAGS) $(OPENSSL_CFLAGS)

@@ -134,7 +134,7 @@ default:
 kickoff-saracode:
   stage: sara-kickoff
   tags:
-    - rhel8-docker
+    - new-docker
   inherit:
     default: false
   script:
@@ -151,7 +151,7 @@ kickoff-saracode:
 build-ubuntu20:
   stage: build
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/ubuntu20:0.0.5
   script:
     - *build_no_selinux_no_tpm
@@ -160,7 +160,7 @@ build-ubuntu20:
 build-ubuntu20-tpm:
   stage: build
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/ubuntu20:0.0.5
   script:
     - *build_no_selinux
@@ -169,7 +169,7 @@ build-ubuntu20-tpm:
 build-ubuntu22:
   stage: build
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/ubuntu22:0.0.5
   script:
     - *build_no_selinux_no_tpm
@@ -178,7 +178,7 @@ build-ubuntu22:
 build-ubuntu22-tpm:
   stage: build
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/ubuntu22:0.0.5
   script:
     - *build_no_selinux
@@ -187,7 +187,7 @@ build-ubuntu22-tpm:
 build-rhel8-no-selinux:
   stage: build
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/rhel8:0.0.5
   script:
     - *build_no_selinux_no_tpm
@@ -196,7 +196,7 @@ build-rhel8-no-selinux:
 build-rhel8-selinux:
   stage: build
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/rhel8:0.0.5
   script:
     - *build_with_selinux_no_tpm
@@ -205,7 +205,7 @@ build-rhel8-selinux:
 build-rhel8-selinux-tpm:
   stage: build
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/rhel8:0.0.5
   script:
     - *build_with_selinux_and_tpm
@@ -214,7 +214,7 @@ build-rhel8-selinux-tpm:
 build-rhel9-no-selinux:
   stage: build
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/rhel9:0.0.5
   script:
     - *build_no_selinux_no_tpm
@@ -223,7 +223,7 @@ build-rhel9-no-selinux:
 build-rhel9-selinux:
   stage: build
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/rhel9:0.0.5
   script:
     - *build_with_selinux_no_tpm
@@ -232,7 +232,7 @@ build-rhel9-selinux:
 build-ubuntu23:
   stage: build
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/ubuntu23:0.0.6
   script:
     - *build_no_selinux_no_tpm
@@ -241,7 +241,7 @@ build-ubuntu23:
 build-debian11:
   stage: build
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/debian11:0.0.1
   script:
     - *build_no_selinux_no_tpm
@@ -252,7 +252,7 @@ build-debian11:
 docs-ubuntu:
   stage: docs
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/ubuntu20:0.0.5
   script:
     - *build_docs
@@ -268,7 +268,7 @@ docs-ubuntu:
 test-ubuntu20-basic:
   stage: test
   tags:
-    - ubuntu20
+    - new-ubuntu20
   script:
     - *test_no_selinux_no_tpm
   coverage: /^\s*lines:\s*\d+.\d+\%/
@@ -287,7 +287,8 @@ test-ubuntu20-basic:
 test-ubuntu20-basic-tpm:
   stage: test
   tags:
-    - maat-swtpm
+    - new-ubuntu20
+    - new-tpm
   script:
     - *test_no_selinux
   coverage: /^\s*lines:\s*\d+.\d+\%/
@@ -306,7 +307,7 @@ test-ubuntu20-basic-tpm:
 test-ubuntu20-asan:
   stage: test
   tags:
-    - ubuntu20
+    - new-ubuntu20
   script:
     - *test_asan_no_tpm
   coverage: /^\s*lines:\s*\d+.\d+\%/
@@ -344,7 +345,7 @@ test-ubuntu20-asan:
 test-ubuntu22-basic:
   stage: test
   tags:
-    - ubuntu22
+    - new-ubuntu22
   script:
     - *test_no_selinux_no_tpm
   coverage: /^\s*lines:\s*\d+.\d+\%/
@@ -363,8 +364,8 @@ test-ubuntu22-basic:
 test-ubuntu22-basic-tpm:
   stage: test
   tags:
-    - ubuntu22
-    - tpm
+    - new-ubuntu22
+    - new-tpm
   script:
     - *test_no_selinux
   coverage: /^\s*lines:\s*\d+.\d+\%/
@@ -383,7 +384,7 @@ test-ubuntu22-basic-tpm:
 test-ubuntu22-asan:
   stage: test
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/ubuntu22:0.0.5
   script:
     - *test_asan_no_tpm
@@ -424,7 +425,7 @@ test-ubuntu22-asan:
 test-ubuntu23-basic:
   stage: test
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/ubuntu23:0.0.6
   script:
     - *test_no_selinux_no_tpm
@@ -444,7 +445,7 @@ test-ubuntu23-basic:
 test-debian11-basic:
   stage: test
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/debian11:0.0.1
   script:
     - *test_no_selinux_no_tpm
@@ -464,7 +465,7 @@ test-debian11-basic:
 test-rhel8-basic-no-selinux:
   stage: test
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/rhel8:0.0.5
   script:
     - *test_no_selinux_no_tpm
@@ -484,7 +485,7 @@ test-rhel8-basic-no-selinux:
 test-rhel8-asan:
   stage: test
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/rhel8:0.0.5
   script:
     - *test_asan_no_tpm
@@ -504,7 +505,7 @@ test-rhel8-asan:
 test-rhel9-basic-no-selinux:
   stage: test
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/rhel9:0.0.5
   script:
     - *test_no_selinux_no_tpm
@@ -524,7 +525,7 @@ test-rhel9-basic-no-selinux:
 test-rhel9-asan:
   stage: test
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/rhel9:0.0.5
   script:
     - *test_asan_no_tpm
@@ -546,7 +547,7 @@ test-rhel9-asan:
 package-ubuntu20-amd64-deb:
   stage: package
   tags:
-    - ubuntu20
+    - new-ubuntu20
   variables:
     release: focal
     arch: amd64
@@ -562,7 +563,7 @@ package-ubuntu20-amd64-deb:
 package-ubuntu22-amd64-deb:
   stage: package
   tags:
-    - ubuntu22
+    - new-ubuntu22
   variables:
     release: jammy
     arch: amd64
@@ -578,7 +579,7 @@ package-ubuntu22-amd64-deb:
 package-rhel8-x86_64-rpm:
   stage: package
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/rhel8:0.0.5
   script:
     - *rpm_repo
@@ -591,7 +592,7 @@ package-rhel8-x86_64-rpm:
 package-rhel9-x86_64-rpm:
   stage: package
   tags:
-    - rhel8-docker
+    - new-docker
   image: ${IMAGE_PREFIX}/rhel9:0.0.5
   script:
     - *rpm_repo
@@ -606,7 +607,7 @@ package-rhel9-x86_64-rpm:
 create-ubuntu20-repo:
   stage: deploy
   tags:
-    - ubuntu20
+    - new-ubuntu20
   needs:
     - package-ubuntu20-amd64-deb
   inherit:
@@ -624,7 +625,7 @@ create-ubuntu20-repo:
 create-ubuntu22-repo:
   stage: deploy
   tags:
-    - ubuntu22
+    - new-ubuntu22
   needs:
     - package-ubuntu22-amd64-deb
   inherit:
@@ -644,7 +645,7 @@ create-ubuntu22-repo:
 system-test-rhel8:
   stage: systemtest
   tags:
-    - rhel8
+    - new-rhel8
   inherit:
     default: false
   timeout: 2 hours
@@ -667,7 +668,7 @@ system-test-rhel8:
 system-test-rhel9:
   stage: systemtest
   tags:
-    - rhel9
+    - new-rhel9
   inherit:
     default: false
   variables:
@@ -690,7 +691,7 @@ system-test-rhel9:
 system-test-ubuntu20-valgrind:
   stage: systemtest
   tags:
-    - ubuntu20
+    - new-ubuntu20
   inherit:
     default: false
   needs:
@@ -729,7 +730,7 @@ system-test-ubuntu20-valgrind:
 system-test-ubuntu20-fail:
   stage: systemtest
   tags:
-    - ubuntu20
+    - new-ubuntu20
   inherit:
     default: false
   needs:
@@ -769,7 +770,8 @@ system-test-ubuntu20-fail:
 system-test-ubuntu20-tpm:
   stage: systemtest
   tags:
-    - maat-swtpm
+    - new-ubuntu20
+    - new-tpm
   inherit:
     default: false
   needs:
@@ -809,7 +811,8 @@ system-test-ubuntu20-tpm:
 system-test-ubuntu20-fail-tpm:
   stage: systemtest
   tags:
-    - maat-swtpm
+    - new-ubuntu20
+    - new-tpm
   inherit:
     default: false
   needs:
@@ -852,8 +855,8 @@ system-test-ubuntu20-fail-tpm:
 system-test-ubuntu22-tpm:
   stage: systemtest
   tags:
-    - ubuntu22
-    - tpm
+    - new-ubuntu22
+    - new-tpm
   inherit:
     default: false
   needs:
@@ -893,8 +896,8 @@ system-test-ubuntu22-tpm:
 system-test-ubuntu22-fail-tpm:
   stage: systemtest
   tags:
-    - ubuntu22
-    - tpm
+    - new-ubuntu22
+    - new-tpm
   inherit:
     default: false
   needs:
@@ -939,7 +942,7 @@ system-test-ubuntu22-fail-tpm:
 collect-saracode:
   stage: sara-collect
   tags:
-    - rhel8-docker
+    - new-docker
   dependencies:
     - kickoff-saracode
   inherit:

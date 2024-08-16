@@ -375,6 +375,15 @@ files_read_all_files(memory_mapping_asp_t)
 files_getattr_all_files(memory_mapping_asp_t)
 dev_getattr_all_chr_files(memory_mapping_asp_t)
 
+# Memory Mapping ASP Appraiser 
+type memorymapping_appraise_asp_t;
+type memorymapping_appraise_asp_exe_t;
+define_asp(memorymapping_appraise_asp_t, memorymapping_appraise_asp_exe_t)
+
+allow memorymapping_appraise_asp_t whitelist_t:file {read_file_perms};
+allow memorymapping_appraise_asp_t cert_t:dir {search};
+allow memorymapping_appraise_asp_t asp_info_dir_t:dir {search};
+
 # Netstat ASPs
 type netstat_asp_exe_t;
 type netstat_asp_t;
@@ -942,6 +951,7 @@ allow_apb_asp(userspace_apb_t, md5_file_service_asp_exe_t, md5_file_service_asp_
 allow_apb_asp(userspace_apb_t, list_directory_service_asp_exe_t, list_directory_service_asp_t)
 allow_apb_asp(userspace_apb_t, mtab_asp_exe_t, mtab_asp_t)
 allow_apb_asp(userspace_apb_t, memory_mapping_asp_exe_t, memory_mapping_asp_t)
+allow_apb_asp(userspace_apb_t, memorymapping_appraise_asp_exe_t, memorymapping_appraise_asp_t)
 allow_apb_asp(userspace_apb_t, sign_send_asp_exe_t, sign_send_asp_t)
 allow_apb_asp(userspace_apb_t, got_measure_asp_exe_t, got_measure_asp_t)
 allow_apb_asp(userspace_apb_t, send_execute_asp_exe_t, send_execute_asp_t)

@@ -231,6 +231,7 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/asps/lsprocasp
 %{_libexecdir}/maat/asps/md5fileserviceasp
 %attr(4755, -, -) %{_libexecdir}/maat/asps/memorymappingasp
+%{_libexecdir}/maat/asps/memorymapping_appraise_asp
 %{_libexecdir}/maat/asps/mtabasp
 %{_libexecdir}/maat/asps/netstatraw6asp
 %{_libexecdir}/maat/asps/netstatrawasp

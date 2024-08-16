@@ -234,8 +234,21 @@ endif
 
 if BUILD_memorymapping_ASP
 suid_asp_PROGRAMS    += memorymappingasp
-memorymappingasp_SOURCES = memorymappingasp.c
+
+if ENABLE_TESTS
+noinst_LTLIBRARIES += libmemorymappingasp_helper.la
+libmemorymappingasp_helper_la_SOURCES = memorymappingasp.c memorymapping.h
+libmemorymappingasp_helper_la_CFLAGS = $(AM_CFLAGS)
+libmemorymappingasp_helper_la_LIBADD = $(OPENSSL_LIBS) -lcrypto
+endif
+
+memorymappingasp_SOURCES = memorymappingasp.c memorymapping.h
 memorymappingasp_LDADD = $(OPENSSL_LIBS) -lcrypto
+endif
+
+if BUILD_memorymapping_appraise_ASP
+suid_asp_PROGRAMS    += memorymapping_appraise_asp
+memorymapping_appraise_asp_SOURCES = memorymapping_appraise_asp.c memorymapping.h
 endif
 
 if BUILD_mtab_ASP
@@ -302,7 +315,8 @@ aspinfo_DATA    += datafiles/modules.whitelist \
                    datafiles/packages.whitelist \
                    datafiles/process.whitelist \
                    datafiles/binary.whitelist \
-                   datafiles/distribution.whitelist
+                   datafiles/distribution.whitelist \
+                   datafiles/memorymapping_appraise_file.whitelist
 whitelist_SOURCES = whitelist.c
 endif
 

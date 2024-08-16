@@ -65,6 +65,7 @@
 @aspdir@/hashserviceasp		-- gen_context(system_u:object_r:hash_service_asp_exe_t)
 @aspdir@/listdirectoryserviceasp	-- gen_context(system_u:object_r:list_directory_service_asp_exe_t)
 @aspdir@/memorymappingasp		-- gen_context(system_u:object_r:memory_mapping_asp_exe_t)
+@aspdir@/memorymapping_appraise_asp			-- gen_context(system_u:object_r:memorymapping_appraise_asp_exe_t)
 @aspdir@/netstat.*asp			-- gen_context(system_u:object_r:netstat_asp_exe_t)
 @aspdir@/procenv			-- gen_context(system_u:object_r:proc_env_asp_exe_t)
 @aspdir@/procfds			-- gen_context(system_u:object_r:proc_fds_asp_exe_t)

@@ -139,6 +139,13 @@ test_readelf_SOURCES = test_readelf.c
 test_readelf_LDADD = $(LDADD_APB)
 endif
 
+if BUILD_memorymapping_ASP
+check_PROGRAMS += test_memorymapping_asp
+test_memorymapping_asp_SOURCES = test_memorymapping_asp.c 
+test_memorymapping_asp_LDADD = $(LDADD_APB) $(LDADD) $(builddir)/../asps/libmemorymappingasp_helper.la
+test_memorymapping_asp_CPPFLAGS = $(AM_CPPFLAGS) -DENABLE_TESTS
+endif
+
 if BUILD_elf_appraise_ASP
 check_PROGRAMS += test_appraise_elf
 test_appraise_elf_SOURCES = test_appraise_elf.c

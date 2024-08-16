@@ -632,6 +632,9 @@ struct asp *select_appraisal_asp(node_id_t node UNUSED,
     if (measurement_type == BLOB_MEASUREMENT_TYPE_MAGIC) {
         return find_asp(apb_asps, "got_appraise");
     }
+    if (measurement_type == SHA256_TYPE_MAGIC) {
+        return find_asp(apb_asps, "memorymapping_appraise");
+    }
     if (measurement_type == LIBELF_TYPE_MAGIC) {
         return find_asp(apb_asps, "elf_appraise");
     }
@@ -1031,11 +1034,9 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
     node_id_str node_str;
     measurement_iterator *data_it;
     struct address *addr;
-
     int appraisal_stat = 0;
 
     str_of_node_id(node, node_str);
-
     addr = measurement_node_get_address(mg, node);
 
     // For every piece of data on the node
@@ -1175,7 +1176,6 @@ int userspace_appraise(struct scenario *scen, GList *values UNUSED,
             it = node_iterator_next(it)) {
 
         node_id_t node = node_iterator_get(it);
-
         appraisal_stat += appraise_node(mg, graph_path, node, scen, apb_asps,
                                         all_apbs);
 

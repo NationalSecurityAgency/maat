@@ -1,0 +1,1197 @@
+#
+# Copyright 2023 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+policy_module(maat, 0.0.1)
+
+
+# libmaat
+
+attribute maat_file_type;
+
+type measurement_spec_dir_t;
+maat_file(measurement_spec_dir_t)
+
+type measurement_spec_t;
+maat_file(measurement_spec_t)
+
+type attestmgr_conf_dir_t;
+maat_file(attestmgr_conf_dir_t)
+
+type maat_certificate_t;
+maat_file(maat_certificate_t)
+
+type maat_private_key_t;
+maat_file(maat_private_key_t)
+
+type maat_places_file_t;
+maat_file(maat_places_file_t)
+
+type maat_tmp_t;
+maat_file(maat_tmp_t)
+files_tmp_file(maat_tmp_t)
+
+
+# For debugging
+require{
+	role unconfined_r;
+	type unconfined_t;
+}
+manage_files_pattern(unconfined_t, maat_file_type, maat_file_type)
+relabel_files_pattern(unconfined_t, maat_file_type, maat_file_type)
+
+type maat_graph_t;
+maat_file(maat_graph_t)
+files_tmp_file(maat_graph_t)
+
+# libmaat ASP
+
+
+attribute asp_type;
+attribute asp_exe_type;
+
+type asp_dir_t;          # type for the directory containing asp exe files
+maat_file(asp_dir_t)
+
+type asp_info_dir_t;     # type for the directory containing asp xml files
+maat_file(asp_info_dir_t)
+
+type asp_info_t;         # type for ASP xml files
+maat_file(asp_info_t)
+
+require {
+	role system_r;
+	role unconfined_r;
+}
+
+role system_r types {asp_type};
+role unconfined_r types {asp_type};
+
+# ASPs can write to the console
+userdom_use_inherited_user_ptys(asp_type)
+
+type default_asp_t;
+type default_asp_exe_t;
+
+define_asp(default_asp_t, default_asp_exe_t)
+
+require {
+	type default_apb_t;
+}
+allow_apb_asp(default_apb_t, default_asp_exe_t, default_asp_t)
+
+
+attribute asp_spawner;
+allow asp_spawner asp_dir_t:dir {search};
+allow asp_spawner self:process {setexec setcap};
+allow asp_spawner bin_t:file {execute};
+selinux_compute_create_context(asp_spawner)
+
+require {
+	type maat_graph_t;
+}
+
+
+allow asp_type self:process { setcap getcap noatsecure siginh rlimitinh };
+
+type_transition asp_type maat_graph_t:dir maat_graph_t;
+
+manage_dirs_pattern(asp_type, maat_graph_t, maat_graph_t)
+manage_lnk_files_pattern(asp_type, maat_graph_t, maat_graph_t)
+manage_files_pattern(asp_type, maat_graph_t, maat_graph_t)
+
+# libmaat APB
+
+attribute apb_type;
+attribute apb_exe_type;
+attribute apb_spawner;
+
+type apb_dir_t;          # type for the directory containing apb .so files
+maat_file(apb_dir_t)
+
+type apb_info_dir_t;     # type for the directory containing apb xml files
+maat_file(apb_info_dir_t)
+
+type apb_info_t;         # type for APB xml files
+maat_file(apb_info_t)
+
+require {
+	role system_r;
+	role unconfined_r;
+}
+role system_r types {apb_type};
+role unconfined_r types {apb_type};
+
+userdom_use_inherited_user_ptys(apb_type)
+
+# APBs can create/write tmp files
+maat_tmp_access(apb_type)
+
+# APBs can load measurement specs
+measurement_spec_reader(apb_type)
+
+# APBs can load asp metadata
+asp_metadata_reader(apb_type)
+
+# APBs can generate random numbers
+require {
+	type urandom_device_t;
+}
+allow apb_type urandom_device_t:chr_file {read_file_perms};
+
+# APBs can access the certificates and private keys
+maat_credentials_reader(apb_type)
+
+# Setup the default apb type
+type default_apb_t;
+type default_apb_exe_t;
+define_apb(default_apb_t, default_apb_exe_t)
+
+# APB spawners can find APB exes in the apb_dir and execute them.
+allow apb_spawner apb_dir_t:dir {search};
+allow apb_spawner apb_exe_type:file {execute open read getattr};
+allow apb_spawner self:process {setexec setcap};
+# Allow APB spawners to compute security contexts of the APB's they spawn.
+selinux_compute_create_context(apb_spawner)
+
+# for debugging only
+require {
+	type unconfined_t;
+}
+allow_spawn_apbs(unconfined_t)
+
+# for gitlab runner
+require {
+	type attestmgr_t;
+	type unconfined_service_t;
+}
+allow_spawn_apbs(unconfined_service_t)
+allow attestmgr_t unconfined_service_t:process {sigchld};
+
+# graph files
+require {
+	type maat_graph_t;
+}
+
+require {
+	type tmpfs_t;
+}
+
+files_tmp_filetrans(apb_type, maat_graph_t, dir)
+type_transition apb_type maat_graph_t:dir maat_graph_t;
+
+manage_dirs_pattern(apb_type, maat_graph_t, maat_graph_t)
+manage_lnk_files_pattern(apb_type, maat_graph_t, maat_graph_t)
+
+create_files_pattern(apb_type, maat_graph_t, maat_graph_t)
+read_files_pattern(apb_type, maat_graph_t, maat_graph_t)
+write_files_pattern(apb_type, maat_graph_t, maat_graph_t)
+
+delete_files_pattern(apb_type, maat_graph_t, maat_graph_t)
+delete_files_pattern(apb_type, tmp_t, maat_graph_t)
+
+# libmaat AM
+
+require {
+	role system_r;
+	role unconfined_r;
+	type unconfined_t;
+	type unconfined_service_t;
+	type cert_t;
+	type init_t;
+	type security_t;
+}
+
+type attestmgr_exec_t;   # main attestation manager executable type
+maat_file(attestmgr_exec_t)
+
+type attestmgr_t;        # domain for attestation manager process
+init_daemon_domain(attestmgr_t, attestmgr_exec_t)
+domain_auto_transition_pattern(unconfined_t, attestmgr_exec_t, attestmgr_t)
+domain_auto_transition_pattern(unconfined_service_t, attestmgr_exec_t, attestmgr_t)
+
+allow attestmgr_t cert_t:dir {search};
+allow attestmgr_t cert_t:file { getattr read open};
+allow attestmgr_t security_t:file {read};
+allow attestmgr_t self:process {getcap transition};
+allow attestmgr_t net_conf_t:lnk_file { read };
+
+logging_send_syslog_msg(attestmgr_t)
+userdom_use_inherited_user_ptys(attestmgr_t)
+
+ifdef(`unconfined_server_stream_connect', `
+	gen_require(`type unconfined_service_t;')
+	allow attestmgr_t unconfined_service_t:unix_stream_socket rw_socket_perms;
+	',`
+	init_rw_script_stream_sockets(attestmgr_t)
+	')
+
+# Attestmgr can read any of the info files
+apb_metadata_reader(attestmgr_t)
+asp_metadata_reader(attestmgr_t)
+measurement_spec_reader(attestmgr_t)
+
+# Attestmgr can also spawn APBs
+allow_spawn_any_apb(attestmgr_t)
+
+# Allow APBs to use attestmgr sockets
+allow apb_type attestmgr_t:tcp_socket { rw_socket_perms };
+allow apb_type attestmgr_t:unix_stream_socket { rw_socket_perms };
+
+require{
+	role unconfined_r;
+}
+role unconfined_r types {attestmgr_t};
+
+allow_spawn_apbs(attestmgr_t)
+
+type attestmgr_conf_t;
+maat_file(attestmgr_conf_t)
+read_files_pattern(attestmgr_t, attestmgr_conf_dir_t, attestmgr_conf_t)
+read_files_pattern(attestmgr_t, attestmgr_conf_dir_t, maat_places_file_t);
+allow attestmgr_t attestmgr_conf_dir_t:dir{read};
+maat_credentials_reader(attestmgr_t)
+maat_tmp_access(attestmgr_t)
+miscfiles_read_localization(attestmgr_t)
+
+require {
+	attribute port_type;
+}
+type attestmgr_port_t, port_type;
+
+require {
+	type node_t;
+	type net_conf_t;
+	type urandom_device_t;
+	type anon_inodefs_t;
+	type locale_t;
+	type lib_t;
+}
+allow attestmgr_t self:{tcp_socket unix_stream_socket} {create_stream_socket_perms 
+      		  			       	rw_stream_socket_perms};
+allow domain self:{tcp_socket unix_stream_socket} {connectto rw_stream_socket_perms};
+
+allow attestmgr_t attestmgr_port_t:tcp_socket { name_bind name_connect };
+allow attestmgr_t node_t:tcp_socket { node_bind };
+
+allow attestmgr_t tmp_t:sock_file manage_sock_file_perms;
+allow attestmgr_t tmp_t:dir setattr;
+
+manage_lnk_files_pattern(attestmgr_t, tmp_t, tmp_t)
+
+allow attestmgr_t net_conf_t:file { read_file_perms };
+allow attestmgr_t urandom_device_t:chr_file { read_file_perms };
+allow attestmgr_t self:capability { setgid setuid chown };
+allow attestmgr_t anon_inodefs_t:file { read_file_perms };
+allow attestmgr_t locale_t:file { read_file_perms };
+allow attestmgr_t lib_t:file { execute_no_trans entrypoint};
+
+ifdef(`auth_read_passwd', `
+        auth_read_passwd(attestmgr_t)
+',`
+	files_read_etc_files(attestmgr_t)
+')
+
+# Maat specific
+
+allow attestmgr_t init_t:unix_stream_socket {connectto};
+allow attestmgr_t unconfined_t:unix_stream_socket {connectto};
+allow attestmgr_t user_tmp_t:sock_file {write};
+
+# Hash file service ASP
+type hash_file_service_asp_exe_t;
+type hash_file_service_asp_t;
+define_asp(hash_file_service_asp_t, hash_file_service_asp_exe_t)
+
+files_read_all_files(hash_file_service_asp_t)
+files_read_all_symlinks(hash_file_service_asp_t)
+read_files_pattern(hash_file_service_asp_t, domain, domain)
+
+allow hash_file_service_asp_t apb_type:file {getattr open read};
+allow hash_file_service_asp_t apb_type:dir {search};
+allow hash_file_service_asp_t apb_type:process {getattr};
+
+# Hash service ASP
+type hash_service_asp_exe_t;
+type hash_service_asp_t;
+define_asp(hash_service_asp_t, hash_service_asp_exe_t)
+
+allow hash_service_asp_t domain:process {getattr};
+read_files_pattern(hash_service_asp_t, domain, domain)
+
+maat_tmp_access(hash_service_asp_t)
+
+# MD5 files service ASP
+require {
+	type mtrr_device_t;
+	type rpm_t;
+	type init_t;
+}
+type md5_file_service_asp_t;
+type md5_file_service_asp_exe_t;
+define_asp(md5_file_service_asp_t, md5_file_service_asp_exe_t)
+
+files_read_all_dirs_except(md5_file_service_asp_t,)
+files_read_all_files(md5_file_service_asp_t)
+files_read_all_symlinks(md5_file_service_asp_t)
+
+read_files_pattern(md5_file_service_asp_t, init_t, init_t)
+read_files_pattern(md5_file_service_asp_t, rpm_t, rpm_t)
+read_files_pattern(md5_file_service_asp_t, mtrr_device_t, mtrr_device_t)
+
+# List directory service ASP
+type list_directory_service_asp_exe_t;
+type list_directory_service_asp_t;
+define_asp(list_directory_service_asp_t, list_directory_service_asp_exe_t)
+
+files_read_all_dirs_except(list_directory_service_asp_t,)
+files_read_all_symlinks(list_directory_service_asp_t)
+files_getattr_all_files(list_directory_service_asp_t)
+files_read_all_files(list_directory_service_asp_t)
+
+# Memory Mapping ASP
+type memory_mapping_asp_exe_t;
+type memory_mapping_asp_t;
+define_asp(memory_mapping_asp_t, memory_mapping_asp_exe_t)
+
+allow memory_mapping_asp_t memory_mapping_asp_t:capability {sys_ptrace};
+allow memory_mapping_asp_t domain:process {getattr};
+
+read_files_pattern(memory_mapping_asp_t, domain, domain)
+
+files_read_all_files(memory_mapping_asp_t)
+files_getattr_all_files(memory_mapping_asp_t)
+dev_getattr_all_chr_files(memory_mapping_asp_t)
+
+# Netstat ASPs
+type netstat_asp_exe_t;
+type netstat_asp_t;
+define_asp(netstat_asp_t, netstat_asp_exe_t)
+
+# Proc fds ASP
+type proc_fds_asp_exe_t;
+type proc_fds_asp_t;
+define_asp(proc_fds_asp_t, proc_fds_asp_exe_t)
+
+files_read_all_dirs_except(proc_fds_asp_t, )
+files_read_all_files(proc_fds_asp_t)
+
+domain_search_all_domains_state(proc_fds_asp_t)
+domain_read_all_domains_state(proc_fds_asp_t)
+
+# Proc env ASP
+type proc_env_asp_exe_t;
+type proc_env_asp_t;
+define_asp(proc_env_asp_t, proc_env_asp_exe_t);
+allow proc_env_asp_t domain:file { open getattr read };
+
+# Proc root ASP
+type proc_root_asp_exe_t;
+type proc_root_asp_t;
+define_asp(proc_root_asp_t, proc_root_asp_exe_t);
+allow proc_root_asp_t domain:file {open getattr read};
+
+# Proc Namespaces ASP
+type proc_namespaces_asp_exe_t;
+type proc_namespaces_asp_t;
+define_asp(proc_namespaces_asp_t, proc_namespaces_asp_exe_t);
+
+allow proc_namespaces_asp_t domain:file {open getattr read};
+files_read_all_dirs_except(proc_namespaces_asp_t, )
+files_read_all_files(proc_namespaces_asp_t)
+
+domain_search_all_domains_state(proc_namespaces_asp_t)
+domain_read_all_domains_state(proc_namespaces_asp_t)
+
+# Proc open file ASP
+type proc_open_file_asp_exe_t;
+type proc_open_file_asp_t;
+define_asp(proc_open_file_asp_t, proc_open_file_asp_exe_t)
+
+allow proc_open_file_asp_t proc_open_file_asp_t:capability {sys_ptrace};
+
+require {
+	type proc_t;
+	attribute file_type;
+	attribute can_read_shadow_passwords;
+}
+typeattribute proc_open_file_asp_t can_read_shadow_passwords;
+read_files_pattern(proc_open_file_asp_t, proc_t, proc_t)
+allow proc_open_file_asp_t file_type:file { open getattr read map };
+allow proc_open_file_asp_t file_type:fifo_file { open getattr read };
+allow proc_open_file_asp_t file_type:dir { search getattr read };
+
+require {
+	attribute domain;
+	attribute filesystem_type;
+	type fixed_disk_device_t;
+}
+allow proc_open_file_asp_t filesystem_type:dir { getattr };
+allow proc_open_file_asp_t fixed_disk_device_t:blk_file { getattr };
+allow proc_open_file_asp_t user_tmp_t:lnk_file {getattr};
+allow proc_open_file_asp_t mtrr_device_t:file {getattr};
+
+domain_read_all_domains_state(proc_open_file_asp_t)
+dev_getattr_all_chr_files(proc_open_file_asp_t)
+files_read_all_chr_files(proc_open_file_asp_t)
+
+require {
+	type initctl_t;
+	type lvm_var_run_t;
+}
+
+allow proc_open_file_asp_t initctl_t:fifo_file {getattr};
+allow proc_open_file_asp_t lvm_var_run_t:fifo_file {getattr};
+
+# this is required because proc_open_file_asp is a thin 
+# wrapper around the lsof command.
+require {
+	type shell_exec_t;
+	type bin_t;
+	type lib_t;
+}
+allow proc_open_file_asp_t shell_exec_t:file { execute execute_no_trans };
+allow proc_open_file_asp_t bin_t:file { execute execute_no_trans };
+
+# Proc mem ASP
+type proc_mem_asp_t;
+type proc_mem_asp_exe_t;
+define_asp(proc_mem_asp_t, proc_mem_asp_exe_t)
+
+allow proc_mem_asp_t proc_mem_asp_t:capability {sys_ptrace};
+allow proc_mem_asp_t domain:file { open getattr read };
+files_read_all_dirs_except(proc_mem_asp_t, )
+
+allow domain proc_mem_asp_t:process {sigchld};
+
+domain_ptrace_all_domains(proc_mem_asp_t)
+domain_search_all_domains_state(proc_mem_asp_t)
+domain_read_all_domains_state(proc_mem_asp_t)
+
+# Read ELF ASP
+type readelf_asp_t;
+type readelf_asp_exe_t;
+define_asp(readelf_asp_t, readelf_asp_exe_t)
+
+read_files_pattern(readelf_asp_t, bin_t, bin_t)
+read_files_pattern(readelf_asp_t, lib_t, lib_t)
+
+# Appraise ELF ASP
+type elf_appraise_asp_t;
+type elf_appraise_asp_exe_t;
+define_asp(elf_appraise_asp_t, elf_appraise_asp_exe_t)
+
+allow elf_appraise_asp_t whitelist_t:file {read_file_perms};
+allow elf_appraise_asp_t cert_t:dir {search};
+allow elf_appraise_asp_t asp_info_dir_t:dir {search};
+
+# Process measurement ASP
+type process_measurement_apb_t;
+type process_measurement_apb_exe_t;
+
+# DPKG Details ASP
+type dpkg_details_asp_t;
+type dpkg_details_asp_exe_t;
+define_asp(dpkg_details_asp_t, dpkg_details_asp_exe_t)
+
+# DPKG inventory ASP
+type dpkg_inv_asp_t;
+type dpkg_inv_asp_exe_t;
+define_asp(dpkg_inv_asp_t, dpkg_inv_asp_exe_t)
+
+# lsmod ASP
+type lsmod_asp_t;
+type lsmod_asp_exe_t;
+define_asp(lsmod_asp_t, lsmod_asp_exe_t)
+
+# kernel msmt ASP
+type kernel_msmt_asp_t;
+type kernel_msmt_asp_exe_t;
+define_asp(kernel_msmt_asp_t, kernel_msmt_asp_exe_t)
+require {
+	type proc_t;
+    type boot_t;
+	attribute file_type;
+}
+read_files_pattern(kernel_msmt_asp_t, proc_t, proc_t)
+read_files_pattern(kernel_msmt_asp_t, boot_t, boot_t)
+
+# RPM details ASP
+type rpm_details_asp_t;
+type rpm_details_asp_exe_t;
+define_asp(rpm_details_asp_t, rpm_details_asp_exe_t)
+
+allow rpm_details_asp_t rpm_details_asp_t:udp_socket {connect create};
+allow rpm_details_asp_t rpm_var_lib_t:file {setattr};
+
+require {
+	type rpm_exec_t;
+	type rpm_var_lib_t;
+}
+
+allow rpm_details_asp_t rpm_exec_t:file {execute_no_trans};
+allow rpm_details_asp_t rpm_var_lib_t:file {map};
+domain_entry_file(rpm_details_asp_t, rpm_exec_t)
+read_files_pattern(rpm_details_asp_t, rpm_var_lib_t, rpm_var_lib_t)
+read_files_pattern(rpm_details_asp_t, rpm_var_lib_t, rpm_var_lib_t)
+
+# The RPM command does a bunch of random crud. It actually seems to
+# complete safely without these perms, but they don't seem that
+# dangerous.
+require {
+	type tmp_t;
+	type bin_t;
+	type proc_t;
+	type net_conf_t;
+	type urandom_device_t;
+	type dbusd_etc_t;
+}
+
+allow rpm_details_asp_t tmp_t:dir { read };
+allow rpm_details_asp_t bin_t:file { execute };
+allow rpm_details_asp_t proc_t:file { read };
+
+ifdef(`auth_read_passwd',`
+	auth_getattr_passwd(rpm_details_asp_t)
+	auth_read_passwd(rpm_details_asp_t)
+',`
+	files_read_etc_files(rpm_details_asp_t)
+')
+
+files_read_all_files(rpm_details_asp_t)
+
+# RPM inventory ASP
+type rpm_inv_asp_t;
+type rpm_inv_asp_exe_t;
+define_asp(rpm_inv_asp_t, rpm_inv_asp_exe_t)
+
+domain_entry_file(rpm_inv_asp_t, rpm_exec_t)
+
+allow rpm_inv_asp_t rpm_exec_t:file {execute_no_trans};
+allow rpm_inv_asp_t rpm_inv_asp_t:udp_socket {connect create};
+allow rpm_inv_asp_t rpm_var_lib_t:file {map setattr};
+
+files_read_all_dirs_except(rpm_inv_asp_t, )
+files_getattr_all_files(rpm_inv_asp_t)
+files_read_all_files(rpm_inv_asp_t)
+
+read_files_pattern(rpm_inv_asp_t, rpm_var_lib_t, rpm_var_lib_t)
+read_files_pattern(rpm_inv_asp_t, net_conf_t, net_conf_t)
+read_files_pattern(rpm_inv_asp_t, proc_t, proc_t)
+read_files_pattern(rpm_inv_asp_t, init_t, init_t) 
+read_files_pattern(rpm_inv_asp_t, rpm_t, rpm_t)
+
+ifdef(`auth_read_passwd',`
+	auth_getattr_passwd(rpm_inv_asp_t)
+	auth_read_passwd(rpm_inv_asp_t)
+',`
+	files_read_etc_files(rpm_inv_asp_t)
+')
+
+require {
+	type mtrr_device_t;
+}
+allow rpm_inv_asp_t mtrr_device_t:file {getattr};
+
+# System ASP
+type system_asp_t;
+type system_asp_exe_t;
+define_asp(system_asp_t, system_asp_exe_t)
+allow system_asp_t cert_t:dir { search };
+
+# lsproc ASP
+type lsproc_asp_t;
+type lsproc_asp_exe_t;
+define_asp(lsproc_asp_t, lsproc_asp_exe_t)
+require {
+	type proc_t;
+	attribute file_type;
+	attribute can_read_shadow_passwords;
+}
+typeattribute lsproc_asp_t can_read_shadow_passwords;
+read_files_pattern(lsproc_asp_t, proc_t, proc_t)
+
+allow lsproc_asp_t lsproc_asp_t:capability {sys_ptrace};
+allow lsproc_asp_t file_type:file { open getattr read map};
+allow lsproc_asp_t file_type:dir { search getattr read };
+
+domain_read_all_domains_state(lsproc_asp_t)
+domain_getattr_all_domains(lsproc_asp_t)
+
+# IMA ASP
+type ima_asp_t;
+type ima_asp_exe_t;
+define_asp(ima_asp_t, ima_asp_exe_t)
+
+# Mtab ASP
+type mtab_asp_t;
+type mtab_asp_exe_t;
+define_asp(mtab_asp_t, mtab_asp_exe_t)
+
+# Serialize Graph ASP
+type serialize_graph_asp_t;
+type serialize_graph_asp_exe_t;
+define_asp(serialize_graph_asp_t, serialize_graph_asp_exe_t);
+maat_tmp_access(serialize_graph_asp_t)
+allow serialize_graph_asp_t lib_t:file entrypoint;
+
+# Compress ASP
+type compress_asp_t;
+type compress_asp_exe_t;
+define_asp(compress_asp_t, compress_asp_exe_t);
+allow compress_asp_t lib_t:file entrypoint;
+
+# Decompress ASP
+type decompress_asp_t;
+type decompress_asp_exe_t;
+define_asp(decompress_asp_t, decompress_asp_exe_t);
+allow decompress_asp_t lib_t:file entrypoint;
+allow decompress_asp_t cert_t:dir {search};
+
+# Encrypt ASP
+type encrypt_asp_t;
+type encrypt_asp_exe_t;
+define_asp(encrypt_asp_t, encrypt_asp_exe_t);
+maat_credentials_reader(encrypt_asp_t)
+allow encrypt_asp_t lib_t:file entrypoint;
+
+# Decrypt ASP
+type decrypt_asp_t;
+type decrypt_asp_exe_t;
+define_asp(decrypt_asp_t, decrypt_asp_exe_t);
+maat_credentials_reader(decrypt_asp_t)
+allow decrypt_asp_t lib_t:file entrypoint;
+allow decrypt_asp_t cert_t:dir {search};
+allow decrypt_asp_t cert_t:file { open read getattr };
+
+# Merge ASP
+type merge_asp_t;
+type merge_asp_exe_t;
+define_asp(merge_asp_t, merge_asp_exe_t);
+allow merge_asp_t lib_t:file entrypoint;
+
+# Split ASP
+type split_asp_t;
+type split_asp_exe_t;
+define_asp(split_asp_t, split_asp_exe_t);
+
+# Create Contract ASP
+type create_measurement_contract_asp_t;
+type create_measurement_contract_asp_exe_t;
+define_asp(create_measurement_contract_asp_t, create_measurement_contract_asp_exe_t);
+maat_credentials_reader(create_measurement_contract_asp_t)
+maat_tmp_access(create_measurement_contract_asp_t)
+allow create_measurement_contract_asp_t lib_t:file { entrypoint };
+
+# Verify Measurement Contract ASP
+type verify_measurement_contract_asp_t;
+type verify_measurement_contract_asp_exe_t;
+define_asp(verify_measurement_contract_asp_t, verify_measurement_contract_asp_exe_t);
+maat_credentials_reader(verify_measurement_contract_asp_t)
+allow verify_measurement_contract_asp_t lib_t:file { entrypoint };
+allow verify_measurement_contract_asp_t cert_t:dir {search};
+allow verify_measurement_contract_asp_t cert_t:file { open read getattr };
+allow verify_measurement_contract_asp_t maat_tmp_t:file { open };
+
+# Send ASP
+type send_asp_t;
+type send_asp_exe_t;
+define_asp(send_asp_t, send_asp_exe_t);
+allow send_asp_t attestmgr_t:tcp_socket { rw_socket_perms };
+allow send_asp_t lib_t:file entrypoint;
+
+# Receive ASP
+type receive_asp_t;
+type receive_asp_exe_t;
+define_asp(receive_asp_t, receive_asp_exe_t);
+allow receive_asp_t attestmgr_t:tcp_socket { rw_socket_perms };
+allow receive_asp_t lib_t:file entrypoint;
+allow receive_asp_t cert_t:dir {search};
+
+# Sign-send ASP
+type sign_send_asp_t;
+type sign_send_asp_exe_t;
+define_asp(sign_send_asp_t, sign_send_asp_exe_t);
+maat_credentials_reader(sign_send_asp_t)
+maat_tmp_access(sign_send_asp_t)
+allow sign_send_asp_t lib_t:file { entrypoint };
+allow sign_send_asp_t bin_t:file { entrypoint };
+allow sign_send_asp_t attestmgr_t:tcp_socket { rw_socket_perms };
+allow sign_send_asp_t attestmgr_t:udp_socket { rw_socket_perms };
+allow sign_send_asp_t attestmgr_t:unix_stream_socket { rw_socket_perms };
+allow sign_send_asp_t cert_t:dir { search };
+allow sign_send_asp_t cert_t:file { read open getattr };
+
+# Requestor ASP
+type send_execute_asp_t;
+type send_execute_asp_exe_t;
+define_asp(send_execute_asp_t, send_execute_asp_exe_t);
+maat_credentials_reader(send_execute_asp_t)
+allow send_execute_asp_t attestmgr_t:tcp_socket { rw_socket_perms };
+allow send_execute_asp_t attestmgr_t:udp_socket { rw_socket_perms };
+allow send_execute_asp_t attestmgr_t:unix_stream_socket { connectto rw_socket_perms };
+# XXX the attester should be updated to make this a maat-specific type
+allow send_execute_asp_t tmp_t:sock_file { rw_file_perms };
+
+# Send execute ASP focused on TCP connections to AMs with permissions caches
+type send_execute_tcp_asp_t;
+type send_execute_tcp_asp_exe_t;
+define_asp(send_execute_tcp_asp_t, send_execute_tcp_asp_exe_t);
+maat_credentials_reader(send_execute_tcp_asp_t)
+allow send_execute_tcp_asp_t attestmgr_port_t:tcp_socket { rw_socket_perms name_connect };
+allow send_execute_tcp_asp_t self:tcp_socket { create rw_socket_perms name_connect };
+allow send_execute_tcp_asp_t net_conf_t:file { getattr open read };
+
+# Send Request ASP
+type send_request_asp_t;
+type send_request_asp_exe_t;
+define_asp(send_request_asp_t, send_request_asp_exe_t);
+maat_credentials_reader(send_request_asp_t)
+allow send_request_asp_t attestmgr_port_t:tcp_socket { rw_socket_perms name_connect };
+allow send_request_asp_t attestmgr_port_t:udp_socket { rw_socket_perms };
+allow send_request_asp_t attestmgr_t:unix_stream_socket { connectto rw_socket_perms };
+allow send_request_asp_t self:tcp_socket { create rw_socket_perms name_connect };
+allow send_request_asp_t complex_att_apb_t:fifo_file write;
+allow send_request_asp_t request_passport_apb_t:fifo_file write;
+allow send_request_asp_t net_conf_t:file { getattr open read };
+# XXX the attester should be updated to make this a maat-specific type
+allow send_request_asp_t tmp_t:sock_file { rw_file_perms };
+
+# Dummy Appraisal ASP
+type dummy_appraisal_t;
+type dummy_appraisal_exe_t;
+define_asp(dummy_appraisal_t, dummy_appraisal_exe_t)
+require {
+	type maat_tmp_t;
+}
+
+allow dummy_appraisal_t maat_tmp_t:file { rw_file_perms };
+
+# Delegated Measurement ASP
+# Change this policy to conform with nay modifications made
+type deleg_meas_skeleton_asp_t;
+type deleg_meas_skeleton_asp_exe_t;
+define_asp(deleg_meas_skeleton_asp_t, deleg_meas_skeleton_asp_exe_t);
+
+allow deleg_meas_skeleton_asp_t tmpfs_t:filesystem {getattr};
+allow deleg_meas_skeleton_asp_t tmpfs_t:dir {add_name remove_name write};
+allow deleg_meas_skeleton_asp_t tmpfs_t:shm {write};
+allow deleg_meas_skeleton_asp_t tmpfs_t:file {create open read write unlink getattr};
+
+allow deleg_meas_skeleton_asp_t bin_t:file {execute_no_trans execute map};
+
+allow bin_t tmpfs_t:file {open write getattr};
+allow bin_t tmpfs_t:shm {write getattr};
+
+# Delegated Measurement Appraisal ASP
+# Change this policy to conform with any modifications made
+type deleg_meas_appraise_skeleton_asp_t;
+type deleg_meas_appraise_skeleton_asp_exe_t;
+define_asp(deleg_meas_appraise_skeleton_asp_t, deleg_meas_appraise_skeleton_asp_exe_t);
+
+allow deleg_meas_appraise_skeleton_asp_t tmpfs_t:filesystem {getattr};
+allow deleg_meas_appraise_skeleton_asp_t tmpfs_t:dir {add_name remove_name write};
+allow deleg_meas_appraise_skeleton_asp_t tmpfs_t:shm {write};
+allow deleg_meas_appraise_skeleton_asp_t tmpfs_t:file {create open read write unlink getattr};
+
+allow deleg_meas_appraise_skeleton_asp_t bin_t:file {execute_no_trans execute map};
+
+# Process Measurement APB
+define_apb(process_measurement_apb_t, process_measurement_apb_exe_t)
+
+allow_apb_asp(process_measurement_apb_t, proc_open_file_asp_exe_t, proc_open_file_asp_t)
+allow_apb_asp(process_measurement_apb_t, hash_file_service_asp_exe_t, hash_file_service_asp_t)
+allow_apb_asp(process_measurement_apb_t, netstat_asp_exe_t, netstat_asp_t)
+allow_apb_asp(process_measurement_apb_t, memory_mapping_asp_exe_t, memory_mapping_asp_t)
+allow_apb_asp(process_measurement_apb_t, list_directory_service_asp_exe_t, list_directory_service_asp_t)
+
+# Appraiser APB
+require {
+	type locale_t;
+}
+type appraiser_apb_t;
+type appraiser_apb_exe_t;
+define_apb(appraiser_apb_t, appraiser_apb_exe_t)
+allow appraiser_apb_t locale_t:file { read open getattr };
+
+allow_apb_asp(appraiser_apb_t, dummy_appraisal_exe_t, dummy_appraisal_t)
+
+# Blacklist ASP
+type blacklist_asp_t;
+type blacklist_asp_exe_t;
+define_asp(blacklist_asp_t, blacklist_asp_exe_t)
+allow blacklist_asp_t asp_info_dir_t:dir {search};
+allow blacklist_asp_t cert_t:dir {search};
+
+type blacklist_t;
+files_type(blacklist_t)
+allow blacklist_asp_t blacklist_t:file {read_file_perms};
+allow blacklist_asp_t userspace_appraiser_apb_t:fifo_file {read write};
+
+# Whitelist ASP
+type whitelist_asp_t;
+type whitelist_asp_exe_t;
+define_asp(whitelist_asp_t, whitelist_asp_exe_t)
+allow whitelist_asp_t asp_info_dir_t:dir {search};
+allow whitelist_asp_t cert_t:dir {search};
+allow whitelist_asp_t tmp_t:dir { remove_name write };
+
+type whitelist_t;
+files_type(whitelist_t)
+allow whitelist_asp_t whitelist_t:file {read_file_perms};
+allow whitelist_asp_t userspace_appraiser_apb_t:fifo_file {read write};
+
+# DPKG check ASP
+type dpkg_check_asp_t;
+type dpkg_check_asp_exe_t;
+define_asp(dpkg_check_asp_t, dpkg_check_asp_exe_t)
+require {
+	type tmp_t;
+	type maat_tmp_t;
+}
+allow dpkg_check_asp_t tmp_t:lnk_file {getattr read};
+allow dpkg_check_asp_t maat_tmp_t:file {open};
+allow dpkg_check_asp_t userspace_appraiser_apb_t:fifo_file {read write};
+allow dpkg_check_asp_t cert_t:dir {search};
+
+# System Appraise ASP
+type system_appraise_asp_t;
+type system_appraise_asp_exe_t;
+define_asp(system_appraise_asp_t, system_appraise_asp_exe_t)
+allow system_appraise_asp_t maat_tmp_t:file {open};
+allow system_appraise_asp_t tmp_t:lnk_file {getattr read};
+allow system_appraise_asp_t asp_info_dir_t:dir { search };
+allow system_appraise_asp_t userspace_appraiser_apb_t:fifo_file {read write};
+allow system_appraise_asp_t cert_t:dir {search};
+allow system_appraise_asp_t whitelist_t:file {read_file_perms};
+
+# GOT Measure ASP
+type got_measure_asp_t;
+type got_measure_asp_exe_t;
+define_asp(got_measure_asp_t, got_measure_asp_exe_t)
+
+allow got_measure_asp_t got_measure_asp_t:capability {sys_ptrace dac_override};
+files_read_all_dirs_except(got_measure_asp_t, )
+
+files_read_all_files(got_measure_asp_t)
+files_read_all_pids(got_measure_asp_t)
+
+allow domain got_measure_asp_t:process {sigchld};
+
+domain_ptrace_all_domains(got_measure_asp_t)
+domain_getattr_all_domains(got_measure_asp_t)
+domain_search_all_domains_state(got_measure_asp_t)
+domain_read_all_domains_state(got_measure_asp_t)
+
+# GOT Appraise ASP
+type got_appraise_asp_t;
+type got_appraise_asp_exe_t;
+define_asp(got_appraise_asp_t, got_appraise_asp_exe_t)
+
+# Passport Maker ASP
+type passport_maker_asp_t;
+type passport_maker_asp_exe_t;
+define_asp(passport_maker_asp_t, passport_maker_asp_exe_t);
+
+# Passport Retriever ASP
+#type passport_retriever_asp_t;
+#type passport_retriever_asp_exe_t;
+#define_asp(passport_retriever_asp_t, passport_retriever_asp_exe_t);
+#allow passport_retriever_asp_t attestmgr_t:tcp_socket { rw_socket_perms };
+#allow passport_retriever_asp_t attestmgr_t:udp_socket { rw_socket_perms };
+#allow passport_retriever_asp_t attestmgr_t:unix_stream_socket { connectto rw_socket_perms };
+# XXX the attester should be updated to make this a maat-specific type
+allow send_request_asp_t tmp_t:sock_file { rw_file_perms };
+
+# Passport Storer ASP
+#type passport_storer_asp_t;
+#type passport_storer_asp_exe_t;
+#define_asp(passport_storer_asp_t, passport_storer_asp_exe_t);
+#allow passport_storer_asp_t attestmgr_t:tcp_socket { rw_socket_perms };
+#allow passport_storer_asp_t attestmgr_t:udp_socket { rw_socket_perms };
+#allow passport_storer_asp_t attestmgr_t:unix_stream_socket { rw_socket_perms };
+
+# Userspace APB
+type userspace_apb_t;
+type userspace_apb_exe_t;
+define_apb(userspace_apb_t, userspace_apb_exe_t)
+
+allow userspace_apb_t lib_t:file { entrypoint };
+allow userspace_apb_t init_var_run_t:dir { search };
+allow userspace_apb_t cert_t:dir {search};
+
+allow_apb_asp(userspace_apb_t, hash_file_service_asp_exe_t, hash_file_service_asp_t)
+allow_apb_asp(userspace_apb_t, lsproc_asp_exe_t, lsproc_asp_t)
+allow_apb_asp(userspace_apb_t, proc_open_file_asp_exe_t, proc_open_file_asp_t)
+allow_apb_asp(userspace_apb_t, system_asp_exe_t, system_asp_t)
+allow_apb_asp(userspace_apb_t, dpkg_inv_asp_exe_t, dpkg_inv_asp_t)
+allow_apb_asp(userspace_apb_t, dpkg_details_asp_exe_t, dpkg_details_asp_t)
+allow_apb_asp(userspace_apb_t, rpm_inv_asp_exe_t, rpm_inv_asp_t)
+allow_apb_asp(userspace_apb_t, rpm_details_asp_exe_t, rpm_details_asp_t)
+allow_apb_asp(userspace_apb_t, md5_file_service_asp_exe_t, md5_file_service_asp_t)
+allow_apb_asp(userspace_apb_t, list_directory_service_asp_exe_t, list_directory_service_asp_t)
+allow_apb_asp(userspace_apb_t, mtab_asp_exe_t, mtab_asp_t)
+allow_apb_asp(userspace_apb_t, memory_mapping_asp_exe_t, memory_mapping_asp_t)
+allow_apb_asp(userspace_apb_t, sign_send_asp_exe_t, sign_send_asp_t)
+allow_apb_asp(userspace_apb_t, got_measure_asp_exe_t, got_measure_asp_t)
+allow_apb_asp(userspace_apb_t, send_execute_asp_exe_t, send_execute_asp_t)
+allow_apb_asp(userspace_apb_t, proc_fds_asp_exe_t, proc_fds_asp_t)
+allow_apb_asp(userspace_apb_t, proc_mem_asp_exe_t, proc_mem_asp_t)
+allow_apb_asp(userspace_apb_t, proc_namespaces_asp_exe_t, proc_namespaces_asp_t)
+allow_apb_asp(userspace_apb_t, readelf_asp_exe_t, readelf_asp_t)
+
+# Hashdir APB
+type hashdir_apb_t;
+type hashdir_apb_exe_t;
+define_apb(hashdir_apb_t, hashdir_apb_exe_t)
+allow_apb_asp(hashdir_apb_t, list_directory_service_asp_exe_t, list_directory_service_asp_t)
+allow_apb_asp(hashdir_apb_t, hash_file_service_asp_exe_t, hash_file_service_asp_t)
+
+# Hashfile APB
+type hashfile_apb_t;
+type hashfile_apb_exe_t;
+define_apb(hashfile_apb_t, hashfile_apb_exe_t)
+allow_apb_asp(hashfile_apb_t, hash_file_service_asp_exe_t, hash_file_service_asp_t)
+
+# KIM APB
+type kim_apb_t;
+type kim_apb_exe_t;
+define_apb(kim_apb_t, kim_apb_exe_t)
+allow kim_apb_t userspace_appraiser_apb_t:fifo_file {rw_file_perms};
+allow_apb_asp(kim_apb_t, kernel_msmt_asp_exe_t, kernel_msmt_asp_t)
+
+# Forwarding APB
+type forwarding_apb_t;
+type forwarding_apb_exe_t;
+define_apb(forwarding_apb_t, forwarding_apb_exe_t)
+
+# No-op APB
+type no_op_apb_t;
+type no_op_apb_exe_t;
+define_apb(no_op_apb_t, no_op_apb_exe_t)
+allow no_op_apb_t lib_t:file entrypoint;
+
+# Complex Attestation APB
+type complex_att_apb_t;
+type complex_att_apb_exe_t;
+define_apb(complex_att_apb_t, complex_att_apb_exe_t)
+
+allow complex_att_apb_t lib_t:file { entrypoint };
+
+allow_apb_asp(complex_att_apb_t, hash_file_service_asp_exe_t, hash_file_service_asp_t)
+allow_apb_asp(complex_att_apb_t, lsproc_asp_exe_t, lsproc_asp_t)
+allow_apb_asp(complex_att_apb_t, proc_open_file_asp_exe_t, proc_open_file_asp_t)
+allow_apb_asp(complex_att_apb_t, system_asp_exe_t, system_asp_t)
+allow_apb_asp(complex_att_apb_t, dpkg_inv_asp_exe_t, dpkg_inv_asp_t)
+allow_apb_asp(complex_att_apb_t, dpkg_details_asp_exe_t, dpkg_details_asp_t)
+allow_apb_asp(complex_att_apb_t, rpm_inv_asp_exe_t, rpm_inv_asp_t)
+allow_apb_asp(complex_att_apb_t, rpm_details_asp_exe_t, rpm_details_asp_t)
+allow_apb_asp(complex_att_apb_t, md5_file_service_asp_exe_t, md5_file_service_asp_t)
+allow_apb_asp(complex_att_apb_t, list_directory_service_asp_exe_t, list_directory_service_asp_t)
+allow_apb_asp(complex_att_apb_t, mtab_asp_exe_t, mtab_asp_t)
+allow_apb_asp(complex_att_apb_t, memory_mapping_asp_exe_t, memory_mapping_asp_t)
+# allow_apb_asp(complex_att_apb_t, sign_send_asp_exe_t, sign_send_asp_t)
+allow_apb_asp(complex_att_apb_t, got_measure_asp_exe_t, got_measure_asp_t)
+allow_apb_asp(complex_att_apb_t, send_execute_asp_exe_t, send_execute_asp_t)
+allow_apb_asp(complex_att_apb_t, proc_fds_asp_exe_t, proc_fds_asp_t)
+allow_apb_asp(complex_att_apb_t, proc_mem_asp_exe_t, proc_mem_asp_t)
+allow_apb_asp(complex_att_apb_t, proc_namespaces_asp_exe_t, proc_namespaces_asp_t)
+allow_apb_asp(complex_att_apb_t, send_request_asp_exe_t, send_request_asp_t)
+allow_apb_asp(complex_att_apb_t, compress_asp_exe_t, compress_asp_t)
+allow_apb_asp(complex_att_apb_t, create_measurement_contract_asp_exe_t, create_measurement_contract_asp_t)
+allow_apb_asp(complex_att_apb_t, merge_asp_exe_t, merge_asp_t)
+allow_apb_asp(complex_att_apb_t, send_asp_exe_t, send_asp_t)
+allow_apb_asp(complex_att_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_t)
+allow_apb_asp(complex_att_apb_t, encrypt_asp_exe_t, encrypt_asp_t)
+
+# Request Passport APB
+type request_passport_apb_t;
+type request_passport_apb_exe_t;
+define_apb(request_passport_apb_t, request_passport_apb_exe_t)
+allow_apb_asp(request_passport_apb_t, send_request_asp_exe_t, send_request_asp_t)
+allow_apb_asp(request_passport_apb_t, compress_asp_exe_t, compress_asp_t)
+allow_apb_asp(request_passport_apb_t, encrypt_asp_exe_t, encrypt_asp_t)
+allow_apb_asp(request_passport_apb_t, create_measurement_contract_asp_exe_t, create_measurement_contract_asp_t)
+allow_apb_asp(request_passport_apb_t, send_asp_exe_t, send_asp_t)
+allow_apb_asp(request_passport_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_t)
+
+# Delegated Measurement APB
+type deleg_meas_skeleton_apb_t;
+type deleg_meas_skeleton_apb_exe_t;
+define_apb(deleg_meas_skeleton_apb_t, deleg_meas_skeleton_apb_exe_t)
+allow_apb_asp(deleg_meas_skeleton_apb_t, deleg_meas_skeleton_asp_exe_t, deleg_meas_skeleton_asp_t)
+
+# Delegated Measurement Appraisal APB
+type deleg_meas_appraise_skeleton_apb_t;
+type deleg_meas_appraise_skeleton_apb_exe_t;
+define_apb(deleg_meas_appraise_skeleton_apb_t, deleg_meas_appraise_skeleton_apb_exe_t)
+allow_apb_asp(deleg_meas_appraise_skeleton_apb_t, deleg_meas_appraise_skeleton_asp_exe_t, deleg_meas_appraise_skeleton_asp_t)
+
+# Passport Ret APB
+#type passport_ret_apb_t;
+#type passport_ret_apb_exe_t;
+#define_apb(passport_ret_apb_t, passport_ret_apb_exe_t)
+#allow_apb_asp(passport_ret_apb_t, passport_retriever_asp_exe_t, passport_retriever_asp_t)
+
+# Passport Storage APB
+#type passport_storage_apb_t;
+#type passport_storage_apb_exe_t;
+#define_apb(passport_storage_apb_t, passport_storage_apb_exe_t)
+#apb_metadata_reader(passport_storage_apb_t)
+#allow passport_storage_apb_t passport_storage_apb_t:fifo_file {rw_file_perms};
+#allow_apb_asp(passport_storage_apb_t, passport_storer_asp_exe_t, passport_storer_asp_t)
+
+# Passport Appraiser APB
+#require {
+#	type attestmgr_t;
+#}
+#type passport_appraiser_apb_t;
+#type passport_appraiser_apb_exe_t;
+#define_apb(passport_appraiser_apb_t, passport_appraiser_apb_exe_t)
+#apb_metadata_reader(passport_appraiser_apb_t)
+#allow passport_appraiser_apb_t passport_appraiser_apb_t:fifo_file {rw_file_perms};
+
+gen_require(`type user_tmp_t;')
+
+# Layered Attestation APB
+type layered_att_apb_t;
+type layered_att_apb_exe_t;
+define_apb(layered_att_apb_t, layered_att_apb_exe_t)
+
+allow layered_att_apb_t lib_t:file { entrypoint };
+
+allow_apb_asp(layered_att_apb_t, hash_file_service_asp_exe_t, hash_file_service_asp_t)
+allow_apb_asp(layered_att_apb_t, lsproc_asp_exe_t, lsproc_asp_t)
+allow_apb_asp(layered_att_apb_t, proc_open_file_asp_exe_t, proc_open_file_asp_t)
+allow_apb_asp(layered_att_apb_t, system_asp_exe_t, system_asp_t)
+allow_apb_asp(layered_att_apb_t, dpkg_inv_asp_exe_t, dpkg_inv_asp_t)
+allow_apb_asp(layered_att_apb_t, dpkg_details_asp_exe_t, dpkg_details_asp_t)
+allow_apb_asp(layered_att_apb_t, rpm_inv_asp_exe_t, rpm_inv_asp_t)
+allow_apb_asp(layered_att_apb_t, rpm_details_asp_exe_t, rpm_details_asp_t)
+allow_apb_asp(layered_att_apb_t, md5_file_service_asp_exe_t, md5_file_service_asp_t)
+allow_apb_asp(layered_att_apb_t, list_directory_service_asp_exe_t, list_directory_service_asp_t)
+allow_apb_asp(layered_att_apb_t, mtab_asp_exe_t, mtab_asp_t)
+allow_apb_asp(layered_att_apb_t, memory_mapping_asp_exe_t, memory_mapping_asp_t)
+# allow_apb_asp(layered_att_apb_t, sign_send_asp_exe_t, sign_send_asp_t)
+allow_apb_asp(layered_att_apb_t, got_measure_asp_exe_t, got_measure_asp_t)
+allow_apb_asp(layered_att_apb_t, send_execute_asp_exe_t, send_execute_asp_t)
+allow_apb_asp(layered_att_apb_t, send_execute_tcp_asp_exe_t, send_execute_tcp_asp_t)
+allow_apb_asp(layered_att_apb_t, proc_fds_asp_exe_t, proc_fds_asp_t)
+allow_apb_asp(layered_att_apb_t, proc_mem_asp_exe_t, proc_mem_asp_t)
+allow_apb_asp(layered_att_apb_t, proc_namespaces_asp_exe_t, proc_namespaces_asp_t)
+allow_apb_asp(layered_att_apb_t, send_request_asp_exe_t, send_request_asp_t)
+allow_apb_asp(layered_att_apb_t, compress_asp_exe_t, compress_asp_t)
+allow_apb_asp(layered_att_apb_t, create_measurement_contract_asp_exe_t, create_measurement_contract_asp_t)
+allow_apb_asp(layered_att_apb_t, merge_asp_exe_t, merge_asp_t)
+allow_apb_asp(layered_att_apb_t, send_asp_exe_t, send_asp_t)
+allow_apb_asp(layered_att_apb_t, serialize_graph_asp_exe_t, serialize_graph_asp_t)
+allow_apb_asp(layered_att_apb_t, encrypt_asp_exe_t, encrypt_asp_t)
+allow_apb_asp(layered_att_apb_t, decrypt_asp_exe_t, decrypt_asp_t)
+allow_apb_asp(layered_att_apb_t, decompress_asp_exe_t, decompress_asp_t)
+allow_apb_asp(layered_att_apb_t, verify_measurement_contract_asp_exe_t, verify_measurement_contract_asp_t)
+allow_apb_asp(layered_att_apb_t, receive_asp_exe_t, receive_asp_t)
+
+# Userspace Appraiser APB
+require {
+	type attestmgr_t;
+	type init_var_run_t;
+}
+
+type userspace_appraiser_apb_t;
+type userspace_appraiser_apb_exe_t;
+define_apb(userspace_appraiser_apb_t, userspace_appraiser_apb_exe_t)
+apb_metadata_reader(userspace_appraiser_apb_t)
+allow userspace_appraiser_apb_t userspace_appraiser_apb_t:fifo_file {rw_file_perms};
+allow userspace_appraiser_apb_t init_var_run_t:dir {search};
+allow userspace_appraiser_apb_t cert_t:dir { search };
+allow userspace_appraiser_apb_t cert_t:file { read open getattr };
+
+allow_apb_asp(userspace_appraiser_apb_t, blacklist_asp_exe_t, blacklist_asp_t)
+allow_apb_asp(userspace_appraiser_apb_t, whitelist_asp_exe_t, whitelist_asp_t)
+allow_apb_asp(userspace_appraiser_apb_t, dpkg_check_asp_exe_t, dpkg_check_asp_t)
+allow_apb_asp(userspace_appraiser_apb_t, system_appraise_asp_exe_t, system_appraise_asp_t)
+allow_apb_asp(userspace_appraiser_apb_t, decompress_asp_exe_t, decompress_asp_t)
+allow_apb_asp(userspace_appraiser_apb_t, decrypt_asp_exe_t, decrypt_asp_t)
+allow_apb_asp(userspace_appraiser_apb_t, verify_measurement_contract_asp_exe_t, verify_measurement_contract_asp_t)
+allow_apb_asp(userspace_appraiser_apb_t, receive_asp_exe_t, receive_asp_t)
+allow_apb_asp(userspace_appraiser_apb_t, got_appraise_asp_exe_t, got_appraise_asp_t)
+allow_apb_asp(userspace_appraiser_apb_t, elf_appraise_asp_exe_t, elf_appraise_asp_t)
+
+# this is needed because the userspace appraiser launches 'subordinate' apbs. 
+# if we want to continue to allow this model of execution, should replace
+# with an allow_spawn_apb(usespace_appraiser_apb_t, kim_apb_t), etc.
+allow_spawn_any_apb(userspace_appraiser_apb_t)
+allow_apb_asp(userspace_appraiser_apb_t, kim_apb_exe_t, kim_apb_t)
+allow_apb_asp(userspace_appraiser_apb_t, userspace_appraiser_apb_exe_t, userspace_appraiser_apb_t)
+
+gen_require(`type user_tmp_t;')
+
+# Layered Appraiser APB
+require {
+	type attestmgr_t;
+	type init_var_run_t;
+}
+
+type layered_appraiser_apb_t;
+type layered_appraiser_apb_exe_t;
+define_apb(layered_appraiser_apb_t, layered_appraiser_apb_exe_t)
+apb_metadata_reader(layered_appraiser_apb_t)
+allow layered_appraiser_apb_t layered_appraiser_apb_t:fifo_file {rw_file_perms};
+allow layered_appraiser_apb_t init_var_run_t:dir {search};
+
+allow_apb_asp(layered_appraiser_apb_t, blacklist_asp_exe_t, blacklist_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, whitelist_asp_exe_t, whitelist_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, dpkg_check_asp_exe_t, dpkg_check_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, system_appraise_asp_exe_t, system_appraise_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, decrypt_asp_exe_t, decrypt_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, decompress_asp_exe_t, decompress_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, verify_measurement_contract_asp_exe_t, verify_measurement_contract_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, receive_asp_exe_t, receive_asp_t)
+allow_apb_asp(layered_appraiser_apb_t, got_appraise_asp_exe_t, got_appraise_asp_t)
+
+# this is needed because the layered appraiser launches 'subordinate' apbs.
+# if we want to continue to allow this model of execution, should replace
+# with an allow_spawn_apb(usespace_appraiser_apb_t, kim_apb_t), etc.
+allow_spawn_any_apb(layered_appraiser_apb_t)
+allow_apb_asp(layered_appraiser_apb_t, kim_apb_exe_t, kim_apb_t)
+allow_apb_asp(layered_appraiser_apb_t, userspace_appraiser_apb_exe_t, userspace_appraiser_apb_t)
+
+gen_require(`type user_tmp_t;')
+
+# Passport Userspace Appraiser APB
+require {
+	type attestmgr_t;
+}
+type passport_userspace_appraiser_apb_t;
+type passport_userspace_appraiser_apb_exe_t;
+define_apb(passport_userspace_appraiser_apb_t, passport_userspace_appraiser_apb_exe_t)
+apb_metadata_reader(passport_userspace_appraiser_apb_t)
+allow passport_userspace_appraiser_apb_t passport_userspace_appraiser_apb_t:fifo_file {rw_file_perms};
+
+allow_apb_asp(passport_userspace_appraiser_apb_t, blacklist_asp_exe_t, blacklist_asp_t)
+allow_apb_asp(passport_userspace_appraiser_apb_t, whitelist_asp_exe_t, whitelist_asp_t)
+allow_apb_asp(passport_userspace_appraiser_apb_t, dpkg_check_asp_exe_t, dpkg_check_asp_t)
+allow_apb_asp(passport_userspace_appraiser_apb_t, system_appraise_asp_exe_t, system_appraise_asp_t)
+allow_apb_asp(passport_userspace_appraiser_apb_t, passport_maker_asp_exe_t, passport_maker_asp_t)
+allow_apb_asp(passport_userspace_appraiser_apb_t, got_appraise_asp_exe_t, got_appraise_asp_t)
+
+# this is needed because the passport userspace appraiser launches 'subordinate' apbs. 
+# if we want to continue to allow this model of execution, should replace
+# with an allow_spawn_apb(passport_usespace_appraiser_apb_t, kim_apb_t), etc.
+allow_spawn_any_apb(passport_userspace_appraiser_apb_t)
+allow_apb_asp(passport_userspace_appraiser_apb_t, kim_apb_exe_t, kim_apb_t)
+allow_apb_asp(passport_userspace_appraiser_apb_t, passport_userspace_appraiser_apb_exe_t, passport_userspace_appraiser_apb_t)
+
+gen_require(`type user_tmp_t;')

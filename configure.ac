@@ -78,6 +78,10 @@ AC_PATH_PROG([GPERF], [gperf], [], [$PATH:/bin:/usr/bin:/usr/local/bin])
 AX_LIB_READLINE()
 
 AX_CHECK_OPENSSL([],[AC_MSG_ERROR([OpenSSL devel libs not installed])])
+XOPENSSL_MAJOR_VERSION=$(openssl version | awk '{print $2}' | awk -F'.' '{print $1}')
+AS_IF([test "x$OPENSSL_MAJOR_VERSION" = "x3"], 
+	[AC_DEFINE_UNQUOTED([OPENSSL_MAJOR_VERSION],[3],[The major version of openssl.])],
+	[AC_DEFINE_UNQUOTED([OPENSSL_MAJOR_VERSION],[1],[The major version of openssl.])])
 
 AC_SEARCH_LIBS([dlopen], [dl])
 
@@ -485,6 +489,12 @@ AC_ARG_ENABLE([selinux],
 	[enable_selinux=$enableval],
 	[enable_selinux=yes])
 
+AC_ARG_ENABLE([photon],
+	[AS_HELP_STRING([--enable-photon], [Specify target as Photon OS for SELinux policy selection (default=no)])],
+	[enable_photon=$enableval],
+	[enable_photon=no])
+
+AM_CONDITIONAL(ENABLE_PHOTON, test "x$enable_photon" = xyes)
 
 # Enable
 AS_IF([test "x$enable_selinux" = xyes],[

@@ -35,7 +35,7 @@ be found in "Orchestrating Layered Attestations" (DOI:
 10.1007/978-3-030-17138-4_9) and "Automated Trust Analysis of Copland
 Specifications for Layered Attestations" (DOI: 10.1145/3479394.3479418).
 
-Maat currently supports RHEL 7 and 8; Ubuntu 20.04, 22.04 and 23.10; and Debian 11.
+Maat currently supports RHEL 7 and 8; Ubuntu 20.04, 22.04 and 23.10; Debian 11; and Photon OS 5.0.
 
 Documentation
 -------------

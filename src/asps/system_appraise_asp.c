@@ -87,13 +87,19 @@ int asp_init(int argc, char *argv[])
     size_t length = 0;
     char str[50];
     GList *temp = NULL;
+    int ret = 0;
 
     // Get path
     full_path = g_strdup_printf("%s/%s", get_aspinfo_dir(), "distribution.whitelist");
 
     // Read a line and tokenize to the corresponding data structure Glist
     //1. Get OS
-    read_line_csv(full_path, "1", 0, MAX_LINE_LEN, &line);
+    ret = read_line_csv(full_path, "1", 0, MAX_LINE_LEN, &line);
+    if( ret == -1 ){
+        free(line);
+        dlog(0, "OS not found in %s\n", full_path);
+        return ASP_APB_ERROR_BADCSV;
+    }
     fields = strtok(line, ",");
     while (fields != NULL) {
         if (strcmp(fields, "1") != 0) {
@@ -112,7 +118,12 @@ int asp_init(int argc, char *argv[])
     while (index < num_lines) {
         temp = NULL;
         sprintf(str, "%d", index + 2);
-        read_line_csv(full_path, str, 0, MAX_LINE_LEN, &line);
+        ret = read_line_csv(full_path, str, 0, MAX_LINE_LEN, &line);
+        if( ret == -1 ){
+            free(line);
+            dlog(0, "OS version not found in %s\n", full_path);
+            return ASP_APB_ERROR_BADCSV;
+        }
         fields = strtok(line, ",");
         while (fields != NULL) {
             if (strcmp(fields, str) != 0) {

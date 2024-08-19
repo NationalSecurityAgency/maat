@@ -323,23 +323,23 @@ test-ubuntu20-asan:
     when: always
 
 # make check tests with address sanitizer on ubuntu20
-#test-ubuntu20-asan-tpm:
-#  stage: test
-#  tags:
-#    - maat-swtpm
-#  script:
-#    - *test_asan
-#  coverage: /^\s*lines:\s*\d+.\d+\%/
-#  artifacts:
-#    paths:
-#      - build/src/test/*.log
-#      - build/lib/test/*.log
-#    expire_in: 2 weeks
-#    reports:
-#      coverage_report:
-#        coverage_format: cobertura
-#        path: build/coverage.xml
-#    when: always
+test-ubuntu20-asan-tpm:
+  stage: test
+  tags:
+    - new-ubuntu20
+  script:
+    - *test_asan
+  coverage: /^\s*lines:\s*\d+.\d+\%/
+  artifacts:
+    paths:
+      - build/src/test/*.log
+      - build/lib/test/*.log
+    expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
+    when: always
 
 # regular make check tests on ubuntu22
 test-ubuntu22-basic:

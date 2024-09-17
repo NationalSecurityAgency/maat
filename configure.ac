@@ -574,6 +574,7 @@ AC_CONFIG_FILES([lib/Makefile lib/util/Makefile lib/graph/Makefile lib/asp/Makef
 		 lib/libmaat_graph.pc
 		 lib/libmaat_client.pc
 		 lib/libmaat_sgraph.pc
+         lib/libmaat_measurement_spec.pc
 		 Makefile
 		 management-ui/Makefile
 		 pam/Makefile

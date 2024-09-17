@@ -28,4 +28,5 @@ pkgconfig_DATA = libmaat.pc \
 		 libmaat_apb.pc \
 		 libmaat_client.pc \
 		 libmaat_graph.pc \
-		 libmaat_sgraph.pc
+		 libmaat_sgraph.pc \
+         libmaat_measurement_spec.pc

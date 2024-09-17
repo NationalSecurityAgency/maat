@@ -289,8 +289,8 @@ latex_appendices = [
     'apbs',
     'asps',
     'doxtypes',
-    'apb_readme',
-    'asp_readme',
+    'apb_developer_guide',
+    'asp_developer_guide',
 ]
 
 # If false, no module index is generated.

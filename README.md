@@ -94,6 +94,10 @@ SOURCE LAYOUT
       			   These credentials are used by the test code and
 			   tutorials
 
++ demo/ancillary_files  -- Sample configuration files used for tutorials
+
++ demo/whitelist    -- Contains scripts to produce whitelists for benign execeptions to certain appraisal policies
+
 + documentation/ 	-- Documentation that, when built, will render an 
   			   html version of the Maat docs
 

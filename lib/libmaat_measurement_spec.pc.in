@@ -1,5 +1,5 @@
 #
-# Copyright 2023 United States Government
+# Copyright 2024 United States Government
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: libmaat
-Description: Maat Library
-Requires: libssl glib-2.0 libxml-2.0 uuid libmaat_asp  libmaat_apb  libmaat_am libmaat_util libmaat_client libmaat_measurement_spec
+Name: libmaat_measurement_spec
+Description: Maat Measurement Specification Library
+Requires: glib-2.0 libxml-2.0 libmaat_util
 Version: @PACKAGE_VERSION@
-Libs: 
-Cflags:
+Libs: -L${libdir} -lmaat_measurement_spec-@PACKAGE_VERSION@
+Cflags: -I${includedir}/maat-@PACKAGE_VERSION@

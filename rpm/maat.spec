@@ -255,6 +255,7 @@ setsebool -P httpd_can_network_connect=off
 %{_libexecdir}/maat/asps/system_appraise_asp
 %{_libexecdir}/maat/asps/system_asp
 %{_libexecdir}/maat/asps/whitelist
+%{_libexecdir}/maat/asps/md5_hashcheck_asp
 %{_libexecdir}/maat/asps/send_execute_asp
 %{_libexecdir}/maat/asps/serialize_graph_asp
 %{_libexecdir}/maat/asps/compress_asp

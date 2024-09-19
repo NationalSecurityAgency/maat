@@ -326,6 +326,7 @@ DEFAULT_ASP(split)
 DEFAULT_ASP(kernel_msmt)
 DEFAULT_ASP(send_request)
 EXTRA_ASP(tlm_ret)
+DEFAULT_ASP(md5_hashcheck)
 DEFAULT_ASP(deleg_meas_skeleton)
 DEFAULT_ASP(deleg_meas_appraise_skeleton)
 

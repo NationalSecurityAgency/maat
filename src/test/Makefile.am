@@ -40,7 +40,10 @@ AM_CPPFLAGS = -g -I$(top_srcdir)/src/include -I$(srcdir) -I$(top_srcdir)/src \
 	-DDEFAULT_ASP_DIR="\"$(ASP_INFO_DIR)\"" \
 	-DDEFAULT_MEAS_SPEC_DIR="\"$(SPEC_INSTALL_DIR)\"" \
 	-DDEFAULT_SELECTOR_PATH="\"$(SELECTOR_INSTALL_DIR)/selector.xml\"" \
-	-DDEFAULT_SELECTOR_MONGO_LOC="\"mongodb://localhost:27017/\""
+	-DDEFAULT_SELECTOR_MONGO_LOC="\"mongodb://localhost:27017/\"" \
+	-DASP_DATA_PATH="\"$(abs_top_srcdir)/src/asps/datafiles\"" \
+	-DASP_TEST_DATA_PATH="\"$(abs_top_srcdir)/src/test/datafiles\"" \
+	-DASP_TEST_SCRIPT_PATH="\"$(abs_top_srcdir)/demo/whitelist/\""
 
 AM_LDFLAGS =
 
@@ -232,3 +235,8 @@ test_kernel_msmt_LDADD = $(LDADD) $(builddir)/../asps/libkernel_msmt_helper.la
 test_kernel_msmt_CPPFLAGS = $(AM_CPPFLAGS) -DENABLE_TESTS
 endif
 
+if BUILD_md5_hashcheck_ASP
+check_PROGRAMS += test_md5_hashcheck_asp
+test_md5_hashcheck_asp_SOURCES = test_md5_hashcheck_asp.c
+test_md5_hashcheck_asp_LDADD = $(LDADD_APB)
+endif

@@ -271,7 +271,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
             }
             // Everything else goes to an ASP
         } else {
-            appraiser_asp = select_appraisal_asp(node, data_type, apb_asps);
+            appraiser_asp = select_appraisal_asp(mg, node, data_type, apb_asps);
             if(!appraiser_asp) {
                 dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", type_str);
                 ret = 0;

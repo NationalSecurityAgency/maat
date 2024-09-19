@@ -1,0 +1,7 @@
+#
+# MD5 hashes whitelist file
+#
+# File hahes appearing in this file (one per line) are the only
+# files allowed on the system.  Any file hash found not on this
+# list will trigger an attestation failure
+# Add whitelisted files in the form <filename>:<hash>

@@ -861,6 +861,15 @@ files_type(whitelist_t)
 allow whitelist_asp_t whitelist_t:file {read_file_perms};
 allow whitelist_asp_t userspace_appraiser_apb_t:fifo_file {read write};
 
+
+# MD5 Hashcheck ASP
+type md5_hashcheck_asp_t;
+type md5_hashcheck_asp_exe_t;
+define_asp(md5_hashcheck_asp_t, md5_hashcheck_asp_exe_t)
+allow md5_hashcheck_asp_t asp_info_dir_t:dir {search};
+allow md5_hashcheck_asp_t cert_t:dir {search};
+allow md5_hashcheck_asp_t whitelist_t:file{read_file_perms};
+
 # DPKG check ASP
 type dpkg_check_asp_t;
 type dpkg_check_asp_exe_t;
@@ -1136,6 +1145,7 @@ allow_apb_asp(userspace_appraiser_apb_t, decrypt_asp_exe_t, decrypt_asp_t)
 allow_apb_asp(userspace_appraiser_apb_t, verify_measurement_contract_asp_exe_t, verify_measurement_contract_asp_t)
 allow_apb_asp(userspace_appraiser_apb_t, receive_asp_exe_t, receive_asp_t)
 allow_apb_asp(userspace_appraiser_apb_t, got_appraise_asp_exe_t, got_appraise_asp_t)
+allow_apb_asp(userspace_appraiser_apb_t, md5_hashcheck_asp_exe_t, md5_hashcheck_asp_t)
 allow_apb_asp(userspace_appraiser_apb_t, elf_appraise_asp_exe_t, elf_appraise_asp_t)
 
 # this is needed because the userspace appraiser launches 'subordinate' apbs. 

@@ -51,7 +51,8 @@ int adjust_measurement_contract_to_access_contract(struct scenario *scen);
 int receive_measurement_contract_asp(GList *apb_asps, int chan,
                                      struct scenario *scen);
 
-struct asp *select_appraisal_asp(node_id_t node UNUSED,
+struct asp *select_appraisal_asp(measurement_graph *graph,
+                                 node_id_t node,
                                  magic_t measurement_type,
                                  GList *apb_asps);
 

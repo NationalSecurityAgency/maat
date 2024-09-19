@@ -615,10 +615,11 @@ chan_err:
     return -1;
 }
 
-struct asp *select_appraisal_asp(node_id_t node UNUSED,
+struct asp *select_appraisal_asp(measurement_graph *graph, node_id_t node,
                                  magic_t measurement_type,
                                  GList *apb_asps)
 {
+    target_type *type = measurement_node_get_target_type(graph, node);
     if (measurement_type == SYSTEM_TYPE_MAGIC) {
         return find_asp(apb_asps, "system_appraise");
     }
@@ -627,7 +628,13 @@ struct asp *select_appraisal_asp(node_id_t node UNUSED,
         return find_asp(apb_asps, "blacklist");
     }
     if (measurement_type == MD5HASH_MAGIC) {
-        return find_asp(apb_asps, "dpkg_check");
+        if (type->magic == FILE_TARGET_MAGIC){
+            return find_asp(apb_asps, "md5_hashcheck_asp");
+        }
+        else{
+            return find_asp(apb_asps, "dpkg_check");
+        }
+        
     }
     if (measurement_type == BLOB_MEASUREMENT_TYPE_MAGIC) {
         return find_asp(apb_asps, "got_appraise");
@@ -1074,7 +1081,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
             // Everything else goes to some ASP for appraisal
         } else {
             struct asp *appraiser_asp = NULL;
-            appraiser_asp = select_appraisal_asp(node, data_type, apb_asps);
+            appraiser_asp = select_appraisal_asp(mg, node, data_type, apb_asps);
             if(!appraiser_asp) {
                 dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", meas_type->name);
                 ret = 0;
@@ -1082,7 +1089,6 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
             } else {
                 dlog(4, "appraiser_asp == %p (%p %d)\n", appraiser_asp, apb_asps,
                      g_list_length(apb_asps));
-
                 char *asp_argv[] = {graph_path,
                                     node_str,
                                     type_str

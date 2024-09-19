@@ -103,8 +103,10 @@
 @aspdir@/create_measurement_contract_asp -- gen_context(system_u:object_r:create_measurement_contract_asp_exe_t)
 @aspdir@/decompress_asp                  -- gen_context(system_u:object_r:decompress_asp_exe_t)
 @aspdir@/receive_asp                  -- gen_context(system_u:object_r:receive_asp_exe_t)
+@aspdir@/md5_hashcheck_asp            -- gen_context(system_u:object_r:md5_hashcheck_asp_exe_t)
 @aspdir@/deleg_meas_skeleton_asp              -- gen_context(system_u:object_r:deleg_meas_skeleton_asp_exe_t)
 @aspdir@/deleg_meas_appraise_skeleton_asp     -- gen_context(system_u:object_r:deleg_meas_appraise_skeleton_asp_exe_t)
+
 #
 # APB implementations
 #

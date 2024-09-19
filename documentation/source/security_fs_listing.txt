@@ -742,6 +742,8 @@ state) should be installed with appropriate ownership, and their SUID or SGID bi
 +------------+------+-------+-----------------------------------------------------------+---------------------------------------+
 |-rwxr-xr-x. |root  |root   |system_u:object_r:md5_file_service_asp_exe_t:s0            |md5fileserviceasp                      |
 +------------+------+-------+-----------------------------------------------------------+---------------------------------------+
+|-rwxr-xr-x. |root  |root   |system_u:object_r:md5_hashcheck_asp_exe_t:s0               |md5_hashcheck_asp                      |
++------------+------+-------+-----------------------------------------------------------+---------------------------------------+
 |-rwsr-xr-x. |root  |root   |system_u:object_r:memory_mapping_asp_exe_t:s0              |memorymappingasp                       |
 +------------+------+-------+-----------------------------------------------------------+---------------------------------------+
 |-rwsr-xr-x. |root  |root   |system_u:object_r:memorymapping_appraise_asp_exe_t:s0      |memorymapping_appraise_asp             |
@@ -1046,6 +1048,8 @@ directory and its contents world readable (chmod 0755 for the directory, chmod 0
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |lsprocasp.xml                           |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |md5fileserviceasp.xml                   |
++------------+------+-------+-----------------------------------------------------+----------------------------------------+
+|-rw-r--r--. |root  |root   |system_u:object_r:whitelist_t:s0                     |md5_hashcheck.whitelist                 |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+
 |-rw-r--r--. |root  |root   |system_u:object_r:asp_info_t:s0                      |memorymappingasp.xml                    |
 +------------+------+-------+-----------------------------------------------------+----------------------------------------+

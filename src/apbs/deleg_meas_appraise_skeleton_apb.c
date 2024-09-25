@@ -347,7 +347,6 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     }
     dlog(4, "Resp contract: %s\n", response_buf);
 
-    sz = sz+1; // include the terminating '\0'
     iostatus = maat_write_sz_buf(resultchan, response_buf, sz, &bytes_written, 5);
 
     if(iostatus != 0) {

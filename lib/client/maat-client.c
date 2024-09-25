@@ -32,6 +32,26 @@
 #include <ctype.h>
 #include <stdint.h>
 
+/**
+ * @brief Create an XML contract for the relying party to send to an
+ *        appraiser to commence negotiation with an attester.
+ *
+ * @param target_typ type of ID identifying an attester
+ * @param target_id ID of the attester of interest
+ * @param target_portnum Network port of the attester of interest, if required
+ * @param resource Aspect of the attester of which to determine integrity
+ * @param nonce Session nonce to be used for all messsages as part of this
+ *        attestation session
+ * @param tunnel Socket tunnel over which to route Maat communications
+ *        (e.g. /tmp/tunnel.sock)
+ * @param cert_fingerprint Fingerprint of the certificate that will be used for
+ *        message encrypting and signing
+ * @param info Base64 encoded representation of DeviceInfo, if required
+ * @param out XML contract which outlines a particular integrity request
+ * @param outsize Size of the XML contract specified by out
+ *
+ * @returns int Returns 0 if the function succeeds or -1 otherwise
+ */
 int create_integrity_request(target_id_type_t target_typ,
                              xmlChar *target_id,
                              xmlChar *target_portnum,
@@ -151,14 +171,15 @@ int create_integrity_request(target_id_type_t target_typ,
     }
 
     /* Cast is justified because of the previous bounds check */
-    if (size < 0 || (INT_MAX > SIZE_MAX && (unsigned int) size > SIZE_MAX)) {
+    if (size < 0 || (INT_MAX > SIZE_MAX && size > SIZE_MAX - 1)) {
         fprintf(stderr, "Size of XML buffer %d not between 0 and %zu\n", size, SIZE_MAX);
         xmlFree(out);
         goto out;
     }
 
     /* Because of the previous bounds checking, this cast is justified */
-    *outsize = (size_t)size;
+    /* Must include the null in the returned size */
+    *outsize = (size_t)size + 1;
     ret = 0;
 
 out:
@@ -226,13 +247,13 @@ int parse_integrity_response(const char *input, size_t input_size,
     *data_idents = NULL;
     *data_entries= NULL;
 
-    if (SIZE_MAX > INT_MAX && input_size > INT_MAX) {
-        fprintf(stderr, "Size parameter %zu too large to represent XML document size\n", input_size);
+    if (input_size == 0 || (SIZE_MAX > INT_MAX && (input_size - 1) > INT_MAX)) {
+        fprintf(stderr, "Size parameter %zu improper size to represent XML document size\n", input_size);
         goto error;
     }
 
     /* Cast is justified because of the previous bounds check */
-    doc = xmlParseMemory(input, (int)input_size);
+    doc = xmlParseMemory(input, (int)input_size - 1);
     if(doc == NULL) {
         fprintf(stderr, "Failed to parse integrity response document\n");
         goto error;

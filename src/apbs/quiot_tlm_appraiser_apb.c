@@ -293,14 +293,13 @@ int apb_execute(struct apb *apb, struct scenario *scen,
 
     dlog(6, "Resp contract: %s\n", response_buf);
     if(sz == 0) {
-        sz = xmlStrlen(response_buf);
+        sz = xmlStrlen(response_buf) + 1;
         dlog(0, "Error: sz is 0, using strlen (Need to fix this! Why is xmlDocDumpMemory not giving back the size!?\n");
     }
 
     int iostatus = -1;
     size_t bytes_written = 0;
     dlog(6,"Send response from appraiser APB: %s.\n", response_buf);
-    sz = sz+1; // include the terminating '\0'
     iostatus = maat_write_sz_buf(resultchan, response_buf, sz,
                                  &bytes_written, 5);
 

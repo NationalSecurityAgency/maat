@@ -99,7 +99,7 @@ START_TEST(test_all_apbs)
                      "\t\t</option>"
                      "\t</subcontract>"
                      "</contract>");
-    scen.size    = strlen(scen.contract);
+    scen.size    = strlen(scen.contract) + 1; // Include the null byte into the buffer length
     scen.workdir = strdup(SRCDIR"/workdirs/workdir-test-all-apbs");
 #ifdef USE_TPM
     scen.tpmpass = strdup("maatpass");

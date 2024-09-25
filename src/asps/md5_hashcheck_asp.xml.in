@@ -50,7 +50,7 @@
     </measurers>
     <security_context>
         <selinux><type>md5_hashcheck_asp_t</type></selinux>
-        <user>${MAAT_GROUP}</user>
+        <user>${MAAT_USER}</user>
         <group>${MAAT_GROUP}</group>
     </security_context>
 </asp>

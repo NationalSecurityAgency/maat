@@ -304,7 +304,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     err = create_integrity_response(parse_target_id_type((xmlChar*)target_type), (xmlChar*)target,
                                     (xmlChar*)resource, evaluation, report_data_list,
                                     scen->certfile, scen->keyfile, scen->keypass, NULL,
-                                    scen->tpmpass, scen->akctx, scen->sign_tpm, 
+                                    scen->tpmpass, scen->akctx, scen->sign_tpm,
                                     (xmlChar **)&response_buf, &sz);
 
     if(err < 0) {
@@ -317,7 +317,6 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     int iostatus=-1;
     size_t bytes_written = 0;
     dlog(1,"Send response from appraiser APB: %s.\n", response_buf);
-    sz = sz+1; // include the terminating '\0'
     iostatus = maat_write_sz_buf(resultchan, response_buf, sz, &bytes_written, 5);
 
     if(iostatus != 0) {

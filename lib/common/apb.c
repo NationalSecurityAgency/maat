@@ -286,6 +286,24 @@ error:
     return NULL;
 }
 
+/**
+ * @brief Synchronously run an APB
+ *
+ * @param apb A pointer to a struct containing metadata pertaining to the APB
+ * @param execcon_behavior Enum which defines whether the execution context of the APB should be used or ignored
+ * @param set_categories Enum which defines whether the APB will use unqique SELinux categories when launching ASPs
+ * @param scen Pointer to a struct which contains meta-informtion pertaining to the measurement session between the
+ *        appraiser and the attester
+ * @param meas_spec A UUID identifying the measurement specification to be used for the APB
+ * @param peerchan An int which represents the file descriptor for communications between the appraiser and the
+ *        attester
+ * @param resultchan An int which represents the file descriptor for communications between the appraiser and the
+ *        relying party
+ * @param args A vector of strings which provide arguments to the APB
+ *
+ * @return int Returns 0 if the APB ran successfully, or a non-zero integer if an error occurred
+ *         while attempting to run a APB
+ */
 int run_apb(struct apb *apb,
             respect_desired_execcon_t execcon_behavior,
             execcon_unique_categories_t set_categories,
@@ -335,20 +353,13 @@ int run_apb_async(struct apb *apb,
         snprintf(resultfd_buf, 17, "%d", resultchan);
         uuid_unparse(meas_spec, meas_spec_str);
 
-        /* The contract is not guaranteed to be NULL terminated */
-        if(scen->size == SIZE_MAX) {
-            dlog(0, "Contract of size %zu is too big\n", scen->size);
-            return -1;
-        }
-
-        contract_buf = malloc(scen->size+1);
+        contract_buf = malloc(scen->size);
         if(contract_buf == NULL) {
             dlog(0, "Failed to allocate buffer of size %zu for contract\n", scen->size+1);
             return -1;
         }
 
         memcpy(contract_buf, scen->contract, scen->size);
-        contract_buf[scen->size] = '\0';
         dlog(6, "Calling exec() on apbmain (%s)\n", apb->file->full_filename);
 
         char *info_file = g_strdup_printf("%s/info", scen->workdir);

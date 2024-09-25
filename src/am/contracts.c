@@ -90,14 +90,14 @@ static char *parse_option_node(xmlNode *opt)
 }
 
 /**
- * Get the am_contract_type of @contract (which is @size bytes
- * long). The type should be specified as an attribute of the root
- * <contract> node of the document.
+ * @brief Get the am_contract_type of an XML contract.
  *
- * On success, the type of contract is stored in *@ctype and 0 is
- * returned.
+ * @param contract A string containing a serialized measurement contract
+ * @param size The size of contract
+ * @param ctype A pointer to the contract type parsed from contract
  *
- * On failure, *@ctype is not modified, and -1 is returned.
+ * @return int 0 if a contract type was correctly parsed from contract, or
+ *         -1 otherwise
  */
 int parse_contract_type(char *contract, size_t size, am_contract_type *ctype)
 {
@@ -105,17 +105,13 @@ int parse_contract_type(char *contract, size_t size, am_contract_type *ctype)
     xmlNode *root;
     char *typestr;
 
-    if(size > INT_MAX) {
-        dlog(0, "contract too big\n");
-        return -1;
-    }
-
     /* Check that we have a valid XML contract of type "initial" */
-    doc = xmlReadMemory(contract, (int)size, NULL, NULL, 0);
+    doc = get_doc_from_blob(contract, size);
     if (!doc) {
         dlog(0, "bad xml?\n");
         return -1;
     }
+
     root = xmlDocGetRootElement(doc);
     if (!root) {
         dlog(0, "Unable to find root node?\n");
@@ -264,6 +260,16 @@ static int get_target_mac_address(struct scenario *scenario, xmlDoc *doc)
     return 0;
 }
 
+/*
+ * @brief Get information from the XML contract and populate the relevant
+ *        scenario metadata
+ *
+ * @param scenario A pointer to the metadata for a particular attestation transaction
+ * @param contract A string containing a serialized XML document
+ * @param contract_size The size of contract
+ *
+ * @return int Return 0 if the function succeeds and -1 otherwise
+ */
 static int get_targ_and_resource_info(struct scenario *scenario,
                                       char *contract, size_t contract_size)
 {
@@ -277,13 +283,7 @@ static int get_targ_and_resource_info(struct scenario *scenario,
     char *info;
     char *tunnel;
 
-    if(contract_size > INT_MAX) {
-        dlog(0, "Error: contract is too large (%zd bytes)\n",
-             contract_size);
-        return -1;
-    }
-
-    doc = xmlParseMemory(contract, (int)contract_size);
+    doc = get_doc_from_blob(contract, contract_size);
     if(doc == NULL) {
         dlog(0, "Failed to get doc from memory blob\n");
         return -1;
@@ -387,6 +387,19 @@ error:
     return -1;
 }
 
+/*
+ * @brief Handle a request contract sent to an Attestation Manager from the relying party
+ *        which specifies the attester and a resource to determine the integrity of. The
+ *        attester will determine an acceptable set of measurements and place them into
+ *        an initial contract.
+ *
+ * @param manager A pointer to a struct containing the metadata regarding an Attestation
+ *        Manager
+ * @param scen A point to a struct containg the metadata regarding a particular attestation
+ *        session
+ *
+ * @return int Return 0 if the request is successfully handled or -1 otherwise
+ */
 int handle_request_contract(struct attestation_manager *manager,
                             struct scenario *scen)
 {
@@ -395,7 +408,6 @@ int handle_request_contract(struct attestation_manager *manager,
     int ret=0;
     GList *options = NULL;
     xmlNode *root  = NULL;
-    int respsize;
 
     if(get_targ_and_resource_info(scen,
                                   scen->contract, scen->size) < 0) {
@@ -447,16 +459,14 @@ int handle_request_contract(struct attestation_manager *manager,
         goto out;
     }
 
-    xmlDocDumpMemory(doc, (xmlChar **)&scen->response, &respsize);
-    if(respsize < 0) {
+    scen->response = serialize_doc(doc, &scen->respsize);
+    if(scen->response == NULL) {
         dlog(0, "Error: serializing request contract produced invalid length\n");
         free(scen->response);
         scen->response = NULL;
         ret = -1;
         goto out;
     }
-
-    scen->respsize = (size_t)respsize;
 
 out:
     if(root != NULL) {
@@ -470,9 +480,16 @@ out:
 
 
 /*
- * Handles the initial contract from the attester.  Attester declares which
- * measurements it wants
- * XXX: must break this up a bit.
+ * @brief Handle the initial contract sent from the appraiser. The attester will select
+ *        a set of acceptable measurements for the resource and place those in a modified
+ *        contract.
+ *
+ * @param manager A pointer to a struct containing the metadata regarding an Attestation
+ *        Manager
+ * @param scen A point to a struct containg the metadata regarding a particular attestation
+ *        session
+ *
+ * @return int Returns 0 if the initial contract was properly handled and -1 otherwise
  */
 int handle_initial_contract(struct attestation_manager *manager,
                             struct scenario *scen)
@@ -484,17 +501,9 @@ int handle_initial_contract(struct attestation_manager *manager,
     char *typestr;
     xmlXPathObject *obj;
     char *fprint;
-    int respsize;
 
     // READ the Initial Contract and convert to a Modified Contract
-
-    // Check that we have a valid XML contract of type "initial"
-    if(scen->size > INT_MAX) {
-        dlog(1, "Contract XML is too big\n");
-        goto xml_parse_failed;
-    }
-
-    doc = xmlReadMemory(scen->contract, (int)scen->size, NULL, NULL, 0);
+    doc = get_doc_from_blob(scen->contract, scen->size);
     if(doc == NULL) {
         dlog(1, "Failed to parse contract XML\n");
         goto xml_parse_failed;
@@ -512,6 +521,8 @@ int handle_initial_contract(struct attestation_manager *manager,
         dlog(1, "Error: failed to get contract type attribute\n");
         goto no_contract_type;
     }
+
+    // Check that we have a valid XML contract of type "initial"
     if(strcasecmp(typestr, "initial") != 0) {
         dlog(1, "Error: not an initial contract.\n");
         goto bad_contract_type;
@@ -690,12 +701,11 @@ int handle_initial_contract(struct attestation_manager *manager,
         save_document(doc, contractfile);
     } while(0);
 
-    xmlDocDumpMemory(doc, (xmlChar **) &scen->response, &respsize);
-    if(respsize < 0) {
+    scen->response = serialize_doc(doc, &scen->respsize);
+    if(scen->response == NULL) {
         dlog(0, "Error: serializing modified contract produced invalid length\n");
         goto xmlDocDumpMemory_failed;
     }
-    scen->respsize = (size_t)respsize;
 
     xmlFreeDoc(doc);
     return 0;
@@ -726,8 +736,16 @@ xml_parse_failed:
 }
 
 /*
- * Appraiser chooses the measurements that it can provide to the
- * attester and creates a modified contract
+ * @brief Handle the modified contract sent from the attester. The appraiser will select
+ *        a single acceptable measurement for the resource and place that measurement into
+ *        an execute contract.
+ *
+ * @param manager A pointer to a struct containing the metadata regarding an Attestation
+ *        Manager
+ * @param scen A point to a struct containg the metadata regarding a particular attestation
+ *        session
+ *
+ * @return int Returns 0 if the modified contract was properly handled and -1 otherwise
  */
 int handle_modified_contract(struct attestation_manager *manager,
                              struct scenario *scen)
@@ -736,7 +754,7 @@ int handle_modified_contract(struct attestation_manager *manager,
     xmlNode *root, *subc, *optnode, *next_optnode;
     copland_phrase *selected, *parsed_option;
     char *fingerprint = NULL, *contract_type = NULL, *opt;
-    int rc = AM_OK, pid, respsize;
+    int rc = AM_OK, pid;
     GList *options = NULL;
 
     /* Check that we have a valid XML contract of type "initial" */
@@ -746,7 +764,7 @@ int handle_modified_contract(struct attestation_manager *manager,
         goto bad_xml;
     }
 
-    doc = xmlReadMemory(scen->contract, (int)scen->size, NULL, NULL, 0);
+    doc = get_doc_from_blob(scen->contract, scen->size);
     if (doc == NULL) {
         dlog(1, "Failed to parse modified contract: bad xml?\n");
         rc = -1;
@@ -883,8 +901,8 @@ int handle_modified_contract(struct attestation_manager *manager,
         save_document(doc, contractfile);
     } while(0);
 
-    xmlDocDumpMemory(doc, (xmlChar **)&scen->response, &respsize);
-    if(respsize < 0) {
+    scen->response = serialize_doc(doc, &scen->respsize);
+    if(scen->response == NULL) {
         dlog(0, "Error: serializing execute contract produced invalid length\n");
         free(scen->response);
         scen->response = NULL;
@@ -892,7 +910,6 @@ int handle_modified_contract(struct attestation_manager *manager,
         goto out;
     }
 
-    scen->respsize = (size_t)respsize;
     pid = appraiser_spawn_protocol(manager, scen, selected);
     if (pid < 0) {
         dlog(0, "Appraiser spawn protocol failed. Returned %d\n", rc);
@@ -909,9 +926,16 @@ bad_xml:
     return rc;
 }
 
-/**
- * Set up some pieces that need to be in place before call to
- * handle_execute_contract().
+/*
+ * @brief Setup state required for handle_execute_contract() if an execute contract is
+ *        receieved in a manner that allows bypassing negotiation (i.e. a cache hit)
+ *
+ * @param manager A pointer to a struct containing the metadata regarding an Attestation
+ *        Manager
+ * @param scen A point to a struct containg the metadata regarding a particular attestation
+ *        session
+ *
+ * @return int Returns 0 if the cache hit was handled and -1 otherwise
  */
 int handle_execute_cache_hit_setup(struct attestation_manager *manager,
                                    struct scenario *scen)
@@ -927,7 +951,7 @@ int handle_execute_cache_hit_setup(struct attestation_manager *manager,
         return -1;
     }
 
-    doc = xmlReadMemory(scen->contract, (int)scen->size, NULL, NULL, 0);
+    doc = get_doc_from_blob(scen->contract, scen->size);
     if (!doc) {
         dlog(0, "bad xml?\n");
         return -1;
@@ -1004,8 +1028,16 @@ out:
     return ret;
 }
 
-/**
- * Attester has the chance to spawn its thread for the APB
+/*
+ * @brief Handle the execute contract sent by the appraiser. Spawn the APB that handles
+ *        the specified measurement
+ *
+ * @param manager A pointer to a struct containing the metadata regarding an Attestation
+ *        Manager
+ * @param scen A point to a struct containg the metadata regarding a particular attestation
+ *        session
+ *
+ * @return int Returns 0 if the execute contract was handled and -1 otherwise
  */
 int handle_execute_contract(struct attestation_manager *manager,
                             struct scenario *scen)
@@ -1023,7 +1055,7 @@ int handle_execute_contract(struct attestation_manager *manager,
         return -1;
     }
 
-    doc = xmlReadMemory(scen->contract, (int)scen->size, NULL, NULL, 0);
+    doc = get_doc_from_blob(scen->contract, scen->size);
     if (!doc) {
         dlog(0, "bad xml?\n");
         return -1;
@@ -1136,13 +1168,20 @@ out:
     return ret;
 }
 
+/*
+ * @brief Create a contract that specifes that an error has occurred
+ *
+ * @param scen A point to a struct containg the metadata regarding a particular attestation
+ *        session
+ *
+ * @return int Returns 0 if the response contract was handled and -1 otherwise
+ */
 int create_error_response(struct scenario *scen)
 {
     xmlDoc *doc = NULL;
     int ret = -1;
     xmlNode *root = NULL;
     xmlNode *node;
-    int outsize_tmp;
 
     char *certfile	= scen->certfile;
     char *keyfile	= scen->keyfile;
@@ -1248,14 +1287,8 @@ int create_error_response(struct scenario *scen)
     }
 
     root = NULL;
-    xmlDocDumpMemory(doc, out, &outsize_tmp);
-    if(outsize_tmp >= 0) {
-        *outsize = (size_t)outsize_tmp;
-    } else {
-        dlog(2, "Warning: while generating response contract invalid output size %d\n",
-             outsize_tmp);
-        *outsize = 0;
-    }
+    *out = serialize_doc(doc, outsize);
+
     dlog(7, "DEBUG!: %s\n", *out ? (char*)*out : "(null)");
     ret = 0;
 

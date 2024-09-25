@@ -202,9 +202,19 @@ static int handle_satisfier(struct scenario *scen, xmlNode *sat,
     return fail;
 }
 
-/*
- * Now to handle a measurement contract and produce an access contract.
- * Appraises a measurement
+/**
+ * @brief Function to appraise the measurements contained within a measurement contract and
+ *        prepare a results contract.
+ *
+ * @param scen Pointer to struct which contains meta information pertaining to the measurement
+ *        session between the appraiser and attester
+ * @param appraise A pointer to a function responsible for appraising measurements contained in
+ *        the measurement contract
+ * @param failed An integer which is set to 0 if the appraisal of all measurements in the
+ *        measurements contract succeeded or 1 otherwise
+ *
+ * @returns int Returns 0 if handle_measurement_contract operated successfully or a nonzero
+ *          integer otherwise
  */
 int handle_measurement_contract(struct scenario *scen, appraise_fn *appraise, int *failed)
 {
@@ -219,12 +229,13 @@ int handle_measurement_contract(struct scenario *scen, appraise_fn *appraise, in
     int respsize = 0;
     *failed = 0;
 
-    if(scen->size > INT_MAX) {
-        dlog(0, "Measurement contract is too big\n");
+    if(scen->size == 0 || (SIZE_MAX > INT_MAX && (scen->size - 1) > INT_MAX)) {
+        dlog(0, "Measurement contract of invalid size: %zu\n", scen->size);
         goto bad_xml;
     }
 
-    doc = xmlReadMemory(scen->contract, (int)scen->size, NULL, NULL, 0);
+    /* xmlReadMemory() does not handle the terminating null byte */
+    doc = xmlReadMemory(scen->contract, (int)scen->size - 1, NULL, NULL, 0);
     if (doc == NULL) {
         dlog(0, "Failed to parse contract XML.\n");
         goto bad_xml;
@@ -347,11 +358,11 @@ int handle_measurement_contract(struct scenario *scen, appraise_fn *appraise, in
 
     xmlDocDumpMemory(doc, (xmlChar **)&scen->response, &respsize);
 
-    if(respsize < 0) {
-        dlog(0, "Error: bad size returned while serializing response document\n");
+    if(respsize < 0 || (INT_MAX >= SIZE_MAX && (respsize > SIZE_MAX - 1))) {
+        dlog(0, "Error: bad size %d returned while serializing response document\n", respsize);
         goto xmlDocDumpMemory_failed;
     }
-    scen->respsize = (size_t)respsize;
+    scen->respsize = (size_t)respsize + 1; // Include the null byte in the size
     xmlFreeDoc(doc);
 
     return 0;
@@ -377,18 +388,40 @@ bad_xml:
     return -1;
 }
 
+/**
+ * @brief Create an XML contract specifying the result of appraisal from an apparaiser to
+ *        a replying party.
+ *
+ * @param target_typ type of ID identifying an attester
+ * @param target ID of the attester of interest
+ * @param resource Aspect of the attester of which to determine integrity
+ * @param result The overall result of the appraisal
+ * @param entries List of entries which provide reports regarding fine-grained appraisal results
+ * @param certfile The certificate file of the recipient of the contract, the relying party
+ * @param keyfile The file which contains the signing key
+ * @param keypass The password for the keyfile
+ * @param nonce The session nonce for this attestation session
+ * @param tpmpass The password used to interact with the TPM
+ * @param akctx An Attestation Key context used if interacting with the TPM
+ * @param sign_tpm Whether to perform signing using the TPM - set to 1 if so, and 0 if not
+ * @param out XML contract which outlines a particular integrity response
+ * @param outsize Size of the XML contract specified by out
+ *
+ * @return int Returns 0 if the creation of the integrity response was successful or
+ *             a non-zero integer otherwise
+ */
 int create_integrity_response(target_id_type_t target_typ, xmlChar *target,
                               xmlChar *resource, xmlChar *result,
                               GList *entries, char *certfile, char *keyfile,
-                              char *keypass, char *nonce, 
+                              char *keypass, char *nonce,
 #ifdef USE_TPM
                               char *tpmpass,
                               char *akctx,
                               int sign_tpm,
 #else
-			                  char *tpmpass UNUSED,
-			                  char *akctx UNUSED,
-			                  int sign_tpm UNUSED,
+                              char *tpmpass UNUSED,
+                              char *akctx UNUSED,
+                              int sign_tpm UNUSED,
 #endif
                               xmlChar **out,
                               size_t *outsize)
@@ -499,8 +532,8 @@ int create_integrity_response(target_id_type_t target_typ, xmlChar *target,
 
     root = NULL;
     xmlDocDumpMemory(doc, out, &outsize_tmp);
-    if(outsize_tmp >= 0) {
-        *outsize = (size_t)outsize_tmp;
+    if(outsize_tmp >= 0 || ((INT_MAX >= SIZE_MAX) && outsize_tmp > SIZE_MAX - 1)) {
+        *outsize = (size_t) outsize_tmp + 1; // Include the null byte in the size
     } else {
         dlog(4, "Warning: while generating response contract invalid output size %d\n",
              outsize_tmp);
@@ -514,7 +547,18 @@ integrity_response_cleanup:
     return ret;
 }
 
-
+/**
+ * @brief Create an XML contract which contains a measurement produced by an attester to send to an appraiser.
+ *
+ * @param scen Pointer to struct which containers meta information pertaining to the measurement session
+ * @param msmt Buffer which contains a serialized measurement graph
+ * @param msmtsize The size of the buffer msmt
+ * @param outbuf The buffer containing the measurement contract. Equivalent to the return value of the function
+ * @param outsize The size of the buffer referenced by outbuf
+ *
+ * @returns unsigned char * Returns a buffer that contains a measurement contract or NULL if there is
+ *          a processing error within the function.
+ */
 unsigned char *generate_measurement_contract(struct scenario *scen,
         unsigned char *msmt, size_t msmtsize,
         unsigned char **outbuf, size_t *outsize)
@@ -535,13 +579,14 @@ unsigned char *generate_measurement_contract(struct scenario *scen,
     char tmpstr[PATH_MAX];
     int ret;
 
-    if(scen->size > INT_MAX) {
-        dlog(0, "Contract too big!\n");
+    if(scen->size == 0 || (SIZE_MAX > INT_MAX && (scen->size - 1) > INT_MAX)) {
+        dlog(0, "Contract of invalid size: %zu!\n", scen->size);
         goto parse_failed;
     }
 
     /* FIXME: we should actually validate this  */
-    if ((doc = UNTAINT(xmlReadMemory(scen->contract, (int)scen->size,
+    /* xmlReadMemory does not handle terminating null byte */
+    if ((doc = UNTAINT(xmlReadMemory(scen->contract, (int)scen->size - 1,
                                      NULL, NULL, 0))) == NULL) {
         dlog(0, "bad xml?\n");
         dlog(5, "\t%s\n", scen->contract);
@@ -674,8 +719,8 @@ unsigned char *generate_measurement_contract(struct scenario *scen,
     int outsize_int;
     xmlDocDumpMemory(doc, (xmlChar**)outbuf, &outsize_int);
 
-    if(outsize_int > 0) {
-        *outsize = (size_t)outsize_int;
+    if(outsize_int > 0 || ((INT_MAX >= SIZE_MAX) && outsize_int > SIZE_MAX - 1)) {
+        *outsize = (size_t)outsize_int + 1;
     } else {
         free(*outbuf);
         *outbuf  = NULL;

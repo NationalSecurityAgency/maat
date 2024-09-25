@@ -83,14 +83,7 @@ static int process_request(const char *req, size_t len)
     char *resource      = NULL;
     char *info          = NULL;
 
-
-    if(len > INT_MAX) {
-        dlog(1, "Contract size %zd is too large\n", len);
-        return -1;
-    }
-
-    /* Cast is justified because the bounds of an int is checked above */
-    doc = xmlParseMemory(req, (int)len);
+    doc = get_doc_from_blob(req, len);
     if(doc == NULL) {
         dlog(1, "Failed to parse XML\n");
         return -2;

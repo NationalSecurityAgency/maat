@@ -156,7 +156,7 @@ START_TEST(test_pkg_inv)
             (strcasecmp(distribution, "debian") == 0)) {
         rc = run_asp(dpkg_inv, -1, -1, false, 2, asp_argv, -1);
     } else if ((strcasecmp(distribution, "fedora") == 0) || (strcasecmp(distribution, "centos") == 0) ||
-               (strcasecmp(distribution, "rhel") == 0)) {
+               (strcasecmp(distribution, "rhel") == 0) || (strcasecmp(distribution, "photon") == 0)) {
         rc = run_asp(rpm_inv, -1, -1, false, 2, asp_argv, -1);
     } else {
         dlog(0, "distribution not supported\n");
@@ -216,7 +216,7 @@ START_TEST(test_pkg_pattern)
             (strcasecmp(distribution, "debian") == 0)) {
         rc = run_asp(dpkg_inv, -1, -1, false, 3, asp_argv, -1);
     } else if ((strcasecmp(distribution, "fedora") == 0) || (strcasecmp(distribution, "centos") == 0) ||
-               (strcasecmp(distribution, "rhel") == 0)) {
+               (strcasecmp(distribution, "rhel") == 0) || (strcasecmp(distribution, "photon") == 0)) {
         rc = run_asp(rpm_inv, -1, -1, false, 3, asp_argv, -1);
     } else {
         dlog(0, "distribution not supported\n");
@@ -296,7 +296,7 @@ START_TEST(test_pkg_details)
         fail_if(rc < 0, "Unable to restore STDOUT");
         rc = 0;
     } else if ((strcasecmp(distribution, "fedora") == 0) || (strcasecmp(distribution, "centos") == 0) ||
-               (strcasecmp(distribution, "rhel") == 0)) {
+               (strcasecmp(distribution, "rhel") == 0) || (strcasecmp(distribution, "photon") == 0)) {
         int tmp_stdout = dup(STDOUT_FILENO);
         fail_if(tmp_stdout < 0, "Unable to dup stdout");
 
@@ -334,7 +334,7 @@ START_TEST(test_pkg_details)
     if((strcasecmp(distribution, "ubuntu") == 0) || (strcasecmp(distribution, "debian") == 0)) {
         rc = run_asp(dpkg_detail, -1, -1, false, 2, asp_argv, -1);
     } else if ((strcasecmp(distribution, "fedora") == 0) || (strcasecmp(distribution, "centos") == 0) ||
-               (strcasecmp(distribution, "rhel") == 0)) {
+               (strcasecmp(distribution, "rhel") == 0) || (strcasecmp(distribution, "photon") == 0)) {
         rc = run_asp(rpm_detail, -1, -1, false, 2, asp_argv, -1);
     } else {
         dlog(0, "distribution %s not supported\n", distribution);
@@ -396,7 +396,7 @@ START_TEST (test_file_pkg)
     if((strcasecmp(distribution, "ubuntu") == 0) || (strcasecmp(distribution, "debian") == 0)) {
         rc = run_asp(dpkg_inv, -1, -1, false, 2, asp_argv, -1);
     } else if ((strcasecmp(distribution, "fedora") == 0) || (strcasecmp(distribution, "centos") == 0) ||
-               (strcasecmp(distribution, "rhel") == 0)) {
+               (strcasecmp(distribution, "rhel") == 0) || (strcasecmp(distribution, "photon") == 0)) {
         rc = run_asp(rpm_inv, -1, -1, false, 2, asp_argv, -1);
     } else {
         dlog(0, "distribution not supported\n");

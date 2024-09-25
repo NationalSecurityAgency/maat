@@ -376,6 +376,15 @@ void print_help(char *progname)
             progname, progname, progname);
 }
 
+/**
+ * @brief The main function for all APBs compiled for Maat
+ *
+ * @param argc Number of arguments contained in argv
+ * @param argv Array containing the arguments to the APB. The last element is NULL
+ *
+ * @return An int indicating the result of executing the APB. Will be equal to 0 on
+ *         success and a non-zero value on failure
+ */
 int main(int argc, char *argv[])
 {
     int opt, rc, arg_num = 0;
@@ -495,7 +504,7 @@ int main(int argc, char *argv[])
                 rc = -ENOMEM;
                 goto out;
             }
-            scen.size     = strlen(scen.contract);
+            scen.size     = strlen(scen.contract) + 1; // Include the null byte
             break;
         case 'l':
             if(scen.contract != NULL) {
@@ -511,7 +520,7 @@ int main(int argc, char *argv[])
                 rc = -EINVAL;
                 goto out;
             }
-            scen.size     = strlen(scen.contract);
+            scen.size     = strlen(scen.contract) + 1; // Include the null byte
             break;
         case 'w':
             if(*optarg != '\0') {

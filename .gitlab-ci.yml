@@ -41,6 +41,29 @@ default:
   - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-tpm
   - make install
 
+# configure and build with selinux and without TPM for PhotonOS
+.build_no_selinux_no_tpm_photonos5: &build_no_selinux_no_tpm_photonos5
+  - cat /builds/JHUAPL-MS-Root-CA-05-21-2038-B64-text.cer >> /etc/pki/tls/certs/ca-bundle.crt
+  - tdnf -y install autoconf automake libtool check-devel glib-devel gcc glibc-devel binutils make elfutils-devel json-c-devel selinux-policy-devel libselinux-devel libxml2-devel tpm2-tss tpm2-tss-devel tpm2-tools openssl-devel libcap-devel
+  - tdnf -y install gcovr
+  - autoreconf -i
+  - "[ -d build ] || mkdir build"
+  - cd build
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-tpm --disable-selinux --enable-coverage --enable-tests
+  - make
+  - make install
+
+# configure and build with selinux and without TPM for PhotonOS
+.build_with_selinux_no_tpm_photonos5: &build_with_selinux_no_tpm_photonos5
+  - cat /builds/JHUAPL-MS-Root-CA-05-21-2038-B64-text.cer >> /etc/pki/tls/certs/ca-bundle.crt
+  - tdnf -y install autoconf automake libtool check-devel glib-devel gcc glibc-devel binutils make elfutils-devel json-c-devel selinux-policy-devel libselinux-devel libxml2-devel tpm2-tss tpm2-tss-devel tpm2-tools openssl-devel libcap-devel
+  - autoreconf -i
+  - "[ -d build ] || mkdir build"
+  - cd build
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-tpm --enable-coverage --enable-tests --enable-photon
+  - make
+  - make install
+
 # configure and build with selinux and TPM
 .build_with_selinux_and_tpm: &build_with_selinux_and_tpm
   - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd
@@ -61,6 +84,12 @@ default:
 # run check tests without selinux adn without TPM
 .test_no_selinux_no_tpm: &test_no_selinux_no_tpm
   - ../configure  --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-selinux --enable-tests --disable-tpm --enable-coverage
+  - make check
+  - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
+
+# configure and build with selinux and without TPM for PhotonOS
+.test_no_selinux_no_tpm_photonos5: &test_no_selinux_no_tpm_photonos5
+  - *build_no_selinux_no_tpm_photonos5
   - make check
   - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
 
@@ -245,6 +274,16 @@ build-debian11:
   image: ${IMAGE_PREFIX}/debian11:0.0.1
   script:
     - *build_no_selinux_no_tpm
+
+# build without selinux for PhotonOS 5.0
+build-photonos5:
+  stage: build
+  inherit:
+   default: false
+  tags:
+    - photonos5
+  script:
+    - *build_with_selinux_no_tpm_photonos5
 
 ## docs
 
@@ -454,6 +493,26 @@ test-debian11-basic:
     paths:
       - build/src/test/*.log
       - build/lib/test/*.log
+    expire_in: 2 weeks
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
+    when: always
+
+# regular make check tests on photonos
+test-photonos5-basic:
+  stage: test
+  inherit:
+    default: false
+  tags:
+    - photonos5
+  script:
+    - *test_no_selinux_no_tpm_photonos5
+  coverage: /^\s*lines:\s*\d+.\d+\%/
+  artifacts:
+    paths:
+      - build/src/test/*.log
     expire_in: 2 weeks
     reports:
       coverage_report:

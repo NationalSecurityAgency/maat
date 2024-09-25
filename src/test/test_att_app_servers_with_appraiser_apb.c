@@ -102,8 +102,8 @@ int parse_resp_contract(char* contract)
 {
     char* tmp;
     xmlNode *node, *root;
-    dlog(7, "strlen of contract: %zu\n", strlen(contract));
-    xmlDoc *doc = xmlReadMemory(contract, ((int)(strlen(contract)+1)), NULL, NULL, 0);
+    dlog(6, "strlen of contract: %zu\n", strlen(contract));
+    xmlDoc *doc = get_doc_from_blob(contract, strlen(contract) + 1);
     root = xmlDocGetRootElement(doc);
     if(root == NULL) {
         dlog(0, "Error: parse resp contract\n");
@@ -224,7 +224,6 @@ START_TEST(test_appraiser_apb)
     fail_if(request_contract == NULL, "Failed to create request contract");
 
     dlog(6, "Created integrity request: %s\n", request_contract);
-    msglen = strlen(request_contract)+1;
     maat_write_sz_buf(appraiser_chan, request_contract, msglen, NULL, 2);
     free(request_contract);
 
@@ -242,7 +241,7 @@ START_TEST(test_appraiser_apb)
     int i;
     int eof_encountered;
 
-    /* Cast is juftified because the function operation does not regard the signedness of the buffer */
+    /* Cast is justified because the function operation does not regard the signedness of the buffer */
     status = maat_read_sz_buf(appraiser_chan, (unsigned char **)&resp_contract,
                               &resp_contract_sz, &bytes_read,
                               &eof_encountered,

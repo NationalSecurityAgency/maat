@@ -1,0 +1,7 @@
+version=0.26.1
+profile=default
+comment-check=true
+doc-comments=before
+doc-comments-tag-only=fit
+parse-docstrings=true
+dock-collection-brackets=true

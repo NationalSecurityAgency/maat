@@ -76,4 +76,13 @@ int check_predicate(void *ctxt, measurement_variable *var,
                     measurement_type *mtype, predicate_quantifier quant,
                     char *feature, char *operator, char *value);
 
+int execute_updated_sign_send_pipeline(struct measurement_graph *graph, struct scenario *scen,
+                                       int peerchan, GList *apb_asps);
+
+GQueue *get_new_variables(struct measurement_graph *g, GHashTable *hashset);
+
+GQueue *g_queue_deep_copy(GQueue *q);
+
+void g_queue_compose(GQueue *dest, GQueue *src);
+
 #endif

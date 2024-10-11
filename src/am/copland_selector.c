@@ -101,7 +101,6 @@ struct collection {
 };
 
 static void free_collection(struct collection *collection);
-static void free_select_config(GList *select_config);
 static void free_rule(struct rule *rule);
 static void free_match_condition(match_condition *mc);
 static void free_action(struct action *a);
@@ -607,7 +606,9 @@ static int load_selector_copl_internal(char *path, GList *apbs, selectordb_t **o
     return 0;
 
 error:
-    g_list_free_full(select_config, free_rule);
+    /* Casts appropriate becaise the function pointers broadly
+     * match the type GDestroyNotify */
+    g_list_free_full(select_config, (GDestroyNotify) free_rule);
     g_list_free_full(collections, (GDestroyNotify)free_collection);
     free(selector);
     free(user_selector);
@@ -688,8 +689,10 @@ static void api_free_selector(selectordb_t *user_selector)
         GList *select_config = selector->select_config;
         GList *collections = selector->collections;
 
-        g_list_free_full(select_config, &free_rule);
-        g_list_free_full(collections, &free_collection);
+        /* Casts appropriate becaise the function pointers broadly
+         * match the type GDestroyNotify */
+        g_list_free_full(select_config, (GDestroyNotify) &free_rule);
+        g_list_free_full(collections, (GDestroyNotify) &free_collection);
 
         free(selector);
         free(user_selector);

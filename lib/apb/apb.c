@@ -149,6 +149,18 @@ int run_asp(struct asp *asp, int infd, int outfd, bool async, int asp_argc, char
 {
     pid_t pid = 0;
 
+    int i;
+
+    // Validate argument vector
+    if (asp_argc > 0) {
+        for (i = 0; i < asp_argc; i++) {
+            if (asp_argv[i] == NULL) {
+                dlog(2, "Invalid NULL argument at position %d in arg vector\n", i);
+                return -1;
+            }
+        }
+    }
+
     pid = fork();
     if(pid < 0) {
         dlog(0, "Fork failed: %s\n", strerror(errno));

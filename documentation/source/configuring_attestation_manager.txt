@@ -107,7 +107,7 @@ The attestation manager configuration uses an XML-based format. An example is be
       <user>maat</user>
       <group>maat</group>
       <work dir="/tmp/attestmgr" />
-      <place name="/opt/maat/etc/maat/places.csv">
+      <place name="/opt/maat/etc/maat/places.xml">
   </am-config>
 
 

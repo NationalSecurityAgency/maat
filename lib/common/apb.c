@@ -449,11 +449,21 @@ void unload_apb(struct apb *apb)
     }
 
     if(apb->phrase_specs) {
-        g_list_free_full(apb->phrase_specs, &free_phrase_meas_spec_pair);
+        /* Cast appropraite because the function pointer
+         * broadly matches the type GDestroyNotify */
+        g_list_free_full(apb->phrase_specs,
+                         (GDestroyNotify)&free_phrase_meas_spec_pair);
     }
 
     if(apb->asps) {
         g_list_free(apb->asps);
+    }
+
+    if(apb->place_permissions) {
+        /* Cast appropriate because the function pointer
+         * broadly matches the type GDestroyNotify */
+        g_list_free_full(apb->place_permissions,
+                         (GDestroyNotify)&free_place_perms);
     }
 
     free_exe_sec_ctxt(&apb->desired_sec_ctxt);

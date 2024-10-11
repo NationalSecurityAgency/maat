@@ -184,10 +184,10 @@ static int verify_contract(GList *apb_asps, struct scenario *scen)
         goto verify_tpm_conv_err;
     }
 
-    verify_args[0] = scen->workdir;
-    verify_args[1] = scen->nonce;
-    verify_args[2] = scen->cacert;
-    verify_args[3] = scen->akpubkey;
+    verify_args[0] = (scen->workdir == NULL) ? "" : scen->workdir;
+    verify_args[1] = (scen->nonce == NULL) ? "" : scen->nonce;
+    verify_args[2] = (scen->cacert == NULL) ? "" : scen->cacert;
+    verify_args[3] = (scen->akpubkey == NULL) ? "" : scen->akpubkey;
     verify_args[4] = verify_tpm_str;
 
     /* Cast is justified because function does not regard signedness of the buffer */
@@ -611,13 +611,12 @@ struct asp *select_appraisal_asp(measurement_graph *graph, node_id_t node,
         return find_asp(apb_asps, "blacklist");
     }
     if (measurement_type == MD5HASH_MAGIC) {
-        if (type->magic == FILE_TARGET_MAGIC){
+        if (type->magic == FILE_TARGET_MAGIC) {
             return find_asp(apb_asps, "md5_hashcheck_asp");
-        }
-        else{
+        } else {
             return find_asp(apb_asps, "dpkg_check");
         }
-        
+
     }
     if (measurement_type == BLOB_MEASUREMENT_TYPE_MAGIC) {
         return find_asp(apb_asps, "got_appraise");

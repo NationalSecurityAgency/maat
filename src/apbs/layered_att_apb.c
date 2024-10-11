@@ -103,6 +103,7 @@ error:
 static int get_target_channel_info(dynamic_measurement_request_address *va,
                                    char **addr, char **port)
 {
+    int ret = 0;
     place_info *info          = NULL;
 
     dlog(4, "Get target channel information for place : %s\n", va->attester);
@@ -117,8 +118,19 @@ static int get_target_channel_info(dynamic_measurement_request_address *va,
         return -1;
     }
 
-    *port = info->port;
-    *addr = info->addr;
+    /* retrieve the proper values from the xml style place*/
+    ret = get_place_info_string(info, "port",       port);
+    if (ret < 0) {
+        dlog(1, "Unable to get port information regarding place %s\n", va->attester);
+        return ret;
+    }
+
+    ret = get_place_info_string(info, "ip_address", addr);
+    if (ret < 0) {
+        dlog(1, "Unable to get IP address information regarding place %s\n", va->attester);
+        free(*port);
+        return ret;
+    }
 
     return 0;
 }
@@ -624,8 +636,8 @@ graph_err:
     free_meas_spec(mspec);
 meas_spec_err:
 place_arg_err:
-    free_place_information(g_dom_z_info);
-    free_place_information(g_dom_t_info);
+    free_place_info(g_dom_z_info);
+    free_place_info(g_dom_t_info);
     return ret_val;
 }
 

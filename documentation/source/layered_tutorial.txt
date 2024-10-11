@@ -408,12 +408,12 @@ The Layered Appraisal use case will rely upon a backend database with the
 IP address and port information for Dom0 and DomT. This is intended to simulate
 an environment in which all of the domains on the hypervisor platform are registered
 with the measurement domain. This allows DomM to forward requests for measurements to
-the other domains. A simple CSV example file is provided with the Maat repository, and
+the other domains. A simple XML example file is provided with the Maat repository, and
 can be installed where each AM can use it using the following command:
 
 .. code-block:: bash
 
-    sudo cp demo/ancillary_files/layered-places.csv /opt/maat/etc/maat
+    sudo cp demo/ancillary_files/layered-places.xml /opt/maat/etc/maat
 
 To start the scenario, you must start all of the AMs. To do so, run
 

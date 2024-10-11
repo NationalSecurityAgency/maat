@@ -33,6 +33,9 @@ struct xml_file_info {
     char *full_filename;
 };
 
+/* Optional size limit for XML field contents to avoid unbounded memory allocations when creating buffers */
+#define XML_IN_MEMORY_FIELD_SIZE_LIMIT 5000000
+
 void save_document(xmlDoc *doc, const char *filename);
 xmlXPathObject *xpath(xmlDoc *doc, const char *expression);
 

@@ -42,6 +42,8 @@
 #ifndef _MAAT_APB_COMMON_H_
 #define _MAAT_APB_COMMON_H_
 
+#include <graph/graph-core.h>
+
 /**
  * Creates an edge with the given @label between source and
  * destination nodes identified by the variables @src and @dst in the

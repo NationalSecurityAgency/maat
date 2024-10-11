@@ -21,6 +21,7 @@
 
 #define ASP_DIR       SRCDIR "/xml/asp-info"
 #define SPEC_DIR      SRCDIR "/xml/specs"
+#define XML_DIR       SRCDIR "/xml/place-xml"
 #define APB_DIR       SRCDIR "/xml/apb-info"
 #define SELECTOR_CFG  SRCDIR "/xml/am-selector/doc.xml"
 

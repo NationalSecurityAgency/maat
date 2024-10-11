@@ -21,8 +21,8 @@
  * Checks the validity of the node created by the memorymapping ASP.
  * This includes checking against process memory and its permission,
  * which should not be both writable and executable
- * 
- * This ASP returns ASP_APB_SUCCESS if appraisal succeeds. Otherwise, 
+ *
+ * This ASP returns ASP_APB_SUCCESS if appraisal succeeds. Otherwise,
  * the ASP will return an integer value not equal to ASP_APB_SUCCESS
  */
 
@@ -87,7 +87,8 @@ int check_file_whitelst( char* filename)
     // Check file
     GList *iter = g_list_first(files_whitelist);
     while (iter != NULL) {
-        dlog(6, "Whitelist files comparation: %s %s\n", iter->data, filename);
+        /* Cast list contents to correct type */
+        dlog(6, "Whitelist files comparation: %s %s\n", (char *)iter->data, filename);
         if (strncmp(filename, iter->data, strlen(filename)) == 0) {
             return 0;
         }

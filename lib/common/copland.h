@@ -26,7 +26,14 @@
 
 #include <glib.h>
 #include <libxml/xpath.h>
+#include <libxml/xmlwriter.h>
 #include <util/keyvalue.h>
+
+#define XML_ENCODING "ISO-8859-1"
+#define COPLAND_PLACE_PERMS_FILE "/place_perms.xml"
+
+// Field within place files identifying places
+#define PLACE_ID_FIELD "id"
 
 /*******************************************************************************
  * Copland Struct and Enum Definitions
@@ -77,19 +84,6 @@ typedef struct copland_phrase {
 } copland_phrase;
 
 /**
- * Type that holds an APB's permissions with respect to a domain's data
- */
-typedef uint32_t place_perm_t;
-
-/**
- * Because the base type of place_perm_t is obscured, we need
- * to develop helpers to convert to and from the type, just
- * in case we need to add or remove bits
- */
-int place_perm_to_str(place_perm_t perm, char **str);
-int str_to_place_perm(const char *str, place_perm_t *perm);
-
-/**
  * Struct which holds the information that can be provided about a place.
  * Different APBs will have different knowledge regarding different places,
  * and this struct is used to specify the permissions that an ABP has with
@@ -99,50 +93,19 @@ int str_to_place_perm(const char *str, place_perm_t *perm);
  */
 typedef struct place_perms {
     char *id;
-    place_perm_t perms;
+    GList *perms;
 } place_perms;
 
 /**
  * Stores information that an APB could retrieve pertaining to an APB
+ * The hash table is intended to store name value pairs.  Values are GLists to
+ * allow for more than one entry with a given key.
+ * Example: "id" "1" or "ip_address" "127.0.0.1"
+ * Accessor functions prefixed with '' insert or retrieve values from the internal lists
  */
 typedef struct place_info {
-    char *addr;
-    char *port;
-    char *kern_vers;
-    char *domain;
+    GHashTable *hash_table;
 } place_info;
-
-
-/*
- * Keep track of values within the work directory
- * based CSV file provided to the APB
- */
-#define COPLAND_WORK_PLACE_ID_INDX 0
-#define COPLAND_WORK_PLACE_PERMS_INDX 1
-#define COPLAND_WORK_PLACE_ADDR_INDX 2
-#define COPLAND_WORK_PLACE_PORT_INDX 3
-#define COPLAND_WORK_PLACE_KERN_INDX 4
-#define COPLAND_WORK_PLACE_DOM_INDX 5
-
-#define WORK_INDX_TO_COL_ADJ 2
-#define WORK_INDX_TO_COL(INDEX) (1 << (INDEX - WORK_INDX_TO_COL_ADJ))
-
-#define COPLAND_DB_PLACE_ID_INDX 0
-#define COPLAND_DB_PLACE_ADDR_INDX 1
-#define COPLAND_DB_PLACE_PORT_INDX 2
-#define COPLAND_DB_PLACE_KERN_INDX 3
-#define COPLAND_DB_PLACE_DOM_INDX 4
-
-#define DB_INDX_TO_COL_ADJ 1
-#define DB_INDX_TO_COL(INDEX) (1 << (INDEX - DB_INDX_TO_COL_ADJ))
-
-#define COPLAND_PLACE_ADDR_PERM WORK_INDX_TO_COL(COPLAND_WORK_PLACE_ADDR_INDX)
-#define COPLAND_PLACE_PORT_PERM WORK_INDX_TO_COL(COPLAND_WORK_PLACE_PORT_INDX)
-#define COPLAND_PLACE_KERN_PERM WORK_INDX_TO_COL(COPLAND_WORK_PLACE_KERN_INDX)
-#define COPLAND_PLACE_DOM_PERM WORK_INDX_TO_COL(COPLAND_WORK_PLACE_DOM_INDX)
-
-#define COPLAND_PLACE_PERMS_FILE "/place_perms.csv"
-#define COPLAND_CSV_LINE_MAX_LEN 1024
 
 /**
  * Used by APBs to specify the UUID of the measurement specification that
@@ -152,7 +115,6 @@ struct phrase_meas_spec_pair {
     copland_phrase *copl;
     uuid_t spec_uuid;
 };
-
 
 /*******************************************************************************
  * Copland Deep Copying Functions
@@ -449,33 +411,158 @@ void parse_copland(xmlDocPtr doc, struct apb *apb, xmlNode *copl_node, GList *me
 int has_place_args(const copland_phrase *phrase);
 
 /**
- * When applicable, query for the place information using the compiled in backend.
+ *
+ * @brief Get all of the place information that an APB relies upon for its execution.
+ *
+ * @param apb the APB for which the place information is being retrieved
+ * @param scen information regarding the current measurement negotiation
+ * @param phrase the Copland phrase representing the measurement protocol the APL will execute
+ *
  * Only the information which we have been given permission in the configuration file
- * to acquire will be provided to the APB. If a domain is not given Copland place
- * information, no information will be given pertaining that domain. If place
- * information entry appears with no corresponding domain argument being provided,
- * that entry will just be ignored.
+ * to acquire. If a domain is not given a Copland place information, no information will
+ * be given pertaining that domain. If place information entry appears with no
+ * corresponding domain argument, it will just be ignored.
  *
- * This information will be written to the file specified by the COPLAND_PLACE_PERMS_FILE
- * macro which will be located in the work directory of the APB.
- *
- * Returns 0 on success and -1 otherwise.
+ * @returns 0 on success and -1 otherwise.
  */
 int query_place_information(const struct apb *apb, const struct scenario *scen,
                             const copland_phrase *phrase);
 
 /**
- * In APBs that use information pertaining to places, this function can
- * be used to retrieve that information on a per place basis.
+ * @brief Get filtered place information from the places XML file available to the Attestation
+ *        Manager and write it out to a different file. Typically, this is used to provide an APB
+ *        with place information it has permission to access regarding a relevant place.
  *
- * Returns 0 on success and a -1 otherwise.
+ * @param doc a reference to the parsed XML places file
+ * @param perms the pieces of place information that should be retained in the output XML file
+ * @param id the id of the place to retrieve information about
+ * @param writer a reference to the XML document to write place information to
+ *
+ * @return int 0 on success, 1 if execution succeeds but no information was retrieces, 2 if the place
+ *         was not found, or -1 otherwsie
+ */
+int query_place_info(xmlDocPtr doc,
+                     GList *perms,
+                     const char *id,
+                     xmlTextWriterPtr writer);
+
+/**
+ * @brief Get the place information pertaining to a particular place. This
+ * function is usually used for testing. If performance is a consideration,
+ * get_place_information_xml_doc(...) to avoid multiple parsings of place files.
+ *
+ * @param scenario scenario struct that holds the path to the xml file that
+ *        contains all place info
+ * @param id a string that holds the name of the place
+ * @param info where to store the pointer to the place_info struct that is
+ *        created
+ * @return int returns 0 on success or <0 otherwise
  */
 int get_place_information(const struct scenario *scen, const char *id,
                           place_info **info);
 
 /**
- * Frees the allocated buffers within the place information pointer
+ * @brief Looks through an XML doc to find the required place, and stores all information
+ *        about that place in a hash table held in the info struct.
  *
+ * @param doc pointer to an XML document data structure
+ * @param id a string that holds the name of the place
+ * @param info where to store the pointer to the place_info struct that is created
+ * @return int returns 0 on success or <0 otherwise
  */
-void free_place_information(place_info *info);
+int get_place_information_xml_doc(xmlDocPtr doc, const char *id,
+                                  place_info **info);
+
+/**
+ * @brief Get the glist stored in a field of the place_info struct
+ *
+ * @param place information pertaining to a place
+ * @param field a string with the name of the field you wish to access
+ * @param list a pointer to the glist pointer held by the given field
+ * @return int 0 on success, -1 otherwise
+ */
+int get_place_info_glist( place_info *place, const char *field, GList **list);
+
+/**
+ * @brief Get the first string stored in a field of the place_info struct
+ *
+ * @param place place_info struct
+ * @param field a string with the name of the field you wish to access
+ * @param value a pointer to where to store the retrieved value. This function
+ *                makes a new copy of the string and must be freed by user
+ * @return int 0 on success, -1 otherwsie
+ */
+int get_place_info_string( place_info *place, const char *field, char **value);
+
+/**
+ * @brief Get the nth string stored in a field of the place_info struct
+ *
+ * @param place information pertaining to a place
+ * @param field a string with the name of the field you wish to access
+ * @param n the position of the element you wish to retrieve (0 indexed)
+ * @param value a pointer to where to store the retrieved value. This value
+ *        must be freed by a caller
+ *
+ * @return int 0 on success or -1 otherwise
+ */
+int get_place_info_string_nth( place_info *place, const char *field, uint n, char **value);
+
+/**
+ * @brief Get the place info for an int
+ *
+ * @param place information pertaining to a place
+ * @param field a string with the name of the field you wish to access
+ * @param value a pointer to where to store the retrieved value
+ *
+ * @return int 0 if the field exists or -1 otherwise
+ */
+int get_place_info_int( place_info *place, const char *field, int *value);
+
+/**
+ * @brief Get the nth int stored in the relevant field of the place_info struct
+ *
+ * @param place infoformation pertaining to a place
+ * @param field a string with the name of the field you wish to access
+ * @param n the position of the element you wish to retrieve (0 indexed)
+ * @param value a pointer to where to store the retrieved value
+ *
+ * @return int 0 if the field exists and there is an nth entry in the list
+ */
+int get_place_info_int_nth( place_info *place, const char *field, uint n, int *value);
+
+/**
+ * @brief Get the length of a list associated with a field in a place_info struct
+ *
+ * @param place information pertaining to a place
+ * @param field a string that contains the name of the field or property for which you want the length
+ *
+ * @return int the length of the list
+ */
+int get_place_info_list_length(place_info *place, const char *field );
+
+/**
+ * @brief Fills an int array with values stored in a place
+ *
+ * @param place information pertaining to a place
+ * @param field a string that contains the name of the field or property you wish to turn into an array
+ * @param value a pointer to the array (must already be allocated to proper size)
+ *
+ * @return int returns 0 on success or -1 otherwise
+ */
+int fill_place_info_int_array( place_info *place, const char *field, int *value);
+
+/**
+ * @brief Frees all memory stored in a place_info struct, including hash table, lists and strings stored in lists
+ *
+ * @param place place_info struct to be freed
+ */
+void free_place_info( place_info *place);
+
+/**
+ * @brief Free all of the data associated with a place_perms struct
+ *
+ * @param perms place_perms struct to be freed
+ */
+void free_place_perms( place_perms *perms);
+
 #endif

@@ -453,6 +453,7 @@ test-ubuntu22-asan:
 #    artifacts:
 #      paths:
 #        - build/src/test/*.log
+#        - build/lib/test/*.log
 #      expire_in: 2 weeks
 #      reports:
 #        coverage_report:

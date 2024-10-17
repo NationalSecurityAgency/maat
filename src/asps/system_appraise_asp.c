@@ -82,7 +82,7 @@ int asp_init(int argc, char *argv[])
 
     char *full_path;
     int index = 0;
-    char *line;
+    char *line = NULL;
     char *fields = NULL;
     size_t length = 0;
     char str[50];
@@ -95,8 +95,7 @@ int asp_init(int argc, char *argv[])
     // Read a line and tokenize to the corresponding data structure Glist
     //1. Get OS
     ret = read_line_csv(full_path, "1", 0, MAX_LINE_LEN, &line);
-    if( ret == -1 ){
-        free(line);
+    if( ret == -1 ) {
         dlog(0, "OS not found in %s\n", full_path);
         return ASP_APB_ERROR_BADCSV;
     }
@@ -119,7 +118,7 @@ int asp_init(int argc, char *argv[])
         temp = NULL;
         sprintf(str, "%d", index + 2);
         ret = read_line_csv(full_path, str, 0, MAX_LINE_LEN, &line);
-        if( ret == -1 ){
+        if( ret == -1 ) {
             free(line);
             dlog(0, "OS version not found in %s\n", full_path);
             return ASP_APB_ERROR_BADCSV;

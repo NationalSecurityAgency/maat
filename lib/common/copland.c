@@ -2415,9 +2415,14 @@ int fill_place_info_int_array( place_info *place, const char *field, int *value)
     if(n) {
         for(int i = 0; i < n; i++) {
             ret = get_place_info_int_nth(place, field, i, &(value[i]) );
+            if (ret < 0) {
+                goto error;
+            }
         }
         return 0;
     }
+
+error:
     *value = 0;
     return -1;
 }

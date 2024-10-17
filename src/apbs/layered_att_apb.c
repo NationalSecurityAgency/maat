@@ -349,7 +349,7 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
     char *partner_cert           = NULL;
     char *serialize_args[1];
     char *encrypt_args[1];
-    char *create_con_args[8];
+    char *create_con_args[9];
     struct asp *serialize        = NULL;
     struct asp *compress         = NULL;
     struct asp *encrypt          = NULL;
@@ -427,7 +427,7 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
             if(scen->partner_cert && ((partner_cert = strdup(scen->partner_cert)) != NULL)) {
                 encrypt_args[0] = partner_cert;
 
-                create_con_args[9] = "1";
+                create_con_args[8] = "1";
 
                 ret_val = fork_and_buffer_async_asp(encrypt, 1, encrypt_args, fb_fd, &fb_fd);
                 if(ret_val == -2) {
@@ -441,7 +441,7 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
                     exit(0);
                 }
             } else {
-                create_con_args[9] = "0";
+                create_con_args[8] = "0";
             }
 
             create_con_args[0] = workdir;
@@ -453,7 +453,6 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
             create_con_args[5] = g_akctx;
             create_con_args[6] = g_sign_tpm;
             create_con_args[7] = "1";
-            create_con_args[8] = "1";
             //The last argument is already set depending on the use of encryption
 
             ret_val = fork_and_buffer_async_asp(create_con, 10, create_con_args, fb_fd, &fb_fd);

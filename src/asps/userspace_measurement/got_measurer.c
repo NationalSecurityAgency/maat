@@ -3464,12 +3464,15 @@ static elf_context *create_vdso_ctx(const char *pid_string)
     mapping_group *grp = create_mapping_group(vdso_mapping);
     if(grp == NULL) {
         report_anomaly("Failed to create vdso mapping group");
+        free_file_mapping((gpointer)vdso_mapping, (gpointer)pid_string);
         return NULL;
     }
 
     file_mapping_buffer *mb = create_file_mapping_buffer(grp);
     if(mb == NULL) {
         report_anomaly("Failed to create file mapping buffer for vdso mapping group");
+        free_file_mapping((gpointer)vdso_mapping, (gpointer)pid_string);
+        free_mapping_group(grp);
         return NULL;
     }
 

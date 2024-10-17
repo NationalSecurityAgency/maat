@@ -387,6 +387,14 @@ GQueue *g_queue_deep_copy(GQueue *q)
     GList *current_list = q->head;
     for (; current_list!= NULL; current_list = current_list->next) {
         node_id_t *new_node_ptr = malloc(sizeof(node_id_t));
+
+        if (new_node_ptr == NULL) {
+            dlog(0, "Failed to allocate memory for node pointer\n");
+            g_queue_free_full(copy, free);
+
+            return NULL;
+        }
+
         node_id_t *old_node_ptr = (node_id_t *) current_list->data;
         *new_node_ptr = *old_node_ptr;
         g_queue_push_tail(copy, new_node_ptr);

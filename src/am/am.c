@@ -414,6 +414,7 @@ int appraiser_spawn_protocol(struct attestation_manager *self, struct scenario *
     }
 
 out:
+    free(args);
     g_list_free(option);
     return ret;
 }

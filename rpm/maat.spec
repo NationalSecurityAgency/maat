@@ -15,7 +15,7 @@
 #
 
 Name:           maat
-Version:        1.7
+Version:        2.0
 Release:        1%{?dist}
 Summary:        Maat Measurement & Attestation Framework
 Group:          Administration/Monitoring
@@ -314,6 +314,17 @@ setsebool -P httpd_can_network_connect=off
 %{_datadir}/selinux/targeted/maat.pp
 
 %changelog
+* Thu Oct 17 2024 Maat Developers <apl-maat-developers@jhuapl.edu> 2.0-1
+- Extended place support for arbitrary Copland place attributes
+- Introduced support for PhotonOS 5.0
+- Developed process memory mapping appraisal ASP
+- Developed file hash value appraisal ASP
+- Updated Copland Compiler to generate APB code using basic Copland phrases expressing single place attestations
+- Created documentation which guides integrators through creating new Maat APBs and ASP
+- Altered measurement contract format to represent TPM signatures and quotes
+- Addressed interoperability bugs between TPM enabled and TPM disabled Maat instances
+- Addressed bugs in Maat’s XML parsing
+
 * Fri May 17 2024 Maat Developers <apl-maat-developers@jhuapl.edu> 1.7-1
 - Addition of APBs, ASPs, and supporting policy files to represent a basic integration of existing measurement tools into Maat
 - Official support for Debian 11 and Ubuntu 23.10

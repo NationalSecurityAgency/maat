@@ -4,7 +4,7 @@ variables:
   SARACODE_ROOT: https://saracode-backend.jhuapl.edu/v2/project
   ARCHIVE_USER: archive
   ARCHIVE_HOST: manda-ci-repo.jhuapl.edu
-  MAAT_VERSION: 1.7-1
+  MAAT_VERSION: 2.0-1
   IMAGE_PREFIX: artifactory.jhuapl.edu/maat
 
 stages:

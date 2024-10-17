@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<!--
+#
+# Copyright 2023 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+-->
+<places>
+    <place>
+        <id>1</id>
+        <type>ahhh</type>
+        <field>a;sldkfj</field>
+        <value>fff</value>
+        <thing>500.200.100.40</thing>
+        <another_thing>66</another_thing>
+        <a_list>
+            <item>cat</item>
+            <item>dog</item>
+            <item>tree</item>
+            <item>frog</item>
+            <item>bear</item>
+        </a_list>
+        <b_list>
+            <a>1</a>
+            <a>2</a>
+            <b>3</b>
+            <a>4</a>
+            <a>5</a>
+        </b_list>
+        <value2>eee</value2>
+    </place>
+    <place>
+        <id>2</id>
+        <type>b</type>        
+        <field>a;sldkfj</field>
+        <value>fff</value>
+        <thing>500.200.100.40</thing>
+        <another_thing>66</another_thing>
+    </place>
+    <place>
+        <id>3</id>
+        <type>b</type>
+    </place>
+</places>

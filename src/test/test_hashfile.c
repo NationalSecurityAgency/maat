@@ -312,7 +312,7 @@ static int conduct_test(const char *args)
                            "\t\t</option>"
                            "\t</subcontract>"
                            "</contract>");
-    scen.size    = strlen(scen.contract);
+    scen.size    = strlen(scen.contract) + 1; //Include the null byte
     scen.workdir = strdup(WORKDIR);
     scen.cacert = strdup(CA_CERT);
     scen.keyfile = strdup(PRIV_KEY);

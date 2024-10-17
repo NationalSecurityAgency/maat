@@ -4,6 +4,8 @@ variables:
   SARACODE_ROOT: https://saracode-backend.jhuapl.edu/v2/project
   ARCHIVE_USER: archive
   ARCHIVE_HOST: manda-ci-repo.jhuapl.edu
+  MAAT_VERSION: 2.0-1
+  IMAGE_PREFIX: artifactory.jhuapl.edu/maat
 
 stages:
   - sara-kickoff
@@ -39,15 +41,26 @@ default:
   - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-tpm
   - make install
 
-# configure and build without selinux and without TPM for debian 11, ubuntu 23, and other debian based OSes of the same 'level'
-.build_no_selinux_no_tpm_deb_docker: &build_no_selinux_no_tpm_deb_docker
-  - apt-get -y update
-  - apt -y install build-essential autoconf automake libtool check libglib2.0-dev libxml2-dev libssl-dev uuid-dev libcap-dev make libelf-dev libjson-c-dev libtss2-dev tpm2-tools
-  - apt -y install gcovr
+# configure and build with selinux and without TPM for PhotonOS
+.build_no_selinux_no_tpm_photonos5: &build_no_selinux_no_tpm_photonos5
+  - cat /builds/JHUAPL-MS-Root-CA-05-21-2038-B64-text.cer >> /etc/pki/tls/certs/ca-bundle.crt
+  - tdnf -y install autoconf automake libtool check-devel glib-devel gcc glibc-devel binutils make elfutils-devel json-c-devel selinux-policy-devel libselinux-devel libxml2-devel tpm2-tss tpm2-tss-devel tpm2-tools openssl-devel libcap-devel
+  - tdnf -y install gcovr
   - autoreconf -i
   - "[ -d build ] || mkdir build"
   - cd build
-  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --enable-coverage --disable-selinux --disable-tpm --enable-tests
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-tpm --disable-selinux --enable-coverage --enable-tests
+  - make
+  - make install
+
+# configure and build with selinux and without TPM for PhotonOS
+.build_with_selinux_no_tpm_photonos5: &build_with_selinux_no_tpm_photonos5
+  - cat /builds/JHUAPL-MS-Root-CA-05-21-2038-B64-text.cer >> /etc/pki/tls/certs/ca-bundle.crt
+  - tdnf -y install autoconf automake libtool check-devel glib-devel gcc glibc-devel binutils make elfutils-devel json-c-devel selinux-policy-devel libselinux-devel libxml2-devel tpm2-tss tpm2-tss-devel tpm2-tools openssl-devel libcap-devel
+  - autoreconf -i
+  - "[ -d build ] || mkdir build"
+  - cd build
+  - ../configure --prefix=$PWD/../inst --with-systemdsystemunitdir=$PWD/../inst/lib/systemd --disable-tpm --enable-coverage --enable-tests --enable-photon
   - make
   - make install
 
@@ -74,9 +87,9 @@ default:
   - make check
   - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
 
-# configure and build without selinux and without TPM for debian 11, ubuntu 23, and other debian based OSes of the same 'level'
-.test_no_selinux_no_tpm_deb_docker: &test_no_selinux_no_tpm_deb_docker
-  - *build_no_selinux_no_tpm_deb_docker
+# configure and build with selinux and without TPM for PhotonOS
+.test_no_selinux_no_tpm_photonos5: &test_no_selinux_no_tpm_photonos5
+  - *build_no_selinux_no_tpm_photonos5
   - make check
   - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
 
@@ -120,43 +133,23 @@ default:
   - cd ubuntu
   - reprepro -V includedeb ${release} ../${release}-*-results/maat*.deb
   - cd ../..
-  - mv staging maat-$CI_COMMIT_SHORT_SHA
-  - scp -r maat-$CI_COMMIT_SHORT_SHA $ARCHIVE_USER@$ARCHIVE_HOST:/var/www/data/deb/
 
 # Create RPM repo for ${release} and ${arch}
 .rpm_repo: &rpm_repo
   - ../configure --prefix=/usr --disable-tpm --disable-selinux-libdir-mapping
-  - make dist
-  - "[ -d SOURCES ] || mkdir SOURCES"
-  - cp maat-*.tar.gz SOURCES/
-  - mkdir -p staging/epel/${release}/${arch}
-  - cd staging/epel/${release}/${arch}
-  - createrepo -p -d -v .
-  - cd ../../../../
-  - cp /etc/mock/${distro}-${release}-${arch}.cfg .
-  - mock -r ${distro}-${release}-${arch}.cfg --buildsrpm --spec ../rpm/maat.spec --sources SOURCES
-  - rm -rf staging/epel/${release}/${arch}/maat-*.src.rpm
-  - cp /var/lib/mock/${distro}-${release}-${arch}/result/maat-*.src.rpm staging/epel/${release}/${arch}
-  - mock -v --no-clean -r ${distro}-${release}-${arch}.cfg --rebuild staging/epel/${release}/${arch}/maat-*.src.rpm
-  - rm -f staging/epel/${release}/${arch}/maat-*.rpm
-  - cp -v  /var/lib/mock/${distro}-${release}-${arch}/result/maat-*.rpm staging/epel/${release}/${arch}/
-  - cd staging/epel/${release}/${arch}
-  - createrepo -p -d -v .
-  - cd ../../
-  - ssh $ARCHIVE_USER@$ARCHIVE_HOST "mkdir -p /var/www/data/rpm/$CI_COMMIT_SHORT_SHA/"
-  - scp -r ${release} $ARCHIVE_USER@$ARCHIVE_HOST:/var/www/data/rpm/$CI_COMMIT_SHORT_SHA/
+  - make rpm
+  - cp /root/rpmbuild/RPMS/x86_64/*.rpm .
 
 # System test on RHEL with selinux enabled
 .rhel_selinux_system_test: &rhel_selinux_system_test
-  - echo "baseurl=http://$ARCHIVE_HOST/rpm/$CI_COMMIT_SHORT_SHA/${release}/x86_64" >> ci/maat.repo
-  - sudo cp ci/maat.repo /etc/yum.repos.d
-  - sudo yum clean all
-  - sudo yum install maat maat-selinux -y
+  - cd build
+  - sudo yum install -y maat-${MAAT_VERSION}.el${release}.x86_64.rpm maat-selinux-${MAAT_VERSION}.el${release}.x86_64.rpm
+  - cd ../
   - sudo semanage port -a -t attestmgr_port_t -p tcp 2343
   - sudo cp demo/credentials/client.* /etc/maat/credentials/
   - sudo rpm -qa --qf "%{NAME}\n" | sudo tee -a /usr/share/maat/asps/packages.whitelist
-  - "LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml 2>&1 | tee app.log &"
-  - "LIBMAAT_LOG_SYSLOG=0 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml 2>&1 | tee att.log &"
+  - "LIBMAAT_LOG_SYSLOG=0 LIBMAAT_DEBUG_LEVEL=5 /usr/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /etc/maat/minimal-am-config.xml 2>&1 | tee app.log &"
+  - "LIBMAAT_LOG_SYSLOG=0 LIBMAAT_DEBUG_LEVEL=5 /usr/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /etc/maat/minimal-am-config.xml 2>&1 | tee att.log &"
   - sleep 10
   - "valgrind /usr/bin/test_client  -l localhost -a 2342 -t localhost -p 2343 -r userspace 2>&1 | tee test_client.log || true"
   - "kill %2 || true"
@@ -169,6 +162,8 @@ default:
 # Start saracode analysis
 kickoff-saracode:
   stage: sara-kickoff
+  tags:
+    - new-docker
   inherit:
     default: false
   script:
@@ -185,7 +180,8 @@ kickoff-saracode:
 build-ubuntu20:
   stage: build
   tags:
-    - ubuntu20
+    - new-docker
+  image: ${IMAGE_PREFIX}/ubuntu20:0.0.5
   script:
     - *build_no_selinux_no_tpm
 
@@ -193,7 +189,8 @@ build-ubuntu20:
 build-ubuntu20-tpm:
   stage: build
   tags:
-    - maat-swtpm
+    - new-docker
+  image: ${IMAGE_PREFIX}/ubuntu20:0.0.5
   script:
     - *build_no_selinux
 
@@ -201,7 +198,8 @@ build-ubuntu20-tpm:
 build-ubuntu22:
   stage: build
   tags:
-    - ubuntu22
+    - new-docker
+  image: ${IMAGE_PREFIX}/ubuntu22:0.0.5
   script:
     - *build_no_selinux_no_tpm
 
@@ -209,32 +207,17 @@ build-ubuntu22:
 build-ubuntu22-tpm:
   stage: build
   tags:
-    - ubuntu22
-    - tpm
+    - new-docker
+  image: ${IMAGE_PREFIX}/ubuntu22:0.0.5
   script:
     - *build_no_selinux
-
-# build without selinux for rhel7
-build-rhel7-no-selinux:
-  stage: build
-  tags:
-    - rhel7
-  script:
-    - *build_no_selinux_no_tpm
-
-# build with selinux for rhel7
-build-rhel7-selinux:
-  stage: build
-  tags:
-    - rhel7
-  script:
-    - *build_with_selinux_no_tpm
 
 # build without selinux for rhel8
 build-rhel8-no-selinux:
   stage: build
   tags:
-    - rhel8
+    - new-docker
+  image: ${IMAGE_PREFIX}/rhel8:0.0.5
   script:
     - *build_no_selinux_no_tpm
 
@@ -242,7 +225,8 @@ build-rhel8-no-selinux:
 build-rhel8-selinux:
   stage: build
   tags:
-    - rhel8
+    - new-docker
+  image: ${IMAGE_PREFIX}/rhel8:0.0.5
   script:
     - *build_with_selinux_no_tpm
 
@@ -250,7 +234,8 @@ build-rhel8-selinux:
 build-rhel8-selinux-tpm:
   stage: build
   tags:
-    - rhel8
+    - new-docker
+  image: ${IMAGE_PREFIX}/rhel8:0.0.5
   script:
     - *build_with_selinux_and_tpm
 
@@ -258,7 +243,8 @@ build-rhel8-selinux-tpm:
 build-rhel9-no-selinux:
   stage: build
   tags:
-    - rhel9
+    - new-docker
+  image: ${IMAGE_PREFIX}/rhel9:0.0.5
   script:
     - *build_no_selinux_no_tpm
 
@@ -266,29 +252,38 @@ build-rhel9-no-selinux:
 build-rhel9-selinux:
   stage: build
   tags:
-    - rhel9
+    - new-docker
+  image: ${IMAGE_PREFIX}/rhel9:0.0.5
   script:
     - *build_with_selinux_no_tpm
 
 #build without selinux without TPM for ubuntu23
 build-ubuntu23:
- stage: build
- inherit:
-  default: false
- tags:
-  - ubuntu23
- script:
-  - *build_no_selinux_no_tpm_deb_docker
+  stage: build
+  tags:
+    - new-docker
+  image: ${IMAGE_PREFIX}/ubuntu23:0.0.6
+  script:
+    - *build_no_selinux_no_tpm
 
 #build without selinux without TPM for debian 11
 build-debian11:
- stage: build
- inherit:
-  default: false
- tags:
-  - debian11
- script:
-  - *build_no_selinux_no_tpm_deb_docker
+  stage: build
+  tags:
+    - new-docker
+  image: ${IMAGE_PREFIX}/debian11:0.0.1
+  script:
+    - *build_no_selinux_no_tpm
+
+# build without selinux for PhotonOS 5.0
+build-photonos5:
+  stage: build
+  inherit:
+   default: false
+  tags:
+    - photonos5
+  script:
+    - *build_with_selinux_no_tpm_photonos5
 
 ## docs
 
@@ -296,7 +291,8 @@ build-debian11:
 docs-ubuntu:
   stage: docs
   tags:
-    - ubuntu20
+    - new-docker
+  image: ${IMAGE_PREFIX}/ubuntu20:0.0.5
   script:
     - *build_docs
   artifacts:
@@ -311,13 +307,14 @@ docs-ubuntu:
 test-ubuntu20-basic:
   stage: test
   tags:
-    - ubuntu20
+    - new-ubuntu20
   script:
     - *test_no_selinux_no_tpm
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
+      - build/lib/test/*.log
     expire_in: 2 weeks
     reports:
       coverage_report:
@@ -329,13 +326,15 @@ test-ubuntu20-basic:
 test-ubuntu20-basic-tpm:
   stage: test
   tags:
-    - maat-swtpm
+    - new-ubuntu20
+    - new-tpm
   script:
     - *test_no_selinux
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
+      - build/lib/test/*.log
     expire_in: 2 weeks
     reports:
       coverage_report:
@@ -347,13 +346,14 @@ test-ubuntu20-basic-tpm:
 test-ubuntu20-asan:
   stage: test
   tags:
-    - ubuntu20
+    - new-ubuntu20
   script:
     - *test_asan_no_tpm
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
+      - build/lib/test/*.log
     expire_in: 2 weeks
     reports:
       coverage_report:
@@ -365,13 +365,14 @@ test-ubuntu20-asan:
 test-ubuntu20-asan-tpm:
   stage: test
   tags:
-    - maat-swtpm
+    - new-ubuntu20
   script:
     - *test_asan
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
+      - build/lib/test/*.log
     expire_in: 2 weeks
     reports:
       coverage_report:
@@ -383,13 +384,14 @@ test-ubuntu20-asan-tpm:
 test-ubuntu22-basic:
   stage: test
   tags:
-    - ubuntu22
+    - new-ubuntu22
   script:
     - *test_no_selinux_no_tpm
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
+      - build/lib/test/*.log
     expire_in: 2 weeks
     reports:
       coverage_report:
@@ -401,14 +403,15 @@ test-ubuntu22-basic:
 test-ubuntu22-basic-tpm:
   stage: test
   tags:
-    - ubuntu22
-    - tpm
+    - new-ubuntu22
+    - new-tpm
   script:
     - *test_no_selinux
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
+      - build/lib/test/*.log
     expire_in: 2 weeks
     reports:
       coverage_report:
@@ -420,7 +423,8 @@ test-ubuntu22-basic-tpm:
 test-ubuntu22-asan:
   stage: test
   tags:
-    - ubuntu22
+    - new-docker
+  image: ${IMAGE_PREFIX}/ubuntu22:0.0.5
   script:
     - *test_asan_no_tpm
   coverage: /^\s*lines:\s*\d+.\d+\%/
@@ -434,38 +438,42 @@ test-ubuntu22-asan:
         path: build/coverage.xml
     when: always
 
+# Disabled due to what may be a bug with gcc and/or libasan that only seems to
+# occur on ubuntu22
+# see https://github.com/actions/runner-images/issues/9524
 # make check tests with address sanitizer on ubuntu22
-test-ubuntu22-asan-tpm:
-   stage: test
-   tags:
-     - ubuntu22
-     - tpm
-   script:
-     - *test_asan
-   coverage: /^\s*lines:\s*\d+.\d+\%/
-   artifacts:
-     paths:
-       - build/src/test/*.log
-     expire_in: 2 weeks
-     reports:
-       coverage_report:
-         coverage_format: cobertura
-         path: build/coverage.xml
-     when: always
+# test-ubuntu22-asan-tpm:
+#    stage: test
+#    tags:
+#      - ubuntu22
+#      - tpm
+#    script:
+#      - *test_asan
+#    coverage: /^\s*lines:\s*\d+.\d+\%/
+#    artifacts:
+#      paths:
+#        - build/src/test/*.log
+#        - build/lib/test/*.log
+#      expire_in: 2 weeks
+#      reports:
+#        coverage_report:
+#          coverage_format: cobertura
+#          path: build/coverage.xml
+#      when: always
 
 # regular make check tests on ubuntu23
 test-ubuntu23-basic:
   stage: test
-  inherit:
-    default: false
   tags:
-    - ubuntu23
+    - new-docker
+  image: ${IMAGE_PREFIX}/ubuntu23:0.0.6
   script:
-    - *test_no_selinux_no_tpm_deb_docker
+    - *test_no_selinux_no_tpm
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
+      - build/lib/test/*.log
     expire_in: 2 weeks
     reports:
       coverage_report:
@@ -476,34 +484,16 @@ test-ubuntu23-basic:
 # regular make check tests on debian 11
 test-debian11-basic:
   stage: test
-  inherit:
-    default: false
   tags:
-    - debian11
-  script:
-    - *test_no_selinux_no_tpm_deb_docker
-  coverage: /^\s*lines:\s*\d+.\d+\%/
-  artifacts:
-    paths:
-      - build/src/test/*.log
-    expire_in: 2 weeks
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: build/coverage.xml
-    when: always
-
-# regular make check tests without selinux on rhel7
-test-rhel7-basic-no-selinux:
-  stage: test
-  tags:
-    - rhel7
+    - new-docker
+  image: ${IMAGE_PREFIX}/debian11:0.0.1
   script:
     - *test_no_selinux_no_tpm
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
+      - build/lib/test/*.log
     expire_in: 2 weeks
     reports:
       coverage_report:
@@ -511,13 +501,15 @@ test-rhel7-basic-no-selinux:
         path: build/coverage.xml
     when: always
 
-# make check tests with address sanitizer on rhel7
-test-rhel7-asan:
+# regular make check tests on photonos
+test-photonos5-basic:
   stage: test
+  inherit:
+    default: false
   tags:
-    - rhel7
+    - photonos5
   script:
-    - *test_asan_no_tpm
+    - *test_no_selinux_no_tpm_photonos5
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
@@ -533,13 +525,15 @@ test-rhel7-asan:
 test-rhel8-basic-no-selinux:
   stage: test
   tags:
-    - rhel8
+    - new-docker
+  image: ${IMAGE_PREFIX}/rhel8:0.0.5
   script:
     - *test_no_selinux_no_tpm
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
+      - build/lib/test/*.log
     expire_in: 2 weeks
     reports:
       coverage_report:
@@ -551,13 +545,15 @@ test-rhel8-basic-no-selinux:
 test-rhel8-asan:
   stage: test
   tags:
-    - rhel8
+    - new-docker
+  image: ${IMAGE_PREFIX}/rhel8:0.0.5
   script:
     - *test_asan_no_tpm
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
+      - build/lib/test/*.log
     expire_in: 2 weeks
     reports:
       coverage_report:
@@ -569,13 +565,15 @@ test-rhel8-asan:
 test-rhel9-basic-no-selinux:
   stage: test
   tags:
-    - rhel9
+    - new-docker
+  image: ${IMAGE_PREFIX}/rhel9:0.0.5
   script:
     - *test_no_selinux_no_tpm
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
+      - build/lib/test/*.log
     expire_in: 2 weeks
     reports:
       coverage_report:
@@ -587,13 +585,15 @@ test-rhel9-basic-no-selinux:
 test-rhel9-asan:
   stage: test
   tags:
-    - rhel9
+    - new-docker
+  image: ${IMAGE_PREFIX}/rhel9:0.0.5
   script:
     - *test_asan_no_tpm
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     paths:
       - build/src/test/*.log
+      - build/lib/test/*.log
     expire_in: 2 weeks
     reports:
       coverage_report:
@@ -607,7 +607,7 @@ test-rhel9-asan:
 package-ubuntu20-amd64-deb:
   stage: package
   tags:
-    - ubuntu20
+    - new-ubuntu20
   variables:
     release: focal
     arch: amd64
@@ -623,7 +623,7 @@ package-ubuntu20-amd64-deb:
 package-ubuntu22-amd64-deb:
   stage: package
   tags:
-    - ubuntu22
+    - new-ubuntu22
   variables:
     release: jammy
     arch: amd64
@@ -635,52 +635,30 @@ package-ubuntu22-amd64-deb:
       - build/staging
     expire_in: 2 weeks
 
-# package rhel7 rpm
-package-rhel7-x86_64-rpm:
-  stage: package
-  tags:
-    - rhel7
-  variables:
-    distro: "centos+epel"
-    release: 7
-    arch: x86_64
-  script:
-    - *rpm_repo
-  artifacts:
-    paths:
-      - build/staging
-    expire_in: 2 weeks
-
 # package rhel8 rpm
 package-rhel8-x86_64-rpm:
   stage: package
   tags:
-    - rhel8
-  variables:
-    distro: "centos-stream+epel"
-    release: 8
-    arch: x86_64
+    - new-docker
+  image: ${IMAGE_PREFIX}/rhel8:0.0.5
   script:
     - *rpm_repo
   artifacts:
     paths:
-      - build/staging
+      - build/*.rpm
     expire_in: 2 weeks
 
 # package rhel9 rpm
 package-rhel9-x86_64-rpm:
   stage: package
   tags:
-    - rhel9
-  variables:
-    distro: "centos-stream+epel"
-    release: 9
-    arch: x86_64
+    - new-docker
+  image: ${IMAGE_PREFIX}/rhel9:0.0.5
   script:
     - *rpm_repo
   artifacts:
     paths:
-      - build/staging
+      - build/*.rpm
     expire_in: 2 weeks
 
 ## deploy
@@ -689,7 +667,7 @@ package-rhel9-x86_64-rpm:
 create-ubuntu20-repo:
   stage: deploy
   tags:
-    - ubuntu20
+    - new-ubuntu20
   needs:
     - package-ubuntu20-amd64-deb
   inherit:
@@ -700,14 +678,14 @@ create-ubuntu20-repo:
     - *deb_repo
   artifacts:
     paths:
-      - maat-$CI_COMMIT_SHORT_SHA/
+      - build/staging
     expire_in: 2 weeks
 
 # create ubuntu22 jammy repo
 create-ubuntu22-repo:
   stage: deploy
   tags:
-    - ubuntu22
+    - new-ubuntu22
   needs:
     - package-ubuntu22-amd64-deb
   inherit:
@@ -718,44 +696,43 @@ create-ubuntu22-repo:
     - *deb_repo
   artifacts:
     paths:
-      - maat-$CI_COMMIT_SHORT_SHA/
+      - build/staging
     expire_in: 2 weeks
 
 ## systemtest
 
-# system test with selinux on rhel7
-system-test-selinux-rhel7:
+# system test on rhel8
+system-test-rhel8:
   stage: systemtest
   tags:
-    - rhel7
+    - new-rhel8
   inherit:
     default: false
-  dependencies: []
-  variables:
-    release: 7
   timeout: 2 hours
-  before_script:
-    - "sudo killall -15 attestmgr || true"
-    - "sudo killall -9 attestmgr || true"
-    - sudo semanage port -d -t attestmgr_port_t -p tcp 2343 || true
-    - sudo yum remove maat maat-selinux -y || true
-  script:
-    *rhel_selinux_system_test
-  artifacts:
-    paths:
-      - "*.log"
-    expire_in: 2 weeks
-
-# system test with selinux on rhel8
-system-test-selinux-rhel8:
-  stage: systemtest
-  tags:
-    - rhel8
-  inherit:
-    default: false
-  dependencies: []
   variables:
     release: 8
+  before_script:
+    - "sudo killall -15 attestmgr || true"
+    - "sudo killall -9 attestmgr || true"
+    - sudo semanage port -d -t attestmgr_port_t -p tcp 2343 || true
+    - sudo yum remove maat maat-selinux -y || true
+  script:
+    *rhel_selinux_system_test
+  artifacts:
+    paths:
+      - "*.log"
+    expire_in: 2 weeks
+    when: always
+
+# system test on rhel9
+system-test-rhel9:
+  stage: systemtest
+  tags:
+    - new-rhel9
+  inherit:
+    default: false
+  variables:
+    release: 9
   timeout: 2 hours
   before_script:
     - "sudo killall -15 attestmgr || true"
@@ -768,15 +745,17 @@ system-test-selinux-rhel8:
     paths:
       - "*.log"
     expire_in: 2 weeks
+    when: always
 
 # system test on ubuntu20 with valgrind
 system-test-ubuntu20-valgrind:
   stage: systemtest
   tags:
-    - ubuntu20
+    - new-ubuntu20
   inherit:
     default: false
-  dependencies: []
+  needs:
+    - create-ubuntu20-repo
   variables:
     release: focal
     arch: amd64
@@ -784,7 +763,10 @@ system-test-ubuntu20-valgrind:
     - "sudo killall -15 attestmgr || true"
     - "sudo killall -9 attestmgr || true"
   script:
-    - echo -n "deb [allow-insecure=yes] http://$ARCHIVE_HOST/deb/maat-$CI_COMMIT_SHORT_SHA/ubuntu ${release} multiverse" > maat.list
+    - rm -rf ~/maat-deb
+    - mkdir ~/maat-deb
+    - cp -r build/staging/* ~/maat-deb/
+    - echo -n "deb [allow-insecure=yes] file:/home/gitlab-runner/maat-deb/ubuntu ${release} multiverse" > maat.list
     - sudo cp maat.list /etc/apt/sources.list.d/
     - sudo apt-get --allow-unauthenticated update
     - sudo apt-get --allow-unauthenticated -y --reinstall install maat
@@ -808,10 +790,11 @@ system-test-ubuntu20-valgrind:
 system-test-ubuntu20-fail:
   stage: systemtest
   tags:
-    - ubuntu20
+    - new-ubuntu20
   inherit:
     default: false
-  dependencies: []
+  needs:
+    - create-ubuntu20-repo
   variables:
     release: focal
     arch: amd64
@@ -819,7 +802,10 @@ system-test-ubuntu20-fail:
     - "sudo killall -15 attestmgr || true"
     - "sudo killall -9 attestmgr || true"
   script:
-    - echo -n "deb [allow-insecure=yes] http://$ARCHIVE_HOST/deb/maat-$CI_COMMIT_SHORT_SHA/ubuntu ${release} multiverse" > maat.list
+    - rm -rf ~/maat-deb
+    - mkdir ~/maat-deb
+    - cp -r build/staging/* ~/maat-deb/
+    - echo -n "deb [allow-insecure=yes] file:/home/gitlab-runner/maat-deb/ubuntu ${release} multiverse" > maat.list
     - sudo cp maat.list /etc/apt/sources.list.d/
     - sudo apt-get --allow-unauthenticated update
     - sudo apt-get --allow-unauthenticated -y --reinstall install maat
@@ -844,10 +830,12 @@ system-test-ubuntu20-fail:
 system-test-ubuntu20-tpm:
   stage: systemtest
   tags:
-    - maat-swtpm
+    - new-ubuntu20
+    - new-tpm
   inherit:
     default: false
-  dependencies: []
+  needs:
+    - create-ubuntu20-repo
   variables:
     release: focal
     arch: amd64
@@ -855,7 +843,10 @@ system-test-ubuntu20-tpm:
     - "sudo killall -15 attestmgr || true"
     - "sudo killall -9 attestmgr || true"
   script:
-    - echo -n "deb [allow-insecure=yes] http://$ARCHIVE_HOST/deb/maat-$CI_COMMIT_SHORT_SHA/ubuntu ${release} multiverse" > maat.list
+    - rm -rf ~/maat-deb
+    - mkdir ~/maat-deb
+    - cp -r build/staging/* ~/maat-deb/
+    - echo -n "deb [allow-insecure=yes] file:/home/gitlab-runner/maat-deb/ubuntu ${release} multiverse" > maat.list
     - sudo cp maat.list /etc/apt/sources.list.d/
     - sudo apt-get --allow-unauthenticated update
     - sudo apt-get --allow-unauthenticated -y --reinstall install maat
@@ -880,10 +871,12 @@ system-test-ubuntu20-tpm:
 system-test-ubuntu20-fail-tpm:
   stage: systemtest
   tags:
-    - maat-swtpm
+    - new-ubuntu20
+    - new-tpm
   inherit:
     default: false
-  dependencies: []
+  needs:
+    - create-ubuntu20-repo
   variables:
     release: focal
     arch: amd64
@@ -891,7 +884,10 @@ system-test-ubuntu20-fail-tpm:
     - "sudo killall -15 attestmgr || true"
     - "sudo killall -9 attestmgr || true"
   script:
-    - echo -n "deb [allow-insecure=yes] http://$ARCHIVE_HOST/deb/maat-$CI_COMMIT_SHORT_SHA/ubuntu ${release} multiverse" > maat.list
+    - rm -rf ~/maat-deb
+    - mkdir ~/maat-deb
+    - cp -r build/staging/* ~/maat-deb/
+    - echo -n "deb [allow-insecure=yes] file:/home/gitlab-runner/maat-deb/ubuntu ${release} multiverse" > maat.list
     - sudo cp maat.list /etc/apt/sources.list.d/
     - sudo apt-get --allow-unauthenticated update
     - sudo apt-get --allow-unauthenticated -y --reinstall install maat
@@ -919,11 +915,12 @@ system-test-ubuntu20-fail-tpm:
 system-test-ubuntu22-tpm:
   stage: systemtest
   tags:
-    - ubuntu22
-    - tpm
+    - new-ubuntu22
+    - new-tpm
   inherit:
     default: false
-  dependencies: []
+  needs:
+    - create-ubuntu22-repo
   variables:
     release: jammy
     arch: amd64
@@ -931,7 +928,10 @@ system-test-ubuntu22-tpm:
     - "sudo killall -15 attestmgr || true"
     - "sudo killall -9 attestmgr || true"
   script:
-    - echo -n "deb [allow-insecure=yes] http://$ARCHIVE_HOST/deb/maat-$CI_COMMIT_SHORT_SHA/ubuntu ${release} multiverse" > maat.list
+    - rm -rf ~/maat-deb
+    - mkdir ~/maat-deb
+    - cp -r build/staging/* ~/maat-deb/
+    - echo -n "deb [allow-insecure=yes] file:/home/gitlab-runner/maat-deb/ubuntu ${release} multiverse" > maat.list
     - sudo cp maat.list /etc/apt/sources.list.d/
     - sudo apt-get --allow-unauthenticated update
     - sudo apt-get --allow-unauthenticated -y --reinstall install maat
@@ -956,11 +956,12 @@ system-test-ubuntu22-tpm:
 system-test-ubuntu22-fail-tpm:
   stage: systemtest
   tags:
-    - ubuntu22
-    - tpm
+    - new-ubuntu22
+    - new-tpm
   inherit:
     default: false
-  dependencies: []
+  needs:
+    - create-ubuntu22-repo
   variables:
     release: jammy
     arch: amd64
@@ -968,7 +969,10 @@ system-test-ubuntu22-fail-tpm:
     - "sudo killall -15 attestmgr || true"
     - "sudo killall -9 attestmgr || true"
   script:
-    - echo -n "deb [allow-insecure=yes] http://$ARCHIVE_HOST/deb/maat-$CI_COMMIT_SHORT_SHA/ubuntu ${release} multiverse" > maat.list
+    - rm -rf ~/maat-deb
+    - mkdir ~/maat-deb
+    - cp -r build/staging/* ~/maat-deb/
+    - echo -n "deb [allow-insecure=yes] file:/home/gitlab-runner/maat-deb/ubuntu ${release} multiverse" > maat.list
     - sudo cp maat.list /etc/apt/sources.list.d/
     - sudo apt-get --allow-unauthenticated update
     - sudo apt-get --allow-unauthenticated -y --reinstall install maat
@@ -997,6 +1001,8 @@ system-test-ubuntu22-fail-tpm:
 # collect results from saracode
 collect-saracode:
   stage: sara-collect
+  tags:
+    - new-docker
   dependencies:
     - kickoff-saracode
   inherit:

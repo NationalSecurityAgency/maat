@@ -51,7 +51,7 @@ START_TEST(test_load_inet_iface_config)
 {
     char *iface_cfg_str = "<interface type=\"inet\" address=\"0.0.0.0\" port=\"2342\" />";
     am_config cfg = {0};
-    xmlDoc *d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    xmlDoc *d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     ck_assert(d != NULL);
     xmlNode *root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_inet_iface_config(0, root, &cfg), 0);
@@ -73,7 +73,7 @@ START_TEST(test_load_invalid_inet_iface_config)
     // Missing port
     char *iface_cfg_str = "<interface type=\"inet\" address=\"0.0.0.0\" />";
     am_config cfg = {0};
-    xmlDoc *d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    xmlDoc *d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     xmlNode *root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_inet_iface_config(0, root, &cfg), -1);
     xmlFreeDoc(d);
@@ -81,7 +81,7 @@ START_TEST(test_load_invalid_inet_iface_config)
     // Empty port
     iface_cfg_str = "<interface type=\"inet\" address=\"0.0.0.0\" port=\"\" />";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_inet_iface_config(0, root, &cfg), -1);
     xmlFreeDoc(d);
@@ -89,7 +89,7 @@ START_TEST(test_load_invalid_inet_iface_config)
     // Non-integral port
     iface_cfg_str = "<interface type=\"inet\" address=\"0.0.0.0\" port=\"abc\" />";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_inet_iface_config(0, root, &cfg), -1);
     xmlFreeDoc(d);
@@ -97,7 +97,7 @@ START_TEST(test_load_invalid_inet_iface_config)
     // Negative port
     iface_cfg_str = "<interface type=\"inet\" address=\"0.0.0.0\" port=\"-1\" />";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_inet_iface_config(0, root, &cfg), -1);
     xmlFreeDoc(d);
@@ -105,7 +105,7 @@ START_TEST(test_load_invalid_inet_iface_config)
     // Overlarge port
     iface_cfg_str = "<interface type=\"inet\" address=\"0.0.0.0\" port=\"65536\" />";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_inet_iface_config(0, root, &cfg), -1);
     xmlFreeDoc(d);
@@ -113,7 +113,7 @@ START_TEST(test_load_invalid_inet_iface_config)
     // Missing address
     iface_cfg_str = "<interface type=\"inet\" port=\"2342\" />";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_inet_iface_config(0, root, &cfg), -1);
     xmlFreeDoc(d);
@@ -121,7 +121,7 @@ START_TEST(test_load_invalid_inet_iface_config)
     // Invalid address - too large
     iface_cfg_str = "<interface type=\"inet\" address=\"0.0.256.0\" port=\"2342\" />";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_inet_iface_config(0, root, &cfg), -1);
     xmlFreeDoc(d);
@@ -129,7 +129,7 @@ START_TEST(test_load_invalid_inet_iface_config)
     // Invalid address - negative
     iface_cfg_str = "<interface type=\"inet\" address=\"0.-1.0.0\" port=\"2342\" />";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_inet_iface_config(0, root, &cfg), -1);
     xmlFreeDoc(d);
@@ -137,7 +137,7 @@ START_TEST(test_load_invalid_inet_iface_config)
     // Invalid address - truncated
     iface_cfg_str = "<interface type=\"inet\" address=\"1.2.3\" port=\"2342\" />";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_inet_iface_config(0, root, &cfg), -1);
     xmlFreeDoc(d);
@@ -145,7 +145,7 @@ START_TEST(test_load_invalid_inet_iface_config)
     // Invalid address - extra
     iface_cfg_str = "<interface type=\"inet\" address=\"1.2.3.4.5\" port=\"2342\" />";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_inet_iface_config(0, root, &cfg), -1);
     xmlFreeDoc(d);
@@ -153,7 +153,7 @@ START_TEST(test_load_invalid_inet_iface_config)
     // Invalid address - hostname
     iface_cfg_str = "<interface type=\"inet\" address=\"localhost\" port=\"2342\" />";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_inet_iface_config(0, root, &cfg), -1);
     xmlFreeDoc(d);
@@ -164,7 +164,7 @@ START_TEST(test_load_unix_iface_config)
 {
     char *iface_cfg_str = "<interface type=\"unix\" path=\"/foo/bar/baz\" />";
     am_config cfg = {0};
-    xmlDoc *d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    xmlDoc *d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     ck_assert(d != NULL);
     xmlNode *root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_unix_iface_config(0, root, &cfg), 0);
@@ -180,7 +180,7 @@ START_TEST(test_load_unix_iface_config)
 
     iface_cfg_str = "<interface type=\"unix\" path=\"/foo/bar/baz\" skip-negotiation=\"true\"/>";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_unix_iface_config(0, root, &cfg), 0);
@@ -196,7 +196,7 @@ START_TEST(test_load_unix_iface_config)
 
     iface_cfg_str = "<interface type=\"unix\" path=\"/foo/bar/baz\" skip-negotiation=\"True\"/>";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_unix_iface_config(0, root, &cfg), 0);
@@ -212,7 +212,7 @@ START_TEST(test_load_unix_iface_config)
 
     iface_cfg_str = "<interface type=\"unix\" path=\"/foo/bar/baz\" skip-negotiation=\"false\"/>";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_unix_iface_config(0, root, &cfg), 0);
@@ -232,7 +232,7 @@ START_TEST(test_load_invalid_unix_iface_config)
 {
     char *iface_cfg_str = "<interface type=\"unix\" />";
     am_config cfg = {0};
-    xmlDoc *d = get_doc_from_blob(iface_cfg_str, xmlStrlen(iface_cfg_str));
+    xmlDoc *d = get_doc_from_blob(iface_cfg_str, strlen(iface_cfg_str) + 1);
     ck_assert(d != NULL);
     xmlNode *root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_unix_iface_config(0, root, &cfg), -1);
@@ -249,7 +249,7 @@ START_TEST(test_load_iface_configs)
         "<interface type=\"unix\" path=\"/foo/bar/baz\" skip-negotiation=\"True\"/>"
         "</interfaces>";
     am_config cfg = {0};
-    xmlDoc *d = get_doc_from_blob(iface_cfgs_str, xmlStrlen(iface_cfgs_str));
+    xmlDoc *d = get_doc_from_blob(iface_cfgs_str, strlen(iface_cfgs_str) + 1);
     ck_assert(d != NULL);
     xmlNode *root = xmlDocGetRootElement(d);
     load_iface_configs(0, root, &cfg);
@@ -289,7 +289,7 @@ START_TEST(test_load_iface_configs)
     // No interfaces
     iface_cfgs_str = "<interfaces/>";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(iface_cfgs_str, xmlStrlen(iface_cfgs_str));
+    d = get_doc_from_blob(iface_cfgs_str, strlen(iface_cfgs_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     load_iface_configs(0, root, &cfg);
@@ -310,7 +310,7 @@ START_TEST(test_load_invalid_iface_configs)
         "<interface type=\"unix\" path=\"/foo/bar/baz\" skip-negotiation=\"True\"/>"
         "</interfaces>";
     am_config cfg = {0};
-    xmlDoc *d = get_doc_from_blob(iface_cfgs_str, xmlStrlen(iface_cfgs_str));
+    xmlDoc *d = get_doc_from_blob(iface_cfgs_str, strlen(iface_cfgs_str) + 1);
     ck_assert(d != NULL);
     xmlNode *root = xmlDocGetRootElement(d);
     load_iface_configs(0, root, &cfg);
@@ -361,7 +361,7 @@ START_TEST(test_load_credentials_config)
         "<akpubkey>/whereelse/pubkey</akpubkey>"
         "</credentials>";
     am_config cfg = {0};
-    xmlDoc *d = get_doc_from_blob(creds_cfg_str, xmlStrlen(creds_cfg_str));
+    xmlDoc *d = get_doc_from_blob(creds_cfg_str, strlen(creds_cfg_str) + 1);
     ck_assert(d != NULL);
     xmlNode *root = xmlDocGetRootElement(d);
     load_credentials_config(0, root, &cfg);
@@ -379,7 +379,7 @@ START_TEST(test_load_credentials_config)
     // No credentials
     creds_cfg_str = "<credentials/>";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(creds_cfg_str, xmlStrlen(creds_cfg_str));
+    d = get_doc_from_blob(creds_cfg_str, strlen(creds_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     load_credentials_config(0, root, &cfg);
@@ -409,7 +409,7 @@ START_TEST(test_load_invalid_credentials_config)
         "<akpubkey>/whereelse/pubkey</akpubkey>"
         "</credentials>";
     am_config cfg = {0};
-    xmlDoc *d = get_doc_from_blob(creds_cfg_str, xmlStrlen(creds_cfg_str));
+    xmlDoc *d = get_doc_from_blob(creds_cfg_str, strlen(creds_cfg_str) + 1);
     ck_assert(d != NULL);
     xmlNode *root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_credentials_config(0, root, &cfg), -1);
@@ -433,7 +433,7 @@ START_TEST(test_load_invalid_credentials_config)
         "<akpubkey>/whereelse/pubkey</akpubkey>"
         "</credentials>";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(creds_cfg_str, xmlStrlen(creds_cfg_str));
+    d = get_doc_from_blob(creds_cfg_str, strlen(creds_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_credentials_config(0, root, &cfg), -1);
@@ -456,7 +456,7 @@ START_TEST(test_load_invalid_credentials_config)
         "<akpubkey>/whereelse/pubkey</akpubkey>"
         "</credentials>";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(creds_cfg_str, xmlStrlen(creds_cfg_str));
+    d = get_doc_from_blob(creds_cfg_str, strlen(creds_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_credentials_config(0, root, &cfg), -1);
@@ -479,7 +479,7 @@ START_TEST(test_load_invalid_credentials_config)
         "<akpubkey>/whereelse/pubkey</akpubkey>"
         "</credentials>";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(creds_cfg_str, xmlStrlen(creds_cfg_str));
+    d = get_doc_from_blob(creds_cfg_str, strlen(creds_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_credentials_config(0, root, &cfg), -1);
@@ -502,7 +502,7 @@ START_TEST(test_load_invalid_credentials_config)
         "<akpubkey>/whereelse/pubkey</akpubkey>"
         "</credentials>";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(creds_cfg_str, xmlStrlen(creds_cfg_str));
+    d = get_doc_from_blob(creds_cfg_str, strlen(creds_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_credentials_config(0, root, &cfg), -1);
@@ -524,7 +524,7 @@ START_TEST(test_load_invalid_credentials_config)
         "<private-key password=\"potato\" >thisHadBetterNotShowUp</private-key>"
         "</credentials>";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(creds_cfg_str, xmlStrlen(creds_cfg_str));
+    d = get_doc_from_blob(creds_cfg_str, strlen(creds_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_credentials_config(0, root, &cfg), -1);
@@ -542,7 +542,7 @@ START_TEST(test_load_invalid_credentials_config)
         "<certificate>thisHadBetterNotShowUp</certificate>"
         "</credentials>";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(creds_cfg_str, xmlStrlen(creds_cfg_str));
+    d = get_doc_from_blob(creds_cfg_str, strlen(creds_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_credentials_config(0, root, &cfg), -1);
@@ -560,7 +560,7 @@ START_TEST(test_load_metadata_config)
 {
     char *meta_cfg_str = "<metadata type=\"asps\" dir=\"aspsDir\" />";
     am_config cfg = {0};
-    xmlDoc *d = get_doc_from_blob(meta_cfg_str, xmlStrlen(meta_cfg_str));
+    xmlDoc *d = get_doc_from_blob(meta_cfg_str, strlen(meta_cfg_str) + 1);
     ck_assert(d != NULL);
     xmlNode *root = xmlDocGetRootElement(d);
     load_metadata_config(0, root, &cfg);
@@ -572,7 +572,7 @@ START_TEST(test_load_metadata_config)
 
     meta_cfg_str = "<metadata type=\"apbs\" dir=\"apbsDir\" />";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(meta_cfg_str, xmlStrlen(meta_cfg_str));
+    d = get_doc_from_blob(meta_cfg_str, strlen(meta_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     load_metadata_config(0, root, &cfg);
@@ -585,7 +585,7 @@ START_TEST(test_load_metadata_config)
     meta_cfg_str = "<metadata type=\"measurement-specifications\" "
                    "dir=\"measurement-specificationsDir\" />";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(meta_cfg_str, xmlStrlen(meta_cfg_str));
+    d = get_doc_from_blob(meta_cfg_str, strlen(meta_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     load_metadata_config(0, root, &cfg);
@@ -601,7 +601,7 @@ START_TEST(test_load_invalid_metadata_config)
 {
     char *meta_cfg_str = "<metadata/>";
     am_config cfg = {0};
-    xmlDoc *d = get_doc_from_blob(meta_cfg_str, xmlStrlen(meta_cfg_str));
+    xmlDoc *d = get_doc_from_blob(meta_cfg_str, strlen(meta_cfg_str) + 1);
     ck_assert(d != NULL);
     xmlNode *root = xmlDocGetRootElement(d);
     load_metadata_config(0, root, &cfg);
@@ -612,7 +612,7 @@ START_TEST(test_load_invalid_metadata_config)
 
     meta_cfg_str = "<metadata type=\"unknown\" />";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(meta_cfg_str, xmlStrlen(meta_cfg_str));
+    d = get_doc_from_blob(meta_cfg_str, strlen(meta_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     load_metadata_config(0, root, &cfg);
@@ -629,7 +629,7 @@ START_TEST(test_load_selector_config)
                              "<path>xmlContent</path>\n"
                              "</selector>";
     am_config cfg = {0};
-    xmlDoc *d = get_doc_from_blob(selector_cfg_str, xmlStrlen(selector_cfg_str));
+    xmlDoc *d = get_doc_from_blob(selector_cfg_str, strlen(selector_cfg_str) + 1);
     ck_assert(d != NULL);
     xmlNode *root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_selector_config(0, root, &cfg), 0);
@@ -643,7 +643,7 @@ START_TEST(test_load_selector_config)
     selector_cfg_str = "<selector source=\"file\"><path>xmlContent</path>"
                        "</selector>";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(selector_cfg_str, xmlStrlen(selector_cfg_str));
+    d = get_doc_from_blob(selector_cfg_str, strlen(selector_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_selector_config(0, root, &cfg), 0);
@@ -657,7 +657,7 @@ START_TEST(test_load_selector_config)
                        "<path>mongoContent</path>\n"
                        "</selector>";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(selector_cfg_str, xmlStrlen(selector_cfg_str));
+    d = get_doc_from_blob(selector_cfg_str, strlen(selector_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_selector_config(0, root, &cfg), 0);
@@ -673,7 +673,7 @@ START_TEST(test_load_selector_config)
                        "</selector>";
     bzero(&cfg, sizeof(cfg));
     cfg.selector_source.loc = "pre-existingLoc";
-    d = get_doc_from_blob(selector_cfg_str, xmlStrlen(selector_cfg_str));
+    d = get_doc_from_blob(selector_cfg_str, strlen(selector_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_selector_config(0, root, &cfg), 0);
@@ -687,7 +687,7 @@ START_TEST(test_load_invalid_selector_config)
 {
     char *selector_cfg_str = "<selector/>";
     am_config cfg = {0};
-    xmlDoc *d = get_doc_from_blob(selector_cfg_str, xmlStrlen(selector_cfg_str));
+    xmlDoc *d = get_doc_from_blob(selector_cfg_str, strlen(selector_cfg_str) + 1);
     ck_assert(d != NULL);
     xmlNode *root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_selector_config(0, root, &cfg), -1);
@@ -698,7 +698,7 @@ START_TEST(test_load_invalid_selector_config)
     // No path child node
     selector_cfg_str = "<selector source=\"mongo\">mongoContent</selector>";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(selector_cfg_str, xmlStrlen(selector_cfg_str));
+    d = get_doc_from_blob(selector_cfg_str, strlen(selector_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_selector_config(0, root, &cfg), -1);
@@ -709,7 +709,7 @@ START_TEST(test_load_invalid_selector_config)
     // Missing content
     selector_cfg_str = "<selector source=\"mongo\" />";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(selector_cfg_str, xmlStrlen(selector_cfg_str));
+    d = get_doc_from_blob(selector_cfg_str, strlen(selector_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_selector_config(0, root, &cfg), -1);
@@ -722,7 +722,7 @@ START_TEST(test_load_invalid_selector_config)
                        "<path>unknownContent</path>\n"
                        "</selector>";
     bzero(&cfg, sizeof(cfg));
-    d = get_doc_from_blob(selector_cfg_str, xmlStrlen(selector_cfg_str));
+    d = get_doc_from_blob(selector_cfg_str, strlen(selector_cfg_str) + 1);
     ck_assert(d != NULL);
     root = xmlDocGetRootElement(d);
     ck_assert_int_eq(load_selector_config(0, root, &cfg), -1);
@@ -780,7 +780,7 @@ START_TEST(test_attestmgr_load_full_config)
     pid_t pid = fork();
     ck_assert(pid >= 0);
     if (pid == 0) {
-        ck_assert_int_eq(write(fd, cfg_str, sizeof(cfg_str)), sizeof(cfg_str));
+        ck_assert_int_eq(write(fd, cfg_str, strlen(cfg_str)), strlen(cfg_str));
         ck_assert_int_eq(close(fd), 0);
         am_config cfg = {0};
         ck_assert_int_eq(attestmgr_load_config(cfg_path, &cfg), 0);
@@ -884,7 +884,7 @@ START_TEST(test_attestmgr_load_empty_config)
     pid_t pid = fork();
     ck_assert(pid >= 0);
     if (pid == 0) {
-        ck_assert_int_eq(write(fd, cfg_str, sizeof(cfg_str)), sizeof(cfg_str));
+        ck_assert_int_eq(write(fd, cfg_str, strlen(cfg_str)), strlen(cfg_str));
         ck_assert_int_eq(close(fd), 0);
         am_config cfg = {0};
         ck_assert_int_eq(attestmgr_load_config(cfg_path, &cfg), 0);

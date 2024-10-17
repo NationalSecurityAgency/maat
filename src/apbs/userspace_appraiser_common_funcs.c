@@ -74,16 +74,17 @@
 #define MAX_ENC_KEY_SZ 512
 
 /**
- * This function parses the measurement contract to identify whether the measurement
- * included has been transformed. The contract buffer is provided in the cont_buf
- * parameter and the size of the contract buffer is provided in the cont_size
- * parameter. The function returns one of the following values:
+ * @brief Examine a measurement contract to determine if it has been subject to certain
+ *        transformations
  *
- * -1: if an error occurs in parsing the XML buffer
- * CONTR_MEAS_NO_MOD: if the measurement is not encrypted nor compressed
- * CONTR_MEAS_COMPR_ONLY: if the measurement is compressed but not encrypted
- * CONTR_MEAS_ENCR_ONLY: if the measurement is encrypted but not compressed
- * CONTR_MEAS_ENCR_COMPR: if the measurement is encrypted and compressed
+ * @param cont_buf A buffer containing a measurement contract
+ * @param cont_size The size of cont_buf
+ *
+ * @return int -1: if an error occurs in parsing the XML buffer
+ *             CONTR_MEAS_NO_MOD: if the measurement is not encrypted nor compressed
+ *             CONTR_MEAS_COMPR_ONLY: if the measurement is compressed but not encrypted
+ *             CONTR_MEAS_ENCR_ONLY: if the measurement is encrypted but not compressed
+ *             CONTR_MEAS_ENCR_COMPR: if the measurement is encrypted and compressed
  */
 static int parse_contract_transformations(void *cont_buf, size_t cont_size)
 {
@@ -97,12 +98,7 @@ static int parse_contract_transformations(void *cont_buf, size_t cont_size)
     xmlXPathObject *obj  = NULL;
     xmlNode *tmp         = NULL;
 
-    if (SIZE_MAX > INT_MAX && cont_size > INT_MAX) {
-        dlog(0, "Given contract size greater than XML library can represent\n");
-        goto xml_err;
-    }
-
-    doc = xmlReadMemory(cont_buf, (int)cont_size, NULL, NULL, 0);
+    doc = get_doc_from_blob((char *)cont_buf, cont_size);
     if (doc == NULL) {
         dlog(0, "Failed to parse contract XML.\n");
         goto xml_err;
@@ -188,10 +184,10 @@ static int verify_contract(GList *apb_asps, struct scenario *scen)
         goto verify_tpm_conv_err;
     }
 
-    verify_args[0] = scen->workdir;
-    verify_args[1] = scen->nonce;
-    verify_args[2] = scen->cacert;
-    verify_args[3] = scen->akpubkey;
+    verify_args[0] = (scen->workdir == NULL) ? "" : scen->workdir;
+    verify_args[1] = (scen->nonce == NULL) ? "" : scen->nonce;
+    verify_args[2] = (scen->cacert == NULL) ? "" : scen->cacert;
+    verify_args[3] = (scen->akpubkey == NULL) ? "" : scen->akpubkey;
     verify_args[4] = verify_tpm_str;
 
     /* Cast is justified because function does not regard signedness of the buffer */
@@ -219,11 +215,12 @@ find_asp_err:
 }
 
 /**
- * This function will extract the encryption key from
- * a measurement contract. The resultant key is placed into
- * the key parameter and the Inititalization Vector is placed
- * into the iv buffer.
- * Returns 0 on success and -1 otherwise.
+ * @brief Extract the encryption key from the measurement contract
+ *
+ * @param scen A pointer to a struct containing metadata about an attestation scenario
+ * @param key A pointer to a string where the key, if found, will be placed
+ *
+ * @return int 0 on success or -1 otherwise.
  */
 static int extract_key(struct scenario *scen, char **key)
 {
@@ -234,14 +231,8 @@ static int extract_key(struct scenario *scen, char **key)
     xmlXPathObject *obj  = NULL;
     xmlNode *tmp         = NULL;
 
-    if (SIZE_MAX > INT_MAX && scen->size > INT_MAX) {
-        dlog(0, "Contract size greater than XML library can represent\n");
-        goto xml_err;
-    }
-
     //Previous bounds check ensures this cast is safe
-    doc = xmlReadMemory(scen->contract, (int)scen->size, NULL, NULL,
-                        0);
+    doc = get_doc_from_blob(scen->contract, scen->size);
     if (doc == NULL) {
         dlog(0, "Failed to parse contract XML.\n");
         goto xml_err;
@@ -284,10 +275,13 @@ xml_err:
 }
 
 /**
- * This function will extract the contents of the measurement from
- * a measurement contract. The resultant measurement is placed into
- * the msmt parameter and its size is placed into the msmtsize buffer.
- * Returns 0 on success and -1 otherwise.
+ * @brief Extract a measurement from a measurement contract
+ *
+ * @param scen A pointer to a struct containing metadata regarding the attestation scenario
+ * @param msmt A pointer to a buffer which will hold the extracted measurement
+ * @param msmtsize A pointer to a numeric value which will hold the size of the measurement
+ *
+ * @return int Returns 0 on success or -1 otherwise
  */
 static int extract_measurement(struct scenario *scen, void **msmt,
                                size_t *msmtsize)
@@ -303,16 +297,7 @@ static int extract_measurement(struct scenario *scen, void **msmt,
         goto arg_err;
     }
 
-    if (SIZE_MAX > INT_MAX && scen->size > INT_MAX) {
-        dlog(0, "Size given in scenario structure for measurement contract size %zu cannot be represented to XML API\n",
-             scen->size);
-        goto xml_err;
-    }
-
-    // Cast is justified because of the prior bounds check
-    // TODO: we may want to change the secnario struct to use an int size
-    // in order to be compatible with libxml2
-    doc = xmlReadMemory(scen->contract, (int)scen->size, NULL, NULL, 0);
+    doc = get_doc_from_blob(scen->contract, scen->size);
     if (doc == NULL) {
         dlog(1, "Failed to parse contract XML.\n");
         goto xml_err;
@@ -472,13 +457,12 @@ arg_err:
 int adjust_measurement_contract_to_access_contract(struct scenario *scen)
 {
     int ret;
-    int respsize          = -1;
     char *fingerprint_buf = NULL;
     xmlDoc *doc           = NULL;
     xmlNode *root         = NULL;
     char tmpstr[200]      = {0};
 
-    doc = xmlReadMemory(scen->contract, (int)scen->size, NULL, NULL, 0);
+    doc = get_doc_from_blob(scen->contract, scen->size);
     if (doc == NULL) {
         dlog(0, "Failed to parse contract XML.\n");
         goto xml_err;
@@ -502,11 +486,17 @@ int adjust_measurement_contract_to_access_contract(struct scenario *scen)
 
     /* sign contract with that cert */
     fingerprint_buf = get_fingerprint(scen->certfile, NULL);
-    ret = sign_xml(doc, root, fingerprint_buf, scen->keyfile, scen->keypass,
-                   scen->nonce, scen->tpmpass, scen->akctx, scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
+    ret = sign_xml(root,
+                   fingerprint_buf,
+                   scen->keyfile,
+                   scen->keypass,
+                   scen->nonce,
+                   scen->tpmpass,
+                   scen->akctx,
+                   scen->sign_tpm ? SIGNATURE_TPM : SIGNATURE_OPENSSL);
     free(fingerprint_buf);
     fingerprint_buf = NULL;
-    if(ret != 0) {
+    if(ret != MAAT_SIGNVFY_SUCCESS) {
         dlog(0, "Failed to sign access contract\n");
         goto sig_err;
     }
@@ -514,13 +504,12 @@ int adjust_measurement_contract_to_access_contract(struct scenario *scen)
     snprintf(tmpstr, 200, "%s/access_contract.xml", scen->workdir);
     save_document(doc, tmpstr);
 
-    xmlDocDumpMemory(doc, (xmlChar **)&scen->response, &respsize);
-    if(respsize < 0) {
+    scen->response = serialize_doc(doc, &scen->respsize);
+    if(scen->response == NULL) {
         dlog(0, "Error: bad size returned while serializing response document\n");
         goto dump_err;
     }
 
-    scen->respsize = (size_t)respsize;
     xmlFreeDoc(doc);
 
     return 0;
@@ -609,10 +598,11 @@ chan_err:
     return -1;
 }
 
-struct asp *select_appraisal_asp(node_id_t node UNUSED,
+struct asp *select_appraisal_asp(measurement_graph *graph, node_id_t node,
                                  magic_t measurement_type,
                                  GList *apb_asps)
 {
+    target_type *type = measurement_node_get_target_type(graph, node);
     if (measurement_type == SYSTEM_TYPE_MAGIC) {
         return find_asp(apb_asps, "system_appraise");
     }
@@ -621,10 +611,18 @@ struct asp *select_appraisal_asp(node_id_t node UNUSED,
         return find_asp(apb_asps, "blacklist");
     }
     if (measurement_type == MD5HASH_MAGIC) {
-        return find_asp(apb_asps, "dpkg_check");
+        if (type->magic == FILE_TARGET_MAGIC) {
+            return find_asp(apb_asps, "md5_hashcheck_asp");
+        } else {
+            return find_asp(apb_asps, "dpkg_check");
+        }
+
     }
     if (measurement_type == BLOB_MEASUREMENT_TYPE_MAGIC) {
         return find_asp(apb_asps, "got_appraise");
+    }
+    if (measurement_type == SHA256_TYPE_MAGIC) {
+        return find_asp(apb_asps, "memorymapping_appraise");
     }
     if (measurement_type == LIBELF_TYPE_MAGIC) {
         return find_asp(apb_asps, "elf_appraise");
@@ -1025,11 +1023,9 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
     node_id_str node_str;
     measurement_iterator *data_it;
     struct address *addr;
-
     int appraisal_stat = 0;
 
     str_of_node_id(node, node_str);
-
     addr = measurement_node_get_address(mg, node);
 
     // For every piece of data on the node
@@ -1067,7 +1063,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
             // Everything else goes to some ASP for appraisal
         } else {
             struct asp *appraiser_asp = NULL;
-            appraiser_asp = select_appraisal_asp(node, data_type, apb_asps);
+            appraiser_asp = select_appraisal_asp(mg, node, data_type, apb_asps);
             if(!appraiser_asp) {
                 dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", meas_type->name);
                 ret = 0;
@@ -1075,7 +1071,6 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
             } else {
                 dlog(4, "appraiser_asp == %p (%p %d)\n", appraiser_asp, apb_asps,
                      g_list_length(apb_asps));
-
                 char *asp_argv[] = {graph_path,
                                     node_str,
                                     type_str
@@ -1169,7 +1164,6 @@ int userspace_appraise(struct scenario *scen, GList *values UNUSED,
             it = node_iterator_next(it)) {
 
         node_id_t node = node_iterator_get(it);
-
         appraisal_stat += appraise_node(mg, graph_path, node, scen, apb_asps,
                                         all_apbs);
 

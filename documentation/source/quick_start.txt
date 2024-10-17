@@ -42,7 +42,8 @@ Supported Operating System Distributions and Releases
 =====================================================
 
 Maat is tested and supported for Red Hat Enterprise Linux 7 and 8; Ubuntu
-20.04 (focal), 22.04 (jammy), and Ubuntu 23.10 (minotaur); and Debian 11.
+20.04 (focal), 22.04 (jammy), and Ubuntu 23.10 (minotaur); Debian 11; and
+Photon OS 5.0.
 Other distributions/releases (such as equivalent CentOS or earlier Ubuntu
 versions) may also work but are not officially supported.
 
@@ -75,45 +76,60 @@ For RHEL Machines:
         elfutils-devel json-c-devel selinux-policy-devel \
         libselinux-devel tpm2-tss tpm2-tss-devel tpm2-tools
 
+For Photon OS Machines:
+
+.. code-block:: bash
+
+   sudo yum install autoconf automake libtool check-devel    \
+                    glib-devel gcc glibc-devel binutils make    \
+                    elfutils-devel json-c-devel selinux-policy-devel \
+                    libselinux-devel libxml2-devel tpm2-tss \
+                    tpm2-tss-devel tpm2-tools openssl-devel libcap-devel
 
 
-+----------------------------+----------------------------+
-|  Ubuntu                    | RHEL                       |
-+============================+============================+
-| autoconf                   | autoconf                   |
-+----------------------------+----------------------------+
-| automake                   | automake                   |
-+----------------------------+----------------------------+
-| libtool                    | libtool                    |
-+----------------------------+----------------------------+
-| check                      | check-devel                |
-+----------------------------+----------------------------+
-| libglib2.0-dev             | glib2-devel                |
-+----------------------------+----------------------------+
-| libxml2-dev                | libxml2-devel              |
-+----------------------------+----------------------------+
-| libssl-dev                 | openssl-devel              |
-+----------------------------+----------------------------+
-| uuid-dev                   | libuuid-devel              |
-+----------------------------+----------------------------+
-| libcap-dev                 | libcap-devel               |
-+----------------------------+----------------------------+
-| make                       | make                       |
-+----------------------------+----------------------------+
-| libelf-dev                 | elfutils-devel             |
-+----------------------------+----------------------------+
-| libjson-c-dev              | json-c-devel               |
-+----------------------------+----------------------------+
-| build-essential            | selinux-policy-devel       |
-+----------------------------+----------------------------+
-|                            | libselinux-devel           |
-+----------------------------+----------------------------+
-| libtss2-dev                | tpm2-tss-devel             |
-+----------------------------+----------------------------+
-|                            | tpm2-tss                   |
-+----------------------------+----------------------------+
-| tpm2-tools                 | tpm2-tools                 |
-+----------------------------+----------------------------+
+
++----------------------------+----------------------------+----------------------------+
+|  Ubuntu                    | RHEL                       | Photon OS                  |
++============================+============================+============================+
+| autoconf                   | autoconf                   | autoconf                   |
++----------------------------+----------------------------+----------------------------+
+| automake                   | automake                   | automake                   |
++----------------------------+----------------------------+----------------------------+
+| libtool                    | libtool                    | libtool                    |
++----------------------------+----------------------------+----------------------------+
+| check                      | check-devel                | check-devel                |
++----------------------------+----------------------------+----------------------------+
+| libglib2.0-dev             | glib2-devel                | glibc-devel                |
++----------------------------+----------------------------+----------------------------+
+| libxml2-dev                | libxml2-devel              | libxml2-devel              |
++----------------------------+----------------------------+----------------------------+
+| libssl-dev                 | openssl-devel              | openssl-devel              |
++----------------------------+----------------------------+----------------------------+
+| uuid-dev                   | libuuid-devel              |                            |
++----------------------------+----------------------------+----------------------------+
+| libcap-dev                 | libcap-devel               | libcap-devel               |
++----------------------------+----------------------------+----------------------------+
+| make                       | make                       | make                       |
++----------------------------+----------------------------+----------------------------+
+| libelf-dev                 | elfutils-devel             | elfutils-devel             |
++----------------------------+----------------------------+----------------------------+
+| libjson-c-dev              | json-c-devel               | json-c-devel               |
++----------------------------+----------------------------+----------------------------+
+| build-essential            | selinux-policy-devel       | selinux-policy-devel       |
++----------------------------+----------------------------+----------------------------+
+|                            | libselinux-devel           | libselinux-devel           |
++----------------------------+----------------------------+----------------------------+
+| libtss2-dev                | tpm2-tss-devel             | tpm2-tss-devel             |
++----------------------------+----------------------------+----------------------------+
+|                            | tpm2-tss                   | tpm2-tss                   |
++----------------------------+----------------------------+----------------------------+
+| tpm2-tools                 | tpm2-tools                 | tpm2-tools                 |
++----------------------------+----------------------------+----------------------------+
+|                            |                            | binutils                   |
++----------------------------+----------------------------+----------------------------+
+|                            |                            | gcc                        |
++----------------------------+----------------------------+----------------------------+
+
 
 
 To support building the docs (the `make docs` target), you should also install
@@ -182,6 +198,10 @@ directory. You can choose a different install prefix if you wish via the
 `--disable-selinux-libdir-mapping` is necessary to tell SELinux to use our 
 user-defined install directory when generating SELinux file contexts of ASPs and 
 APBs (as opposed to the default `/usr/lib/`).
+
+For Photon OS machines, `--enable-photon` is necessary to select the appropriate
+SELinux type enforcement file. The default type enforcement file will yield a
+Maat SELinux policy that cannot be installed on Photon OS machines.
 
 Clone the Maat repo, then run
 

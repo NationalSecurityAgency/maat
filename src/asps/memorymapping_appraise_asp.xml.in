@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<asp>
+	<name>memorymapping_appraise</name>
+	<uuid>2adada1c-128c-4f4d-ad8b-109e8447a68d</uuid>
+	<type>Process</type>
+	<description> Appraise memory mapping to detect text segment modifications (TSM)</description>
+	<aspfile hash="XXXXXX">${ASP_INSTALL_DIR}/memorymapping_appraise_asp</aspfile>
+	<measurers>
+	</measurers>
+	<security_context>
+	  <selinux><type>memorymapping_appraise_asp_t</type></selinux>
+	  <user>${MAAT_USER}</user>
+	  <group>${MAAT_GROUP}</group>
+	</security_context>
+	<inputdescription>
+		This ASP expects a measurement graph path and a node identifier as arguments on the command line. 
+		The node identified must have measurement type of sha256_measurement_type, which represents the hash of
+		a range of memory from a running process.
+	</inputdescription>
+	<outputdescription>
+		This ASP check the validity of process nodes and file region nodes created by the memorymapping ASP.
+		The ASP gets sha256 data of the process nodes and file region nodes then compares. Appraisal fails 
+		if these hashes are not identical. 
+		
+		The ASP also verifies the permission of .text section by checking inbound edge labels of the process 
+		nodes. Appraisal fails if the node has both writable and executable permissions.
+		Otherwise, appraise as passed.
+
+		This ASP returns ASP_APB_SUCCESS if appraisal succeeds. Otherwise, the ASP will return an integer 
+		value not equal to ASP_APB_SUCCESS.
+
+		This ASP produces no output on stdout.
+	</outputdescription>
+	<seealso>
+		http://manpages.ubuntu.com/manpages/precise/man5/proc.5.html
+		http://manpages.ubuntu.com/manpages/precise/man1/ps.1.htm
+	</seealso>
+	<usage>/opt/maat/bin/test_client -l localhost -a 2342 -t localhost -p 2343 -r userspace</usage>
+	<example>
+		Running memorymapping_appraise_asp from userspace measurements
+
+		Terminal 1 (Appraiser run with LIBMAAT_LOG_SYSLOG=0)
+		> sudo LIBMAAT_LOG_SYSLOG=0 /opt/maat/bin/attestmgr -i 127.0.0.1:2342 -u /tmp/app.sock -C /opt/maat/etc/maat/minimal-am-config.xml
+		
+		Terminal 2 (Attester run with LIBMAAT_LOG_SYSLOG=0)
+		> sudo /opt/maat/bin/attestmgr -i 127.0.0.1:2343 -u /tmp/att.sock -C /opt/maat/etc/maat/minimal-am-config.xml
+		
+		Terminal 3 (Requests userspace measurement)
+		> /opt/maat/bin/test_client -l localhost -a 2342 -t localhost -p 2343 -r userspace
+		
+		Terminal 1 (Appraiser is appraising the measurement graph using memorymapping_appraise_asp)
+		...
+		(110098) [     asp_measure:66]	: In Memory Mapping ASP Appraise.
+		(110098) [     asp_measure:132]	: Edge label outbound: mappings.files. dst 9031
+		(110098) [     asp_measure:132]	: Edge label outbound: mappings.file_regions_mapped. dst 3898
+		(110098) [     asp_measure:169]	: 
+		File region node Sha256: 
+		70d9d2ded021f76b8fced9832955a5c95484558a9b40609ee0f152fdf6a51a7f
+		Memory segment node sha256: 
+		70d9d2ded021f76b8fced9832955a5c95484558a9b40609ee0f152fdf6a51a7f
+		(110098) [     asp_measure:192]	: Edge label inbound: mappings.private_segments eid 41271
+		(110098) [     asp_measure:192]	: Edge label inbound: mappings.executable_segments eid 50106
+		(110098) [     asp_measure:192]	: Edge label inbound: mappings.segments eid 2604
+		(110098) [     asp_measure:192]	: Edge label inbound: mappings.readable_segments eid 60342
+		(110099) [     asp_measure:66]	: In Memory Mapping ASP Appraise.
+		(99330) [xpath_delete_nod:477]	: Deleting node: signature
+	</example>
+</asp>

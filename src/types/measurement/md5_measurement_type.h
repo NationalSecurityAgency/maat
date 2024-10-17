@@ -34,7 +34,7 @@
 /**
  * MD5 hash data measurement_type universally unique name
  */
-#define MD5HASH_NAME "md5hashtype"
+#define MD5HASH_NAME "md5hash_measurement_type"
 #define MD5HASH_LEN   (16)
 
 /**

@@ -58,11 +58,21 @@ static const gchar introspection_xml[] =
 
 /* ------------------------------------------------------------------------ */
 
+/**
+ * @brief Get appraisal results from a serialized XML document
+ *
+ * @param result A buffer which contains an XML document
+ * @param size The size of the result buffer
+ *
+ * @return char * A string containing the result section of the XML document,
+ *         NULL if a result is not found, or the static string "FAIL xml read"
+ *         if the serialized XML document could not be parsed
+ */
 static char *parse_results(char *result, size_t size)
 {
     /* The operations to be performed on this buffer do not regard the signedness
      * of the content */
-    xmlDoc *doc = get_doc_from_blob((unsigned char *)result, size);
+    xmlDoc *doc = get_doc_from_blob(result, size);
     if (doc == NULL)
         return "FAIL xml read";
 

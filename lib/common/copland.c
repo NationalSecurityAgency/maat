@@ -1236,20 +1236,8 @@ int parse_place_entry(xmlDocPtr doc, xmlNode *place_entry, place_perms **place)
                 dlog(2, "Unable to strip whitespace from info permission in Copland section\n");
                 continue;
             }
-
-            /* Determine what info permission we're given over this place */
-            if(strcmp(info, "host") == 0) {
-                tmp->perms |= COPLAND_PLACE_ADDR_PERM;
-            } else if(strcmp(info, "port") == 0) {
-                tmp->perms |= COPLAND_PLACE_PORT_PERM;
-            } else if(strcmp(info, "kernel") == 0) {
-                tmp->perms |= COPLAND_PLACE_KERN_PERM;
-            } else if(strcmp(info, "domain") == 0) {
-                tmp->perms |= COPLAND_PLACE_DOM_PERM;
-            } else {
-                dlog(1, "Warning: encountered unexpected info type %s in info block\n", info);
-            }
-
+            /* GList add info*/
+            tmp->perms = g_list_append(tmp->perms, strdup(info));
             free(info);
         } else {
             dlog(1, "Warning: encountered unexpected element %s in info block\n", name);
@@ -1710,58 +1698,6 @@ struct apb *find_apb_copl_phrase_by_template(GList *apbs, copland_phrase *copl, 
     return NULL;
 }
 
-#define MAX_STR_LEN_UINT32 10
-
-int place_perm_to_str(place_perm_t perm, char **str)
-{
-    int ret;
-    char *tmp;
-
-    if (str == NULL) {
-        return -1;
-    }
-
-    tmp = calloc(MAX_STR_LEN_UINT32 + 1, 1);
-    if (tmp == NULL) {
-        return -1;
-    }
-
-    ret = snprintf(tmp, MAX_STR_LEN_UINT32 + 1,
-                   "%"PRIu32"", perm);
-    if (ret < 0) {
-        dlog(1,
-             "Unable to convert place perm %"PRIu32" to str\n", perm);
-        free(tmp);
-        return -1;
-    }
-
-    *str = tmp;
-    return ret;
-}
-
-int str_to_place_perm(const char *str, place_perm_t *perm)
-{
-    int res;
-    uint32_t tmp;
-
-    if (str == NULL || perm == NULL) {
-        return -1;
-    }
-
-    errno = 0;
-    res = sscanf(str, "%"SCNu32"", &tmp);
-    if (res < 0 || errno) {
-        dlog(1, "Unable to convert %s to place perm: error %s\n",
-             str, strerror(errno));
-        return -1;
-    }
-
-    /* The place perms are just a typedef to uint32_t */
-    *perm = (place_perm_t) tmp;
-
-    return 0;
-}
-
 /**
  * This function checks to see if the Copland phrase has arguments pertaining to
  * Copland places. This could be used to check if calls to query_place_information
@@ -1787,237 +1723,230 @@ int has_place_args(const copland_phrase *phrase)
     return 0;
 }
 
-
-/**
- * This function parses the CSV line for a column and then appends that information
- * into the out buffer. How it is used in query_place_info_csv is to iterative
- * extend the CSV line which is going to be written out
+/*
+ * @brief Get the ID of a place given the XML node representing the place.
  *
- * Returns the new size of out if a value was added to the out line,
- * or 0 if an error occured
+ * @param place_node XML node containing the information about a place
+ * @param id a return paramater that holds the string representing the id of the place,
+ *        if found. MUST BE FREED BY THE CALLER
+ *
+ * @return int 0 if the id is found, < 0 otherwise
  */
-#define NULL_CONT "0"
-static size_t handle_csv_perm_db_line(const char *read_line, size_t len,
-                                      place_perm_t perms, int col_indx,
-                                      char **out)
+static int get_place_id(xmlNode *place_node, char **id)
 {
-    int ret;
-    size_t ele_len;
-    char *tmp;
-    char *ele;
+    char *tmp_id = NULL;
+    xmlNode *tmp_node;
 
-    if (read_line == NULL || out == NULL) {
-        dlog(1, "Given null return parameter\n");
-        return 0;
+    if(place_node == NULL || id == NULL) {
+        dlog(1, "get_place_id given invalid NULL parameter\n");
+        return -1;
     }
 
-    if (col_indx < DB_INDX_TO_COL_ADJ) {
-        dlog(1, "Index %d less than the adjustment val %d\n",
-             col_indx, DB_INDX_TO_COL_ADJ);
-        return 0;
-    }
+    for(tmp_node = xmlFirstElementChild(place_node); tmp_node != NULL;
+            tmp_node = xmlNextElementSibling(tmp_node)) {
+        if (strcmp(tmp_node->name, PLACE_ID_FIELD) == 0) {
+            if(strlen(tmp_node->children->content) + 1 > XML_IN_MEMORY_FIELD_SIZE_LIMIT) {
+                dlog(0, "ID content too large to be accepted\n");
+                return -1;
+            }
 
-    if (perms & DB_INDX_TO_COL(col_indx)) {
-        ret = get_col_from_csv_line(read_line,
-                                    col_indx,
-                                    COPLAND_CSV_LINE_MAX_LEN - len,
-                                    &ele);
-        if (ret < 0) {
-            return 0;
-        } else if (ret > 0) {
-            dlog(1, "Unable to find ADDR information in CSV file\n");
-            return 0;
-        }
-    } else {
-        //Place null content to keep columns
-        ele = malloc(2);
+            tmp_id = calloc(strlen(tmp_node->children->content) + 1, 1);
 
-        if (ele == NULL) {
-            dlog(0, "Unable to allocate memory for string\n");
-            return 0;
-        }
+            if (tmp_id == NULL) {
+                dlog(0, "Unable to allocate memory for place ID copy\n");
+                return -1;
+            }
 
-        if(strcpy(ele, NULL_CONT) == NULL) {
-            dlog(1, "Unable to copy string\n");
-            free(ele);
+            strcpy(tmp_id, tmp_node->children->content);
+            *id = tmp_id;
+
+            dlog(4, "get_place_id found place id: %s\n", tmp_id);
             return 0;
         }
     }
 
-    ele_len = strlen(ele);
-    if (len + ele_len + 2 <= len
-        || len + ele_len + 2 >= COPLAND_CSV_LINE_MAX_LEN) {
-        dlog(1, "CSV line would be too long to write out\n");
-        free(ele);
-        return 0;
-    }
-    tmp = realloc(*out, len + ele_len + 2);
-    if (tmp == NULL) {
-        dlog(0, "Unable to allocate buffer for CSV line\n");
-        free(ele);
-        return 0;
-    }
-
-    tmp[len - 1] = ',';
-    strcpy(tmp + len, ele);
-    free(ele);
-
-    tmp[len + ele_len] = '\n';
-    tmp[len + ele_len + 1] = '\0';
-
-    len = len + ele_len + 1;
-
-    *out = tmp;
-    return len;
+    return -1;
 }
 
 /**
- * Get place information from the registration CSV file.
- * Returns 0 on success, 1 if the function succeeds but
- * no information is retrieved, 2 if the place is not found,
- * and -1 otherwise.
+ * @brief Get filtered place information from the places XML file available to the Attestation
+ *        Manager and write it out to a different file. Typically, this is used to provide an APB
+ *        with place information it has permission to access regarding a relevant place.
  *
- * Ultimately, we want multiple of these functions which
- * can be selected during compile time. For now, this is
- * the only one
+ * @param doc a reference to the parsed XML places file
+ * @param perms the pieces of place information that should be retained in the output XML file
+ * @param id the id of the place to retrieve information about
+ * @param writer a reference to the XML document to write place information to
+ *
+ * @return int 0 on success, 1 if execution succeeds but no information was retrieces, 2 if the place
+ *         was not found, or -1 otherwsie
  */
-static int query_place_info_csv(const struct apb *apb,
-                                const char *filename,
-                                place_perm_t perms,
-                                const char *id,
-                                char **out_buf)
+int query_place_info(xmlDocPtr doc,
+                     GList *perms,
+                     const char *id,
+                     xmlTextWriterPtr writer)
 {
-    int ret;
-    short parse_flag = 0;
-    char *tmp = NULL;
-    size_t len;
-    size_t tmp_len;
-    size_t perm_len;
-    char *read_line;
-    char *perm;
-
-    if (apb == NULL || id == NULL || out_buf == NULL) {
-        dlog(1, "Given null argument(s) in one parameter that must be dereferenced\n");
-        return -1;
-    }
-
-    if(len >= COPLAND_CSV_LINE_MAX_LEN) {
-        dlog(1, "Given ID is longer than the maximum allowed line length\n");
-        return -1;
-    }
+    int ret = 0;
+    int comp;
+    int has_perm;
+    char *place_id;
+    GList *tmp_perms;
+    xmlNode *root_element = NULL;
+    xmlNode *use_node     = NULL;
+    xmlNode *cur_node     = NULL;
+    xmlNode *id_node      = NULL;
+    xmlNode *this_node    = NULL;
 
     if (perms == 0) {
-        dlog(3, "No permissions to access any information on place %s\n", id);
-        return 1;
+        dlog(2, "No permissions to access any information on place %s\n", id);
+        return -1;
     }
 
-    ret = place_perm_to_str(perms, &perm);
+    root_element = xmlDocGetRootElement(doc);
+    if (root_element == NULL) {
+        dlog(1, "Unable to find xml root node in xml places file");
+        return -1;
+    }
+
+    dlog(6, "Looking for node with id within XML place: %s\n", id);
+
+    // Stop search when thr right ID is found
+    for( cur_node = xmlFirstElementChild(root_element); cur_node; cur_node = xmlNextElementSibling(cur_node)) {
+        if(cur_node->type != XML_ELEMENT_NODE) {
+            continue;
+        }
+
+        ret = get_place_id(cur_node, &place_id);
+        if (ret < 0) {
+            goto error;
+        }
+
+        comp = strcmp(place_id, id);
+        free(place_id);
+
+        // if we get a match, point use_node at the match
+        if(comp == 0) {
+            use_node = cur_node;
+            break;
+        }
+    }
+
+    if( use_node == NULL) {
+        dlog(3, "No id tag was found for the place with id: %s\n",id);
+        return 2;
+    }
+
+    // all place nodes will have a <place> tag. There is a separate ID tag inside
+    // this allows for numbers to be used as IDs
+    ret = xmlTextWriterStartElement(writer, "place");
     if (ret < 0) {
-        return -1;
+        dlog(0, "Unable to write place tag to the APB's place file\n");
+        goto error;
     }
 
-    len = strlen(id);
-    perm_len = strlen(perm);
-
-    if(len + perm_len >= COPLAND_CSV_LINE_MAX_LEN) {
-        dlog(1,
-             "ID and perms longer than allowed line length\n");
-        free(perm);
-        return -1;
+    ret = xmlTextWriterWriteString(writer,"\n");
+    if (ret < 0) {
+        dlog(0, "Unable to write new line to APB's place file\n");
+        goto error;
     }
 
-    // Initial entry will be <id>,<perms>\n\0
-    tmp = calloc(len + perm_len + 3, 1);
-    if (tmp == NULL) {
-        dlog(0,
-             "Unable to allocate buffer to hold result line\n");
-        free(perm);
-        return -1;
+    /* Check what pieces of information regarding a place are available */
+    for( cur_node = xmlFirstElementChild(use_node); cur_node;  cur_node = xmlNextElementSibling(cur_node)) {
+        // Check if the APB has permissions for this data
+        has_perm = -1;
+        for(tmp_perms = perms; tmp_perms != NULL; tmp_perms = tmp_perms->next) {
+            has_perm = strcmp(cur_node->name, PLACE_ID_FIELD);
+            if( has_perm == 0) {
+                break;
+            }
+
+            has_perm = strcmp(tmp_perms->data, cur_node->name);
+            if( has_perm == 0) {
+                break;
+            }
+        }
+
+        if ( has_perm != 0) {
+            dlog(4, "Permission for field %s missing, skipping...\n", cur_node->name);
+            continue;
+        }
+
+
+        // If cur_node has a non-null first child, treat it as a list of several pieces of information.
+        if( xmlChildElementCount(cur_node) ) {
+
+            // Start the element that holds a list
+            ret = xmlTextWriterStartElement(writer, BAD_CAST cur_node->name);
+            if (ret < 0) {
+                goto error;
+            }
+            ret = xmlTextWriterWriteString(writer,"\n");
+            if (ret < 0) {
+                goto error;
+            }
+
+            // Loop over and write children to xml
+            for(this_node = xmlFirstElementChild(cur_node); this_node;
+                    this_node = xmlNextElementSibling(this_node)) {
+                dlog(6, "Write child node %s val: %s\n", this_node->name,
+                     this_node->children->content);
+
+                ret = xmlTextWriterWriteFormatElement(writer,
+                                                      BAD_CAST this_node->name,
+                                                      "%s",
+                                                      this_node->children->content);
+                if (ret < 0) {
+                    goto error;
+                }
+                ret = xmlTextWriterWriteString(writer,"\n");
+                if (ret < 0) {
+                    goto error;
+                }
+
+            }
+            // Close element
+            ret = xmlTextWriterEndElement(writer);
+            if (ret < 0) {
+                goto error;
+            }
+            ret = xmlTextWriterWriteString(writer,"\n");
+            if (ret < 0) {
+                goto error;
+            }
+        }
+        // There were no element nodes that were children of cur_node, therefore
+        // it is a single valued entry
+        else {
+            // write the element + text
+            ret = xmlTextWriterWriteFormatElement(writer,
+                                                  BAD_CAST cur_node->name,
+                                                  "%s",
+                                                  cur_node->children->content);
+            if (ret < 0) {
+                goto error;
+            }
+            ret = xmlTextWriterWriteString(writer,"\n");
+            if (ret < 0) {
+                goto error;
+            }
+        }
     }
 
-    memcpy(tmp, id, len);
-    tmp[len] = ',';
-    memcpy(tmp + len + 1, perm, perm_len);
-    free(perm);
-    tmp[len + 1 + perm_len] = '\n';
-    /*
-     * len in this function is a bit tricky, but in general it will not count
-     * \n, mostly because len is used for reallocations and the \n is more or
-     * less just moved farther into the string as re-allocations go. Null byte
-     * isn't included, but for string length that's normal
-     */
-    len += (perm_len + 2);
-
-    ret = read_line_csv(filename, id,
-                        COPLAND_DB_PLACE_ID_INDX,
-                        COPLAND_CSV_LINE_MAX_LEN, &read_line);
-
-    if (ret == 1) {
-        dlog(1, "Unable to find place in the CSV file\n");
-        ret = 2;
-        goto err;
-    } else if (ret < 0) {
-        goto err;
+    ret = xmlTextWriterEndElement(writer);
+    if (ret < 0) {
+        goto error;
     }
-
-    tmp_len = handle_csv_perm_db_line(read_line, len, perms,
-                                      COPLAND_DB_PLACE_ADDR_INDX,
-                                      &tmp);
-    if (tmp_len == 0) {
-        ret = -1;
-        goto err;
-    } else if (tmp_len > len + strlen(NULL_CONT) + 1) {
-        parse_flag = 1;
+    ret = xmlTextWriterWriteString(writer,"\n");
+    if (ret < 0) {
+        goto error;
     }
+    return 0;
 
-    len = tmp_len;
-
-    tmp_len = handle_csv_perm_db_line(read_line, len, perms,
-                                      COPLAND_DB_PLACE_PORT_INDX,
-                                      &tmp);
-    if (tmp_len == 0) {
-        ret = -1;
-        goto err;
-    } else if (tmp_len > len + strlen(NULL_CONT) + 1) {
-        parse_flag = 1;
-    }
-
-    len = tmp_len;
-
-    tmp_len = handle_csv_perm_db_line(read_line, len, perms,
-                                      COPLAND_DB_PLACE_KERN_INDX,
-                                      &tmp);
-    if (tmp_len == 0) {
-        ret = -1;
-        goto err;
-    } else if (tmp_len > len + strlen(NULL_CONT) + 1) {
-        parse_flag = 1;
-    }
-
-    len = tmp_len;
-
-    tmp_len = handle_csv_perm_db_line(read_line, len, perms,
-                                      COPLAND_DB_PLACE_DOM_INDX,
-                                      &tmp);
-    if (tmp_len == 0) {
-        ret = -1;
-        goto err;
-    } else if (tmp_len > len + strlen(NULL_CONT) + 1) {
-        parse_flag = 1;
-    }
-
-    if (parse_flag == 0) {
-        ret = 1;
-        goto err;
-    } else {
-        *out_buf = tmp;
-        return 0;
-    }
-
-err:
-    free(tmp);
+error:
     return ret;
 }
+
+
 
 static int get_place_file_name(const struct scenario *scen, char **file_name)
 {
@@ -2029,10 +1958,8 @@ static int get_place_file_name(const struct scenario *scen, char **file_name)
         dlog(1, "Given null parameters\n");
         return -1;
     }
-
     workdir_len = strlen(scen->workdir);
     perms_file_len = strlen(COPLAND_PLACE_PERMS_FILE);
-
     tmp = calloc(workdir_len + perms_file_len + 1, 1);
     if (tmp == NULL) {
         dlog(0, "Unable to allocate memory for workdir filename\n");
@@ -2050,12 +1977,19 @@ static int get_place_file_name(const struct scenario *scen, char **file_name)
 }
 
 /**
- * When applicable, query for the place information using the compiled in backend.
+ *
+ * @brief Get all of the place information that an APB relies upon for its execution.
+ *
+ * @param apb the APB for which the place information is being retrieved
+ * @param scen information regarding the current measurement negotiation
+ * @param phrase the Copland phrase representing the measurement protocol the APL will execute
+ *
  * Only the information which we have been given permission in the configuration file
  * to acquire. If a domain is not given a Copland place information, no information will
  * be given pertaining that domain. If place information entry appears with no
- * corresponding domain argument, it will just be ignored. Returns 0 on success
- * and -1 otherwise.
+ * corresponding domain argument, it will just be ignored.
+ *
+ * @returns 0 on success and -1 otherwise.
  */
 int query_place_information(const struct apb *apb,
                             const struct scenario *scen,
@@ -2072,28 +2006,62 @@ int query_place_information(const struct apb *apb,
     place_perms *place = NULL;
     GList *place_perm_list = apb->place_permissions;
     GList *perm = NULL;
+    xmlTextWriterPtr writer;
 
+    /* If any of these arguments are null, here is where we return an error and need to stop execution*/
     if (apb == NULL || scen == NULL || phrase == NULL) {
         dlog(1, "Given NULL pointer parameter\n");
         return -1;
     }
 
+    /* If this is NULL, that the APB is not entitled to any information, so nothing more needs to be done */
     if (place_perm_list == NULL) {
         dlog(4, "No place information permissions given, bypassing the domain argument search\n");
         return 0;
     }
 
+    /* If the Attestation Manager has no places file, then no places information can be provided */
     if (scen->place_file == NULL) {
         dlog(4, "No place filename has been given, bypassing the place information query\n");
         return 0;
     }
 
+    /* We are actually attempting to do something, start allocating*/
+    xmlDoc *place_doc = xmlReadFile(scen->place_file, NULL, 0);
+    if (place_doc == NULL) {
+        dlog(1, "Place file could not be opened as xml: %s\n", scen->place_file);
+        ret = -1;
+        goto error;
+    }
+
     ret = get_place_file_name(scen, &file_name);
     if (ret < 0) {
         dlog(0, "Failed to get place file name\n");
-        return ret;
+        goto error;
     }
 
+    /* Create a new XmlWriter for uri, with no compression. */
+    dlog(6, "Attempting to create xml file at: %s\n", file_name);
+    writer = xmlNewTextWriterFilename(file_name, 0);
+    if (writer == NULL) {
+        dlog(3,"xml place writer: Error creating the xml writer\n");
+        ret = -1;
+        goto error;
+    }
+
+    ret = xmlTextWriterStartDocument(writer, NULL, XML_ENCODING, NULL);
+    if( ret != 0) {
+        dlog(6,"could not start document for xml writer");
+        goto error;
+    }
+
+    ret = xmlTextWriterStartElement(writer, "places");
+    if( ret != 0) {
+        dlog(6,"could not start root element in xml writer");
+        goto error;
+    }
+
+    /* For each place, get the relevant place information */
     for(i = 0; i < phrase->num_args; i++) {
         arg = phrase->args[i];
 
@@ -2102,197 +2070,405 @@ int query_place_information(const struct apb *apb,
             perm = place_perm_list;
 
             while (perm != NULL) {
+
                 place = (place_perms *)perm->data;
-                /**
-                         * Need to match permission constraints to
-                         * the domain we need to query for information
-                         * regarding
-                         */
+
                 if (strcmp(place->id, place_label) == 0) {
-                    ret = query_place_info_csv(apb,
-                                               scen->place_file,
-                                               place->perms,
-                                               (char *)arg->data,
-                                               &out_buf);
 
-                    if(ret != 0) {
-                        dlog(1, "Unable to get data for place %s\n", (char *)arg->data);
-                        break;
-                    } else {
-                        dlog(4, "Writing out data %s\n", out_buf);
-                        /*
-                         * The case of out_buf is justified because the signedness of
-                         * the buffer is not relevant for the operations performed
-                         * on it in this function.
-                         */
-                        written = append_buffer_to_file(file_name,
-                                                        (unsigned char *)out_buf,
-                                                        strlen(out_buf));
-                        /*
-                         * append_buffer_to_file would return an error if
-                         * the length of out_buf would overflow the maximum
-                         * value that the return value ssize_t can hold. Therefore,
-                         * the length of out_buf WILL be representable as a ssize_t
-                         */
-                        out_buf_len = (ssize_t)strlen(out_buf);
-                        if (written < 0 || written != out_buf_len) {
-                            free(out_buf);
-                            ret = -1;
-                            dlog(0, "Unable to append place information to CSV file\n");
-                            goto end;
-                        }
-
-                        free(out_buf);
+                    ret = query_place_info( place_doc,
+                                            place->perms,
+                                            (char *)arg->data,
+                                            writer );
+                    if( ret < 0) {
+                        dlog(6, "error from query_place_info\n");
+                        goto error;
                     }
                 }
-
                 perm = g_list_next(perm);
             }
         }
     }
 
-end:
+    ret = xmlTextWriterEndElement(writer);
+    if (ret < 0) {
+        dlog(3,"xml place writer: Error at xmlTextWriterEndElement\n");
+        goto error;
+    }
+    ret = xmlTextWriterEndDocument(writer);
+    if (ret < 0) {
+        dlog(3,"Error at xmlTextWriterEndDocument\n");
+        goto error;
+    }
+
+error:
+    xmlFreeDoc(place_doc);
+    xmlFreeTextWriter(writer);
     free(file_name);
     return ret;
 }
 
 /**
- * In APBs that use information pertaining to places, this function can
- * be used to retrieve that information on a per place basis.
+ * @brief Get the place information pertaining to a particular place. This
+ * function is usually used for testing. If performance is a consideration,
+ * get_place_information_xml_doc(...) to avoid multiple parsings of place files.
  *
- * Returns 0 on success and a -1 otherwise.
+ * @param scenario scenario struct that holds the path to the xml file that
+ * contains all place info
+ * @param id a string that holds the name of the place
+ * @param info where to store the pointer to the place_info struct that is
+ * created
+ * @return int returns 0 on success or <0 otherwise
  */
-int get_place_information(const struct scenario *scen,
-                          const char *id, place_info **info)
+int get_place_information(const struct scenario *scen, const char *id,
+                          place_info **info)
 {
-    int ret;
-    place_perm_t perms;
+    int ret = 0;
+    xmlDoc *doc = NULL;
     char *file_name;
-    char *str;
-    char *csv_line;
-    place_info *tmp;
-
-    if (scen == NULL || id == NULL || info == NULL ||
-            scen->workdir == NULL) {
-        dlog(1, "Given null argument\n");
-        return -1;
-    }
 
     ret = get_place_file_name(scen, &file_name);
     if (ret < 0) {
         return ret;
     }
+    dlog(4, "Looking for place info in %s , id = %s \n", file_name, id);
+
+    doc = xmlReadFile(file_name,NULL,0);
+    if (doc == NULL) {
+        dlog(2, "Unable to open xml file %s for place info\n", file_name);
+        return -1;
+    }
+
+    ret = get_place_information_xml_doc(doc, id, info);
+    xmlFreeDoc(doc);
+    return ret;
+}
+
+/**
+ * @brief Looks through an XML doc to find the required place, and stores all information
+ *        about that place in a hash table held in the info struct.
+ *
+ * @param doc pointer to an XML document data structure
+ * @param id a string that holds the name of the place
+ * @param info where to store the pointer to the place_info struct that is created
+ * @return int returns 0 on success or <0 otherwise
+ */
+int get_place_information_xml_doc(xmlDocPtr doc, const char *id,
+                                  place_info **info)
+{
+    int ret = 0;
+    int k;
+    int comp;
+    char *node_key;
+    char *node_id;
+    char *node_value;
+    place_info *tmp;
+    GList *new_list       = NULL;
+    xmlNode *root_element = NULL;
+    xmlNode *use_node     = NULL;
+    xmlNode *cur_node     = NULL;
+    xmlNode *id_node      = NULL;
+    xmlNode *list_node    = NULL;
+    xmlNode *this_node    = NULL;
+
+    gboolean has_type = false;
+
+    root_element = xmlDocGetRootElement(doc);
+    if (root_element == NULL) {
+        dlog(1, "Unable to find xml root node in xml places file");
+        return -1;
+    }
 
     tmp = calloc(sizeof(place_info), 1);
     if (tmp == NULL) {
         dlog(0, "Unable to allocate memory for place info of %s\n", id);
-        free(file_name);
         return -1;
     }
 
-    ret = read_line_csv(file_name, id, COPLAND_WORK_PLACE_ID_INDX,
-                        COPLAND_CSV_LINE_MAX_LEN, &csv_line);
-    free(file_name);
-    if (ret != 0) {
-        dlog(1, "Unable to read place line from CSV for place : %s\n", id);
-        free(tmp);
+    tmp->hash_table = g_hash_table_new( g_str_hash, g_str_equal);
+    if (tmp == NULL) {
+        dlog(1, "Unable to initialize hash table for place info of %s\n", id);
+        free_place_info(tmp);
         return -1;
     }
 
-    ret = get_col_from_csv_line(csv_line,
-                                COPLAND_WORK_PLACE_PERMS_INDX,
-                                COPLAND_CSV_LINE_MAX_LEN,
-                                &str);
-    if (ret < 0) {
-        dlog(1, "Unable to get place permission from line: %s\n",
-             csv_line);
-        goto err;
-    }
-
-    ret = str_to_place_perm(str, &perms);
-    free(str);
-    if (ret < 0) {
-        dlog(1, "Unable to parse permissions in CSV str %s\n",
-             csv_line);
-        goto err;
-    }
-
-    if (perms & COPLAND_PLACE_ADDR_PERM) {
-        ret = get_col_from_csv_line(csv_line,
-                                    COPLAND_WORK_PLACE_ADDR_INDX,
-                                    COPLAND_CSV_LINE_MAX_LEN,
-                                    &str);
+    // Find the child XML node with the correct ID, store in use_node
+    for( cur_node = xmlFirstElementChild(root_element); cur_node; cur_node = xmlNextElementSibling(cur_node)) {
+        // Get the id of the current node
+        ret = get_place_id(cur_node, &node_id);
         if (ret < 0) {
-            dlog(1, "Unable to get address in CSV line: %s\n",
-                 csv_line);
-            goto err;
+            dlog(1, "Unable to get place information for node, skipping...\n");
+            continue;
         }
 
-        tmp->addr = str;
+        comp = strcmp(node_id, id);
+        free(node_id);
+
+        // make sure it doesn't already exist
+        if(comp == 0) {
+            dlog(6, "Node with id: %s found\n", id);
+            use_node = cur_node;
+            break;
+        }
     }
 
-    if (perms & COPLAND_PLACE_PORT_PERM) {
-        ret = get_col_from_csv_line(csv_line,
-                                    COPLAND_WORK_PLACE_PORT_INDX,
-                                    COPLAND_CSV_LINE_MAX_LEN,
-                                    &str);
-        if (ret < 0) {
-            dlog(1, "Unable to get port in CSV line: %s\n",
-                 csv_line);
-            goto err;
+    // We looked through every node but never found the right node, return error
+    if( use_node == NULL) {
+        dlog(2, "Node with id: %s NOT found\n", id);
+        return -1;
+    }
+
+    for( cur_node = xmlFirstElementChild(use_node); cur_node; cur_node = xmlNextElementSibling(cur_node) ) {
+        // Check if information is already present
+        if( g_hash_table_contains( tmp->hash_table, cur_node->name ) ) {
+            dlog(3, "Duplicate place attributes in place with ID %s\n", id);
+            free(tmp);
+            return -1;
+        }
+        // Since the XML doc will get freed, we need to make copies of the
+        // strings so that they can be held in place info.
+        node_key = strdup(cur_node->name);
+
+        // Make a new glist to put in the hash table
+        new_list = NULL;
+
+        // Collect place information that may be contained in a list
+        k = 0;
+        for(this_node = cur_node->children; this_node; this_node = this_node->next) {
+            k += (this_node->type == XML_ELEMENT_NODE);
+            if(this_node->type == XML_ELEMENT_NODE) {
+                node_value = strdup(this_node->children->content);
+                new_list = g_list_append(new_list, node_value);
+            }
         }
 
-        tmp->port = str;
-    }
-
-    if (perms & COPLAND_PLACE_KERN_PERM) {
-        ret = get_col_from_csv_line(csv_line,
-                                    COPLAND_WORK_PLACE_KERN_INDX,
-                                    COPLAND_CSV_LINE_MAX_LEN,
-                                    &str);
-        if (ret < 0) {
-            dlog(1, "Unable to get kernel in CSV line: %s\n",
-                 csv_line);
-            goto err;
+        // If true, there is only one piece of relevant place information for this attribute
+        if( k == 0) {
+            node_value = strdup(cur_node->children->content);
+            new_list = g_list_append(new_list, node_value);
         }
 
-        tmp->kern_vers = str;
+        dlog(6, "Inserting list %s into hash table\n", node_key);
+        g_hash_table_insert( tmp->hash_table, node_key, new_list);
     }
 
-    if (perms & COPLAND_PLACE_DOM_PERM) {
-        ret = get_col_from_csv_line(csv_line,
-                                    COPLAND_WORK_PLACE_DOM_INDX,
-                                    COPLAND_CSV_LINE_MAX_LEN,
-                                    &str);
-        if (ret < 0) {
-            dlog(1, "Unable to get kernel in CSV line: %s\n",
-                 csv_line);
-            goto err;
-        }
-
-        tmp->domain = str;
-    }
-
-    free(csv_line);
     *info = tmp;
     return 0;
+}
 
-err:
-    free(csv_line);
-    free(tmp);
+/**
+ * @brief Get the glist stored in a field of the place_info struct
+ *
+ * @param place information pertaining to a place
+ * @param field a string with the name of the field you wish to access
+ * @param list a pointer to the glist pointer held by the given field
+ * @return int 0 on success, -1 otherwise
+ */
+int get_place_info_glist( place_info *place, const char *field, GList **list)
+{
+    char *orig_key;
+
+    /* Casts to glib-2.0 types are justified from compatible base types */
+    if( g_hash_table_lookup_extended ( place->hash_table,
+                                       (gconstpointer)field, (gpointer *)&orig_key, (gpointer *)list)) {
+        // Copy string from first list element into value
+        dlog(6,"%s key found! returning pointer to list \n", field);
+        return 0;
+    }
+    return -1;
+}
+
+
+/**
+ * @brief Get the first string stored in a field of the place_info struct
+ *
+ * @param place information pertaining to a place
+ * @param field a string with the name of the field you wish to access
+ * @param value a pointer to where to store the retrieved value. This function
+ *                makes a new copy of the string and must be freed by user
+ * @return int 0 on success, -1 otherwsie
+ */
+int get_place_info_string( place_info *place, const char *field, char **value)
+{
+    GList *list;
+    char *orig_key;
+
+    /* Casts to glib-2.0 types are justified from compatible base types */
+    if( g_hash_table_lookup_extended ( place->hash_table,
+                                       (gconstpointer) field, (gpointer *) &orig_key, (gpointer *) &list)) {
+        // Copy string from first list element into value
+        *value = strdup(list->data);
+        dlog(6,"%s key found! copying value: %s\n", field, *value);
+        return 0;
+    }
     return -1;
 }
 
 /**
- * Frees place information structure memory
+ * @brief Get the nth string stored in a field of the place_info struct
+ *
+ * @param place information pertaining to a place
+ * @param field a string with the name of the field you wish to access
+ * @param n the position of the element you wish to retrieve (0 indexed)
+ * @param value a pointer to where to store the retrieved value. This value
+ *        must be freed by a caller
+ *
+ * @return int 0 on success or -1 otherwise
  */
-void free_place_information(place_info *info)
+int get_place_info_string_nth( place_info *place, const char *field, uint n, char **value)
 {
-    free(info->addr);
-    free(info->port);
-    free(info->kern_vers);
-    free(info->domain);
-    free(info);
+    GList *list;
+    char *orig_key;
+
+    /* Casts to glib-2.0 types are justified from compatible base types */
+    if( !g_hash_table_lookup_extended ( place->hash_table,
+                                        (gconstpointer) field, (gpointer *)  &orig_key, (gpointer *) &list)) {
+        return -1;
+    }
+    if (g_list_length(list) >= n+1) {
+        list = g_list_nth(list,n);
+        *value = strdup(list->data);
+        return 0;
+    }
+    return -1;
+}
+
+/**
+ * @brief Get the place info for an int
+ *
+ * @param place information pertaining to a place
+ * @param field a string with the name of the field you wish to access
+ * @param value a pointer to where to store the retrieved value
+ *
+ * @return int 0 if the field exists or -1 otherwise
+ */
+int get_place_info_int( place_info *place, const char *field, int *value)
+{
+    char *str;
+    int ret = get_place_info_string(place, field, &str);
+    if( !ret ) {
+        if(sscanf(str, "%d", value)  == EOF ) {
+            ret = -1;
+        }
+        free(str);
+    }
+    return ret;
+}
+
+/**
+ * @brief Get the nth int stored in the relevant field of the place_info struct
+ *
+ * @param place infoformation pertaining to a place
+ * @param field a string with the name of the field you wish to access
+ * @param n the position of the element you wish to retrieve (0 indexed)
+ * @param value a pointer to where to store the retrieved value
+ *
+ * @return int 0 if the field exists and there is an nth entry in the list
+ */
+int get_place_info_int_nth( place_info *place, const char *field, uint n, int *value)
+{
+    gchar *str = NULL;
+    int ret = get_place_info_string_nth(place, field, n, &str);
+    if( !ret ) {
+        if(sscanf(str, "%d", value)  == EOF ) {
+            ret = -1;
+        }
+        free(str);
+    }
+    return ret;
+}
+
+/**
+ * @brief Get the length of a list from place info object
+ *
+ * @param place information pertaining to a place
+ * @param field a string that contains the name of the field or property for which you want the length
+ *
+ * @return int the length of the list
+ */
+int get_place_info_list_length(place_info *place, const char *field )
+{
+    GList *list;
+    char *orig_key;
+    int ret = 0;
+
+    /* Casts to glib-2.0 types are justified from compatible base types */
+    if( g_hash_table_lookup_extended ( place->hash_table,
+                                       (gconstpointer)field, (gpointer *)&orig_key, (gpointer *)&list)) {
+        ret = g_list_length(list);
+    }
+    return ret;
+}
+
+/**
+ * @brief Fills an int array with values stored in a place
+ *
+ * @param place information pertaining to a place
+ * @param field a string that contains the name of the field or property you wish to turn into an array
+ * @param value a pointer to the array (must already be allocated to proper size)
+ *
+ * @return int returns 0 on success or -1 otherwise
+ */
+int fill_place_info_int_array( place_info *place, const char *field, int *value)
+{
+    int n = get_place_info_list_length( place, field );
+    int ret;
+    if(n) {
+        for(int i = 0; i < n; i++) {
+            ret = get_place_info_int_nth(place, field, i, &(value[i]) );
+            if (ret < 0) {
+                goto error;
+            }
+        }
+        return 0;
+    }
+
+error:
+    *value = 0;
+    return -1;
+}
+
+/**
+ * @brief Frees all memory stored in a place_info struct, including hash table, lists and strings stored in lists
+ *
+ * @param place place_info struct to be freed
+ */
+void free_place_info( place_info *place)
+{
+    GHashTableIter it;
+    GList *values;
+    gchar *key;
+
+    if(place) {
+        if(place->hash_table) {
+            g_hash_table_iter_init(&it, place->hash_table);
+
+            /* Casts to glib-2.0 types are justified from compatible base types */
+            while(g_hash_table_iter_next(&it, (gpointer *)&key, (gpointer *)&values)) {
+                g_list_free_full(values, free);
+                free(key);
+            }
+            g_hash_table_destroy(place->hash_table);
+        }
+        free(place);
+    }
+}
+
+/**
+ * @brief Free all of the data associated with a place_perms struct
+ *
+ * @param perms place_perms struct to be freed
+ */
+void free_place_perms( place_perms *perms)
+{
+    // Free the ID string
+    if (perms->id) {
+        free(perms->id);
+    }
+    // Free the strings in the glist
+    if (perms->perms) {
+        g_list_free_full(perms->perms, &free);
+    }
+
 }
 
 /* Local Variables:  */

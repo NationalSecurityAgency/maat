@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.0-1] - 2024-10-17
+### Added
+- Extended place support for arbitrary Copland place attributes
+- Introduced support for PhotonOS 5.0
+- Developed process memory mapping appraisal ASP
+- Developed file hash value appraisal ASP
+- Updated Copland Compiler to generate APB code using basic Copland phrases expressing single place attestations
+- Created documentation which guides integrators through creating new Maat APBs and ASP
+- Altered measurement contract format to represent TPM signatures and quotes
+- Addressed interoperability bugs between TPM enabled and TPM disabled Maat instances
+- Addressed bugs in Maat’s XML parsing
+
 ## [1.7-1] - 2024-05-17
 ### Added
 - Addition of APBs, ASPs, and supporting policy files to represent a basic integration of existing measurement tools into Maat

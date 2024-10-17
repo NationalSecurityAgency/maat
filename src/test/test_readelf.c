@@ -65,7 +65,7 @@ void setup(void)
     graph = create_measurement_graph(NULL);
 
     file_var = new_measurement_variable(&file_target_type, alloc_address(&simple_file_address_space));
-    ((simple_file_address*)(file_var->address))->filename = strdup("/bin/ls");
+    ((simple_file_address*)(file_var->address))->filename = strdup("/bin/bash");
     measurement_graph_add_node(graph, file_var, NULL, &file_node);
     free_measurement_variable(file_var);
 
@@ -114,7 +114,7 @@ START_TEST(test_readelf)
 
     fail_unless(data->type->magic == LIBELF_TYPE_MAGIC, "Node data type "MAGIC_FMT" is unexpected", data->type->magic);
 
-    int found_file = strcmp(elfheader_data->filename, "/bin/ls");
+    int found_file = strcmp(elfheader_data->filename, "/bin/bash");
     fail_unless(found_file == 0, "Node data verify failed with error code %d", found_file);
 
     free(graph_path);

@@ -103,6 +103,7 @@ error:
 static int get_target_channel_info(dynamic_measurement_request_address *va,
                                    char **addr, char **port)
 {
+    int ret = 0;
     place_info *info          = NULL;
 
     dlog(4, "Get target channel information for place : %s\n", va->attester);
@@ -117,8 +118,19 @@ static int get_target_channel_info(dynamic_measurement_request_address *va,
         return -1;
     }
 
-    *port = info->port;
-    *addr = info->addr;
+    /* retrieve the proper values from the xml style place*/
+    ret = get_place_info_string(info, "port",       port);
+    if (ret < 0) {
+        dlog(1, "Unable to get port information regarding place %s\n", va->attester);
+        return ret;
+    }
+
+    ret = get_place_info_string(info, "ip_address", addr);
+    if (ret < 0) {
+        dlog(1, "Unable to get IP address information regarding place %s\n", va->attester);
+        free(*port);
+        return ret;
+    }
 
     return 0;
 }
@@ -337,7 +349,7 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
     char *partner_cert           = NULL;
     char *serialize_args[1];
     char *encrypt_args[1];
-    char *create_con_args[8];
+    char *create_con_args[9];
     struct asp *serialize        = NULL;
     struct asp *compress         = NULL;
     struct asp *encrypt          = NULL;
@@ -415,7 +427,7 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
             if(scen->partner_cert && ((partner_cert = strdup(scen->partner_cert)) != NULL)) {
                 encrypt_args[0] = partner_cert;
 
-                create_con_args[9] = "1";
+                create_con_args[8] = "1";
 
                 ret_val = fork_and_buffer_async_asp(encrypt, 1, encrypt_args, fb_fd, &fb_fd);
                 if(ret_val == -2) {
@@ -429,7 +441,7 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
                     exit(0);
                 }
             } else {
-                create_con_args[9] = "0";
+                create_con_args[8] = "0";
             }
 
             create_con_args[0] = workdir;
@@ -441,7 +453,6 @@ static int execute_sign_send_pipeline(measurement_graph *graph, struct scenario 
             create_con_args[5] = g_akctx;
             create_con_args[6] = g_sign_tpm;
             create_con_args[7] = "1";
-            create_con_args[8] = "1";
             //The last argument is already set depending on the use of encryption
 
             ret_val = fork_and_buffer_async_asp(create_con, 10, create_con_args, fb_fd, &fb_fd);
@@ -624,8 +635,8 @@ graph_err:
     free_meas_spec(mspec);
 meas_spec_err:
 place_arg_err:
-    free_place_information(g_dom_z_info);
-    free_place_information(g_dom_t_info);
+    free_place_info(g_dom_z_info);
+    free_place_info(g_dom_t_info);
     return ret_val;
 }
 

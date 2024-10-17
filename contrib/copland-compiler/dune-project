@@ -1,0 +1,18 @@
+(lang dune 3.14)
+
+(name copland_compiler)
+
+(generate_opam_files true)
+(using menhir 2.0)
+
+(documentation https://github.com/NationalSecurityAgency/maat)
+
+(package
+ (name copland_compiler)
+ (synopsis "A compiler from Copland phrases to APBs")
+ (depends ocaml dune core yojson ppx_deriving_yojson ppx_sexp_conv xmlm))
+
+
+
+
+; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project

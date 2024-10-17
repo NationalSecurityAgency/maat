@@ -20,12 +20,18 @@ maat_pp_DATA=maat.pp
 maat_ifdir=$(prefix)/share/selinux/devel/include/contrib
 maat_if_DATA=maat.if
 
-EXTRA_DIST = maat.fc.in maat.te maat.if
+EXTRA_DIST = maat.fc.in maat.te maat.if maat-photon.te.in maat-default.te.in
 
 .PHONY: maat.te maat.if
 
 maat.te:
+if ENABLE_PHOTON
+	cp $(srcdir)/maat-photon.te.in $(srcdir)/$@
+	[ -e $@ ] ||cp -vf $(srcdir)/$@ .
+else
+	cp $(srcdir)/maat-default.te.in $(srcdir)/$@
 	[ -e $@ ] || cp -vf $(srcdir)/$@ .
+endif
 
 maat.if:
 	[ -e $@ ] || cp -vf $(srcdir)/$@ .
@@ -58,6 +64,6 @@ clean-local:
 	if [ "${srcdir}" != "${builddir}" ]; then \
 		rm -f maat.te ; \
 	fi; \
-	rm -f maat.fc  maat.pp; \
+	rm -f maat.fc maat.pp maat.te; \
 	rm -rf tmp
 

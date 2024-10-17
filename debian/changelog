@@ -1,3 +1,16 @@
+maat (2.0-1) develop; urgency=low
+    - Extended place support for arbitrary Copland place attributes
+    - Introduced support for PhotonOS 5.0
+    - Developed process memory mapping appraisal ASP
+    - Developed file hash value appraisal ASP
+    - Updated Copland Compiler to generate APB code using basic Copland phrases expressing single place attestations
+    - Created documentation which guides integrators through creating new Maat APBs and ASP
+    - Altered measurement contract format to represent TPM signatures and quotes
+    - Addressed interoperability bugs between TPM enabled and TPM disabled Maat instances
+    - Addressed bugs in Maat’s XML parsing
+
+ -- Maat Developers <apl-maat-developers@jhuapl.edu> Fri, 17 May 2024 13:30:00 -0500
+
 maat (1.7-1) develop; urgency=low
     * Introduction of full OpenSSL v3 support within Maat
     * Resolved system information ASP information collection error on some platforms

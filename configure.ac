@@ -15,7 +15,7 @@
 #
 #
 
-AC_INIT([maat], [1.7])
+AC_INIT([maat], [2.0])
 AC_CONFIG_AUX_DIR([build-aux])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AM_INIT_AUTOMAKE([foreign -Wall tar-pax subdir-objects])
@@ -78,6 +78,10 @@ AC_PATH_PROG([GPERF], [gperf], [], [$PATH:/bin:/usr/bin:/usr/local/bin])
 AX_LIB_READLINE()
 
 AX_CHECK_OPENSSL([],[AC_MSG_ERROR([OpenSSL devel libs not installed])])
+XOPENSSL_MAJOR_VERSION=$(openssl version | awk '{print $2}' | awk -F'.' '{print $1}')
+AS_IF([test "x$OPENSSL_MAJOR_VERSION" = "x3"], 
+	[AC_DEFINE_UNQUOTED([OPENSSL_MAJOR_VERSION],[3],[The major version of openssl.])],
+	[AC_DEFINE_UNQUOTED([OPENSSL_MAJOR_VERSION],[1],[The major version of openssl.])])
 
 AC_SEARCH_LIBS([dlopen], [dl])
 
@@ -282,6 +286,7 @@ DEFAULT_ASP(netstatraw6)
 DEFAULT_ASP(listdirectoryservice)
 DEFAULT_ASP(ima)
 DEFAULT_ASP(memorymapping)
+DEFAULT_ASP(memorymapping_appraise)
 DEFAULT_ASP(mtab)
 DEFAULT_ASP(dummy_appraisal)
 DEFAULT_ASP(lsproc)
@@ -321,6 +326,7 @@ DEFAULT_ASP(split)
 DEFAULT_ASP(kernel_msmt)
 DEFAULT_ASP(send_request)
 EXTRA_ASP(tlm_ret)
+DEFAULT_ASP(md5_hashcheck)
 DEFAULT_ASP(deleg_meas_skeleton)
 DEFAULT_ASP(deleg_meas_appraise_skeleton)
 
@@ -484,6 +490,12 @@ AC_ARG_ENABLE([selinux],
 	[enable_selinux=$enableval],
 	[enable_selinux=yes])
 
+AC_ARG_ENABLE([photon],
+	[AS_HELP_STRING([--enable-photon], [Specify target as Photon OS for SELinux policy selection (default=no)])],
+	[enable_photon=$enableval],
+	[enable_photon=no])
+
+AM_CONDITIONAL(ENABLE_PHOTON, test "x$enable_photon" = xyes)
 
 # Enable
 AS_IF([test "x$enable_selinux" = xyes],[
@@ -563,6 +575,7 @@ AC_CONFIG_FILES([lib/Makefile lib/util/Makefile lib/graph/Makefile lib/asp/Makef
 		 lib/libmaat_graph.pc
 		 lib/libmaat_client.pc
 		 lib/libmaat_sgraph.pc
+         lib/libmaat_measurement_spec.pc
 		 Makefile
 		 management-ui/Makefile
 		 pam/Makefile

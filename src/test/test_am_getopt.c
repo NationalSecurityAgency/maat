@@ -262,7 +262,7 @@ START_TEST(test_attestmgr_getopt_full_config_xml)
     char cfg_path[] = __FILE__ "_tmpXXXXXX";
     int fd = mkstemp(cfg_path);
     ck_assert_int_gt(fd, 0);
-    ck_assert_int_eq(write(fd, cfg_str, sizeof(cfg_str)), sizeof(cfg_str));
+    ck_assert_int_eq(write(fd, cfg_str, strlen(cfg_str)), strlen(cfg_str));
     ck_assert_int_eq(close(fd), 0);
     // fork & wait to guarantee cleanup of tmp file
     pid_t pid = fork();
@@ -400,7 +400,7 @@ START_TEST(test_attestmgr_getopt_opts_trump_all)
     char cfg_path[] = __FILE__ "_tmpXXXXXX";
     int fd = mkstemp(cfg_path);
     ck_assert_int_gt(fd, 0);
-    ck_assert_int_eq(write(fd, cfg_str, sizeof(cfg_str)), sizeof(cfg_str));
+    ck_assert_int_eq(write(fd, cfg_str, strlen(cfg_str)), strlen(cfg_str));
     ck_assert_int_eq(close(fd), 0);
     // fork & wait to guarantee cleanup of tmp file
     pid_t pid = fork();
@@ -533,7 +533,7 @@ START_TEST(test_attestmgr_getopt_env_trumps_config)
     char cfg_path[] = __FILE__ "_tmpXXXXXX";
     int fd = mkstemp(cfg_path);
     ck_assert_int_gt(fd, 0);
-    ck_assert_int_eq(write(fd, cfg_str, sizeof(cfg_str)), sizeof(cfg_str));
+    ck_assert_int_eq(write(fd, cfg_str, strlen(cfg_str)), strlen(cfg_str));
     ck_assert_int_eq(close(fd), 0);
     // fork & wait to guarantee cleanup of tmp file
     pid_t pid = fork();

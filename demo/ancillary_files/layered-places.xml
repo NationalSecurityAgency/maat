@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!--
+# Copyright 2023 United States Government
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+-->
+<places>
+    <place>
+        <id>1</id>
+        <ip_address>127.0.0.1</ip_address>
+        <port>2343</port>        
+        <kernel_version>4.18.0-240.10.1.el8_3.x86_64</kernel_version>                
+    </place>
+    <place>
+        <id>2</id>
+        <ip_address>127.0.0.1</ip_address>
+        <port>2344</port>        
+        <kernel_version>4.18.0-240.10.1.el8_3.x86_64</kernel_version>                
+    </place>
+</places>

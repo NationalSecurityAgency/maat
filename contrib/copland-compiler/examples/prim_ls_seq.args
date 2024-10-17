@@ -1,0 +1,5 @@
+(
+    files1 ( /opt/maat/share/maat/asps )
+    files2 ( /opt/maat/share/maat/apbs )
+    files3 ( /opt/maat/share/maat/asps/blacklist.xml /opt/maat/share/maat/apbs/appraiser_apb.xml )
+)

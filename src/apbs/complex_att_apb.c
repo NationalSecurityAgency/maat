@@ -97,7 +97,7 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
     char *req_args[6];
     char *serialize_args[1];
     char *encrypt_args[1];
-    char *create_con_args[10];
+    char *create_con_args[9];
     char *merge_args[2];
     struct asp *send_request_asp = NULL;
     struct asp *serialize        = NULL;
@@ -151,7 +151,7 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
         goto find_asp_err;
     }
 
-    create_con = find_asp(apb_asps, "create_execute_contract_asp");
+    create_con = find_asp(apb_asps, "create_measurement_contract_asp");
     if(create_con == NULL) {
         ret_val = -1;
         dlog(1, "Error: unable to retrieve create execute contract ASP\n");
@@ -246,7 +246,7 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
                     if(scen->partner_cert && ((partner_cert = strdup(scen->partner_cert)) != NULL)) {
                         encrypt_args[0] = partner_cert;
 
-                        create_con_args[9] = "1";
+                        create_con_args[8] = "1";
 
                         ret_val = fork_and_buffer_async_asp(encrypt, 1, encrypt_args, fb_fd, &fb_fd);
                         if(ret_val == -2) {
@@ -260,7 +260,7 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
                             exit(0);
                         }
                     } else {
-                        create_con_args[9] = "0";
+                        create_con_args[8] = "0";
                     }
 
                     create_con_args[0] = workdir;
@@ -272,7 +272,6 @@ static int execute_measurement_and_asp_pipeline(measurement_graph *graph, struct
                     create_con_args[5] = scen->akctx == NULL ? "" : scen->akctx;
                     create_con_args[6] = scen->sign_tpm == 0 ? "0" : "1";
                     create_con_args[7] = "1";
-                    create_con_args[8] = "1";
                     //The last argument is already set depending on the use of encryption
 
                     ret_val = fork_and_buffer_async_asp(create_con, 10, create_con_args, fb_fd, &fb_fd);
@@ -321,6 +320,10 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
     place_info *place2_info = NULL;
     struct meas_spec *mspec = NULL;
     measurement_graph *graph = NULL;
+    char* ip1   = NULL;
+    char* port1 = NULL;
+    char* ip2   = NULL;
+    char* port2 = NULL;
 
     if((ret_val = register_types()) < 0) {
         return ret_val;
@@ -400,10 +403,37 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
 
     /* Execute the measurement ASPs and the ASPs to combine, sign, and send the
        measurements to the appraiser */
-    ret_val = execute_measurement_and_asp_pipeline(graph, mspec, place2_info->addr,
-              place2_info->port, place1_info->addr, place1_info->port, scen,
-              peerchan);
+    /* need to extract address and port from place struct*/
+    ret_val = get_place_info_string( place1_info, "ip_address", &ip1  );
+    if (ret_val < 0) {
+        dlog(1, "Could not get the IP address for place 1\n");
+        goto place_error;
+    }
 
+    ret_val = get_place_info_string( place1_info, "port",       &port1);
+    if (ret_val < 0) {
+        dlog(1, "Could not get the port for place 1\n");
+        goto place_error;
+    }
+
+    ret_val = get_place_info_string( place2_info, "ip_address", &ip2  );
+    if (ret_val < 0) {
+        dlog(1, "Could not get the IP address for place 2\n");
+        goto place_error;
+    }
+
+    ret_val = get_place_info_string( place2_info, "port",       &port2);
+    if (ret_val < 0) {
+        dlog(1, "Could not get the port for place 2\n");
+        goto place_error;
+    }
+
+    ret_val = execute_measurement_and_asp_pipeline(graph, mspec, ip2, port2,
+              ip1, port1, scen, peerchan);
+
+place_error:
+    free(ip1);
+    free(ip2);
 str_alloc_err:
     destroy_measurement_graph(graph);
     graph = NULL;
@@ -412,8 +442,8 @@ graph_err:
     free_meas_spec(mspec);
 meas_spec_err:
 place_arg_err:
-    free_place_information(place1_info);
-    free_place_information(place2_info);
+    free_place_info(place1_info);
+    free_place_info(place2_info);
 
     return ret_val;
 }

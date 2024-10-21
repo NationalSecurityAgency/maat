@@ -43,6 +43,7 @@
 #define ASP_APB_ERROR_UUIDTYPECONFLICT (17)
 #define ASP_APB_ERROR_MARSHALL (18)
 #define ASP_APB_UNDEF_RESULT (19)
+#define ASP_APB_ERROR_BADCSV (20)
 
 /**
  * Platform specific error codes start from here and are defined in the

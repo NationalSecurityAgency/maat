@@ -283,9 +283,9 @@ int create_execute_contract(char *version, int sig_flags,
     xmlAddChild(root, cred_node);
 
     fprint = get_fingerprint(certfile, NULL);
-    ret = sign_xml(doc, root, fprint, keyfile, keyfilepass, nonce, tpmpass, akctx, sig_flags);
+    ret = sign_xml(root, fprint, keyfile, keyfilepass, nonce, tpmpass, akctx, sig_flags);
     free(fprint);
-    if(ret) {
+    if(ret != MAAT_SIGNVFY_SUCCESS) {
         dlog(0, "Error signing XML\n");
         ret = -1;
         goto out;
@@ -485,11 +485,20 @@ int xpath_delete_node(xmlDoc *doc, const char *to_delete)
     return deleted;
 }
 
+/**
+ * @brief Get the content of a node within a XML document at a specified path
+ *
+ * @param doc The XML document to retrieve content from
+ * @param path A string specifying the path to retrieve content from doc
+ *
+ * @return char * A buffer containing the specified contents from the XML document or NULL
+ *         if the path is not valid.
+ */
 char *xpath_get_content(xmlDoc *doc, const char *path)
 {
     xmlXPathObject *obj;
     char *ret = NULL;
-
+    
     obj = xpath(doc, path);
     if (obj && obj->nodesetval->nodeNr) {
         if (obj->nodesetval->nodeTab[0]->type == XML_ELEMENT_NODE) {
@@ -503,13 +512,23 @@ char *xpath_get_content(xmlDoc *doc, const char *path)
     return ret;
 }
 
-char *get_contract_type(void *buffer, int size)
+/**
+ * @brief A convience function to retrieve the type of a Maat contract
+ *
+ * @param buffer A buffer which contains a serialized representation of an XML document
+ * @param size The size of buffer
+ *
+ * @return char * Returns a string which contains the type of the contract or NULL
+ *         if the contract type cannot be retrieved
+ */
+char *get_contract_type(xmlChar *buffer, int size)
 {
     xmlDoc *doc;
     xmlNode *root;
     char *contype = NULL;
 
-    doc = xmlReadMemory(buffer, size, NULL, NULL, 0);
+    /* Function does not regard signedness of buffer contents */
+    doc = xmlReadMemory((char *)buffer, size, NULL, NULL, 0);
     if (doc) {
         root = xmlDocGetRootElement(doc);
         if (!root) {
@@ -528,18 +547,27 @@ char *get_contract_type(void *buffer, int size)
     return contype;
 }
 
-/* Purely a convenience function */
-xmlDoc *get_doc_from_blob(unsigned char *buffer, size_t size)
+/**
+ * @brief Parse an XML document from a buffer
+ *
+ * @param buffer A buffer which contains a serialized XML document
+ * @param size The size of buffer
+ *
+ * @return xmlDoc * Returns a pointer to an XML document if the buffer can be successfully
+ *         parsed or NULL if an error occurs
+ */
+xmlDoc *get_doc_from_blob(char *buffer, size_t size)
 {
     xmlDoc *doc;
 
-    if (size > INT_MAX) {
-        dlog(0, "Unable to parse XML buffer of length %zu is too long (may be at most %d bytes)\n",
+    if (size == 0 || size > INT_MAX) {
+        dlog(0, "Unable to parse XML buffer of length %zu is imporperly sized (must be at least 0 bytes and at most %d bytes)\n",
              size, INT_MAX);
         return NULL;
     }
 
-    doc = xmlReadMemory((char*)buffer, (int)size, NULL, NULL, 0);
+    /* xmlReadMemory() cannot handle the terminating null byte */
+    doc = xmlReadMemory(buffer, (int)size - 1, NULL, NULL, 0);
     if (!doc) {
         dlog(0, "Could not decipher document.\n");
         return NULL;
@@ -548,7 +576,14 @@ xmlDoc *get_doc_from_blob(unsigned char *buffer, size_t size)
     return doc;
 }
 
-/* Another convenience function.  */
+/**
+ * @brief Parse an XML document contained in a file
+ *
+ * @param filename The name of the file to parse
+ *
+ * @return xmlDoc * Returns a pointer to the parsed XML document or NULL if an error
+ *         occurred during parsing
+ */
 xmlDoc *get_doc_from_file(const char *filename)
 {
     unsigned char *buffer = NULL;
@@ -561,28 +596,53 @@ xmlDoc *get_doc_from_file(const char *filename)
         return NULL;
     }
 
-    /* Error handling provided by function */
-    doc = get_doc_from_blob(buffer, size);
+    /* Function does not regard buffer signedness */
+    doc = get_doc_from_blob((char *)buffer, size);
     free(buffer);
     return doc;
 }
 
-char *get_nonce_from_blob(void *buffer, size_t size)
+/**
+ * @brief Serialize an XML document into a buffer
+ *
+ * @param doc An XML document
+ * @param outsize The size of the buffer containing the serialized XML document
+ *
+ * @return xmlChar * Returns a pointer to a buffer containing the serialized XML document or
+ *         NULL if an error occurred during serialization
+ */
+xmlChar *serialize_doc(xmlDoc *doc, size_t *outsize)
+{
+    int size     = 0;
+    xmlChar *buf = NULL;
+
+    xmlDocDumpMemory(doc, &buf, &size);
+    if(size < 0 || (INT_MAX >= SIZE_MAX && size > SIZE_MAX - 1)) {
+        dlog(0, "Error: bad size %d returned while serializing response document\n", size);
+        return NULL;
+    }
+
+    *outsize = (size_t)size + 1;
+    return buf;
+}
+
+/**
+ * @brief A convience function to retrieve the nonce in a Maat contract
+ *
+ * @param buffer A buffer which contains a serialized representation of an XML document
+ * @param size The size of buffer
+ *
+ * @return char * Returns a string which contains the nonce or NULL if it cannot be
+ *         retrieved
+ */
+char *get_nonce_from_blob(char *buffer, size_t size)
 {
     xmlDoc *doc;
     xmlNode *root;
     char *nonce = NULL;
 
-
-    if (size > INT_MAX) {
-        dlog(0, "Unable to parse XML buffer of length %zu is too long (may be at most %d bytes)\n",
-             size, INT_MAX);
-        return NULL;
-    }
-
-    doc = xmlReadMemory(buffer, (int)size, NULL, NULL, 0);
+    doc = get_doc_from_blob(buffer, size);
     if (!doc) {
-        dlog(0, "bad xml?\n");
         return NULL;
     }
 
@@ -599,32 +659,40 @@ char *get_nonce_from_blob(void *buffer, size_t size)
     return nonce;
 }
 
-/*
+/**
  * Merges a local contract into a master contract (which comes up from a
- * lower domain).  Search for subtracts for the local (type) domain in the
+ * lower domain). Search for subcontracts for the local (type) domain in the
  * master contract and remove them.  Then add all subcontracts of local
  * type from the local contract to the master contract.  Return the result
  * as a blob in merged.
+ *
+ * @brief Merges a local contract into a master contract
+ *
+ * @param type A string containing the type of subcontract to remove from the master ocntract
+ * @param master A buffer containing the master contract
+ * @param mastsize The size of the buffer containing the master contract
+ * @param local A buffer containing the local contract
+ * @param localsize The size of the buffer containing the local contract
+ * @param merged A buffer containing the merged contract
+ * @param msize The size of the merged contract
+ *
+ * @return int Returns 0 if the contract merging succeeds or -1 otherwise
  */
-int merge_contracts(const char *type, char *master, int mastsize, char *local,
-                    int localsize, char **merged, int *msize)
+int merge_contracts(const char *type, char *master, size_t mastsize, char *local,
+                    size_t localsize, char **merged, size_t *msize)
 {
     xmlDoc *doc, *loc;
     xmlNode *root, *newnode;
     xmlXPathObject *obj, *mcreds, *lcreds;
-    int i;
-    char scratch[200], *lfprint, *mfprint;
+    int i, msize_tmp = -1;
+    char scratch[200], *lfprint, *mfprint, *merged_tmp = NULL;
 
-    *merged = NULL;
-    *msize = 0;
-
-    doc = xmlReadMemory(master, mastsize, NULL, NULL, 0);
+    doc = get_doc_from_blob(master, mastsize);
     if (!doc) {
-        dlog(0, "Error reading master contract\n");
         return -1;
     }
 
-    loc = xmlReadMemory(local, localsize, NULL, NULL, 0);
+    loc = get_doc_from_blob(local, localsize);
     if (!loc) {
         dlog(0, "Error reading local contract\n");
         return -1;
@@ -706,10 +774,20 @@ int merge_contracts(const char *type, char *master, int mastsize, char *local,
 
     xpath_delete_node(doc, "/contract/nonce");
 
-    xmlDocDumpMemory(doc, (xmlChar **)merged, msize);
+    /* Cast is justified because the function does not regard the signedness of the buffer */
+    xmlDocDumpMemory(doc, (xmlChar **)&merged_tmp, &msize_tmp);
 
     xmlFreeDoc(loc);
     xmlFreeDoc(doc);
+
+    if (msize_tmp < 0 || (UINT_MAX > SIZE_MAX && (unsigned int) msize_tmp > SIZE_MAX)) {
+        dlog(0, "XML doc has invalid size %d\n", msize_tmp);
+        xmlFree(merged_tmp);
+        return -1;
+    }
+
+    *merged = merged_tmp;
+    *msize = (size_t)msize_tmp;
 
     return 0;
 }

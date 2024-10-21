@@ -126,8 +126,7 @@ struct scenario {
     char *contract;     	/**
 				 * Contract to parse. Set by
 				 * application code prior to calling
-				 * handle_*_contract. May not be NULL
-				 * terminated.
+				 * handle_*_contract. Is NULL terminated.
 				 */
     size_t size;             	/**
 				 * Contract size. Set by application
@@ -206,7 +205,7 @@ static inline int init_scenario(struct scenario *scen,
                                 char *cacert, char *certfile,
                                 char *keyfile, char *keypass,
                                 char *tpmpass, char *akctx,
-				                char *akpubkey, int sign_tpm, int verify_tpm,
+                                char *akpubkey, int sign_tpm, int verify_tpm,
                                 char *place_file, char *contract, size_t contract_size,
                                 role_t role)
 {

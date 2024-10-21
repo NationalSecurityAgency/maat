@@ -109,7 +109,7 @@ int setup_scenario(char *contract, struct scenario **scenario)
     }
     fclose(con_file);
 
-    scen->size = strlen(scen->contract);
+    scen->size = strlen(scen->contract) + 1; // include the terminating null byte
 
     /* Set variables needed to handle measurement contract */
     scen->workdir = strdup(WORK_DIR);

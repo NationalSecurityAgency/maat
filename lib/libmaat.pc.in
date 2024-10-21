@@ -20,7 +20,7 @@ includedir=@includedir@
 
 Name: libmaat
 Description: Maat Library
-Requires: libssl glib-2.0 libxml-2.0 uuid libmaat_asp  libmaat_apb  libmaat_am libmaat_util libmaat_client
+Requires: libssl glib-2.0 libxml-2.0 uuid libmaat_asp  libmaat_apb  libmaat_am libmaat_util libmaat_client libmaat_measurement_spec
 Version: @PACKAGE_VERSION@
 Libs: 
 Cflags:

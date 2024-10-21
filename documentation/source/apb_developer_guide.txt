@@ -1,0 +1,704 @@
+.. Copyright
+
+   Copyright 2024 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+.. currentmodule:: maat
+
+.. _SELinux: https://github.com/SELinuxProject
+
+.. _Copland: https://ku-sldg.github.io/copland/resources/tutorial/README
+
+.. _Linux Capabilities: http://lkml.iu.edu/hypermail/linux/kernel/9808.1/0178.html
+
+.. _apbDevGuide:
+
+APB Developer Guide
+###################
+
+This appendix is a guide for the process of creating new Attestation Protocol Blocks (APBs). This guide will
+cover the motivation for creating new APBs, the required elements of an APB, and a technical reference for the
+elements of APBs and their associated metadata.
+
+Why Create an APB?
+==================
+
+Within Maat's architecture, APBs serve as coordinators for Measurement and Attestation (M&A) activities. APBs are
+launched by Attestation Managers (AMs) to perform measurement collection and appraisal activities by invoking
+narrowly defined pieces of functionality encapsulated in Attestation Service Providers (ASPs). Maat includes
+several APBs that coordinate a range of relevant M&A scenarios.
+
+Some Maat integrators may consider creating custom APBs that are tailored to their needs. In general, a new APB
+should be implemented if there are unique requirements for the coordination of ASPs that are not fulfilled by
+existing APBs. This would include circumstances such as:
+
+    * A different set of unique types of evidence (each collected by different unique ASPs) is required to create a novel measurement
+    * A different order of ASP executions is required to achieve certain measurement properties
+    * A different flow of data between ASPs is required to achieve certain measurement properties
+
+These sorts of changes result in a new procedure for carrying out M&A scenarios, but does not change what types of
+evidence Maat is capable of collecting, what privileged operations Maat is capable of performing, or the behavior
+of the Attestation Manager.
+
+For more information about relevant aspects of Maat's architecture, please consult the :ref:`Understanding Maat Architecure <understanding_maat_architecture>` chapter.
+
+Implementing an APB
+===================
+
+This section will give a high level overview of the different items required to implement an APB. Some items
+that need to be implemented are only required for certain kinds of APBs and those items will be labeled as such.
+
+apb.c
+-----
+
+This file constitutes the implementation of the APB. All APBs must implement an `apb_execute` function, which is the
+entry point for the execution of the APB.
+
+For more information about the apb_execute function, please consult the :ref:`technical reference <apb_tech_ref>` in this appendix.
+
+The apb_execute function is the only required component of the apb.c file, however, for APBs implemented for the purpose
+of executing a measurement protocol, there are a set of helper functions that ease the process of interpreting the
+measurement specification and delegating the process of measurement to ASPs. These functions that need to be implemented are the
+following:
+
+    1. `enumerate_variables` - interpret the measurement specification to identify and create the measurement graph's root nodes
+    2. `measure_variable` - given a node in the measurement graph, identify and execute an ASP to fill in the data
+    3. `get_related_variables` - given a measurement node, get all the measurement nodes with a specified edge to the node
+    4. `check_predicate` - given a measurement node, ensure that the data contained within matches a given predicate
+
+These functions are encapsulated within the `measurement_spec_callbacks` struct and are provided to `evaluate_measurement_spec()`
+function to process a measurement specification and place the results within a measurment graph.
+
+For more information about measurement specifications, please consult the :ref:`Measurement Specification <measSpec>` chapter.
+
+apb.xml.in
+----------
+
+This file contains metadata regarding the APB. The AM consults a collection of these files in order to track information
+pertaining to installed APBs. This includes, but is not limited to:
+
+    * A description of the APB
+    * The location of the APB executable on the filesystem
+    * The set of measurement protocols the APB claims to implement, expressed as Copland phrases
+    * A list of ASPs that this APB may use
+
+For more information about the contents of the apl.xml.in file, please consult the :ref:`Technical Reference <apb_tech_ref>` section in this appendix.
+
+SELinux
+-------
+
+SELinux is the Mandatory Access Control policy that constrains the behavior of Maat's components and prevents them from being misused at runtime. Each APB should have an appropriate policy that describes their expected behavior.
+
+An integrator creating an SELinux policy for a new APB could either add to Maat's existing SELinux policy, or could develop a new set of policy files, compile them, and install the new, independent, policy.
+
+For more information about Maat's overall security philosophy, please consult the :ref:`Understanding the Security Model <security_model>` chapter. For more information about SELinux, please consult SELinux resources such as the `SELinux`_ project page.
+
+Measurement Specification
+-------------------------
+
+A measurement specification is a configuration file which defines the measurement protocol an APB should execute and, by extension, the type of measurement it will produce. The sections contained within a measurement specification, at a high level, define the following:
+
+    * The kinds of measurements, each represented by a tuple of  measurement types, that will be taken as part of the measurement
+    * The structural relationship between different measurements within the measurement graph, if applicable
+    * The initial nodes that the measurement graph will be populated with
+
+With this information, an APB can execute an iterative measurement protocol. A system integrator can alter measurement specifications in order to configure the behavior of an APB executing a measurement at runtime.
+
+For any measurement APB, at least one measurement specification should be defined. The APB implementation should include a procedure for interpreting a measurement specification. For this purpose, Maat has an API that helps to define the behaviors required to interpret a measurement specification encapsulated within the measurement specification callbacks. For more information about these callbacks, please consult the :ref:`Technical Reference <apb_tech_ref>` section in this appendix.
+
+For more information about measurement specifications and their role in Maat, please consult the :ref:`Measurement Specification <measSpec>` chapter.
+
+Selector Policy
+---------------
+
+Selector Policies are referenced by AMs during negotiation with another AM to determine how to respond at each stage of the negotiation. Once a new APB has been developed, it needs to be included in the Selector Policy used by the AM in order to have the potential of being executed by the AM.
+
+For more information about Selector Policies and their role in Maat, please consult the :ref:`Measurement Specification <measSpec>` chapter.
+
+Installing an APB
+=================
+
+In-tree
+-------
+
+This type of installation will allow your APB to be compiled, installed, and packaged alongside all the
+existing APBs in Maat.
+
+APB Source Files
+****************
+
+The APB source files should be placed in the `src/apbs` directory along with the APB's .xml.in file.
+
+Autotools/Makefile Changes
+**************************
+
+Edit the `configure.ac` file at the root of the Maat source tree to add one of the following lines:
+
+.. code-block:: none
+
+    DEFAULT_APB([...])
+
+or
+
+.. code-block:: none
+
+    EXTRA_APB([...])
+
+where the ellipses are replaced with the name of your APB. If you make your APB a default APB then it will always be compiled when you compile Maat, while if you make it an extra APB it will only compile when the flag `--enable-apb-"..."` is passed to the configure script, where the ellipses are replaced with the name of your APB.
+
+You also have to modify the `Makefile.am` located in the `src/apbs` directory. You must add a section like the following:
+
+.. code-block:: none
+
+    if BUILD_..._APB
+    apb_PROGRAMS                   += ..._apb
+    "..."_apb_SOURCES = ..._apb.c $(APB_COMMON_SOURCES)
+    "..."_apb_LDADD   = $(AM_LIBADD)
+    endif
+
+where the ellipses are replaced with the name of your APB. If your APB is enabled to be built, the Makefile will be generated with a section to compile your APB with the source files and the libraries specified under the SOURCES and LDADD sections, respectively. There are common sources and libraries that will be used to compile your APB, but other relevant files can be specified.
+
+SELinux
+*******
+
+For an in-tree build, one can generally incorporate the SELinux policy for a new APB into the existing Maat SELinux policy. There are several files that together define Maat's SELinux policy:
+
+    * selinux/maat.te - defines the runtime policy constraining the APB
+    * seinux/maat.if - defines helpful interfaces to ease the process of policy development in the maat.te file
+    * selinux/maat.fc.in - binds the APB's types, defined in maat.te, to the APB's executable installed on the filesystem
+
+Within Maat's SELinux policy, there are several helpful interfaces which make defining an APB easier:
+
+    * define_apb() - defines generic APB permissions and applies them to the provided APB types
+    * allow_apb_asp() - applies permissions allowing an APB with the specified types to execute an ASP with the specified types
+
+With these interfaces, one can define an APB with a basic set of permissions and assign some ASPs as being runnable by that APB. Further permissions require manual assignment by the policy author.
+
+For information about installing Maat's SELinux policy, please consult the :ref:`quick start <quick_start>` appendix.
+
+Measurement Specification
+*************************
+
+If a new measurement specification is required, it should be placed in the `measurement-specs` directory.
+
+You also have to modify the `Makefile.am` located in the `measurement-specs` directory. You must add the file to the list of files assigned to the `dist_spec_DATA` variable.
+
+Out-of-tree
+-----------
+
+This type of installation involves an APB being seperately built and then registered with an existing Maat installation.
+
+For more details on installing Maat, please consult the `quick start <quick_start>` appendix.
+
+APB Binary
+**********
+
+To build an APB out of the Maat tree, you will need to link libraries built by Maat. These would be the following:
+
+    * libmaat_apb
+    * libmaat_asp
+    * libmaat_client
+    * libmaat_graph
+    * libmaat_measurement_spec
+    * libmaat_util
+
+The binary should be placed in the directory containing the binary files of all installed APBs. By default this is located at `/usr/lib/maat/apbs`, although if you follow the installation instructions located in the `quick start appendix <quick_start>`, these files will be installed to the `/opt/maat` prefix such that the APB directory will be `/opt/maat/lib/maat/apbs`.
+
+Regardless of the installation location, ensure that the APB's XML has a valid path to the APB binary. This will allow the AM to execute the APB binary as needed.
+
+APB XML
+*******
+
+The XML file for an APB should be placed in the directory containing the XML files of the other APBs. By default this is located at `/usr/share/maat/apbs` however, if you follow the installation instructions located in the `quick start appendix <quick_start`, Maat will be installed to the `/opt/maat` prefix such that the APB directory will be `/opt/maat/share/maat/apbs`. Ensure that the XML file has a valid path to the executable you wish Maat to execute if this APB is selected.
+
+Once the APB XML has been put into the proper location, an AM will be able to load the APB as part of negotiations and execute the APB if it is selected.
+
+Measurement Specification
+*************************
+
+The XML file specifying a measurement should be placed in the directory containing all installed measurement specifications. By default, this is located at `/usr/share/maat/measurement-specifications`, although if you follow the installation instructions located in the `quick start appendix <quick_start>`, these files will be installed to the `/opt/maat` prefix such that the measurement specifications directory will be `/opt/maat/share/maat/measurement-specification`.
+
+Once the APB XML has been put into the proper location, an AM will be able to load APB metadata as part of any negotiations with other AMs and execute the APB if it is selected.
+
+.. _apb_tech_ref:
+
+Technical Reference
+===================
+
+APB.xml.in
+-----------
+
+The purpose of this file is to provide the basic metadata regarding an APB and how it interacts with other
+components.
+
+The file includes the following sections:
+
+Name
+****
+
+The name of the APB.
+
+Desc
+****
+
+A brief description of the APB and its purpose.
+
+UUID
+****
+
+An UUID formatted identifier for the APB. This should be unique from every other installed APB.
+
+File
+****
+
+The path to the executable that is invoked when an APB is executed. File elements are specified as follows, with the ellipses as appropriate:
+
+.. code-block:: xml
+
+    <file hash="...">${APB_INSTALL_DIR}/...</file>
+
+APBs are generally installed to the APB install directory (the location of which is defined in ${APB_INSTALL_DIR} for in-tree builds).
+
+The `hash` attribute is currently unused.
+
+Input_Type
+**********
+
+Currently unused in any APB.
+
+Output_Type
+***********
+
+Currently unused in any APB.
+
+ASPs
+****
+
+The `asps` element enumerates the ASPs the APB uses. An APB will only be given references to ASPs which are declared in this section [#]_. An `asps` element is as follows, with the ellipses filled in as appropriate:
+
+.. code-block:: xml
+
+    <asps ordered="False">
+        <asp uuid="..." initial="True">...</asp>
+        ...
+    </asps>
+
+The `ordered` attribute for ASPs is currently unused.
+
+The `asps` element contains zero or more children which each detail an ASP this APB can invoke. Each of these child `asp` entries is laid out as follows, with the ellipses filled in as appropriate:
+
+.. code-block:: xml
+
+    <asp uuid="..." initial="True">
+        ...
+    </asp>
+
+The `uuid` attribute for the ASP element specifies the UUID of an ASP the APB can launch.
+
+The `initial` attribute is currently unused.
+
+The ASP element can contain any text, but typically is filled with the name of the ASP that is being referenced by that particular entry.
+
+Copland
+*******
+
+The `copland` element specifies Copland phrases that are claimed to be handled by the APB. Each `copland` element in the file specifies one Copland phrase supported by the APB, the measurement specification used in the execution of the phrase, any places which an APB needs metadata about, and any arguments the phrase may possess.
+
+A `copland` element is as follows, with the ellipses filled in as appropriate:
+
+.. code-block:: xml
+
+    <copland>
+        <phrase copland="...">...</phrase>
+        <spec uuid="...">...</spec>
+        <args>...</args>
+        <places>...</places>
+    </copland>
+
+The child `phrase` element contains the textual representation of the Copland phrase the whole `copland` element represents. The `copland` attribute holds the Copland phrase. Currently, there are no constraints on how a phrase is represented, but in general phrases should conform with Copland syntax. The `phrase` element can contain any text that is desired, such as a short phrase identifying the intent of the Copland phrase.
+
+The child `spec` element specifies the measurement specification that the APB uses when it executes this Copland phrase. The `uuid` attribute specifies the UUID of the relevant measurement specification. The `spec` element can contain any text that is desired, such as a short phrase identifying the measurement specification.
+
+The child `arguments` element specifies the name, type, and number of arguments that a Copland phrase requires, if any. Each argument is represented with an `arg` element. If a Copland phrase supports no arguments, then the `arguments` section can be omitted entirely. The `arguments` element is as follows, with the ellipses filled in as appropriate:
+
+.. code-block:: xml
+
+    <arguments>
+        <arg name = "...">
+            <type> ... </type>
+        </arg>
+        ...
+    </arguments>
+
+The `name` attribute specifies the name of an argument. For clarity this argument should be represented within the Copland phrase the parent `copland` element is specifiying.
+
+`arg` elements have exactly one child element which is the `type` element. `type` elements contain a string which specifies what data type this particular argument has. Currently, Copland supports integer, string, and Copland place arguments.
+
+If at least one argument with a place type is specified, then a `places` element is required. The `places` element is as follows:
+
+.. code-block:: xml
+
+    <places>
+        <place id="@_1">
+            <info>host</info>
+            <info>port</info>
+	        ...
+        </place>
+        ...
+    </places>
+
+For each place argument specified in the `arguments` element, there must be a corresponding `place` child element of the `places` element.
+
+A `place` element has an `id` attribute. The value of the `id` attribute MUST correspond to the name provided for the `name` attribute for the relevant `arg` element. Within the `place` element, there are one or more `info` elements. `info` elements specify what information, expressed as a string within the `info` element, the APB should have knowledge of pertaining to the specified place. This information needs to be reflected in the installed places information available to the AM.
+
+An example of a complete Copland element is as follows:
+
+.. code-block:: xml
+
+    <copland>
+        <phrase copland="@_1(USM hash file iterations)">hash file measurement</phrase>
+        <spec uuid="d427cbfa-252f-4b81-9129-8f436d9172f8">hash spec</spec>
+        <arguments>
+            <arg name = "file">
+                <type>string</type>
+            </arg>
+            <arg name = "iterations">
+                <type>integer</type>
+            </arg>
+            <arg name = "@_1">
+                <type>place</type>
+            </arg>
+        </arguments>
+        <places>
+            <place id="@_1">
+                <info>host</info>
+                <info>port</info>
+            </place>
+        </places>
+    </copland>
+
+This example Copland element specifies a Copland phrase (USM hash file iterations) that takes three arguments - one is named "file" and is of the string type, another is named "iterations" and has an integer type, and the third is named "@_1" and corresponds to a Copland place regarding which the executing attestation manager may access relevant information. Based on the places element the host IP and port number of the "@_1" place will be made available to the APB. The measurement specification with the specified UUID will be used when invoking the APB with this phrase. Note that the text within the `spec` section is not used by Maat, and can be thought of as an annotation for the identity of the measurement specification.
+
+In order to be used in negotiation by an attestation manager, the `apb_phrase` attribute in the relevant `condition` element in the selector policy should match the contents of the relevant `phrase` element in the APB's XML file.
+
+For more information about selector policies, please consult the :ref:`selector policy <_selCnfTut>` chapter. For more information about Copland, please consult online `Copland`_ resources.
+
+Security Context
+****************
+
+The `security_context` element specifies various aspects of the security context of the running APB, including its user, group, assigned Linux kernel capabilities, and SELinux type, as applicable.
+
+A `security_context` element is laid out as follows, with the ellipses filled in as appropriate:
+
+.. code-block:: xml
+
+   <security_context>
+      <user> ... </user>
+      <group> ... </group>
+      <capabilities> ... </capabilities>
+      <selinux> ... </selinux>
+   </security_context>
+
+Each element has no attributes and contains text that describes the corresponding attribute of the security context.
+
+The `user` element contains the name of the system user that the APB process will run as. One can use the ${MAAT_USER} macro in order to use the default Maat user.
+
+The `group` element contains the name of the system group that the APB process will run as. One can use the ${MAAT_GROUP} macro in order to use the default Maat group.
+
+The `capabilities` element specified what Linux kernel capabilities will be applied to the APB process. For more information about Linux kernel capabilities, please consult this reference describing `Linux Capabilities`_.
+
+The `selinux` element has no attributes and several child elements. Each child element contains text indicating its value. It is laid out as follows, with the ellipses filled in as appropriate:
+
+.. code-block:: xml
+
+    <selinux>
+        <user> ... </user>
+        <role> ... </role>
+        <type> ... </type>
+        <range> ... </range>
+    </selinux>
+
+Each child element corresponds to the relevant attribute of the APB process' SELinux context. A process executing this APB will be assigned these attributes when spawned.
+
+An example of a complete `security_context` element is as follows:
+
+.. code-block:: xml
+
+   <security_context>
+      <user>${MAAT_USER}</user>
+      <group>${MAAT_GROUP}</group>
+      <capabilities>cap_dac_override</capabilities>
+      <selinux><type>system_u:system_r:dummy_t:s0</type></selinux>
+   </security_context>
+
+APB.c
+------
+
+APBs are flexible representations of measurement functionality designed to accommodate diverse measurement applications. They control how ASPs are applied to measurement targets and how measurements are combined. This is the source file which specifies the behavior of the APB.
+
+apb_execute
+***********
+
+`apb_execute` is the function that is called in order to execute the functionality of an APB. The main function (implemented in `lib/apb/apbmain.c`) sets up the APB's state and then calls `apb_execute`.
+
+The signature of the `apb_execute` function is as follows:
+
+.. code-block:: c
+
+    int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid,
+                    int peerchan, int resultchan, char *target, char *target_type,
+                    char *resource, struct key_value **arg_list, int argc);
+
+
+The arguments provided to this function contain the following information:
+
+* `apb` - contains information about an APB such as the ASPs available to it for execution, its UUID, and more (for more details, consult the struct definition in `lib/common/apb_info.h`)
+* `scen` - contains information regarding the negotiation between the Attester and Appraiser such as the keys and certificates used during negotiation and the nonce for this measurement
+* `meas_spec_uuid` - contains the UUID of the measurement spec that is being used for this execution of the APB
+* `peerchan` - file descriptor referring to the channel of communication to a peer (usually the appraiser), which is normally used to transfer measurements from the attester to the appraiser
+* `resultchan` - file descriptor referring to the channel of communication to the client requesting the appraisal, which is normally used to transfer the result of appraisal to the client
+* `target` - identification of the attester host
+* `target_type` - type of identification stored in `target` (for instance, "host-port" for a host and port combination)
+* `resource` - string specifying the subject of measurement and appraisal. This will correspond to a resource within the AMs selector policy
+* `arg_list` - any arguments that may have been provided to the APB
+* `argc` - how many arguments are in `arg_list`
+
+Not all, or even most, of the arguments to `apb_execute` must be used.
+
+`apb_execute` should return `ASP_APB_SUCCESS` on success and any non-zero integer value otherwise. A set of standard error codes is provided in `lib/common/asp-errno.h`.
+
+An APB may invoke ASPs to collect measurements. The ASPs available to an APB are stored in a GList called `asps` in the `apb` argument passed into apb_execute (these were the ASPs identified in the `asps` section in the apb .xml.in file referenced in the previous section). To reference a specific ASP during execution, the ASP must be found from the list and then invoked using `asp_execute`. This can be done with the following example code segment:
+
+.. code-block:: c
+
+    asp = find_asp(apb->asps, "ASPNAME");
+    if(asp == NULL) {
+        return -1;
+    }
+
+    ...
+
+    ret_val = asp_execute(asp, ...);
+
+with the specific ASP name and ASP parameters defined as needed by the APB.
+
+Measurement Specification Callbacks
+***********************************
+
+The measurement specification callbacks are a set of functions that are declared in measurement APBs and used to coordinate the execution of a measurement protocol by specifying how an APB interprets a measurement specification and carries out measurement activities. This is intended to ease the implementation burden of APBs but, unlike the `apb_execute` function, implementing these callbacks is optional.
+
+The measurement specification callbacks are as follows:
+
+    1. `enumerate_variables` - interpret the measurement specification to identify and create the measurement graph's root nodes
+    2. `measure_variable` - given a node in the measurement graph, identify and execute an ASP to fill in the data
+    3. `get_measurement_feature` (DEPRECATED) - retrieve the value of a specified feature of a measurement node
+    4. `connect_variables` (DEPRECATED) - record a relationship between two variables, represented as an edge between two nodes
+    5. `get_related_variables` - given a measurement node, get all the measurement nodes with a specified edge to the node
+    6. `check_predicate` - given a measurement node, ensure that the data contained within matches a given predicate
+    7. `handle_error` - handle errors that occur within the process of evaluating a measurement specification
+
+There are default implementations for many of these functions in `src/apbs/apb-common.c` (`connect_variables`, `get_related_variables`, `get_measurement_feature`, `check_predicate`), and there are default implementations of other functions (`enumerate_variables`, `measure_variable`) that are specialized for Maat's bundled userspace measurements. Most custom APBs can use the default implementation of the former set of functions, but may need to alter the latter two functions as needed to capture the behavior of any new APBs. `handle_error` is optional and need not be implemented for any APB.
+
+Once these functions have been implemented, they can be used by providing them to the `evaluate_measurement_spec` function via the `measurement_spec_callbacks` struct.
+
+For more information regarding these functions, and the processing of a measurement specification, please consult the `src/measurement_spec/measurement_spec.h` file within the repository.
+
+evaluate_measurement_spec
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The signature of the `evaluate_measurement_spec` function is as follows:
+
+.. code-block:: c
+
+    int evaluate_measurement_spec(meas_spec *spec, measurement_spec_callbacks *callbacks, void *ctxt);
+
+
+The arguments of this function represent the following:
+
+* `spec` - contains information relating to the measurement specification the APB is processing
+* `callbacks` - contains callbacks that implement several aspects of the behavior of carrying out a measurment protocol
+* `ctxt` - a reference to the measurement graph into which measurements are to be placed
+
+`apb_execute` should return `ASP_APB_SUCCESS` on success and any non-zero integer value otherwise. A set of standard error codes is provided in `lib/common/asp-errno.h`.
+
+
+enumerate_variables
+^^^^^^^^^^^^^^^^^^^
+
+The `enumerate_variables` function populates the measurement graph with one or more root nodes based on the contents of a `variable` element of a measurement specification. The signature of the `enumerate_variables` function is as follows:
+
+.. code-block:: c
+
+    GQueue enumerate_variables(void *ctxt,
+                               target_type *ttype,
+                               address_space *space,
+                               char *op, char *val);
+
+The arguments of this function represent the following:
+
+* `ctxt` - a reference to the measurement graph into which measurement variables will be placed
+* `ttype` - a reference to the target type of the measurement variable(s) to be instantiated
+* `space` - a reference to the address space of the measurement variable(s) to be instantiated
+* `op` - a string specifying the operation that should be applied to `val` in order to derive a set of addresses of type `space` for which a root node should be created
+* `val` - a string specifying the value that the operation specified by `op` is applied to in order to produce a set of addresses of type `space`
+
+For each address produced by applying the operation specified by `op` to the value specified by `val`, a new measurement variable with an address space of `space` and a target type of `ttype` is created in the measurement graph. The behavior implied by a particular value of `op` must be encoded in the behavior of `enumerate_variables()`.
+
+This function should return a `GQueue` with all of the measurement variable(s) created as a result of the interpretation of the relevant section of the measurement specification, or NULL if an error occured.
+
+measure_variable
+^^^^^^^^^^^^^^^^
+
+`measure_variable()` implements the logic for collecting a particular piece of measurement data for a particular node in the measurement graph. The signature of `measure_variables()` is as follows:
+
+.. code-block:: c
+
+    int measure_variable(void *ctxt,
+                         measurement_variable *var,
+                         measurement_type *mtype);
+
+The arguments of this function represent the following:
+
+* `ctxt` - a reference to the measurement graph into which the measurement variables will be placed
+* `var` - a reference to the variable that should be measured
+* `mtype` - a reference to the measurement data type that should be collected
+
+This function should return a value of 0 if the measurement was taken successfully and a non-zero value otherwise.
+
+The focus of this function is on selecting an ASP to handle the measurement variable and confirming that the measurement ASP properly executed.
+
+get_measurement_feature (DEPRECATED)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`get_measurement_feature()` implements the behavior for retrieving a specified feature associated with a piece of measurement data. These features must be items that can be extracted by invoking the relevant measurement type's `get_feature()`. The signature of `get_measurement_feature()` is as follows:
+
+.. code-block:: c
+
+    GList *get_measurement_feature(void *ctxt,
+                                   measurement_variable *var,
+                                   measurement_type *mtype,
+                                   char *feature);
+
+The arguments of this function represent the following:
+
+* `ctxt` - a reference to the measurement graph into which the measurement variables will be placed
+* `var` - a reference to the variable that should be measured
+* `mtype` - a reference to the measurement data type which has the relevant feature
+* `feature` - the relevant feature
+
+This function should return a list of values which represent the specified feature, or NULL if an error occurred.
+
+The behavior of this function has been encapsulated by `get_related_variables()`. Defining this function is unnecesary and its use is discouraged.
+
+connect_variables (DEPRECATED)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`connect_variables()` creates an edge between two different measurement variables in the measurement graph. The signature of `measure_variables()` is as follows:
+
+.. code-block:: c
+
+    int connect_variables(void *ctxt,
+                          measurement_variable *src,
+                          char *label,
+                          measurement_type *dest);
+
+The arguments of this function represent the following:
+
+* `ctxt` - a reference to the measurement graph into which the measurement variables will be placed
+* `src` - a reference to the measurement variable from which the edge should be drawn
+* `label` - the label for the new edge
+* `dest` - a reference to the measurement variable to which the edge should be drawn
+
+This function should return a value of 0 if the measurement was taken successfully and a non-zero value otherwise.
+
+The behavior of this function has been encapsulated by `get_related_variables()`. Defining this function is unnecesary and its use is discouraged.
+
+get_related_variables
+^^^^^^^^^^^^^^^^^^^^^
+
+The `get_related_variables()` function returns a list of measurement variables which are related by some given measurement to a particular measurement variable. This relationship could describe a connection based on the underlying data contained within the measurement or an edge that has been created within the measurement graph. This function was intended to encapsulate the functionality of both `get_measurement_feature()` and `connect_variables()`. The signature of `get_related_variables()` is as follows:
+
+.. code-block:: c
+
+    int get_related_variables(void *ctxt,
+                              measurement_variable *var,
+                              measurement_type *mtype,
+                              char *relationship,
+                              GList **out);
+
+The arguments of this function represent the following:
+
+* `ctxt` - a reference to the measurement graph into which the measurement variables will be placed
+* `src` - a reference to the measurement variable from which the edge should be drawn
+* `label` - the label for the new edge
+* `dest` - a reference to the measurement variable to which the edge should be drawn
+
+This function should return a value of 0 if the measurement was taken successfully and a non-zero value otherwise.
+
+
+check_predicate
+^^^^^^^^^^^^^^^
+
+`check_predicate()` evaluates measurement data from the measurement graph with respect to some predicate.
+
+The signature of `check_predicate()` is as follows:
+
+.. code-block:: c
+
+    int check_predicate(void *ctxt,
+                        measurement_variable *var,
+                        measurement_type *mtype,
+                        predicate_quantifier q,
+                        char *feature,
+                        char *operator,
+                        char *value);
+
+The arguments of this function represent the following:
+
+* `ctxt` - a reference to the measurement graph into which the measurement variables will be placed
+* `var` - the measurement variable which contains data against which the predicate is evaluated
+* `mtype` - the type of measurement data, stored within `var`, over which the predicate will be evaluated
+* `q` - the quantifier (`forall` or `any`) that is applied when evaluating the predicate
+* `feature` - the feature of the measurement data over which to evaluate the predicate
+* `operator` - the operator that is applied to the datum and the specified value
+* `value` - the value which is used with `operator` to evaluate the measurement data
+
+This function returns a value greater than 0 if the predicate holds, a value equal to 0 if the predicate does not hold, or -1 otherwise.
+
+handle_error
+^^^^^^^^^^^^
+
+The `handle_error()` function handles the error code which comes from the call to `measure_variable()`.
+
+The signature of `handle_error()` is as follows:
+
+.. code-block:: c
+
+    int handle_error(void *ctxt,
+                     int rc,
+                     measurement_variable *var,
+                     measurement_type *mtype);
+
+The arguments of this function represent the following:
+
+* `ctxt` - a reference to the measurement graph into which the measurement variables will be placed
+* `rc` - the return code of the associated `measure_variable()` call
+* `var` - the measurement variable for which data was being collected when the failure occurred
+* `mtype` - the type fo the measurement that was being collected when the failure occurred
+
+This function should return a value of 0 or greater if a recoverable error was handled and measurement specification evaluation can continue, or a negative value if the evaluation must be aborted.
+
+.. rubric:: Footnotes
+
+.. [#] These permissions to execute ASPs should be reflected in the APB's SELinux policy in order to properly enforce this policy.

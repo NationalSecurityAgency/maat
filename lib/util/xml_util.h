@@ -33,6 +33,9 @@ struct xml_file_info {
     char *full_filename;
 };
 
+/* Optional size limit for XML field contents to avoid unbounded memory allocations when creating buffers */
+#define XML_IN_MEMORY_FIELD_SIZE_LIMIT 5000000
+
 void save_document(xmlDoc *doc, const char *filename);
 xmlXPathObject *xpath(xmlDoc *doc, const char *expression);
 
@@ -60,13 +63,14 @@ int save_node_content(xmlNode *node, const char *filename);
 int save_all_creds(xmlDoc *doc, const char *prefix);
 int xpath_delete_node(xmlDoc *doc, const char *to_delete);
 char *xpath_get_content(xmlDoc *doc, const char *path);
-char *get_contract_type_from_blob(void *buffer, int size);
-xmlDoc *get_doc_from_blob(unsigned char *buffer, size_t size);
+char *get_contract_type_from_blob(xmlChar *buffer, int size);
+xmlDoc *get_doc_from_blob(char *buffer, size_t size);
 xmlDoc *get_doc_from_file(const char *filename);
-char *get_nonce_from_blob(void *buffer, size_t size);
+xmlChar *serialize_doc(xmlDoc *doc, size_t *outsize);
+char *get_nonce_from_blob(char *buffer, size_t size);
 char* get_nonce_xml(xmlNode *root);
-int merge_contracts(const char *type, char *master, int mastsize, char *local,
-                    int localsize, char **merged, int *msize);
+int merge_contracts(const char *type, char *master, size_t mastsize, char *local,
+                    size_t localsize, char **merged, size_t *msize);
 int copy_xml_file_info(struct xml_file_info **dest, struct xml_file_info *src);
 
 

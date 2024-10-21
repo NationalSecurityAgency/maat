@@ -1,0 +1,404 @@
+.. Copyright
+
+   Copyright 2024 United States Government
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+.. currentmodule:: maat
+
+.. _Linux Capabilities: http://lkml.iu.edu/hypermail/linux/kernel/9808.1/0178.html
+
+.. _SELinux: https://github.com/SELinuxProject
+
+.. _aspDevGuide:
+
+ASP Developer Guide
+###################
+
+This appendix is a guide for the process of creating new Attestation Service Providers (ASPs). This guide will cover the motivation for creating new ASPs, the required elements of an ASP, and a technical reference for the elements of ASPs and their associated metadata.
+
+Why Create an ASP?
+==================
+
+Within Maat's architecture, ASPs are the functional units that perform discrete measurement and appraisal tasks on a platform. ASPs are designed to have one deliberate, constrained piece of functionality in order to encourage reuse and strengthen the seperation of concerns. ASPs may interact with operating system services and resources, even privileged ones, in order to execute their functionality. ASPs may be created for any of the following reasons:
+
+    * Measurement - a measurement ASP collects evidence from a target in order to help compose a measurement
+    * Appraisal - an appraisal ASP extracts one or more pieces of related evidence from a measurement and determines whether or not a particular system property is as is expected
+    * Utility - a utility ASP performs some piece of functionality which may require privileged access or otherwise should be seperated from the behavior of an APB, e.g. accessing a cryptographic signing key
+
+For more information about relevant aspects of Maat's architecture, please consult the :ref:`Understanding Maat Architecure <understanding_maat_architecture>` chapter.
+
+Implementing an ASP
+===================
+
+This section will give a high level overview of the different items required to implement an ASP.
+
+asp.c
+-----
+
+This file constitutes the implementation of the ASP. Every ASP is require to implement one of three functions:
+
+    1. `asp_init` - Initializes any state required for the operation of the ASP
+    2. `asp_execute` - Executes the behavior of the ASP
+    3. `asp_exit` - Cleans up any state set up by the ASP
+
+For more information about these functions, please consult the :ref:`Technical Reference <asp_tech_ref>` included in this appendix.
+
+asp.xml.in
+----------
+
+This file contains metadata regarding the ASP. The AM consults a collection of these files in order to track information pertaining to installed ASPs. This includes, but is not limited to:
+
+    * A description of the ASP
+    * The location of the ASP executable on the filesystem
+    * Usage information regarding the ASP
+
+For more information about the contents of the asp.xml.in file, please consult the :ref:`Technical Reference <asp_tech_ref>` included in this appendix.
+
+Measurement Specification
+-------------------------
+
+Measurement specifications are a declaration of a measurement that one or more APBs may interpret in order to execute a measurement protocol. The sections contained within a measurement specification, at a high level, define the following:
+
+    * The types of measurements, representing the measurement types of the relevant graph nodes, that will be taken as part of the measurement
+    * The structural relationship between different measurements within the measurement graph, if applicable
+    * The initial nodes that the measurement graph will be populated with
+
+ASPs are instrumented to take measurements for one or more varieties of nodes within the measurement graph, differentiated by their tuple of measurement types. Therefore, for a measurement ASP to be executed by an APB, there must be some representation of the relevant measurement node in the measurement specification.
+
+For a list of Maat's measurement types, please consult the :ref:`Types Appendix <meas_types>`.
+
+For more information about Maat's measurement specifications, please consult the :ref:`Measurement Specification <measSpec>` chapter.
+
+apb.c
+-----
+
+ASPs are executed by APBs in order to perform some constrained unit of work. For every ASP, there must be an APB implementation that includes a call to use the ASP. If the ASP is intended to perform a measurement, then it should be called in the APB's `measure_variable()` function.
+
+For more information about implementing an APB, as well as how to invoke an ASP from an APB, please consult the :ref:`APB Development Guide <apbDevGuide>`.
+
+SELinux
+-------
+
+SELinux is the Mandatory Access Control policy which constrains the behavior of Maat's components and prevents them from being misused at runtime. Each ASP should have an appropriate policy that describes their expected behavior.
+
+An integrator creating an SELinux policy for a new ASP could either add to Maat's existing SELinux policy, or could develop a new set of policy files, compile them, and install the new, independent, policy.
+
+For more information about Maat's overall security philosophy, please consult the :ref:`Understanding the Security Model <security_model>`. For more information about SELinux, please consult SELinux resources such as the `SELinux`_ project page.
+
+Installing an ASP
+=================
+
+In-tree
+-------
+
+This type of installation occurs when a new ASP is compiled, installed, and packaged alongside all the existing APBs in Maat.
+
+ASP Source Files
+****************
+
+The ASP source files should be placed in the `src/asps` directory along with the ASP's .xml.in file.
+
+Autotools/Makefile Changes
+**************************
+
+Edit the `configure.ac` file at the root of the Maat source tree to add one of the following lines:
+
+.. code-block:: none
+
+    DEFAULT_ASP([...])
+
+or
+
+.. code-block:: none
+
+    EXTRA_ASP([...])
+
+where the ellipses are replaced with the name of your ASP. If you make your ASP a default ASP then it will always be compiled when you compile Maat, while if you make it an extra ASP it will only compile when the flag `--enable-asp-"..."` is passed to the configure script, where the ellipses are replaced with the name of your ASP.
+
+You also have to modify the `Makefile.am` located in the `src/asps` directory. You must add a section like the following:
+
+.. code-block:: none
+
+    if BUILD_..._ASP
+    asp_PROGRAMS      += ..._asp
+    "..."_asp_SOURCES = ..._asp.c
+    "..."_asp_CFLAGS  = $(AM_CFLAGS)
+    "..."_asp_LDADD   = $(AM_LIBADD)
+    endif
+
+where the ellipses are replaced with the name of your ASP. If your ASP is enabled to be built, the Makefile will be generated with a section to compile your ASP with the source files and the libraries specified under the SOURCES and LDADD sections, respectively. There are common sources and libraries that will be used to compile your ASP, but other such files can be specified as needed.
+
+SELinux
+*******
+
+For an in-tree build, one can generally incorporate the SELinux policy for a new ASP into the existing Maat SELinux policy. There are several files which defines Maat's SELinux policy:
+
+    * selinux/maat.te - defines the runtime policy constraining the ASP
+    * seinux/maat.if - defines helpful interfaces to ease the process of policy development in the maat.te file
+    * selinux/maat.fc.in - binds the ASP's types, defined in maat.te, to the ASP's executable installed on the filesystem
+
+Within Maat's SELinux policy, the `define_asp()` interface defines generic ASP permissions and applies them to the provided ASP types. Further permissions require manual assignment by the policy author.
+
+For information about installing Maat's SELinux policy, please consult the :ref:`quick start <quick_start>` appendix.
+
+Measurement Specification
+-------------------------
+
+Measurement Specifications define the structure of a measurement taken by an APB. During the measurement process, an APB will interpret a measurement specification and delegate to ASPs to collect information required to fill in the measurement.
+
+Therefore, in order to utilize a new measurement ASP, you will need to have at least one measurement specification that contains a directive to collect the type of information the measurement ASP produces.
+
+For more information about Measurement Specifications and their role in Maat, please consult the :ref:`Measurement Specification <measSpec>` chapter.
+
+Out-of-tree
+-----------
+
+This type of installation involves an ASP being seperately built and then registered with an existing Maat installation.
+
+For more details on installing Maat, please consult the :ref:`quick start <quick_start>` appendix.
+
+ASP Binary
+**********
+
+To build an ASP out of the Maat tree, you will need to link libraries built by Maat. These would be the following:
+
+    * libmaat_apb
+    * libmaat_asp
+    * libmaat_client
+    * libmaat_graph
+    * libmaat_measurement_spec
+    * libmaat_util
+
+The binary should be placed in the directory containing the binary files of all installed ASPs. By default, this is located at `/usr/lib/maat/asps`, although if you follow the installation instructions located in the `quick start appendix <quick_start>`, these files will be installed to the `/opt/maat` prefix such that the ASP directory will be `/opt/maat/lib/maat/asps`.
+
+Regardless of the installation location, ensure that the ASP's XML has a valid path to the ASP binary. This will allow APBs to execute the ASP binary as needed.
+
+ASP XML
+*******
+
+The XML file for an ASP should be placed in the directory containing the XML files of the other ASPs. By default, this is located at `/usr/share/maat/asps`, although if you follow the installation instructions located in the `quick start appendix <quick_start>`, Maat will be installed to the `/opt/maat` prefix such that the ASP directory will be `/opt/maat/share/maat/asps`. Ensure that the XML file has a valid path to the executable you wish Maat to execute if this ASP is selected.
+
+Once the ASP XML has been put into the proper location, an APB will be able to load the ASP during execution and execute the ASP if it is selected.
+
+Measurement Specification
+*************************
+
+The XML file specifying a measurement which would trigger the new measurement, if one is needed, should be placed in the directory containing all installed measurement specifications. By default, this is located at `/usr/share/maat/measurement-specifications`, although if you follow the installation instructions located in the `quick start appendix <quick_start>`, these files will be installed to the `/opt/maat` prefix such that the measurement specifications directory will be `/opt/maat/share/maat/measurement-specification`.
+
+Once the measurement specification has been put into the proper location, an AM will be able to load the measurement specification as part of negotiations and an APB will be able to parse the measurement specification to carry out the measurement it describes.
+
+.. _asp_tech_ref:
+
+Technical Reference
+===================
+
+ASP.xml.in
+----------
+
+The purpose of this file is to provide the basic metadata regarding an ASP and how it interacts with other components.
+
+The file includes the following sections:
+
+Name
+****
+
+The `name` element contains the name of the ASP.
+
+Description
+***********
+
+The `Description` element contains a brief description of the ASP and its purpose.
+
+UUID
+****
+
+The `UUID` element contains UUID formatted identifier for the ASP. This should be unique from every other installed ASP.
+
+Type
+****
+
+Declares the broad class of this ASP. This categorizes ASPs by their behavior or the types of constructs they interact with. The following types are currently present in Maat:
+
+    * Apprisal
+    * Compressing
+    * Contract Verification
+    * Creating contract
+    * Decompress
+    * Decrypting
+    * Demonstration
+    * Encrypting
+    * File
+    * GOT
+    * Kernel
+    * Merging
+    * Network
+    * Process
+    * Receive
+    * Request
+    * Sending
+    * Serializing
+    * Signing
+    * Split
+    * System
+
+File
+****
+
+The `file` element declares the executable that is invoked when an ASP is executed. File elements are specified as follows, with the ellipses as appropriate:
+
+.. code-block:: xml
+
+    <file hash="...">${ASP_INSTALL_DIR}/...</file>
+
+ASPs are generally installed to the ASP install directory (the location of which is defined in ${ASP_INSTALL_DIR} for in-tree builds).
+
+The `hash` attribute is currently unused.
+
+Input Description
+*****************
+
+The `Input_Description` element contains text that describes the command line inputs used by the ASP.
+
+Output Description
+******************
+
+The `Output_Description` element contains text that describes the outputs of the ASP.
+
+Measurers
+*********
+
+For ASPs that carry out measurement activities, the `measurers` element describes the different measurement types that ASP may act upon to produce a measurement. The `measurers` element contains zero or more `satisfier` elements that each encode one set of types the ASP may act upon. A `satisfier` element is laid out as follows, with ellipses filled in as appropriate:
+
+.. code-block:: xml
+
+   <satisfier id="...">
+       <value name="...">...</value>
+       <capability
+           target_type="..." target_magic = "..."
+           address_type="..." address_magic="..."
+           measurement_type="..." measurement_magic="..." />
+   </satisfier>
+
+The `id` attribute is an identifier for a particular satisfier element, and should be unique for each satisfier element.
+
+The `value` sub-element contains information that is used to annotate the satisfier. The `name` attribute labels what the contents of the `value` sub-element represents.
+
+The `capability` sub-element describes a tuple of Maat's types (the measurement data type, the target type, and the address space type) which a node in a measurement graph may have. This represents a type of node that this ASP is able to act upon.
+
+Security Context
+****************
+
+The `security_context` element specifies various aspects of the security context of the running ASP, including its user, group, assigned Linux kernel capabilities, and SELinux type, as applicable.
+
+A `security_context` element is laid out as follows, with the ellipses filled in as appropriate:
+
+.. code-block:: xml
+
+   <security_context>
+      <user> ... </user>
+      <group> ... </group>
+      <capabilities> ... </capabilities>
+      <selinux> ... </selinux>
+   </security_context>
+
+Each element has no attributes and contains text that describes the corresponding attribute of the security context.
+
+The `user` element contains the name of the system user that the ASP process will run as. One can use the ${MAAT_USER} macro in order to use the default Maat user.
+
+The `group` element contains the name of the system group that the ASP process will run as. One can use the ${MAAT_GROUP} macro in order to use the default Maat group.
+
+The `capabilities` element specified what Linux kernel capabilities will be applied to the ASP process. For more information about Linux kernel capabilities, please consult  this reference describing `Linux Capabilities`_.
+
+The `selinux` element has no attributes and several child elements. Each child element contains text indicating its value. It is laid out as follows, with the ellipses filled in as appropriate:
+
+.. code-block:: xml
+
+    <selinux>
+        <user> ... </user>
+        <role> ... </role>
+        <type> ... </type>
+        <range> ... </range>
+    </selinux>
+
+Each child element assigned the specified value to the corresponding attribute of the ASP process' SELinux context.
+
+An example of a complete `security_context` element is as follows:
+
+.. code-block:: xml
+
+   <security_context>
+      <user>${MAAT_USER}</user>
+      <group>${MAAT_GROUP}</group>
+      <capabilities>cap_dac_override</capabilities>
+      <selinux><type>system_u:system_r:dummy_t:s0</type></selinux>
+   </security_context>
+
+ASP.c
+------
+
+ASPs are agents that implement some discrete piece of measurement functionality. This is the source file which specifies the behavior of the ASP.
+
+asp_init
+********
+
+`asp_init()` is the function that is called to initialize the ASP. If there is any state that needs to be intitialized before the ASP starts, it should be done here.
+
+The signature of the `asp_init()` function is as follows:
+
+.. code-block:: c
+
+    int asp_init(int argc, char *argv[]);
+
+The arguments provided to this function contain the following information:
+
+* `argc` - the number of entries within `argv`
+* `argv` - all of the command line arguments provided to the ASP
+
+`asp_init()` should return `ASP_APB_SUCCESS` on success and any non-zero integer value otherwise. A set of standard error codes is provided in `lib/common/asp-errno.h`.
+
+asp_measure
+***********
+
+`asp_measure()` is the function that executes the functionality of the ASP.
+
+The signature of the `asp_measure()` function is as follows:
+
+.. code-block:: c
+
+    int asp_measure(int argc, char *argv[]);
+
+The arguments provided to this function contain the following information:
+
+* `argc` - the number of entries within `argv`
+* `argv` - all of the command line arguments provided to the ASP
+
+`asp_measure()` should return `ASP_APB_SUCCESS` on success and any non-zero integer value otherwise. A set of standard error codes is provided in `lib/common/asp-errno.h`.
+
+asp_exit
+********
+
+`asp_exit()` is the function that cleans up any state following the completion of the ASP and handles any errors. This function is the counterpart to the `asp_init()` function, which sets up much of the state that `asp_exit()` will teardown.
+
+The signature of the `asp_exit()` function is as follows:
+
+.. code-block:: c
+
+    int asp_exit(int status);
+
+The arguments provided to this function contain the following information:
+
+* `status` - the result of the `asp_execute()` call
+
+`asp_exit()` should return `ASP_APB_SUCCESS` on success and any non-zero integer value otherwise. A set of standard error codes is provided in `lib/common/asp-errno.h`.
+

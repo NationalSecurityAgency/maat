@@ -45,7 +45,10 @@ static measurement_data *copy_marshalled_data(measurement_data *d)
         } else {
             memcpy(new->marshalled_data, md->marshalled_data, len);
         }
+    } else {
+        return NULL;
     }
+
     return &new->meas_data;
 }
 

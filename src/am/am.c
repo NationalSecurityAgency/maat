@@ -250,7 +250,7 @@ int attester_spawn_protocol(struct attestation_manager *self,
     if (has_place_args(phrase) == 1) {
         ret = query_place_information(apb, scen, phrase);
         if(ret < 0) {
-            dlog(1, "Error writing place information to the csv file, launching will continue\n");
+            dlog(1, "Error writing place information to the xml file, launching will continue\n");
         }
     }
 
@@ -382,7 +382,7 @@ int appraiser_spawn_protocol(struct attestation_manager *self, struct scenario *
         if (has_place_args(copl) == 1) {
             ret = query_place_information(apb, scen, copl);
             if(ret < 0) {
-                dlog(1, "Error writing place information to the csv file, launching will continue\n");
+                dlog(1, "Error writing place information to the xml file, launching will continue\n");
             }
         }
 
@@ -414,6 +414,7 @@ int appraiser_spawn_protocol(struct attestation_manager *self, struct scenario *
     }
 
 out:
+    free(args);
     g_list_free(option);
     return ret;
 }

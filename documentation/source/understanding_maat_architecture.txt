@@ -20,6 +20,8 @@ Understanding Maat Architecture
 
 .. currentmodule:: maat
 
+.. _understanding_maat_architecture:
+
 Purpose and Intended Audience
 ==============================
 

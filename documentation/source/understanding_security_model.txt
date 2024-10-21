@@ -23,7 +23,7 @@ Understanding the Security Model
 
 .. _sVirt: http://namei.org/presentations/svirt-lca-2009.pdf
 
-.. _SELinux: http://selinuxproject.org
+.. _SELinux: https://github.com/SELinuxProject
 
 .. _security_model:
 

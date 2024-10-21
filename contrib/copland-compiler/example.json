@@ -1,4 +1,0 @@
-["PRIM", {"cmd": "/bin/echo",
-	  "target": "self",
-	  "args": ["hello", "world"]}]
-

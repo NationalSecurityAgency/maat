@@ -32,6 +32,8 @@
 		<asp uuid="70e8cb56-bcd9-11ec-9d64-0242ac120002">decompress_asp</asp>
 		<asp uuid="96158eee-bcf4-11ec-9d64-0242ac120002">verify_measurement_contract_asp</asp>
         <asp uuid="3cc9f1a6-50c2-4612-b24b-8430ad1f1a83">got_appraiser</asp>
+		<asp uuid="3a342d1e-1c71-4be3-852d-53eb27afa013">md5_hashcheck_asp</asp>
+		<asp uuid="2adada1c-128c-4f4d-ad8b-109e8447a68d">memorymapping_appraise</asp>
 		<asp uuid="C75ABC0E-39E9-442A-93AB-54CE8D361213">elf_appraise</asp>
 	</asps>
     <copland>

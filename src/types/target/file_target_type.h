@@ -25,18 +25,21 @@
  */
 
 #include <measurement_spec/meas_spec-api.h>
+#define FILE_TARGET_MAGIC 1001
+#define FILE_TARGET_TYPE_NAME "file"
+
 
 
 #ifdef DEFINE_GLOBALS
 /**
  * file target type universally unique name
  */
-const char* file_target_type_name = "file";
+const char* file_target_type_name = FILE_TARGET_TYPE_NAME;
 
 /**
  * file name target_type universally unique 'magic' id number
  */
-const magic_t file_target_type_uuid = 1001;
+const magic_t file_target_type_uuid = FILE_TARGET_MAGIC;
 
 #else
 
@@ -51,3 +54,4 @@ extern const magic_t file_target_type_uuid;
 extern target_type file_target_type;
 
 #endif
+

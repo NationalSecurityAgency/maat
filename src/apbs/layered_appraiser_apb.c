@@ -271,7 +271,7 @@ static int appraise_node(measurement_graph *mg, char *graph_path, node_id_t node
             }
             // Everything else goes to an ASP
         } else {
-            appraiser_asp = select_appraisal_asp(node, data_type, apb_asps);
+            appraiser_asp = select_appraisal_asp(mg, node, data_type, apb_asps);
             if(!appraiser_asp) {
                 dlog(2, "Warning: Failed to find an appraiser ASP for node of type %s\n", type_str);
                 ret = 0;
@@ -430,7 +430,7 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     }
 
     /* Read the measurement contract */
-    doc = xmlReadMemory(scen->contract, (int)scen->size, NULL, NULL, 0);
+    doc = get_doc_from_blob(scen->contract, scen->size);
     if (doc == NULL) {
         dlog(1, "Failed to parse contract XML.\n");
         return ret;
@@ -492,12 +492,11 @@ int apb_execute(struct apb *apb, struct scenario *scen,
 
     dlog(6, "Resp contract: %s\n", response_buf);
     if(sz == 0) {
-        sz = (size_t)xmlStrlen(response_buf);
+        sz = (size_t)xmlStrlen(response_buf) + 1;
         dlog(0, "Error: sz is 0, using strlen (Need to fix this! Why is xmlDocDumpMemory not giving back the size!?\n");
     }
 
     dlog(6, "Send response from appraiser APB: %s.\n", response_buf);
-    sz = sz+1; // include the terminating '\0'
     ret = write_response_contract(resultchan, response_buf, sz,
                                   &bytes_written, 5);
 

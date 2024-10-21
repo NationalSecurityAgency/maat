@@ -18,7 +18,8 @@ check_PROGRAMS    = test_util test_load_asps test_graph \
 			test_client test_am_apb \
 			test_marshall_data test_csv \
 			test_graph_announcements \
-			test_sgraph
+			test_sgraph \
+            test_place_xml
 
 noinst_PROGRAMS = dummy dummy_apb
 
@@ -38,12 +39,13 @@ LDADD           = ../common/libcommon.la \
 		  $(XML_LIBS) $(GLIB_LIBS) $(OPENSSL_LIBS) \
 		  -luuid -ldl -lz
 
+AM_LDFLAGS     = -lcheck
 if BUILD_COVERAGE
-AM_LDFLAGS     = -fprofile-arcs -ftest-coverage
+AM_LDFLAGS    += -fprofile-arcs -ftest-coverage
 LDADD         += -lgcov
 AM_CFLAGS     += --coverage
 else
-AM_LDFLAGS     = 
+AM_LDFLAGS    += 
 endif
 
 test_util_SOURCES		= test_util.c
@@ -90,7 +92,9 @@ test_sgraph_LDADD		= ../sgraph/libmaat_sgraph-@PACKAGE_VERSION@.la \
 						  ../util/libmaat_util-@PACKAGE_VERSION@.la \
                           @CHECK_LIBS@
 
-
+test_place_xml_LDADD    = ${LDADD}
+test_place_xml_LDFLAGS  = ${AM_LDFLAGS}
+test_place_xml_SOURCES  = test_place_xml.c
 
 # test_everything_SOURCES         = test_everything.c
 # test_everything_CPPFLAGS        = $(AM_CPPFLAGS) -DSRC_DIR="\"$(srcdir)\"" -DBUILD_DIR="\"$(builddir)\""

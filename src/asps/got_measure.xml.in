@@ -31,7 +31,7 @@
 	<measurers>
 		<satisfier id="0">
 			<value name="type">HASHFILE</value>
-                       <capability target_type="process" target_magic="0x091D091D" target_desc = "An instance of target type, which describes the attributes of the target process." 
+                       <capability target_type="process_target_type" target_magic="0x091D091D" target_desc = "An instance of target type, which describes the attributes of the target process." 
 				address_type="pid_address_space" address_magic="0x0F1DF1DF"  address_desc = "An instance of address type that describes the address space for PID memory"
 				measurement_type="blob_measurement_type" measurement_magic="0xB10BB10B" measurement_desc = "Data blob"/>
 		</satisfier>

@@ -15,215 +15,130 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-About
-=====
-
-*EXPERIMENTAL* OCaml tool to take an Copland-based s-expression as input, 
-and output an APB that implements the s-expression input. This is 
-intended to be close to how we might actually implement Copland 
-evaluation in an APB, but high level enough that it is still easy to 
-experiment with. The end goal here would be to have APBs that can be 
-proven to implement the Copland phrase that they claim to implement in 
-their xml.in file. 
-
-Note, this is reference code, so it likely has many bugs. Notably,
-file descriptors are leaked into child processes and exceptions are
-completely ignored.
-
 Dependencies
 ============
 
-Requires the Core, Yojson, PPX Let, PPX SEXP Conv, PPX Deriving, xmlm, and
-PPX Deriving Yojson packages. 
+Requires the Core, Yojson, PPX Let, PPX SEXP Conv, PPX Deriving, xmlm, Menhir and
+PPX Deriving Yojson packages as well as the Dune build system. 
 
 ```
    opam install core yojson ppx_deriving_yojson ppx_sexp_conv xmlm
 ```
 
-_Note_: There have been some compatibility issues with `ppx_sexp_conv`
-and `ppx_deriving` with `ppx_type_conv` version `v0.9.1`. Upgrading to
-ocaml `4.05.0` with `ppx_type_conv` version `v0.10.0` seems to work.
-
 Building
 ========
 
-You can build the example workflow interpreter using the `make` command: 
-```
-   make
-```
-
-Real APB Example (Work in Progress)
-===================================
-
-This will use the 'standard ASPS' in Maat (serialize graph, compress, encrypt,
-create contract, and send) to serialize and relay an existing Maat graph to a
-pipe.
-
-1. Install Maat with the configuration option `--prefix=/opt/maat`
-2. Rename the hardcoded graph path in stdasps.sexp to a leftover maat graph
-   on your system (graphs should remain in `/tmp/` after running through the
-   tutorial). Copy the example execute contract (execute_contract.xml) to
-   /tmp/workdir (hardcoded work directory ASPs will use, execute contract is
-   needed for the create_contract ASP).
-   ```
-      sudo mkdir /tmp/workdir
-      sudo cp execute_contract.xml /tmp/workdir/
-   ```   
-   
-3. Build the compiler and generate the C source code and APB XML based upon the
-   S-Expression in stdasps.sexp
+You can build the compiler using the `dune build` command:
 
 ```
-   make
-   ./workflow.native -c stdasps.c -s stdasps.sexp
-   ./workflow.native -x stdasps.xml.in -s stdasps.sexp
+   dune build
+```
+This will produce an executable in `_build/default/bin/main.exe`
+
+Running
+========
+The compiler will compile a copland phrase present in the file provided with the `-f` flag.
+The parser was designed to parse Copland phrases as typically written.
+For further inspection or development see `lib/lexer.mll` and `lib/parser.mly`.
+Example copland phrases can be found in `examples/*.cl` files.
+
+Each ASP in the compiled ASP can be run on a batch of arguments.
+These arguments are provided in an arguments file specified with the `-a` flag.
+These files have the following format.
+```
+(
+   arg_name1 (file1 ... filen)
+   ...
+   arg_namen (file1 ... filen)   
+)
+```
+Alternatively, an argument name can be mapped to the special identifier `children`, which refers to new nodes produced by the previous ASP that was run.
+For example, after running `listdirectoryserviceasp`, you could run `hashfileserviceasp` on `children`, and hash each node that was created during the running of `listdirectoryserviceasp`.
+
+
+Examples can be found in `examples/*.args`
+
+
+You can run the compiler with the following command.
+```
+./main.exe -f <copland phrase file> -a <argument map file> -c <output c file name>
 ```
 
-4. Edit the placeholders in stdasps.xml.in to add information about the APB.
-   Adding at least one supported Copland phrase is a requirement, as well as
-   UUIDs which correspond to the ASPs you are calling
-
-5. Add the .xml.in and .c file to the `~/maat/src/apbs` directory and add a 
-   reference to the APB to `~/maat/src/apbs/Makefile.am` so that the APB will be
-   built
-
-6. Add the APB to the DEFAULT_APB list in `~/maat/configure.ac`
-
-At this point, if you follow the instructions to configure and build Maat, your 
-APB will be available and can be negotiated over using the Copland phrases you 
-added to `stdasps.xml.in`.
-
-For more information about adding an APB to Maat, please consult 
-`~/maat/src/apbs/README.md`
-
-Correspondence with Copland Terms
-=========================
-
-The `workflow` type defined here is intended to correspond with the structures 
-of Copland terms with the semantics provided by the `run` function.
-The primary difference is that:
-1. Remote subterms are assumed to be encapsulated in a single ASP
-   action
-2. The dataflow between atomic terms is explicitly constructed using
-   file descriptors to pass evidence to or around components
-
-To support (2) explicit `split` and `merge` operations are required
-for both `Parallel` and `Sequential` composition.
-
-If terms are combined via `Sequential` or `Parallel`, the dataflow
-must be split: a subset of the current input is passed to each of the
-two subterms, and merged: the output of the two subterms is combined
-to a new output. This allows implementation of the abstract `par` and
-`seq` functions used to combine evidence in the evidence semantics of
-Copland.
-
-The difference between `Sequential` and `Parallel` is that the first
-subterm of `Sequential` is executed to completion prior to executing
-the first subterm of `Parallel`. This reflects the difference between
-`;` and `||` in Copland.
-
-The `Pipeline` constructor supports dataflow where input from one
-subterm is passed to another (e.g., for the `ENV` action). This is a
-form of parallel composition because the subterms are executed
-concurrently, but internal synchronization (e.g., blocking for input)
-may ensure sequencing properties.
-
-The `Serial` constructor is similar to `Pipeline` but inserts a
-buffering subprocess that ensures the left subflow terminates before
-the execution of the right subflow. The `Serial` constructor should
-correspond exactly to `;` in Copland.
-
-Handling Serial
-===============
-
-The interpreter and compiler handle the `Serial` construct somewhat
-differently.
-
-The interpreter relies on its ability to serialize and interpret
-workflows to pass the righthand flow to another instance of itself. It
-treats `Serial a b` as syntactic sugar for `Pipeline a (ASP self
-["-b"; "-s"; "-e"; sexp_of_workflow b])`. This causes the interpreter
-to fork another version of itself in a buffering mode, the buffering
-interprter will read its input to EOF, set up a new pipe, then fork
-again. The child of the bufferer sets the read end of the new pipe as
-its standard input and interprets its workflow argument, the bufferer
-writes the buffered input to the pipe then waits for its child to
-exit. The ASCII art diagram below reflects these flows, each column
-represents a separate process.
-
-<pre>
-original --- fork/exec ---> buffer
-   |                          |
-   |                      read input
-   |                          |
-   |                          +------ fork --------> child
-   |                          |                        |
-   |                          |                        |
-   |                     write buffer -- pipe --> interpret b
-   |                          |                        |
-   |                          |                        |
-   |                        wait <------------------ exit
-   |                          |
-   |                          |
- wait <-------------------- exit
-</pre>
-
-The compiler can't play the same game because it can't rely on runtime
-serialization and interpretation of workflows. Instead, it uses a
-`fork_and_buffer()` primitive function defined in `runasp.c` to
-implement the buffering semantics and inlines the righthand flow into
-the body of the generated code inside a block that will be executed by
-a subprocess `fork()`ed (but not `exec()`ed) from within
-`fork_and_buffer()`.
-
-The `fork_and_buffer()` routine actually performs two `fork()`
-operations. First, it `fork()`s from the orignal process and reads
-input to `EOF` in the child. Then, it `fork()`s again and uses the
-original child to write the buffered input to a pipe connected to the
-grandchild. In the original process, control is returned back to the
-main function with a return value of `0` which will cause the
-execution to skip over the righthand subflow and continue dispatching
-work as normal. In the grandchild process, `fork_and_buffer()` returns
-back to the main function with a return value `> 0` which causes the
-righthand subflow to be executed. In the child process,
-`fork_and_buffer()` never returns, it writes the buffered input data
-then `exit()`s.
-
-The `main` function ends up looking something like:
-
+If you are developing compiler, it is useful to be able to run the compiler without building and retrieving the executable, this can be accomplished with the following command.
 ```
-	pid_t child;
-	int infd;
-	rc = fork_and_buffer(&child, &infd, ...);
-	if(rc > 0){
-		...	
-		/* do_subflow_b with stdin <- infd */
-		...
-		return 0; /* exits the program */
-		...
-		*cleanups*
-		...
-	}
+dune exec -- copland_compiler -f <copland phrase file> -a <argument map file> -c <output c file name>
+```
+
+Please see the general MAAT documentation on how to properly build and use APBs.
+Please not that this compiler is experimental, and its output has not been as thoroughly tested as the core functionality of MAAT.
+
+ASP XML File
+=========
+
+In order to compile an ASP, there must be an accompanying `.xml` file that contains some essential information.
+These xml files should be located in a directory that can be specified with the `-d` flag.
+This xml file should contain the `<name>`, `<uuid>`, `target_type`, and `address_type` of the asp.
+The information in these tags is necessary for the compiler to function on that asp.
+The `<name>` and `<uuid>` tags should be top-level children of an `<asp>` tag.
+The `target_type` and `address_type` information should be attributes of the `<capability>` tag, which is the child of `<satisfier>` which is in turn a child of `<measurers>`.
+
+This structure is specified in this partial xml.
+```
+<asp>
+   <name>name</name>
+   <uuid>uuid<uuid>
+   ...
+   <measurers>
+      <satisfier>
+         <capability target_type="target_type" address_type="address_type" .../>
+      </satisfier>
+   </measurers>
+   ...
+</asp>
+```
+
+
+The following xml is a more complete example of a valid asp xml file.
+```
+<asp>
+	<name>hashfileservice</name>
+	<uuid>dff44141-9d3a-4cfe-8a30-2c072bb77025</uuid>
+	<type>File</type>
+	<description>SHA1 hash of target file</description>
+	<usage>
+        hashfileservice [graph path] [node id]</usage>
+	<inputdescription>...</inputdescription>
+	<outputdescription>...</outputdescription>
+	<seealso>
+        sha1</seealso>
+	<example>
 	...
-	/* rest of the workflow */
-	...
+	<aspfile hash="XXXXXX">/opt/maat/lib/maat/asps/hashfileserviceasp</aspfile>
+	<measurers>
+		<satisfier id="0">
+			<value name="type">HASHFILE</value>
+                        <capability target_type="file_target_type" target_magic="1001" target_desc = "..." 
+				address_type="file_addr_space" address_magic="0x5F5F5F5F" address_desc = "A..."
+				measurement_type="sha1hash_measurement_type" measurement_magic="3100" measurement_desc = "..."/>
+		</satisfier>
+	</measurers>
+	<security_context>
+	  <selinux><type>hash_file_service_asp_t</type></selinux>
+	  <user>maat</user>
+	  <group>maat</group>
+	</security_context>
+</asp>
+
 ```
 
-The flow looks essentially the same as the interpreter case:
+Current Limitations
+=========
 
-<pre>
-original --- fork --------> child
-   |                          |
-   |                      read input
-   |                          |
-   |                          +------ fork ------> grandchild
-   |                          |                        |
-   |                          |                        |
-   |                     write buffer <--- pipe --- execute b
-   |                          |                        |
-   |                          |                        |
-   |                        wait <------------------ exit
-   |                          |
-   |                          |
- wait <-------------------- exit
-</pre>
+- The compiler does not support running APBs at remote locations. The compiler assumes all Copland phrases do not use the @ constructor.
+
+- This compiler does not currently support ASPs that communicate using pipes. This includes both input and output. In particular, if you want to write an APB that ends by sending the measurement graph through an output channel without signing it, you would need to write additional code to implement this behavior.
+
+- This compiler relies on `target_type` and `address_type` information present in the asp `.xml` files. Not all of the `.xml` files are properly formatted for the copland compiler to parse this information.
+
+- Different ASPs require different code to generate measurement variables. For the examples we have handled so far, the `address_type` provides enough information to perform this task correctly. ASPs that we have not yet handled may require more information.
+

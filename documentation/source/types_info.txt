@@ -16,6 +16,7 @@
 
 .. currentmodule:: maat
 
+.. _meas_types:
 
 Types
 ######

@@ -73,7 +73,7 @@ void setup(void)
     int whitelist_dummy = whitelist_dummy_elf();
 
     file_var = new_measurement_variable(&file_target_type, alloc_address(&simple_file_address_space));
-    ((simple_file_address*)(file_var->address))->filename = strdup("elftest-dir/dummyls");
+    ((simple_file_address*)(file_var->address))->filename = strdup("elftest-dir/dummybash");
     measurement_graph_add_node(graph, file_var, NULL, &file_node);
 
     free_measurement_variable(file_var);
@@ -112,7 +112,7 @@ int create_elftest_dir()
 int create_dummy_elf()
 {
     char *command = NULL;
-    command = "objcopy --set-section-flags .text=data /bin/ls elftest-dir/dummyls";
+    command = "objcopy --set-section-flags .text=data /bin/bash elftest-dir/dummybash";
 
     return system(command);
 }
@@ -162,12 +162,12 @@ START_TEST(test_appraise_elf)
     fail_unless(elfappraiseasp != NULL, "ELF APPRAISE ASP NOT FOUND");
 
     fail_unless(create_dummy == 0, "Create dummy elf failed");
-    fail_unless(access("elftest-dir/dummyls", F_OK) == 0, "Dummy binary does not exist");
+    fail_unless(access("elftest-dir/dummybash", F_OK) == 0, "Dummy binary does not exist");
 
     fail_unless(whitelist_dummy == 0, "Whitelist dummy failed");
     fail_unless(access("elftest-dir/binary.whitelist", F_OK) == 0, "Whitelist file does not exist");
 
-    int verify_whitelist = g_list_find_custom(bin_whitelist, "elftest-dir/dummyls", (GCompareFunc)strcmp);
+    int verify_whitelist = g_list_find_custom(bin_whitelist, "elftest-dir/dummybash", (GCompareFunc)strcmp);
     fail_unless(verify_whitelist == 0, "The dummy elf file was not whitelisted");
 
     // Exclude ASP security context capabilities

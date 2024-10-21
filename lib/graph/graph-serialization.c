@@ -492,15 +492,14 @@ error:
     return NULL;
 }
 
-
 /**
-   Parse a serialized measurement graph.
-
-   @s contains the serialized XML graph with size @size (NULL
-   determination is not assumed).
-
-   Returns a pointer to the graph on success or NULL on failure.
-*/
+ * @brief Parse a serialized measurement graph
+ *
+ * @param s Buffer containing the serialized XML graph
+ * @paran size Unsigned value which contains the size of s
+ *
+ * @return measurement_graph * Returns a pointer to the graph on success or NULL on failure.
+ */
 measurement_graph *parse_measurement_graph(char *s, size_t size)
 {
     xmlNode *root, *node, *iter, *meas;
@@ -512,8 +511,8 @@ measurement_graph *parse_measurement_graph(char *s, size_t size)
 
     dlog(6, "Parse Measurement Graph\n");
 
-    if(size > INT_MAX) {
-        dlog(1, "Error: buffer of size %zd is too large to parse\n", size);
+    if(size == 0 || (SIZE_MAX > INT_MAX && (size - 1) > INT_MAX)) {
+        dlog(1, "Error: buffer of size %zu is invalid\n", size);
         goto error;
     }
 
@@ -530,7 +529,7 @@ measurement_graph *parse_measurement_graph(char *s, size_t size)
     node_map_capacity = 64;
 
     /* FIXME: we should do schema validation here */
-    if((doc = xmlReadMemory(s, (int)size, NULL, NULL, XML_PARSE_HUGE)) == NULL) {
+    if((doc = xmlReadMemory(s, (int)size - 1, NULL, NULL, XML_PARSE_HUGE)) == NULL) {
         dlog(1, "Error Parsing MG: doc is null\n");
     }
 

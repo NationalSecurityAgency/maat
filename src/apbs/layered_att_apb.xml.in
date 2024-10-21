@@ -50,11 +50,11 @@
 	  </arguments>
 	  <places>
 	    <place id="@_0">
-	      <info>host</info>
+	      <info>ip_address</info>
 	      <info>port</info>
 	    </place>
         <place id="@_t">
-	      <info>host</info>
+	      <info>ip_address</info>
 	      <info>port</info>
 	    </place>
 	  </places>

@@ -254,7 +254,7 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid UN
                       parse_target_id_type((xmlChar*)target_type),
                       (xmlChar*)target,
                       (xmlChar*)resource, evaluation, report_data_list,
-                      scen->certfile, scen->keyfile, scen->keypass, NULL, 
+                      scen->certfile, scen->keyfile, scen->keypass, NULL,
                       scen->tpmpass, scen->akctx, scen->sign_tpm,
                       (xmlChar **)&response_buf, &sz);
 
@@ -266,13 +266,12 @@ int apb_execute(struct apb *apb, struct scenario *scen, uuid_t meas_spec_uuid UN
 
         dlog(6, "Resp contract: %s\n", response_buf);
         if(sz == 0) {
-            sz = (size_t)xmlStrlen(response_buf);
+            sz = (size_t)xmlStrlen(response_buf) + 1;
             dlog(0, "Error: sz is 0, using strlen (Need to fix this! Why is xmlDocDumpMemory not giving back the size!?\n");
         }
 
         size_t bytes_written = 0;
         dlog(2,"Send response from KIM APB: %s.\n", response_buf);
-        sz = sz+1; // include the terminating '\0'
         ret_val = maat_write_sz_buf(resultchan, response_buf, sz,
                                     &bytes_written, 5);
 

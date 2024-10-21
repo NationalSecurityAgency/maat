@@ -21,6 +21,7 @@
 
 #define ASP_DIR       SRCDIR "/xml/asp-info"
 #define SPEC_DIR      SRCDIR "/xml/specs"
+#define XML_DIR       SRCDIR "/xml/place-xml"
 #define APB_DIR       SRCDIR "/xml/apb-info"
 #define SELECTOR_CFG  SRCDIR "/xml/am-selector/doc.xml"
 
@@ -40,6 +41,7 @@
 #define CA_CERT         (CREDS_DIR "/ca.pem")
 #define ATTESTER_KEY    (CREDS_DIR "/client.key")
 #define ATTESTER_CERT   (CREDS_DIR "/client.pem")
+#define FINGERPRINTED_CERT  (CREDS_DIR "/a1:b2:c3:d4.pem")
 #define APPRAISER_KEY   (CREDS_DIR "/server.key")
 #define APPRAISER_CERT  (CREDS_DIR "/server.pem")
 #define TPMPASS         "maatpass"

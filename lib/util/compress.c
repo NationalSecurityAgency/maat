@@ -58,7 +58,7 @@ int compress_buffer(const void *data, size_t size, void **output,
     remaining = size;
     copied = 0;
     do {
-        dlog(6, "copied = %zu, remaining = %zu\n", copied, remaining);
+        dlog(LOG_DEBUG, "copied = %zu, remaining = %zu\n", copied, remaining);
 
         if (remaining < CHUNK)
             sz = remaining;
@@ -80,7 +80,7 @@ int compress_buffer(const void *data, size_t size, void **output,
             }
 
             have = CHUNK-stream.avail_out;
-            dlog(6, "have = %zu, *outsize = %zu\n", have, *outsize);
+            dlog(LOG_DEBUG, "have = %zu, *outsize = %zu\n", have, *outsize);
 
             if (!*output) {
                 *output = malloc(have);
@@ -115,7 +115,7 @@ int compress_buffer(const void *data, size_t size, void **output,
 
 
     deflateEnd(&stream);
-    dlog(6, "have = %zu *outsize = %zu\n", have, *outsize);
+    dlog(LOG_DEBUG, "have = %zu *outsize = %zu\n", have, *outsize);
     return ret; //(ret == Z_STREAM_END) ? Z_OK : Z_DATA_ERROR;
 }
 
@@ -152,7 +152,7 @@ int uncompress_buffer(void *data, size_t size, void **output, size_t *outsize)
         else
             sz = CHUNK;
 
-        dlog(6, "remaining = %zu, sz=%zu\n",remaining,sz);
+        dlog(LOG_DEBUG, "remaining = %zu, sz=%zu\n",remaining,sz);
         memcpy(in, ((uint8_t*)data)+copied, sz);
         stream.avail_in = (uInt)sz;
         stream.next_in = in;
@@ -170,7 +170,7 @@ int uncompress_buffer(void *data, size_t size, void **output, size_t *outsize)
             }
 
             have = CHUNK - stream.avail_out;
-            dlog(6, "have = %zu, *outsize = %zu\n", have, *outsize);
+            dlog(LOG_DEBUG, "have = %zu, *outsize = %zu\n", have, *outsize);
 
             if (!*output) {
                 *output = malloc(have);
@@ -204,7 +204,7 @@ int uncompress_buffer(void *data, size_t size, void **output, size_t *outsize)
 
 out:
     inflateEnd(&stream);
-    dlog(6, "have = %zu *outsize = %zu\n", have, *outsize);
+    dlog(LOG_DEBUG, "have = %zu *outsize = %zu\n", have, *outsize);
     return ret;
 }
 

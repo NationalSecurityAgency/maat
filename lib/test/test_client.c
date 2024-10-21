@@ -52,7 +52,7 @@ START_TEST(test_parse_response_pass)
                         "\t<data identifier=\"d1\">value 1</data>\n"
                         "\t<data identifier=\"d2\">value 2</data>\n"
                         "</contract>\n";
-    size_t msg_size = strlen(response_msg);
+    size_t msg_size = strlen(response_msg) + 1; // Must account for the null byte in the buffer
 
     target_id_type_t target_typ;
     xmlChar *target_id;

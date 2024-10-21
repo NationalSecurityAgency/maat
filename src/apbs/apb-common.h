@@ -42,6 +42,8 @@
 #ifndef _MAAT_APB_COMMON_H_
 #define _MAAT_APB_COMMON_H_
 
+#include <graph/graph-core.h>
+
 /**
  * Creates an edge with the given @label between source and
  * destination nodes identified by the variables @src and @dst in the
@@ -75,5 +77,14 @@ GList *get_measurement_feature(void *ctxt, measurement_variable *var,
 int check_predicate(void *ctxt, measurement_variable *var,
                     measurement_type *mtype, predicate_quantifier quant,
                     char *feature, char *operator, char *value);
+
+int execute_updated_sign_send_pipeline(struct measurement_graph *graph, struct scenario *scen,
+                                       int peerchan, GList *apb_asps);
+
+GQueue *get_new_variables(struct measurement_graph *g, GHashTable *hashset);
+
+GQueue *g_queue_deep_copy(GQueue *q);
+
+void g_queue_compose(GQueue *dest, GQueue *src);
 
 #endif

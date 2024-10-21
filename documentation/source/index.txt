@@ -47,15 +47,9 @@ Maat User Guide / Documentation
       ui_tutorial
       maat_attestation_manager_ui_tutorial
       measurement_specifications
+      apb_developer_guide
       apbs
+      asp_developer_guide
       asps
       doxtypes
 
-   Developer Guides
-   ================
-
-   .. toctree::
-      :maxdepth: 2
-
-      apb_readme
-      asp_readme

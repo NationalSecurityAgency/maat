@@ -28,7 +28,7 @@
 @sysconfdir@/maat/credentials/.*\.key		-- gen_context(system_u:object_r:maat_private_key_t,s0)
 #
 # Places file
-@sysconfigdir@/maat/places.csv                  -- gen_context(system_u:object_r:maat_places_file_t,s0)
+@sysconfigdir@/maat/places.xml                  -- gen_context(system_u:object_r:maat_places_file_t,s0)
 #
 #
 # The Attestation Manager itself.
@@ -65,6 +65,7 @@
 @aspdir@/hashserviceasp		-- gen_context(system_u:object_r:hash_service_asp_exe_t)
 @aspdir@/listdirectoryserviceasp	-- gen_context(system_u:object_r:list_directory_service_asp_exe_t)
 @aspdir@/memorymappingasp		-- gen_context(system_u:object_r:memory_mapping_asp_exe_t)
+@aspdir@/memorymapping_appraise_asp			-- gen_context(system_u:object_r:memorymapping_appraise_asp_exe_t)
 @aspdir@/netstat.*asp			-- gen_context(system_u:object_r:netstat_asp_exe_t)
 @aspdir@/procenv			-- gen_context(system_u:object_r:proc_env_asp_exe_t)
 @aspdir@/procfds			-- gen_context(system_u:object_r:proc_fds_asp_exe_t)
@@ -102,8 +103,10 @@
 @aspdir@/create_measurement_contract_asp -- gen_context(system_u:object_r:create_measurement_contract_asp_exe_t)
 @aspdir@/decompress_asp                  -- gen_context(system_u:object_r:decompress_asp_exe_t)
 @aspdir@/receive_asp                  -- gen_context(system_u:object_r:receive_asp_exe_t)
+@aspdir@/md5_hashcheck_asp            -- gen_context(system_u:object_r:md5_hashcheck_asp_exe_t)
 @aspdir@/deleg_meas_skeleton_asp              -- gen_context(system_u:object_r:deleg_meas_skeleton_asp_exe_t)
 @aspdir@/deleg_meas_appraise_skeleton_asp     -- gen_context(system_u:object_r:deleg_meas_appraise_skeleton_asp_exe_t)
+
 #
 # APB implementations
 #

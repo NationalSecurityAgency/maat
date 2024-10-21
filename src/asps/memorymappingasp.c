@@ -39,6 +39,7 @@
 #include <common/asp-errno.h>
 #include <maat-basetypes.h>
 #include <graph/graph-core.h>
+#include <memorymapping.h>
 
 #define ASP_NAME        "memorymappingasp"
 
@@ -169,32 +170,32 @@ static int add_memory_segment_node(measurement_graph *graph, node_id_t process_n
     }
     *out = tmpnode;
 
-    if((rc = measurement_graph_add_edge(graph, process_node, "mappings.segments",
+    if((rc = measurement_graph_add_edge(graph, process_node, MAPPINGS_SEGMENTS,
                                         tmpnode, &edge)) < 0) {
         asp_logwarn("Failed to add mappings.segments edge\n");
     }
 
     if(entry->r) {
-        if((rc = measurement_graph_add_edge(graph, process_node, "mappings.readable_segments",
+        if((rc = measurement_graph_add_edge(graph, process_node, READ_PERM,
                                             tmpnode, &edge)) < 0) {
             asp_logwarn("Failed to add mappings.readable_segments edge\n");
         }
     }
 
     if(entry->w) {
-        if((rc = measurement_graph_add_edge(graph, process_node, "mappings.writable_segments",
+        if((rc = measurement_graph_add_edge(graph, process_node, WRITE_PERM,
                                             tmpnode, &edge)) < 0) {
             asp_logwarn("Failed to add mappings.writable_segments edge\n");
         }
     }
     if(entry->x) {
-        if((rc = measurement_graph_add_edge(graph, process_node, "mappings.executable_segments",
+        if((rc = measurement_graph_add_edge(graph, process_node, EXE_PERM,
                                             tmpnode, &edge)) < 0) {
             asp_logwarn("Failed to add mappings.executable_segments edge\n");
         }
     }
     if(entry->p) {
-        if((rc = measurement_graph_add_edge(graph, process_node, "mappings.private_segments",
+        if((rc = measurement_graph_add_edge(graph, process_node, MAPPINGS_PRIVATE_SEGMENTS,
                                             tmpnode, &edge)) < 0) {
             asp_logwarn("Failed to add mappings.private_segments edge\n");
         }
@@ -242,11 +243,11 @@ static int add_file_region_node(measurement_graph *graph, node_id_t process_node
     }
     *out = tmpnode;
 
-    if((rc = measurement_graph_add_edge(graph, process_node, "mappings.file_regions",
+    if((rc = measurement_graph_add_edge(graph, process_node, MAPPINGS_FILE_REG,
                                         tmpnode, &edge)) < 0) {
         asp_logwarn("Failed to add mappings.file_regions edge to process node\n");
     }
-    if((rc = measurement_graph_add_edge(graph, memory_segment_node, "mappings.file_regions_mapped",
+    if((rc = measurement_graph_add_edge(graph, memory_segment_node, MAPPINGS_FILE_REG_MAP,
                                         tmpnode, &edge)) < 0) {
         asp_logwarn("Failed to add mappings.file_regions edge to memory region node\n");
     }
@@ -260,7 +261,7 @@ static int add_file_region_node(measurement_graph *graph, node_id_t process_node
 
         fd = open(fr_addr->path, O_RDONLY|O_NONBLOCK);
         if (fd < 0) {
-            dlog(3, "Failed to open file for reading\n");
+            dlog(3, "Failed to open file for reading.\n");
             goto out;
         }
 
@@ -362,22 +363,22 @@ static int add_file_node(measurement_graph *graph, node_id_t process_node,
     }
     *out = tmpnode;
 
-    if((rc = measurement_graph_add_edge(graph, process_node, "mappings.files",
+    if((rc = measurement_graph_add_edge(graph, process_node, MAPPING_FILES,
                                         tmpnode, &edge)) < 0) {
         asp_logwarn("Failed to add mappings.files edge to process node\n");
     }
 
     if (path_is_reg(sf_addr->filename)) {
-        if((rc = measurement_graph_add_edge(graph, process_node, "mappings.reg_files",
+        if((rc = measurement_graph_add_edge(graph, process_node, MAPPING_REG_FILES,
                                             tmpnode, &edge)) < 0) {
             asp_logwarn("Failed to add mappings.files edge to process node\n");
         }
     }
-    if((rc = measurement_graph_add_edge(graph, memory_segment_node, "mappings.files",
+    if((rc = measurement_graph_add_edge(graph, memory_segment_node, MAPPING_FILES,
                                         tmpnode, &edge)) < 0) {
         asp_logwarn("Failed to add mappings.files edge to memory region node\n");
     }
-    if((rc = measurement_graph_add_edge(graph, tmpnode, "mappings.mapped_regions",
+    if((rc = measurement_graph_add_edge(graph, tmpnode, MAPPING_MAPPED_REG,
                                         file_region_node, &edge)) < 0) {
         asp_logwarn("Failed to add mappings.mapped_regions edge to file node\n");
     }

@@ -76,6 +76,7 @@ int read_line_csv(const char *filename, const char *key,
          * represented as an int */
         out = fgets(csv_line, (int) max_line_len, fp);
         if (out == NULL) {
+            ret = -1;
             break;
         } else {
             tmp = calloc(strlen(csv_line) + 1, 1);

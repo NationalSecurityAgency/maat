@@ -303,7 +303,6 @@ int apb_execute(struct apb *apb, struct scenario *scen,
     int iostatus = -1;
     size_t bytes_written = 0;
     dlog(0,"Send response from appraiser APB: %s.\n", response_buf);
-    sz = sz+1; // include the terminating '\0'
     iostatus = maat_write_sz_buf(resultchan, response_buf, sz,
                                  &bytes_written, 5);
 

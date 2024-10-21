@@ -234,8 +234,21 @@ endif
 
 if BUILD_memorymapping_ASP
 suid_asp_PROGRAMS    += memorymappingasp
-memorymappingasp_SOURCES = memorymappingasp.c
+
+if ENABLE_TESTS
+noinst_LTLIBRARIES += libmemorymappingasp_helper.la
+libmemorymappingasp_helper_la_SOURCES = memorymappingasp.c memorymapping.h
+libmemorymappingasp_helper_la_CFLAGS = $(AM_CFLAGS)
+libmemorymappingasp_helper_la_LIBADD = $(OPENSSL_LIBS) -lcrypto
+endif
+
+memorymappingasp_SOURCES = memorymappingasp.c memorymapping.h
 memorymappingasp_LDADD = $(OPENSSL_LIBS) -lcrypto
+endif
+
+if BUILD_memorymapping_appraise_ASP
+suid_asp_PROGRAMS    += memorymapping_appraise_asp
+memorymapping_appraise_asp_SOURCES = memorymapping_appraise_asp.c memorymapping.h
 endif
 
 if BUILD_mtab_ASP
@@ -258,6 +271,12 @@ if BUILD_send_execute_tcp_ASP
 asp_PROGRAMS += send_execute_tcp_asp
 send_execute_tcp_asp_SOURCES = send_execute_tcp_asp.c
 send_execute_tcp_asp_LDADD   = $(LIBMAAT_CLIENT_LIBS)
+endif
+
+if BUILD_md5_hashcheck_ASP
+asp_PROGRAMS += md5_hashcheck_asp
+md5_hashcheck_asp_SOURCES = md5_hashcheck_asp.c md5_hashcheck_asp.h
+md5_hashcheck_asp_LDADD = $(LIBMAAT_CLIENT_LIBS)
 endif
 
 if BUILD_tlm_ret_ASP
@@ -301,8 +320,10 @@ asp_PROGRAMS    += whitelist
 aspinfo_DATA    += datafiles/modules.whitelist \
                    datafiles/packages.whitelist \
                    datafiles/process.whitelist \
+                   datafiles/distribution.whitelist \
                    datafiles/binary.whitelist \
-                   datafiles/distribution.whitelist
+                   datafiles/md5_hashcheck.whitelist \
+                   datafiles/memorymapping_appraise_file.whitelist
 whitelist_SOURCES = whitelist.c
 endif
 

@@ -90,7 +90,7 @@
 		<satisfier id="0">
 			<value name="type">LISTDIRECTORY</value>
 			<capability target_type="file_target_type" target_magic="1001" target_desc = "An instance of target type, which describes atributes of the target file" 			       	
-				address_type="path_address_space" address_magic="0x5F5F5F5F" address_desc = "An instance of address type that decribes the file address, for this asp it is a path. This includes file information such as address, device major/minor, file size, node, and full name."
+				address_type="file_addr_space" address_magic="0x5F5F5F5F" address_desc = "An instance of address type that decribes the file address, for this asp it is a path. This includes file information such as address, device major/minor, file size, node, and full name."
 				    measurement_type="filename_measurement_type" measurement_magic="3001" measurement_desc = "List of File address found in target directory"/>
 		</satisfier>
 	</measurers>

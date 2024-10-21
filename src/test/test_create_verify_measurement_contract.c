@@ -192,7 +192,7 @@ START_TEST (test_measurement_contract_asps)
 }
 END_TEST
 
-START_TEST (fail_test_measurement_contract_asps)
+START_TEST (test_fail_measurement_contract_asps)
 {
     int rc = 0;
     int eof_enc;
@@ -297,6 +297,7 @@ Suite* sel_suite (void)
 
     TCase *tc_basic = tcase_create ("Basic Tests");
     tcase_add_test (tc_basic, test_measurement_contract_asps);
+    tcase_add_test (tc_basic, test_fail_measurement_contract_asps);
     tcase_add_checked_fixture(tc_basic, setup, teardown);
     tcase_set_timeout(tc_basic, 50);
     suite_add_tcase (s, tc_basic);

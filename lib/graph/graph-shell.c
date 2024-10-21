@@ -814,6 +814,12 @@ int main(int __attribute__((unused)) argc, char __attribute__((unused)) *argv[])
         } else if(strcmp(cmd, "ls-data") == 0) {
             node_id_t node;
             measurement_iterator *it;
+
+            if(graph == NULL) {
+                fprintf(stderr, "Error: must create a graph with 'new' first\n");
+                goto next;
+            }
+
             if(sscanf(args, " "ID_FMT, &node) != 1) {
                 fprintf(stderr, "Error: ls-data <node id>\n");
                 goto next;
